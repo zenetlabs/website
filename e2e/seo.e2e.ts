@@ -71,11 +71,11 @@ test('robots and sitemap are served', async ({ request }) => {
 
 test('page HTML preloads only the hero serif fonts', async ({ request }) => {
   const html = await (await request.get('/')).text();
-  const preloads = [...html.matchAll(/rel="preload"[^>]*href="([^"]+)"/g)].map(
-    (m) => m[1],
+  const preloads = (html.match(/<link[^>]*>/g) ?? []).filter((tag) =>
+    tag.includes('rel="preload"'),
   );
   expect(preloads).toHaveLength(2);
-  expect(preloads.every((href) => href.includes('instrument-serif'))).toBe(
-    true,
+  expect(preloads.filter((tag) => !tag.includes('instrument-serif'))).toEqual(
+    [],
   );
 });

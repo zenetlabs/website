@@ -50,17 +50,14 @@ describe('withLowScriptPriority', () => {
     expect(setAttribute).toHaveBeenCalledWith('fetchpriority', 'low');
   });
 
-  it('passes non-HTML responses through', () => {
-    const response = new Response('{}', {
-      headers: { 'content-type': 'application/json' },
-    });
-    expect(withLowScriptPriority(response)).toBe(response);
-    expect(instances).toHaveLength(0);
-  });
-
-  it('passes responses without a content type through', () => {
-    const response = new Response(null);
-    response.headers.delete('content-type');
+  it.each([
+    {
+      name: 'JSON',
+      headers: new Headers({ 'content-type': 'application/json' }),
+    },
+    { name: 'no content type', headers: new Headers() },
+  ])('passes $name responses through', ({ headers }) => {
+    const response = new Response(null, { headers });
     expect(withLowScriptPriority(response)).toBe(response);
     expect(instances).toHaveLength(0);
   });
