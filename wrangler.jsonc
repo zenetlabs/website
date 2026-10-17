@@ -1,0 +1,50 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "local-zenet-web",
+  "account_id": "a77225fbdf7bcff161325563e9c2063b",
+  "main": "./src/server.ts",
+  "compatibility_date": "2026-03-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  "secrets_store_secrets": [
+    {
+      "binding": "RESEND_API_KEY",
+      "store_id": "5a96b366abb34e3991c881dab187adfd",
+      "secret_name": "PROD_RESEND_API_KEY"
+    },
+    {
+      "binding": "TURNSTILE_SECRET_KEY",
+      "store_id": "5a96b366abb34e3991c881dab187adfd",
+      "secret_name": "ZENETLABS_PROD_TURNSTILE_SECRET"
+    }
+  ],
+  "env": {
+    "production": {
+      "name": "prod-zenet-web",
+      "preview_urls": true,
+      "secrets_store_secrets": [
+        {
+          "binding": "RESEND_API_KEY",
+          "store_id": "5a96b366abb34e3991c881dab187adfd",
+          "secret_name": "PROD_RESEND_API_KEY"
+        },
+        {
+          "binding": "TURNSTILE_SECRET_KEY",
+          "store_id": "5a96b366abb34e3991c881dab187adfd",
+          "secret_name": "ZENETLABS_PROD_TURNSTILE_SECRET"
+        }
+      ],
+      "routes": [
+        { "pattern": "zenetlabs.com", "custom_domain": true },
+        { "pattern": "www.zenetlabs.com", "custom_domain": true },
+        { "pattern": "zenettech.com", "custom_domain": true },
+        { "pattern": "www.zenettech.com", "custom_domain": true },
+        { "pattern": "zenettechnology.com", "custom_domain": true },
+        { "pattern": "www.zenettechnology.com", "custom_domain": true },
+        { "pattern": "sabatemartinez.com", "custom_domain": true },
+        { "pattern": "www.sabatemartinez.com", "custom_domain": true }
+      ]
+    }
+  }
+}

@@ -1,0 +1,93 @@
+name: Deploy Production
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+jobs:
+  check-ci:
+    name: Verify CI passed
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Require main
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          if [ "$REF" != "refs/heads/main" ]; then
+            echo "::error::Production deploys run from main only (ref: $REF)"
+            exit 1
+          fi
+      - name: Check CI status for this commit
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const { data } = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'ci-cd.yml',
+              head_sha: context.sha,
+              per_page: 30,
+            });
+            const ok = data.workflow_runs.some(
+              (r) => r.conclusion === 'success' && r.event === 'push',
+            );
+            if (!ok) {
+              core.setFailed(
+                `No successful push CI run for commit ${context.sha}. Push to main and let CI pass before deploying.`,
+              );
+            }
+
+  security:
+    name: Scan deployment target
+    needs: [check-ci]
+    uses: ./.github/workflows/security.yml
+    with:
+      ref: ${{ github.sha }}
+
+  deploy:
+    name: Deploy (prod)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [check-ci, security]
+    environment:
+      name: production
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/pnpm-install-hosted
+      - name: Build
+        run: CLOUDFLARE_ENV=production pnpm build
+      - name: Deploy
+        uses: ./.github/actions/wrangler-deploy-retry
+        with:
+          working-directory: .
+          args: --config dist/server/wrangler.json
+          api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Smoke test
+        run: bash scripts/smoke.sh
+      - name: Rollback command
+        if: ${{ failure() }}
+        run: |
+          {
+            echo "### Deploy or smoke test failed"
+            echo
+            echo 'Roll back with:'
+            echo
+            echo '```'
+            echo 'pnpm exec wrangler rollback --name prod-zenet-web'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

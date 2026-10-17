@@ -1,0 +1,189 @@
+{
+  "meta": {
+    "title": "Zenet Labs: AI consultancy for agentic companies",
+    "description": "Zenet Labs helps companies understand AI, implement agents that do real work, and become agentic companies."
+  },
+  "nav": {
+    "skip": "Skip to content",
+    "language": "Language",
+    "languageFooter": "Language (footer)",
+    "home": "Zenet Labs home",
+    "primary": "Main",
+    "legal": "Legal",
+    "menu": "Menu",
+    "services": "Services",
+    "process": "How we work",
+    "work": "Work",
+    "contact": "Contact",
+    "cta": "Start a conversation"
+  },
+  "hero": {
+    "eyebrow": "AI consultancy · Agentic operations",
+    "title": {
+      "before": "Turn your company into an ",
+      "emphasis": "agentic company",
+      "after": "."
+    },
+    "lead": "We help teams understand AI, put agents to work on real tasks, and redesign how the company operates around them.",
+    "cta": "Start a conversation",
+    "secondary": "See what we run"
+  },
+  "runlog": {
+    "title": "agents/ops — running",
+    "description": "Illustrative example of an agent run log: inbound emails triaged, proposals drafted, invoices reconciled and a weekly report in preparation.",
+    "lines": {
+      "1": "triaged the shared inbox → routed what needs a human",
+      "2": "drafted proposals from WhatsApp briefs",
+      "3": "reconciled supplier invoices",
+      "4": "updated the CRM from call notes",
+      "5": "flagged an exception for human review",
+      "6": "preparing weekly ops report…"
+    }
+  },
+  "services": {
+    "eyebrow": "01 — Services",
+    "title": {
+      "before": "From curiosity to an ",
+      "emphasis": "AI-native",
+      "after": " operating model"
+    },
+    "items": {
+      "understand": {
+        "number": "01",
+        "title": "Understand",
+        "bullets": {
+          "1": "AI literacy for leadership and teams",
+          "2": "Hands-on workshops built on your own workflows",
+          "3": "An opportunity map: where agents pay off first",
+          "4": "A usage policy people can actually follow"
+        }
+      },
+      "implement": {
+        "number": "02",
+        "title": "Implement",
+        "bullets": {
+          "1": "Agents and automations wired into your email, CRM, WhatsApp and docs",
+          "2": "Integrations with the tools you already use",
+          "3": "Evaluation, so you know what works before you scale it",
+          "4": "Handover and training for your team"
+        }
+      },
+      "agentic": {
+        "number": "03",
+        "title": "Become agentic",
+        "bullets": {
+          "1": "Operating model redesign around agents",
+          "2": "An agent workforce with clear roles and owners",
+          "3": "Governance and human-in-the-loop checkpoints",
+          "4": "Metrics that show what actually changed"
+        }
+      }
+    }
+  },
+  "process": {
+    "eyebrow": "02 — How we work",
+    "title": {
+      "before": "Small steps, ",
+      "emphasis": "real results",
+      "after": ", at your own pace"
+    },
+    "steps": {
+      "discover": {
+        "label": "Discover",
+        "text": "We map your workflows and find where agents will do the most good."
+      },
+      "pilot": {
+        "label": "Pilot",
+        "text": "We build one agent on one real process and test it with your team."
+      },
+      "scale": {
+        "label": "Scale",
+        "text": "We extend what worked to more teams and tools, with evaluation in place."
+      },
+      "operate": {
+        "label": "Operate",
+        "text": "We monitor, tune and hand over, so the agents keep working as the company changes."
+      }
+    }
+  },
+  "work": {
+    "eyebrow": "03 — Work",
+    "title": {
+      "before": "We don't just advise. ",
+      "emphasis": "We run agentic companies ourselves",
+      "after": "."
+    },
+    "lead": "These are products we build and operate with agentic workflows. They are where we learn what works.",
+    "items": {
+      "viatsy": {
+        "description": "Small-group trips to Japan, China, Korea, Taiwan and Hong Kong.",
+        "category": "Travel · Group tours"
+      },
+      "mexica": {
+        "description": "Custom trips to Mexico with local guides.",
+        "category": "Travel · Mexico"
+      },
+      "taplany": {
+        "description": "The all-in-one platform for travel agencies: website, inquiries, proposals, bookings, payments and WhatsApp.",
+        "category": "SaaS · Travel agencies"
+      },
+      "brisily": {
+        "description": "Instant travel eSIMs for 200+ destinations.",
+        "category": "Telecom · eSIM"
+      },
+      "luce": {
+        "description": "Exclusive dental jewelry.",
+        "category": "E-commerce · Dental jewelry"
+      }
+    }
+  },
+  "contact": {
+    "eyebrow": "04 — Contact",
+    "title": {
+      "before": "Tell us what your company should ",
+      "emphasis": "stop doing by hand",
+      "after": "."
+    },
+    "text": "Describe a process, a bottleneck or just a hunch. We will tell you honestly whether agents can help.",
+    "mail": "Prefer email? Write to",
+    "human": "A human replies, personally.",
+    "form": {
+      "label": "Contact form",
+      "name": "Name",
+      "email": "Email",
+      "company": "Company (optional)",
+      "message": "What should we look at?",
+      "consentBefore": "I agree that Zenet Technology Pte. Ltd. uses these details to reply to my enquiry, as described in the ",
+      "consentLink": "privacy policy",
+      "consentAfter": ".",
+      "submit": "Send message",
+      "sending": "Sending…",
+      "successTitle": "Message sent",
+      "successText": "Thank you. We will reply to the address you gave us.",
+      "errorSend": "We could not send your message. Please try again, or write to",
+      "errorCaptcha": "The security check failed. Please try again, or write to",
+      "honeypot": "Leave this field empty"
+    }
+  },
+  "footer": {
+    "legal": "© Zenet Technology Pte. Ltd.",
+    "uen": "UEN 202202371M",
+    "address": "160 Robinson Road #14-04, Singapore 068914",
+    "founded": "Founded in 2022 by Albert Sabaté",
+    "privacy": "Privacy policy",
+    "cookies": "Cookies policy"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist.",
+    "home": "Back to the home page"
+  },
+  "privacy": {
+    "title": "Privacy policy",
+    "description": "How Zenet Technology Pte. Ltd. handles personal data."
+  },
+  "cookies": {
+    "title": "Cookies policy",
+    "description": "How Zenet Labs uses cookies."
+  }
+}

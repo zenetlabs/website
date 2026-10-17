@@ -1,0 +1,83 @@
+name: "Wrangler deploy (retry on CF rate-limit / startup validation)"
+description: >
+  Deploy a Worker with the locally pinned wrangler. Retries on a Cloudflare API
+  rate limit (code 971 / HTTP 429) and on startup-time CPU validation (code
+  10021 with CPU-limit wording), each against its own bounded budget. Any other
+  failure fails fast. A zero exit without a deploy confirmation is a failure.
+
+inputs:
+  working-directory:
+    description: "Directory holding the pinned wrangler in node_modules"
+    required: true
+  args:
+    description: "Args appended to 'wrangler deploy'"
+    required: true
+  api-token:
+    description: "Cloudflare API token (wrangler reads CLOUDFLARE_API_TOKEN)"
+    required: true
+  max-startup-attempts:
+    description: "Max attempts for startup validation (10021, CPU-limit wording) failures"
+    required: false
+    default: "4"
+  startup-backoff-seconds:
+    description: "Fixed delay between startup-validation retries, in seconds"
+    required: false
+    default: "15"
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ inputs.api-token }}
+        DEPLOY_ARGS: ${{ inputs.args }}
+        MAX_STARTUP_ATTEMPTS: ${{ inputs.max-startup-attempts }}
+        STARTUP_BACKOFF_SECONDS: ${{ inputs.startup-backoff-seconds }}
+      run: |
+        set -uo pipefail
+        log="$(mktemp)"
+        if ! command -v node >/dev/null 2>&1; then
+          echo "::error::node not found on PATH; wrangler's bin needs it."
+          exit 1
+        fi
+        echo "deploy runtime: node=$(node --version) pnpm=$(pnpm --version 2>/dev/null) wrangler=$(pnpm exec wrangler --version 2>/dev/null | tail -1)"
+        read -ra args <<<"$DEPLOY_ARGS"
+        n_startup=1; max_startup="$MAX_STARTUP_ATTEMPTS"; startup_delay="$STARTUP_BACKOFF_SECONDS"
+        n_rate=1; max_rate=5; rate_delay=30
+        while true; do
+          if pnpm exec wrangler deploy "${args[@]}" 2>&1 | tee "$log"; then
+            # wrangler can exit 0 without shipping a version, so require proof.
+            if grep -qE 'Current Version ID:|Deployed[[:space:]].*triggers|No deploy necessary' "$log"; then
+              exit 0
+            fi
+            echo "::error::wrangler exited 0 but printed no deploy confirmation (no 'Current Version ID'). The live Worker was NOT updated."
+            exit 1
+          fi
+          if grep -qE 'exceeded startup limits|startup exceeded CPU time limit' "$log"; then
+            if [ "$n_startup" -lt "$max_startup" ]; then
+              echo "::warning::Startup validation failed (code 10021) on attempt $n_startup/$max_startup; retrying in ${startup_delay}s"
+              sleep "$startup_delay"
+              n_startup=$(( n_startup + 1 ))
+              continue
+            fi
+            echo "::error::Worker failed Cloudflare startup validation (CPU time limit) after ${max_startup} attempts."
+            exit 1
+          fi
+          if grep -qE '\[code:[[:space:]]*10021\]' "$log"; then
+            echo "::error::Worker threw during startup evaluation (code 10021); not retrying."
+            exit 1
+          fi
+          if ! grep -qE '\[code:[[:space:]]*971\]|[Tt]oo many requests|HTTP 429' "$log"; then
+            echo "::error::wrangler deploy failed with a non-rate-limit error; not retrying."
+            exit 1
+          fi
+          if [ "$n_rate" -lt "$max_rate" ]; then
+            echo "::warning::Cloudflare API rate limit (attempt $n_rate/$max_rate); backing off ${rate_delay}s"
+            sleep "$rate_delay"; rate_delay=$(( rate_delay * 2 ))
+            n_rate=$(( n_rate + 1 ))
+            continue
+          fi
+          echo "::error::wrangler deploy still rate-limited after ${max_rate} attempts."
+          exit 1
+        done
