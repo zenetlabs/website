@@ -24,6 +24,7 @@ Decisions go through AskUserQuestion (recommended option first).
 - No Date.now()/new Date() in render. Tailwind 4: `outline-hidden`, not `outline-none`.
 - workers-types shadows Element.append — use appendChild.
 - Playwright: wait for `body[data-hydrated="true"]` before clicking.
+- `pnpm e2e` serves whatever is in `dist/` and reuses any server already on :4173: after a `CLOUDFLARE_ENV=production pnpm build`, run `pnpm build` again and stop stale previews first (the real Turnstile key fails locally).
 - After any version bump run `pnpm dedupe`. wrangler can exit 0 without deploying — the deploy action greps for confirmation.
 
 ## Checks (local is allowed here; CI is the source of truth)
