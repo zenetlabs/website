@@ -10,6 +10,11 @@ const PORTFOLIO = [
   { key: 'luce', name: 'Luce', href: 'https://luce.es' },
 ] as const;
 
+const PREVIOUS = [
+  { key: 'splyt', name: 'Splyt' },
+  { key: 'setoros', name: 'Setoros' },
+] as const;
+
 export function Portfolio() {
   const { work } = useMessages();
 
@@ -52,6 +57,19 @@ export function Portfolio() {
           </li>
         ))}
       </ul>
+      <div className="mt-12 border-t border-hairline pt-8">
+        <h3 className={EYEBROW}>{work.previous.label}</h3>
+        <dl className="mt-5 grid gap-6 md:grid-cols-2">
+          {PREVIOUS.map(({ key, name }) => (
+            <div key={key}>
+              <dt className="font-semibold text-fg">{name}</dt>
+              <dd className="mt-1 max-w-xl text-muted-fg">
+                {work.previous[key]}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
     </Section>
   );
 }

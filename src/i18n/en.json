@@ -114,6 +114,11 @@
       "after": "."
     },
     "lead": "These are products we build and operate with agentic workflows. They are where we learn what works.",
+    "previous": {
+      "label": "We've also worked with",
+      "splyt": "Engineering leadership for a global mobility network, scaled across multiple countries.",
+      "setoros": "Software engineering and product development."
+    },
     "items": {
       "viatsy": {
         "description": "Small-group trips to Japan, China, Korea, Taiwan and Hong Kong.",

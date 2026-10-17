@@ -114,6 +114,11 @@
       "after": "."
     },
     "lead": "Son productos que construimos y operamos con flujos de trabajo agénticos. Ahí es donde aprendemos qué funciona.",
+    "previous": {
+      "label": "También hemos trabajado con",
+      "splyt": "Liderazgo de ingeniería para una red de movilidad global, escalada a varios países.",
+      "setoros": "Ingeniería de software y desarrollo de producto."
+    },
     "items": {
       "viatsy": {
         "description": "Viajes en grupo reducido a Japón, China, Corea, Taiwán y Hong Kong.",
