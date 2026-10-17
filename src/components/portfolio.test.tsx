@@ -54,4 +54,22 @@ describe.each(locales)('Portfolio (%s)', (locale) => {
       expect(all[index]).toContain(item.category);
     }
   });
+
+  it('lists previous work as plain text', () => {
+    state.locale = locale;
+    render(<Portfolio />);
+    const { previous } = messages[locale].work;
+    const list = screen.getByRole('heading', {
+      name: previous.label,
+    }).nextElementSibling;
+    if (!(list instanceof HTMLElement)) throw new Error('missing list');
+    const terms = within(list).getAllByRole('term');
+    const definitions = within(list).getAllByRole('definition');
+    expect(terms.map((term) => term.textContent)).toEqual(['Splyt', 'Setoros']);
+    expect(definitions.map((definition) => definition.textContent)).toEqual([
+      previous.splyt,
+      previous.setoros,
+    ]);
+    expect(within(list).queryAllByRole('link')).toHaveLength(0);
+  });
 });
