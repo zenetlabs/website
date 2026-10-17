@@ -68,3 +68,14 @@ test('robots and sitemap are served', async ({ request }) => {
   expect((await sitemap.text()).match(/<loc>/g)).toHaveLength(6);
   expect((await request.get('/robots.txt')).status()).toBe(200);
 });
+
+test('page HTML preloads only the hero serif fonts', async ({ request }) => {
+  const html = await (await request.get('/')).text();
+  const preloads = [...html.matchAll(/rel="preload"[^>]*href="([^"]+)"/g)].map(
+    (m) => m[1],
+  );
+  expect(preloads).toHaveLength(2);
+  expect(preloads.every((href) => href.includes('instrument-serif'))).toBe(
+    true,
+  );
+});
