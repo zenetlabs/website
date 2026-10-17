@@ -1,0 +1,189 @@
+{
+  "meta": {
+    "title": "Zenet Labs: consultoría de IA para empresas agénticas",
+    "description": "Zenet Labs ayuda a las empresas a entender la IA, implementar agentes que hacen trabajo real y convertirse en empresas agénticas."
+  },
+  "nav": {
+    "skip": "Saltar al contenido",
+    "language": "Idioma",
+    "languageFooter": "Idioma (pie de página)",
+    "home": "Inicio de Zenet Labs",
+    "primary": "Principal",
+    "legal": "Legal",
+    "menu": "Menú",
+    "services": "Servicios",
+    "process": "Cómo trabajamos",
+    "work": "Proyectos",
+    "contact": "Contacto",
+    "cta": "Hablemos"
+  },
+  "hero": {
+    "eyebrow": "Consultoría de IA · Operaciones agénticas",
+    "title": {
+      "before": "Convierte tu empresa en una ",
+      "emphasis": "empresa agéntica",
+      "after": "."
+    },
+    "lead": "Ayudamos a los equipos a entender la IA, a poner agentes a trabajar en tareas reales y a rediseñar cómo opera la empresa a su alrededor.",
+    "cta": "Hablemos",
+    "secondary": "Mira lo que operamos"
+  },
+  "runlog": {
+    "title": "agents/ops — running",
+    "description": "Ejemplo ilustrativo del registro de un agente: correos entrantes clasificados, propuestas redactadas, facturas conciliadas y un informe semanal en preparación.",
+    "lines": {
+      "1": "clasificó el buzón compartido → derivó lo que necesita a una persona",
+      "2": "redactó propuestas a partir de briefs de WhatsApp",
+      "3": "concilió facturas de proveedores",
+      "4": "actualizó el CRM con las notas de las llamadas",
+      "5": "marcó una excepción para revisión humana",
+      "6": "preparando el informe semanal de operaciones…"
+    }
+  },
+  "services": {
+    "eyebrow": "01 — Servicios",
+    "title": {
+      "before": "De la curiosidad a un modelo operativo ",
+      "emphasis": "nativo",
+      "after": " en IA"
+    },
+    "items": {
+      "understand": {
+        "number": "01",
+        "title": "Entender",
+        "bullets": {
+          "1": "Formación en IA para dirección y equipos",
+          "2": "Talleres prácticos sobre tus propios procesos",
+          "3": "Un mapa de oportunidades: dónde rinden primero los agentes",
+          "4": "Una política de uso que la gente pueda cumplir de verdad"
+        }
+      },
+      "implement": {
+        "number": "02",
+        "title": "Implementar",
+        "bullets": {
+          "1": "Agentes y automatizaciones conectados a tu correo, CRM, WhatsApp y documentos",
+          "2": "Integraciones con las herramientas que ya usas",
+          "3": "Evaluación, para saber qué funciona antes de escalarlo",
+          "4": "Traspaso y formación para tu equipo"
+        }
+      },
+      "agentic": {
+        "number": "03",
+        "title": "Ser agéntico",
+        "bullets": {
+          "1": "Rediseño del modelo operativo en torno a los agentes",
+          "2": "Una plantilla de agentes con roles y responsables claros",
+          "3": "Gobierno y puntos de control con supervisión humana",
+          "4": "Métricas que muestran qué ha cambiado de verdad"
+        }
+      }
+    }
+  },
+  "process": {
+    "eyebrow": "02 — Cómo trabajamos",
+    "title": {
+      "before": "Pasos pequeños, ",
+      "emphasis": "resultados reales",
+      "after": ", a tu ritmo"
+    },
+    "steps": {
+      "discover": {
+        "label": "Descubrir",
+        "text": "Mapeamos tus procesos y encontramos dónde los agentes aportarán más."
+      },
+      "pilot": {
+        "label": "Piloto",
+        "text": "Construimos un agente sobre un proceso real y lo probamos con tu equipo."
+      },
+      "scale": {
+        "label": "Escalar",
+        "text": "Extendemos lo que ha funcionado a más equipos y herramientas, con evaluación incluida."
+      },
+      "operate": {
+        "label": "Operar",
+        "text": "Monitorizamos, ajustamos y te lo entregamos, para que los agentes sigan funcionando mientras la empresa cambia."
+      }
+    }
+  },
+  "work": {
+    "eyebrow": "03 — Proyectos",
+    "title": {
+      "before": "No solo asesoramos. ",
+      "emphasis": "Nosotros mismos dirigimos empresas agénticas",
+      "after": "."
+    },
+    "lead": "Son productos que construimos y operamos con flujos de trabajo agénticos. Ahí es donde aprendemos qué funciona.",
+    "items": {
+      "viatsy": {
+        "description": "Viajes en grupo reducido a Japón, China, Corea, Taiwán y Hong Kong.",
+        "category": "Viajes · Tours en grupo"
+      },
+      "mexica": {
+        "description": "Viajes a medida por México con guías locales.",
+        "category": "Viajes · México"
+      },
+      "taplany": {
+        "description": "La plataforma todo en uno para agencias de viajes: web, consultas, propuestas, reservas, pagos y WhatsApp.",
+        "category": "SaaS · Agencias de viajes"
+      },
+      "brisily": {
+        "description": "eSIMs de viaje al instante para más de 200 destinos.",
+        "category": "Telecom · eSIM"
+      },
+      "luce": {
+        "description": "Joyería dental exclusiva.",
+        "category": "E-commerce · Joyería dental"
+      }
+    }
+  },
+  "contact": {
+    "eyebrow": "04 — Contacto",
+    "title": {
+      "before": "Cuéntanos qué debería ",
+      "emphasis": "dejar de hacer a mano",
+      "after": " tu empresa."
+    },
+    "text": "Describe un proceso, un cuello de botella o solo una intuición. Te diremos con franqueza si los agentes pueden ayudar.",
+    "mail": "¿Prefieres el correo? Escribe a",
+    "human": "Te responde una persona, personalmente.",
+    "form": {
+      "label": "Formulario de contacto",
+      "name": "Nombre",
+      "email": "Correo electrónico",
+      "company": "Empresa (opcional)",
+      "message": "¿Qué deberíamos mirar?",
+      "consentBefore": "Acepto que Zenet Technology Pte. Ltd. use estos datos para responder a mi consulta, según se describe en la ",
+      "consentLink": "política de privacidad",
+      "consentAfter": ".",
+      "submit": "Enviar mensaje",
+      "sending": "Enviando…",
+      "successTitle": "Mensaje enviado",
+      "successText": "Gracias. Te responderemos a la dirección que nos has indicado.",
+      "errorSend": "No hemos podido enviar tu mensaje. Inténtalo de nuevo o escribe a",
+      "errorCaptcha": "La comprobación de seguridad ha fallado. Inténtalo de nuevo o escribe a",
+      "honeypot": "Deja este campo vacío"
+    }
+  },
+  "footer": {
+    "legal": "© Zenet Technology Pte. Ltd.",
+    "uen": "UEN 202202371M",
+    "address": "160 Robinson Road #14-04, Singapur 068914",
+    "founded": "Fundada en 2022 por Albert Sabaté",
+    "privacy": "Política de privacidad",
+    "cookies": "Política de cookies"
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "description": "La página que buscas no existe.",
+    "home": "Volver al inicio"
+  },
+  "privacy": {
+    "title": "Política de privacidad",
+    "description": "Cómo trata Zenet Technology Pte. Ltd. los datos personales."
+  },
+  "cookies": {
+    "title": "Política de cookies",
+    "description": "Cómo usa cookies Zenet Labs."
+  }
+}

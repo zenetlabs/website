@@ -1,7 +1,25 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "files": {
-    "include": ["src"]
+    "ignoreUnknown": true,
+    "includes": [
+      "**",
+      "!pnpm-lock.yaml",
+      "!**/routeTree.gen.ts",
+      "!**/dist/**/*",
+      "!**/.wrangler/**/*",
+      "!**/.tanstack/**/*",
+      "!**/playwright-report/**/*",
+      "!**/test-results/**/*",
+      "!**/.lighthouseci/**/*",
+      "!**/node_modules/**/*",
+      "!public/**/*"
+    ]
+  },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
   },
   "formatter": {
     "enabled": true,
@@ -12,19 +30,14 @@
     "lineWidth": 80,
     "attributePosition": "auto"
   },
-  "organizeImports": {
-    "enabled": true
-  },
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
-      "a11y": {
-        "useMediaCaption": "off"
-      }
+      "preset": "recommended"
     }
   },
   "javascript": {
+    "assist": { "enabled": true },
     "formatter": {
       "jsxQuoteStyle": "double",
       "quoteProperties": "asNeeded",
@@ -36,5 +49,8 @@
       "quoteStyle": "single",
       "attributePosition": "auto"
     }
+  },
+  "css": {
+    "parser": { "tailwindDirectives": true }
   }
 }

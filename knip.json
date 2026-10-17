@@ -1,0 +1,12 @@
+{
+  "$schema": "https://unpkg.com/knip@6.41.0/schema.json",
+  "entry": [
+    "src/routes/**/*.{ts,tsx}",
+    "e2e/**/*.e2e.ts",
+    "site.config.ts",
+    "scripts/lhci-server.mjs"
+  ],
+  "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts", "test/**/*.ts"],
+  "ignoreDependencies": ["tailwindcss", "@fontsource.*", "cloudflare"],
+  "ignoreExportsUsedInFile": true
+}

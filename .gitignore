@@ -1,35 +1,13 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
 node_modules
-
-# testing
-coverage
-
-# vscode
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
-
-# app common output
-out/
-build
 dist
-*.tsbuildinfo
-
-# misc
-.DS_Store
-*.pem
-backup
-
-# local env files
-.env
-.env.*
-!.env.example
-
-# Deployment files
-.turbo
 .wrangler
-.vercel
-src/public/rss.xml
-src/public/sitemap.xml
+.tanstack
+.output
+coverage
+playwright-report
+test-results
+.lighthouseci
+.dev.vars*
+.env*
+*.tsbuildinfo
+.DS_Store

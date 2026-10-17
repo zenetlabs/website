@@ -1,0 +1,9 @@
+title = "zenetlabs website"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Public per-environment values (Turnstile site key, CF beacon token)"
+regexTarget = "line"
+regexes = ['''turnstileSiteKey''', '''cfBeaconToken''']
