@@ -114,10 +114,11 @@
       "after": "."
     },
     "lead": "These are products we build and operate with agentic workflows. They are where we learn what works.",
-    "previous": {
-      "label": "We've also worked with",
-      "splyt": "Engineering leadership for a global mobility network, scaled across multiple countries.",
-      "setoros": "Software engineering and product development."
+    "founder": {
+      "label": "Before Zenet Labs",
+      "intro": "Our founder, Albert Sabaté, has spent 15+ years building and leading engineering teams. That includes leading engineering at",
+      "splytAfter": "as its global mobility network scaled across multiple countries, and making core contributions to",
+      "brisaAfter": ", an open-source web framework."
     },
     "items": {
       "viatsy": {

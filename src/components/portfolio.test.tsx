@@ -26,8 +26,8 @@ describe.each(locales)('Portfolio (%s)', (locale) => {
   function links() {
     state.locale = locale;
     render(<Portfolio />);
-    const section = screen.getByRole('region');
-    return within(section).getAllByRole('link');
+    const list = screen.getByRole('list');
+    return within(list).getAllByRole('link');
   }
 
   it('renders exactly 5 links with the exact hrefs', () => {
@@ -55,21 +55,22 @@ describe.each(locales)('Portfolio (%s)', (locale) => {
     }
   });
 
-  it('lists previous work as plain text', () => {
+  it('shows the founder track record with a single clean Brisa link', () => {
     state.locale = locale;
-    render(<Portfolio />);
-    const { previous } = messages[locale].work;
-    const list = screen.getByRole('heading', {
-      name: previous.label,
-    }).nextElementSibling;
-    if (!(list instanceof HTMLElement)) throw new Error('missing list');
-    const terms = within(list).getAllByRole('term');
-    const definitions = within(list).getAllByRole('definition');
-    expect(terms.map((term) => term.textContent)).toEqual(['Splyt', 'Setoros']);
-    expect(definitions.map((definition) => definition.textContent)).toEqual([
-      previous.splyt,
-      previous.setoros,
-    ]);
-    expect(within(list).queryAllByRole('link')).toHaveLength(0);
+    const { container } = render(<Portfolio />);
+    const { founder } = messages[locale].work;
+    const heading = screen.getByRole('heading', { name: founder.label });
+    const paragraph = heading.nextElementSibling;
+    if (!(paragraph instanceof HTMLParagraphElement)) {
+      throw new Error('missing paragraph');
+    }
+    expect(paragraph.textContent).toBe(
+      `${founder.intro} Splyt ${founder.splytAfter} Brisa${founder.brisaAfter}`,
+    );
+    const blockLinks = within(paragraph).getAllByRole('link');
+    expect(blockLinks).toHaveLength(1);
+    expect(blockLinks[0]).toHaveAttribute('href', 'https://brisa.build/');
+    expect(blockLinks[0]).not.toHaveAttribute('rel');
+    expect(container.textContent).not.toContain('Setoros');
   });
 });
