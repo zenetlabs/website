@@ -1,12 +1,7 @@
 import { Section } from '@/components/section';
-import { EYEBROW } from '@/components/ui';
+import { EYEBROW, TEXT_LINK } from '@/components/ui';
 import { useMessages } from '@/lib/i18n';
 import { PORTFOLIO } from '@/lib/portfolio';
-
-const PREVIOUS = [
-  { key: 'splyt', name: 'Splyt' },
-  { key: 'setoros', name: 'Setoros' },
-] as const;
 
 export function Portfolio() {
   const { work } = useMessages();
@@ -49,17 +44,19 @@ export function Portfolio() {
         ))}
       </ul>
       <div className="mt-12 border-t border-hairline pt-8">
-        <h3 className={EYEBROW}>{work.previous.label}</h3>
-        <dl className="mt-5 grid gap-6 md:grid-cols-2">
-          {PREVIOUS.map(({ key, name }) => (
-            <div key={key}>
-              <dt className="font-semibold text-fg">{name}</dt>
-              <dd className="mt-1 max-w-xl text-muted-fg">
-                {work.previous[key]}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <h3 className={EYEBROW}>{work.founder.label}</h3>
+        <p className="mt-4 max-w-3xl text-lg text-muted-fg">
+          {work.founder.intro}{' '}
+          <strong className="font-semibold text-fg">Splyt</strong>{' '}
+          {work.founder.splytAfter}{' '}
+          <a
+            href="https://brisa.build/"
+            className={`font-semibold ${TEXT_LINK}`}
+          >
+            Brisa
+          </a>
+          {work.founder.brisaAfter}
+        </p>
       </div>
     </Section>
   );
