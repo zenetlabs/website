@@ -10,6 +10,7 @@ import type { ReactNode } from 'react';
 import { NotFound } from '@/components/not-found';
 import { PageShell } from '@/components/page-shell';
 import { localeFromPath, messages, useLocale, useMessages } from '@/lib/i18n';
+import { SITE_NAME } from '@/lib/seo';
 import { SITE } from '@/lib/site';
 import { THEME_COLOR_DARK, THEME_COLOR_LIGHT } from '@/lib/theme-colors';
 import appCss from '@/styles/app.css?url';
@@ -21,14 +22,20 @@ export const Route = createRootRoute({
   beforeLoad: ({ location }) => ({
     locale: localeFromPath(location.pathname),
   }),
-  head: ({ match }) => {
-    const { meta } = messages[match.context.locale];
+  head: ({ match, matches }) => {
+    const { meta, notFound } = messages[match.context.locale];
+    const missing = matches.some(
+      (entry) => entry.status === 'notFound' || entry._notFound === true,
+    );
     return {
       meta: [
         { charSet: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { title: meta.title },
-        { name: 'description', content: meta.description },
+        { title: missing ? `${notFound.title} | ${SITE_NAME}` : meta.title },
+        {
+          name: 'description',
+          content: missing ? notFound.description : meta.description,
+        },
       ],
       links: [
         { rel: 'manifest', href: '/manifest.webmanifest' },

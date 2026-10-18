@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoHydrated } from './helpers';
+import { gotoHydrated, PAGES } from './helpers';
 
 const PATHS = ['/', '/privacy-policy', '/cookies-policy'] as const;
 
@@ -43,6 +43,50 @@ test('unknown paths answer 404', async ({ request }) => {
   }
 });
 
+const NOT_FOUND: ReadonlyArray<readonly [string, string]> = [
+  ['/nope', 'Page not found | Zenet Labs'],
+  ['/es/nope', 'Página no encontrada | Zenet Labs'],
+  ['/fr/privacy-policy', 'Page not found | Zenet Labs'],
+];
+
+for (const [path, title] of NOT_FOUND) {
+  test(`${path} has a 404 head without a canonical`, async ({ page }) => {
+    await gotoHydrated(page, path);
+    await expect(page).toHaveTitle(title);
+    await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
+    for (const landmark of ['header', 'main', 'footer']) {
+      await expect(page.locator(landmark)).toHaveCount(1);
+    }
+  });
+}
+
+test('404s send X-Robots-Tag noindex and 200 pages do not', async ({
+  request,
+}) => {
+  for (const [path] of NOT_FOUND) {
+    const response = await request.get(path);
+    expect(response.headers()['x-robots-tag'], path).toBe('noindex');
+  }
+  for (const path of PAGES) {
+    const response = await request.get(path);
+    expect(response.headers()['x-robots-tag'], path).toBeUndefined();
+  }
+});
+
+test('404 markdown starts with the title and the heading only', async ({
+  request,
+}) => {
+  for (const [path, title] of NOT_FOUND.slice(0, 2)) {
+    const response = await request.get(path, {
+      headers: { accept: 'text/markdown' },
+    });
+    const heading = title.split(' | ')[0];
+    const body = await response.text();
+    expect(body.startsWith(`---\ntitle: "${title}"\n`), path).toBe(true);
+    expect(body, path).toContain(`\n---\n\n# ${heading}\n`);
+  }
+});
+
 const LEGACY: ReadonlyArray<readonly [string, string]> = [
   ['/blog/x', '/'],
   ['/es/blog', '/es'],
@@ -52,6 +96,9 @@ const LEGACY: ReadonlyArray<readonly [string, string]> = [
   ['/en', '/'],
   ['/en/cookies-policy', '/cookies-policy'],
   ['/privacy?x=1', '/privacy-policy?x=1'],
+  ['/es/', '/es'],
+  ['/privacy-policy/', '/privacy-policy'],
+  ['/es/cookies-policy/?x=1', '/es/cookies-policy?x=1'],
 ];
 
 for (const [from, to] of LEGACY) {
@@ -67,6 +114,13 @@ test('robots and sitemap are served', async ({ request }) => {
   expect(sitemap.status()).toBe(200);
   expect((await sitemap.text()).match(/<loc>/g)).toHaveLength(6);
   expect((await request.get('/robots.txt')).status()).toBe(200);
+});
+
+test('llms.txt is served as plain text', async ({ request }) => {
+  const response = await request.get('/llms.txt');
+  expect(response.status()).toBe(200);
+  expect(response.headers()['content-type']).toContain('text/plain');
+  expect(await response.text()).toMatch(/^# Zenet Labs\n\n> /);
 });
 
 test('page HTML preloads only the hero serif fonts', async ({ request }) => {

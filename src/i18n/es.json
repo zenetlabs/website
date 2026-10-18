@@ -185,10 +185,17 @@
   },
   "privacy": {
     "title": "Política de privacidad",
-    "description": "Cómo trata Zenet Technology Pte. Ltd. los datos personales."
+    "description": "Cómo recoge, usa y protege Zenet Labs (Zenet Technology Pte. Ltd.) los datos que nos envías por el formulario de contacto y cómo ejercer tus derechos."
   },
   "cookies": {
     "title": "Política de cookies",
-    "description": "Cómo usa cookies Zenet Labs."
+    "description": "Zenet Labs no usa cookies analíticas ni publicitarias. Descubre qué cookies necesarias puede usar Cloudflare, cómo funciona Turnstile y cómo gestionarlas."
+  },
+  "organization": {
+    "knowsAbout": {
+      "1": "Inteligencia artificial",
+      "2": "Agentes de IA",
+      "3": "Automatización de procesos empresariales"
+    }
   }
 }

@@ -10,7 +10,7 @@ type Link = { rel: string; href: string; hrefLang?: string };
 
 const OG_LOCALES: Record<Locale, string> = { en: 'en_US', es: 'es_ES' };
 const OG_IMAGE_PATH = '/og.png';
-const SITE_NAME = 'Zenet Labs';
+export const SITE_NAME = 'Zenet Labs';
 
 export function pageUrl(locale: Locale, path: string): string {
   return `${SITE.url}${localePath(locale, path)}`;
