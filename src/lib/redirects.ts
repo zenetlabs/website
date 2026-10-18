@@ -25,6 +25,13 @@ function stripDefaultLocale(pathname: string): string {
   return pathname;
 }
 
+function stripTrailingSlash(pathname: string): string {
+  if (pathname.length > 1 && pathname.endsWith('/')) {
+    return pathname.replace(/\/+$/, '') || '/';
+  }
+  return pathname;
+}
+
 export function mapLegacyPath(pathname: string): string {
   const path = stripDefaultLocale(pathname);
   const split = splitLocale(path);
@@ -39,11 +46,28 @@ export function mapLegacyPath(pathname: string): string {
   return path;
 }
 
+function collapseLeadingSlashes(pathname: string): string {
+  return pathname.replace(/^\/{2,}/, '/');
+}
+
+export function isOwnedHost(hostname: string): boolean {
+  return (
+    hostname === SITE_HOST ||
+    ALIAS_HOSTS.has(hostname) ||
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.endsWith('.zenetlabs.workers.dev')
+  );
+}
+
 export function redirectTarget(url: URL): string | null {
+  if (!isOwnedHost(url.hostname)) return null;
   const hostChange =
     ALIAS_HOSTS.has(url.hostname) ||
     (url.hostname === SITE_HOST && url.protocol === 'http:');
-  const pathname = mapLegacyPath(url.pathname);
+  const pathname = stripTrailingSlash(
+    mapLegacyPath(collapseLeadingSlashes(url.pathname)),
+  );
   if (!hostChange && pathname === url.pathname) return null;
 
   const target = new URL(url);

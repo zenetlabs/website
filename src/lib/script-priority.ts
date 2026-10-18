@@ -1,6 +1,7 @@
+import { isHtml } from '@/lib/http';
+
 export function withLowScriptPriority(response: Response): Response {
-  const type = response.headers.get('content-type') ?? '';
-  if (!type.includes('text/html')) return response;
+  if (!isHtml(response)) return response;
   return new HTMLRewriter()
     .on('link[rel="modulepreload"], script[type="module"][src]', {
       element(el) {

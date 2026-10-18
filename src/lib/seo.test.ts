@@ -65,6 +65,21 @@ describe.each(cases)('pageHeadFor(%s, %s)', (locale, path) => {
   });
 });
 
+describe.each(locales)('legal descriptions (%s)', (locale) => {
+  it.each(['/privacy-policy', '/cookies-policy'] as const)(
+    '%s is 120 to 155 characters',
+    (path) => {
+      const [description] = contents(
+        pageHeadFor(locale, path).meta,
+        'name',
+        'description',
+      );
+      expect(description?.length).toBeGreaterThanOrEqual(120);
+      expect(description?.length).toBeLessThanOrEqual(155);
+    },
+  );
+});
+
 describe('pageUrl', () => {
   it('keeps the default locale unprefixed', () => {
     expect(pageUrl('en', '/')).toBe(`${SITE}/`);

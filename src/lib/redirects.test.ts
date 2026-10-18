@@ -23,6 +23,10 @@ const PATH_CASES: ReadonlyArray<readonly [string, string]> = [
   ['/en', '/'],
   ['/en/privacy-policy', '/privacy-policy'],
   ['/privacy-policy?x=1', '/privacy-policy?x=1'],
+  ['/es/', '/es'],
+  ['/privacy-policy/', '/privacy-policy'],
+  ['/es/cookies-policy/?x=1', '/es/cookies-policy?x=1'],
+  ['/privacy/', '/privacy-policy'],
 ];
 
 const SITE = 'https://zenetlabs.com';
@@ -69,8 +73,48 @@ describe('redirectTarget on the canonical host', () => {
     expect(redirectTarget(new URL(`${SITE}${path}`))).toBeNull();
   });
 
+  it.each([
+    ['/es/', '/es'],
+    ['/privacy-policy/', '/privacy-policy'],
+    ['/sitemap.xml/', '/sitemap.xml'],
+  ])('strips the trailing slash of %s', (from, to) => {
+    expect(redirectTarget(new URL(`${SITE}${from}`))).toBe(`${SITE}${to}`);
+  });
+
   it('maps legacy paths on https without changing the host', () => {
     expect(redirectTarget(new URL(`${SITE}/blog/x?y=1`))).toBe(`${SITE}/?y=1`);
+  });
+});
+
+describe('redirectTarget never names a foreign host', () => {
+  const PATHS = [
+    '//evil.com/',
+    '//evil.com//',
+    '/%2F%2Fevil.com/',
+    '/\\evil.com/',
+  ];
+  const origins = [SITE, 'https://www.zenetlabs.com', 'http://zenettech.com'];
+
+  it.each(
+    origins.flatMap((origin) => PATHS.map((path) => [origin, path] as const)),
+  )('%s%s', (origin, path) => {
+    const result = redirectTarget(new URL(`${origin}${path}`));
+    if (result === null) return;
+    expect(new URL(result).host).toBe('zenetlabs.com');
+  });
+
+  it('never redirects on a host we do not own', () => {
+    expect(redirectTarget(new URL('http://evil.com//'))).toBeNull();
+    expect(redirectTarget(new URL('https://evil.com/blog/x'))).toBeNull();
+  });
+
+  it('collapses leading slashes into one path', () => {
+    expect(redirectTarget(new URL(`${SITE}//evil.com//`))).toBe(
+      `${SITE}/evil.com`,
+    );
+    expect(
+      redirectTarget(new URL('https://www.zenetlabs.com//evil.com//')),
+    ).toBe(`${SITE}/evil.com`);
   });
 });
 
@@ -90,6 +134,7 @@ describe('redirectTarget on other hosts', () => {
     expect(redirectTarget(new URL(`${origin}/es/about-us`))).toBe(
       `${origin}/es`,
     );
+    expect(redirectTarget(new URL(`${origin}/es/`))).toBe(`${origin}/es`);
     expect(redirectTarget(new URL(`${origin}/privacy`))).toBe(
       `${origin}/privacy-policy`,
     );

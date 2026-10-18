@@ -1,6 +1,7 @@
 {
   "name": "Zenet Labs",
   "short_name": "Zenet Labs",
+  "description": "Zenet Labs helps companies understand AI, implement agents that do real work, and become agentic companies.",
   "start_url": "/",
   "display": "browser",
   "background_color": "#f6f4ee",
