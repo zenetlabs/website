@@ -3,19 +3,20 @@ import { decodeEntities } from '../src/lib/markdown';
 import { ogImagePath } from '../src/lib/og-image';
 import { PATH_CASES } from '../test/redirect-cases';
 import {
+  CLUSTERS,
   gotoHydrated,
   htmlLang,
   PAGES,
-  PAIRS,
   type Tag,
   tagsOf,
 } from './helpers';
 
 const OG_LOCALES = { en: 'en_SG', es: 'es_ES' } as const;
 
-for (const pair of PAIRS) {
+for (const cluster of CLUSTERS) {
   for (const locale of ['en', 'es'] as const) {
-    const url = pair[locale];
+    const url = cluster[locale];
+    if (url === undefined) continue;
 
     test(`${url} has lang, canonical and hreflang`, async ({ page }) => {
       await gotoHydrated(page, url);
@@ -37,10 +38,15 @@ for (const pair of PAIRS) {
           ]),
         );
       expect(alternates).toEqual([
-        ['en', pair.en],
-        ['es', pair.es],
-        ['x-default', pair.en],
+        ...(cluster.en === undefined ? [] : [['en', cluster.en]]),
+        ...(cluster.es === undefined ? [] : [['es', cluster.es]]),
+        ...(cluster.en === undefined ? [] : [['x-default', cluster.en]]),
       ]);
+      await expect(
+        page.locator('meta[property="og:locale:alternate"]'),
+      ).toHaveCount(
+        cluster.en !== undefined && cluster.es !== undefined ? 1 : 0,
+      );
     });
 
     test(`${url} has the same head in the SSR html and after hydration`, async ({

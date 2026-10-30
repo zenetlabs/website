@@ -29,4 +29,12 @@ export const PATH_CASES: ReadonlyArray<readonly [string, string]> = [
   ['/en/foo', '/foo'],
   ['/en//evil.com', '/evil.com'],
   ['/en/en/privacy', '/privacy'],
+  ['/aviso-legal', '/es/aviso-legal'],
+  ['/aviso-legal/', '/es/aviso-legal'],
+  ['/aviso-legal?x=1', '/es/aviso-legal?x=1'],
+  ['/en/aviso-legal', '/es/aviso-legal'],
+  ['/legal-notice', '/es/aviso-legal'],
+  ['/en/legal-notice', '/es/aviso-legal'],
+  ['/es/legal-notice', '/es/aviso-legal'],
+  ['/es/aviso-legal/', '/es/aviso-legal'],
 ];

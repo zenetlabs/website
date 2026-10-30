@@ -1,50 +1,68 @@
-import { COMPANY } from '@/lib/company';
-import { type Locale, messages } from '@/lib/i18n';
-import { jsonLd, SITE_NAME } from '@/lib/seo';
-import { serviceSummary } from '@/lib/services';
+import type {
+  Organization,
+  ProfessionalService,
+  WebSite,
+  WithContext,
+} from 'schema-dts';
+import type { PublishedEntity } from '@/content/types';
+import { legalEntity } from '@/lib/content';
+import { type Locale, localePath, messages } from '@/lib/i18n';
+import { jsonLd, pageUrl, SITE_NAME } from '@/lib/seo';
 import { PUBLIC_EMAIL, SITE } from '@/lib/site';
 
-const ORGANIZATION_ID = `${SITE.url}/#organization`;
+function entityNode(
+  entity: PublishedEntity,
+): WithContext<Organization | ProfessionalService> {
+  const { address, founder, foundingYear, jsonLd: ids } = entity;
+  return {
+    '@context': 'https://schema.org',
+    '@type': ids.type,
+    '@id': `${SITE.url}${ids.idPath}`,
+    name: SITE_NAME,
+    legalName: entity.legalName,
+    taxID: entity.taxId.value,
+    identifier: {
+      '@type': 'PropertyValue',
+      propertyID: entity.taxId.scheme,
+      value: entity.taxId.value,
+    },
+    url: `${SITE.url}${ids.urlPath}`,
+    logo: `${SITE.url}/icons/android-chrome-512x512.png`,
+    email: PUBLIC_EMAIL,
+    ...(foundingYear ? { foundingDate: foundingYear } : {}),
+    ...(founder ? { founder: { '@type': 'Person', name: founder } } : {}),
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: address.streetAddress,
+      addressLocality: address.locality,
+      ...(address.region ? { addressRegion: address.region } : {}),
+      postalCode: address.postalCode,
+      addressCountry: address.country,
+    },
+  };
+}
 
-function structuredData(locale: Locale) {
-  const copy = messages[locale];
-  return [
-    jsonLd({
-      '@context': 'https://schema.org',
-      '@type': 'Organization',
-      '@id': ORGANIZATION_ID,
-      name: SITE_NAME,
-      legalName: COMPANY.legalName,
-      url: SITE.url,
-      logo: `${SITE.url}/icons/android-chrome-512x512.png`,
-      email: PUBLIC_EMAIL,
-      description: copy.meta.description,
-      areaServed: 'Worldwide',
-      knowsAbout: Object.values(copy.organization.knowsAbout),
-      makesOffer: Object.values(copy.services.items).map((item) => ({
-        '@type': 'Offer',
-        itemOffered: { '@type': 'Service', ...serviceSummary(item) },
-      })),
-      foundingDate: COMPANY.foundingYear,
-      founder: { '@type': 'Person', name: COMPANY.founder },
-      address: {
-        '@type': 'PostalAddress',
-        streetAddress: COMPANY.streetAddress,
-        addressLocality: COMPANY.locality,
-        postalCode: COMPANY.postalCode,
-        addressCountry: COMPANY.country,
-      },
-    }),
-    jsonLd({
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      '@id': `${SITE.url}/#website`,
-      name: SITE_NAME,
-      url: SITE.url,
-      inLanguage: ['en', 'es'],
-      publisher: { '@id': ORGANIZATION_ID },
-    }),
-  ];
+function websiteNode(
+  locale: Locale,
+  entity: PublishedEntity,
+): WithContext<WebSite> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': `${SITE.url}${localePath(locale, '/')}#website`,
+    name: SITE_NAME,
+    description: messages[locale].meta.description,
+    url: pageUrl(locale, 'home'),
+    inLanguage: locale,
+    publisher: { '@id': `${SITE.url}${entity.jsonLd.idPath}` },
+  };
+}
+
+export function structuredData(
+  locale: Locale,
+  entity: PublishedEntity = legalEntity(locale),
+) {
+  return [jsonLd(entityNode(entity)), jsonLd(websiteNode(locale, entity))];
 }
 
 export const STRUCTURED_DATA: Record<

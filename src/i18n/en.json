@@ -162,9 +162,8 @@
       "email": "Email",
       "company": "Company (optional)",
       "message": "What should we look at?",
-      "consentBefore": "I agree that Zenet Technology Pte. Ltd. uses these details to reply to my enquiry, as described in the ",
+      "consent": "I agree that {legalName} uses these details to reply to my enquiry, as described in the {privacyLink}.",
       "consentLink": "privacy policy",
-      "consentAfter": ".",
       "submit": "Send message",
       "sending": "Sending…",
       "successTitle": "Message sent",
@@ -175,10 +174,8 @@
     }
   },
   "footer": {
-    "legal": "© Zenet Technology Pte. Ltd.",
-    "uen": "UEN 202202371M",
-    "address": "160 Robinson Road #14-04, Singapore 068914",
-    "founded": "Founded in 2022 by Albert Sabaté",
+    "founded": "Founded in {year} by {founder}",
+    "legalNotice": "Legal notice",
     "privacy": "Privacy policy",
     "cookies": "Cookies policy"
   },
@@ -196,12 +193,5 @@
     "title": "Cookies policy",
     "metaTitle": "Cookies policy | Zenet Labs AI consultancy",
     "description": "Zenet Labs sets no analytics or advertising cookies. See which strictly necessary cookies Cloudflare may set, how Turnstile works and how to manage them."
-  },
-  "organization": {
-    "knowsAbout": {
-      "1": "Artificial intelligence",
-      "2": "AI agents",
-      "3": "Business process automation"
-    }
   }
 }

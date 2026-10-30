@@ -162,9 +162,8 @@
       "email": "Correo electrónico",
       "company": "Empresa (opcional)",
       "message": "¿Qué deberíamos mirar?",
-      "consentBefore": "Acepto que Zenet Technology Pte. Ltd. use estos datos para responder a mi consulta, según se describe en la ",
+      "consent": "Acepto que {legalName} use estos datos para responder a mi consulta, según se describe en la {privacyLink}.",
       "consentLink": "política de privacidad",
-      "consentAfter": ".",
       "submit": "Enviar mensaje",
       "sending": "Enviando…",
       "successTitle": "Mensaje enviado",
@@ -175,10 +174,8 @@
     }
   },
   "footer": {
-    "legal": "© Zenet Technology Pte. Ltd.",
-    "uen": "UEN 202202371M",
-    "address": "160 Robinson Road #14-04, Singapur 068914",
-    "founded": "Fundada en 2022 por Albert Sabaté",
+    "founded": "Fundada en {year} por {founder}",
+    "legalNotice": "Aviso legal",
     "privacy": "Política de privacidad",
     "cookies": "Política de cookies"
   },
@@ -190,18 +187,11 @@
   "privacy": {
     "title": "Política de privacidad",
     "metaTitle": "Política de privacidad | Zenet Labs",
-    "description": "Cómo recoge, usa y protege Zenet Labs (Zenet Technology Pte. Ltd.) los datos que nos envías por el formulario de contacto y cómo ejercer tus derechos."
+    "description": "Cómo recoge, usa y protege Zenet Labs los datos que nos envías por el formulario de contacto, quién es el responsable y cómo ejercer tus derechos."
   },
   "cookies": {
     "title": "Política de cookies",
     "metaTitle": "Política de cookies | Zenet Labs",
     "description": "Zenet Labs no usa cookies analíticas ni publicitarias. Descubre qué cookies necesarias puede usar Cloudflare, cómo funciona Turnstile y cómo gestionarlas."
-  },
-  "organization": {
-    "knowsAbout": {
-      "1": "Inteligencia artificial",
-      "2": "Agentes de IA",
-      "3": "Automatización de procesos empresariales"
-    }
   }
 }

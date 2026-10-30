@@ -1,20 +1,25 @@
 import { LegalPage, LegalSection } from '@/components/legal-page';
 import { TEXT_LINK } from '@/components/ui';
+import type { PublishedEntity } from '@/content/types';
+import { describeEntity } from '@/lib/content';
 import { PUBLIC_EMAIL } from '@/lib/site';
 
-export function PrivacyEs({ title }: { title: string }) {
+export function PrivacyEs({
+  title,
+  entity,
+}: {
+  title: string;
+  entity: PublishedEntity;
+}) {
+  const { legalEs } = entity;
+
   return (
     <LegalPage
       title={title}
-      updated="Última actualización: 17 de octubre de 2026"
+      updated="Última actualización: 30 de octubre de 2026"
     >
       <LegalSection title="Quién es el responsable de tus datos">
-        <p>
-          El responsable de los datos personales recogidos a través de
-          zenetlabs.com es Zenet Technology Pte. Ltd. (UEN 202202371M), 160
-          Robinson Road #14-04, Singapore Business Federation Center, Singapur
-          068914. Operamos bajo el nombre Zenet Labs.
-        </p>
+        <p>{describeEntity(legalEs.controller, entity, 'es')}</p>
         <p>
           Para cualquier duda sobre privacidad, escribe a{' '}
           <a href={`mailto:${PUBLIC_EMAIL}`} className={TEXT_LINK}>
@@ -43,11 +48,7 @@ export function PrivacyEs({ title }: { title: string }) {
       </LegalSection>
       <LegalSection title="Base jurídica">
         <ul>
-          <li>
-            Tu consentimiento, que das al marcar la casilla del formulario (art.
-            6.1.a del RGPD y la ley de protección de datos personales de
-            Singapur, PDPA).
-          </li>
+          <li>{legalEs.consentBasis}</li>
           <li>
             La aplicación de medidas precontractuales a petición tuya (art.
             6.1.b del RGPD).
@@ -70,8 +71,8 @@ export function PrivacyEs({ title }: { title: string }) {
       </LegalSection>
       <LegalSection title="Transferencias internacionales">
         <p>
-          Estos proveedores pueden tratar datos fuera de tu país, por ejemplo en
-          Estados Unidos y Singapur. Cuando es necesario, las transferencias se
+          Estos proveedores pueden tratar datos fuera de tu país,{' '}
+          {legalEs.transferPlaces}. Cuando es necesario, las transferencias se
           apoyan en garantías adecuadas, como las cláusulas contractuales tipo
           de la Comisión Europea.
         </p>
@@ -95,10 +96,8 @@ export function PrivacyEs({ title }: { title: string }) {
           y te responderemos lo antes posible.
         </p>
         <p>
-          También puedes reclamar ante una autoridad de control: la Agencia
-          Española de Protección de Datos (AEPD) o la autoridad de protección de
-          datos de tu país de residencia en la UE, o la Personal Data Protection
-          Commission (PDPC) de Singapur.
+          También puedes reclamar ante una autoridad de control:{' '}
+          {legalEs.authorities}
         </p>
       </LegalSection>
       <LegalSection title="Cambios en esta política">

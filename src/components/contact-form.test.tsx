@@ -75,6 +75,13 @@ describe('ContactForm', () => {
     ).toHaveAttribute('href', '/privacy');
   });
 
+  it('names the legal entity in the consent label', () => {
+    render(<ContactForm />);
+    expect(screen.getByRole('checkbox').closest('label')).toHaveTextContent(
+      'I agree that Zenet Technology Pte. Ltd. uses these details to reply to my enquiry, as described in the privacy policy.',
+    );
+  });
+
   it('keeps the honeypot out of the tab order and the accessibility tree', () => {
     const { container } = render(<ContactForm />);
     const honeypot = container.querySelector('input[name="website"]');

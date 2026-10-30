@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { locales } from '@/lib/i18n';
-import { PAGE_IDS, PAGES } from '@/lib/page-registry';
+import {
+  hasLocale,
+  PAGE_IDS,
+  PAGES,
+  pageLocales,
+  pagesIn,
+} from '@/lib/page-registry';
 import { robotsTxt } from '@/lib/robots';
 import { pageUrl } from '@/lib/seo';
 import { SITEMAP_XML } from '@/lib/sitemap';
@@ -42,7 +48,7 @@ describe('robotsTxt', () => {
 describe('sitemapXml', () => {
   const xml = SITEMAP_XML;
 
-  it('lists 3 paths in 2 locales', () => {
+  it('lists the pages present in each locale', () => {
     expect(parseSitemap(xml).map((entry) => entry.loc)).toEqual([
       'https://zenetlabs.com/',
       'https://zenetlabs.com/privacy',
@@ -50,18 +56,21 @@ describe('sitemapXml', () => {
       'https://zenetlabs.com/es',
       'https://zenetlabs.com/es/privacidad',
       'https://zenetlabs.com/es/cookies',
+      'https://zenetlabs.com/es/aviso-legal',
     ]);
   });
 
   it('gives every url the registry lastmod', () => {
     expect(parseSitemap(xml).map((entry) => entry.lastmod)).toEqual(
-      locales.flatMap(() => PAGE_IDS.map((page) => PAGES[page].lastmod)),
+      locales.flatMap((locale) =>
+        pagesIn(locale).map((page) => PAGES[page].lastmod),
+      ),
     );
   });
 
   it('gives every url its alternates', () => {
     const entries = parseSitemap(xml);
-    expect(entries).toHaveLength(6);
+    expect(entries).toHaveLength(7);
     for (const { loc, alternates } of entries) {
       const page = PAGE_IDS.find((id) =>
         locales.some((locale) => pageUrl(locale, id) === loc),
@@ -69,11 +78,17 @@ describe('sitemapXml', () => {
       expect(page).toBeDefined();
       if (!page) continue;
       expect([...alternates]).toEqual([
-        ['en', pageUrl('en', page)],
-        ['es', pageUrl('es', page)],
-        ['x-default', pageUrl('en', page)],
+        ...pageLocales(page).map((l) => [l, pageUrl(l, page)]),
+        ...(hasLocale(page, 'en') ? [['x-default', pageUrl('en', page)]] : []),
       ]);
     }
+  });
+
+  it('gives the single-locale page only its own alternate', () => {
+    const entry = parseSitemap(xml).find((e) => e.loc.endsWith('/aviso-legal'));
+    expect([...(entry?.alternates ?? [])]).toEqual([
+      ['es', 'https://zenetlabs.com/es/aviso-legal'],
+    ]);
   });
 
   it('is well-formed xml', () => {

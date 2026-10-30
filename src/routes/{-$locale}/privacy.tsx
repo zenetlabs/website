@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { legalEntity } from '@/lib/content';
 import { useLocale, useMessages } from '@/lib/i18n';
 import { pageHeadFor } from '@/lib/pages';
 import { PrivacyEn } from './-legal/privacy-en';
@@ -12,6 +13,7 @@ export const Route = createFileRoute('/{-$locale}/privacy')({
 
 function Privacy() {
   const { privacy } = useMessages();
-  const Page = useLocale() === 'es' ? PrivacyEs : PrivacyEn;
-  return <Page title={privacy.title} />;
+  const locale = useLocale();
+  const Page = locale === 'es' ? PrivacyEs : PrivacyEn;
+  return <Page title={privacy.title} entity={legalEntity(locale)} />;
 }

@@ -1,3 +1,4 @@
+import { legalNotice } from '@/content/es/legal-notice';
 import { type Locale, messages } from '@/lib/i18n';
 import type { PageId } from '@/lib/page-registry';
 import { pageHead } from '@/lib/seo';
@@ -19,6 +20,11 @@ export function pageCopy(
       return {
         title: copy.cookies.metaTitle,
         description: copy.cookies.description,
+      };
+    case 'legalNotice':
+      return {
+        title: legalNotice.metaTitle,
+        description: legalNotice.description,
       };
   }
 }

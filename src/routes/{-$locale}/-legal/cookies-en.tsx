@@ -1,14 +1,22 @@
 import { LegalPage, LegalSection } from '@/components/legal-page';
 import { TEXT_LINK } from '@/components/ui';
+import type { PublishedEntity } from '@/content/types';
+import { taxIdLabel } from '@/lib/content';
 import { PUBLIC_EMAIL } from '@/lib/site';
 
-export function CookiesEn({ title }: { title: string }) {
+export function CookiesEn({
+  title,
+  entity,
+}: {
+  title: string;
+  entity: PublishedEntity;
+}) {
   return (
     <LegalPage title={title} updated="Last updated: 17 October 2026">
       <LegalSection title="What this policy covers">
         <p>
-          This policy explains how zenetlabs.com, operated by Zenet Technology
-          Pte. Ltd. (UEN 202202371M), uses cookies and similar technologies.
+          This policy explains how zenetlabs.com, operated by {entity.legalName}{' '}
+          ({taxIdLabel(entity)}), uses cookies and similar technologies.
         </p>
       </LegalSection>
       <LegalSection title="Cookies we use">

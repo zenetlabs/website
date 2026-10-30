@@ -1,6 +1,12 @@
-import { defaultLocale, type Locale, locales } from '@/lib/i18n';
+import type { Thing, WithContext } from 'schema-dts';
+import { defaultLocale, type Locale } from '@/lib/i18n';
 import { ogImagePath } from '@/lib/og-image';
-import { type PageId, pagePath } from '@/lib/page-registry';
+import {
+  hasLocale,
+  type PageId,
+  pageLocales,
+  pagePath,
+} from '@/lib/page-registry';
 import { SITE } from '@/lib/site';
 
 type Meta =
@@ -21,8 +27,10 @@ export function alternateUrls(
   page: PageId,
 ): { hreflang: string; href: string }[] {
   return [
-    ...locales.map((l) => ({ hreflang: l, href: pageUrl(l, page) })),
-    { hreflang: 'x-default', href: pageUrl(defaultLocale, page) },
+    ...pageLocales(page).map((l) => ({ hreflang: l, href: pageUrl(l, page) })),
+    ...(hasLocale(page, defaultLocale)
+      ? [{ hreflang: 'x-default', href: pageUrl(defaultLocale, page) }]
+      : []),
   ];
 }
 
@@ -39,7 +47,7 @@ export function pageHead({
 }): { meta: Meta[]; links: Link[] } {
   const url = pageUrl(locale, page);
   const image = `${SITE.url}${ogImagePath(locale)}`;
-  const alternateLocale = locales.filter((l) => l !== locale);
+  const alternateLocale = pageLocales(page).filter((l) => l !== locale);
 
   const meta: Meta[] = [
     { title },
@@ -76,7 +84,7 @@ export function pageHead({
   return { meta, links };
 }
 
-export function jsonLd(data: Record<string, unknown>): {
+export function jsonLd(data: WithContext<Thing>): {
   type: 'application/ld+json';
   children: string;
 } {
