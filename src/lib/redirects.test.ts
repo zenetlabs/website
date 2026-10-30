@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { redirectTarget } from '@/lib/redirects';
+import { PATH_CASES } from '../../test/redirect-cases';
 
 const ALIAS_HOSTS = [
   'www.zenetlabs.com',
@@ -11,22 +12,13 @@ const ALIAS_HOSTS = [
   'www.sabatemartinez.com',
 ];
 
-const PATH_CASES: ReadonlyArray<readonly [string, string]> = [
-  ['/', '/'],
-  ['/es', '/es'],
-  ['/blog', '/'],
-  ['/blog/x', '/'],
-  ['/es/blog/x', '/es'],
-  ['/privacy', '/privacy-policy'],
-  ['/es/cookies', '/es/cookies-policy'],
-  ['/about-us', '/'],
-  ['/en', '/'],
-  ['/en/privacy-policy', '/privacy-policy'],
-  ['/privacy-policy?x=1', '/privacy-policy?x=1'],
-  ['/es/', '/es'],
-  ['/privacy-policy/', '/privacy-policy'],
-  ['/es/cookies-policy/?x=1', '/es/cookies-policy?x=1'],
-  ['/privacy/', '/privacy-policy'],
+const CANONICAL = [
+  '/',
+  '/privacy',
+  '/cookies',
+  '/es',
+  '/es/privacidad',
+  '/es/cookies',
 ];
 
 const SITE = 'https://zenetlabs.com';
@@ -44,6 +36,16 @@ describe('redirectTarget on alias hosts', () => {
       );
     },
   );
+
+  it.each(
+    ALIAS_HOSTS.flatMap((host) =>
+      CANONICAL.map((path) => [host, path] as const),
+    ),
+  )('%s%s goes to the same path on the canonical host', (host, path) => {
+    expect(redirectTarget(new URL(`https://${host}${path}`))).toBe(
+      `${SITE}${path}`,
+    );
+  });
 
   it('upgrades alias hosts requested over http', () => {
     expect(redirectTarget(new URL('http://zenettech.com/es?x=1'))).toBe(
@@ -63,11 +65,15 @@ describe('redirectTarget on the canonical host', () => {
   });
 
   it.each([
-    '/',
-    '/es',
-    '/privacy-policy',
-    '/es/cookies-policy',
+    ...CANONICAL,
     '/sitemap.xml',
+    '/robots.txt',
+    '/llms.txt',
+    '/_serverFn/x',
+    '/foo',
+    '/fr',
+    '/fr/privacy-policy',
+    '/es/foo',
     '/enterprise',
   ])('leaves %s alone', (path) => {
     expect(redirectTarget(new URL(`${SITE}${path}`))).toBeNull();
@@ -75,7 +81,7 @@ describe('redirectTarget on the canonical host', () => {
 
   it.each([
     ['/es/', '/es'],
-    ['/privacy-policy/', '/privacy-policy'],
+    ['/privacy/', '/privacy'],
     ['/sitemap.xml/', '/sitemap.xml'],
   ])('strips the trailing slash of %s', (from, to) => {
     expect(redirectTarget(new URL(`${SITE}${from}`))).toBe(`${SITE}${to}`);
@@ -83,6 +89,40 @@ describe('redirectTarget on the canonical host', () => {
 
   it('maps legacy paths on https without changing the host', () => {
     expect(redirectTarget(new URL(`${SITE}/blog/x?y=1`))).toBe(`${SITE}/?y=1`);
+  });
+
+  it.each([
+    ['http://zenettech.com/es/cookies-policy?x=1', `${SITE}/es/cookies?x=1`],
+    ['https://zenettech.com/en/privacy-policy', `${SITE}/privacy`],
+    ['https://www.zenetlabs.com/', `${SITE}/`],
+  ])('maps %s in one hop', (from, to) => {
+    expect(redirectTarget(new URL(from))).toBe(to);
+  });
+});
+
+describe('redirectTarget chains', () => {
+  const origins = [SITE, 'http://zenetlabs.com', 'https://zenettech.com'];
+  const paths = [
+    ...PATH_CASES.map(([from]) => from),
+    ...CANONICAL,
+    '//evil.com//',
+    '/en//evil.com',
+    '/en/en/en/privacy',
+    '/en///en//es',
+  ];
+
+  it('every target is final', () => {
+    for (const origin of origins) {
+      for (const path of paths) {
+        const input = `${origin}${path}`;
+        const target = redirectTarget(new URL(input));
+        if (target === null) continue;
+        expect(
+          redirectTarget(new URL(target)),
+          `${input} -> ${target}`,
+        ).toBeNull();
+      }
+    }
   });
 });
 
@@ -125,7 +165,7 @@ describe('redirectTarget on other hosts', () => {
   ];
 
   it.each(origins)('keeps the host of %s', (origin) => {
-    expect(redirectTarget(new URL(`${origin}/es/privacy-policy`))).toBeNull();
+    expect(redirectTarget(new URL(`${origin}/es/privacidad`))).toBeNull();
     expect(redirectTarget(new URL(`${origin}/`))).toBeNull();
   });
 
@@ -135,11 +175,11 @@ describe('redirectTarget on other hosts', () => {
       `${origin}/es`,
     );
     expect(redirectTarget(new URL(`${origin}/es/`))).toBe(`${origin}/es`);
-    expect(redirectTarget(new URL(`${origin}/privacy`))).toBe(
-      `${origin}/privacy-policy`,
+    expect(redirectTarget(new URL(`${origin}/privacy-policy`))).toBe(
+      `${origin}/privacy`,
     );
     expect(redirectTarget(new URL(`${origin}/en/cookies-policy`))).toBe(
-      `${origin}/cookies-policy`,
+      `${origin}/cookies`,
     );
   });
 });

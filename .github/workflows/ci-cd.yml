@@ -75,7 +75,7 @@ jobs:
         run: pnpm exec wrangler deploy --dry-run --config dist/server/wrangler.json
 
   browser:
-    name: Browser (e2e + Lighthouse)
+    name: Browser (e2e)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -84,10 +84,7 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/pnpm-install-hosted
       - run: pnpm build
-      - name: Create local-only secrets
-        run: |
-          pnpm exec wrangler secrets-store secret create 5a96b366abb34e3991c881dab187adfd --name ZENETLABS_PROD_TURNSTILE_SECRET --value 1x0000000000000000000000000000000AA --scopes workers
-          pnpm exec wrangler secrets-store secret create 5a96b366abb34e3991c881dab187adfd --name PROD_RESEND_API_KEY --value re_local_dummy --scopes workers
+      - uses: ./.github/actions/local-secrets
       - name: Read Playwright version
         id: playwright
         run: echo "version=$(node -p 'require("./package.json").devDependencies["@playwright/test"]')" >> "$GITHUB_OUTPUT"
@@ -104,15 +101,32 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium
       - run: pnpm e2e
-      - run: pnpm lhci
       - name: Upload reports
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: browser-reports
-          path: |
-            playwright-report
-            .lighthouseci
+          path: playwright-report
+          if-no-files-found: ignore
+
+  lighthouse:
+    name: Lighthouse (mobile + desktop)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/pnpm-install-hosted
+      - run: pnpm build
+      - uses: ./.github/actions/local-secrets
+      - run: pnpm lhci
+      - name: Upload reports
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lighthouse-reports
+          path: .lighthouseci
           if-no-files-found: ignore
 
   ci-passed:
@@ -120,7 +134,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     if: ${{ always() }}
-    needs: [security, lint, typecheck, test, build-prod, browser]
+    needs: [security, lint, typecheck, test, build-prod, browser, lighthouse]
     steps:
       - name: Assert all validation jobs succeeded
         env:

@@ -5,7 +5,8 @@ import { type FormEvent, type ReactNode, useId, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
 import type { ContactInput } from '@/lib/contact-schema';
-import { localePath, useLocale, useMessages } from '@/lib/i18n';
+import { useLocale, useMessages } from '@/lib/i18n';
+import { pagePath } from '@/lib/page-registry';
 import { PUBLIC_EMAIL, SITE } from '@/lib/site';
 import { sendContact } from '@/server/contact.functions';
 
@@ -180,10 +181,7 @@ export function ContactForm() {
               />
               <span>
                 {copy.consentBefore}
-                <a
-                  href={localePath(locale, '/privacy-policy')}
-                  className={TEXT_LINK}
-                >
+                <a href={pagePath(locale, 'privacy')} className={TEXT_LINK}>
                   {copy.consentLink}
                 </a>
                 {copy.consentAfter}

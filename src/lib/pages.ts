@@ -1,30 +1,28 @@
 import { type Locale, messages } from '@/lib/i18n';
-import { pageHead, SITE_NAME } from '@/lib/seo';
-
-export const PAGE_PATHS = ['/', '/privacy-policy', '/cookies-policy'] as const;
-export type PagePath = (typeof PAGE_PATHS)[number];
+import type { PageId } from '@/lib/page-registry';
+import { pageHead } from '@/lib/seo';
 
 export function pageCopy(
   locale: Locale,
-  path: PagePath,
+  page: PageId,
 ): { title: string; description: string } {
   const copy = messages[locale];
-  switch (path) {
-    case '/':
+  switch (page) {
+    case 'home':
       return copy.meta;
-    case '/privacy-policy':
+    case 'privacy':
       return {
-        title: `${copy.privacy.title} | ${SITE_NAME}`,
+        title: copy.privacy.metaTitle,
         description: copy.privacy.description,
       };
-    case '/cookies-policy':
+    case 'cookies':
       return {
-        title: `${copy.cookies.title} | ${SITE_NAME}`,
+        title: copy.cookies.metaTitle,
         description: copy.cookies.description,
       };
   }
 }
 
-export function pageHeadFor(locale: Locale, path: PagePath) {
-  return pageHead({ locale, path, ...pageCopy(locale, path) });
+export function pageHeadFor(locale: Locale, page: PageId) {
+  return pageHead({ locale, page, ...pageCopy(locale, page) });
 }

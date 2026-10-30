@@ -14,8 +14,8 @@ import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as Char123LocaleChar125RouteImport } from './routes/{-$locale}'
 import { Route as Char123LocaleChar125IndexRouteImport } from './routes/{-$locale}/index'
-import { Route as Char123LocaleChar125CookiesPolicyRouteImport } from './routes/{-$locale}/cookies-policy'
-import { Route as Char123LocaleChar125PrivacyPolicyRouteImport } from './routes/{-$locale}/privacy-policy'
+import { Route as Char123LocaleChar125CookiesRouteImport } from './routes/{-$locale}/cookies'
+import { Route as Char123LocaleChar125PrivacyRouteImport } from './routes/{-$locale}/privacy'
 
 const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
   id: '/llms.txt',
@@ -43,16 +43,16 @@ const Char123LocaleChar125IndexRoute =
     path: '/',
     getParentRoute: () => Char123LocaleChar125Route,
   } as any)
-const Char123LocaleChar125CookiesPolicyRoute =
-  Char123LocaleChar125CookiesPolicyRouteImport.update({
-    id: '/cookies-policy',
-    path: '/cookies-policy',
+const Char123LocaleChar125CookiesRoute =
+  Char123LocaleChar125CookiesRouteImport.update({
+    id: '/cookies',
+    path: '/cookies',
     getParentRoute: () => Char123LocaleChar125Route,
   } as any)
-const Char123LocaleChar125PrivacyPolicyRoute =
-  Char123LocaleChar125PrivacyPolicyRouteImport.update({
-    id: '/privacy-policy',
-    path: '/privacy-policy',
+const Char123LocaleChar125PrivacyRoute =
+  Char123LocaleChar125PrivacyRouteImport.update({
+    id: '/privacy',
+    path: '/privacy',
     getParentRoute: () => Char123LocaleChar125Route,
   } as any)
 
@@ -61,16 +61,16 @@ export interface FileRoutesByFullPath {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/{-$locale}': typeof Char123LocaleChar125RouteWithChildren
-  '/{-$locale}/cookies-policy': typeof Char123LocaleChar125CookiesPolicyRoute
-  '/{-$locale}/privacy-policy': typeof Char123LocaleChar125PrivacyPolicyRoute
+  '/{-$locale}/cookies': typeof Char123LocaleChar125CookiesRoute
+  '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
 }
 export interface FileRoutesByTo {
   '/llms.txt': typeof LlmsDottxtRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/{-$locale}/cookies-policy': typeof Char123LocaleChar125CookiesPolicyRoute
-  '/{-$locale}/privacy-policy': typeof Char123LocaleChar125PrivacyPolicyRoute
+  '/{-$locale}/cookies': typeof Char123LocaleChar125CookiesRoute
+  '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}': typeof Char123LocaleChar125IndexRoute
 }
 export interface FileRoutesById {
@@ -79,8 +79,8 @@ export interface FileRoutesById {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/{-$locale}': typeof Char123LocaleChar125RouteWithChildren
-  '/{-$locale}/cookies-policy': typeof Char123LocaleChar125CookiesPolicyRoute
-  '/{-$locale}/privacy-policy': typeof Char123LocaleChar125PrivacyPolicyRoute
+  '/{-$locale}/cookies': typeof Char123LocaleChar125CookiesRoute
+  '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
 }
 export interface FileRouteTypes {
@@ -90,16 +90,16 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/{-$locale}'
-    | '/{-$locale}/cookies-policy'
-    | '/{-$locale}/privacy-policy'
+    | '/{-$locale}/cookies'
+    | '/{-$locale}/privacy'
     | '/{-$locale}/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/llms.txt'
     | '/robots.txt'
     | '/sitemap.xml'
-    | '/{-$locale}/cookies-policy'
-    | '/{-$locale}/privacy-policy'
+    | '/{-$locale}/cookies'
+    | '/{-$locale}/privacy'
     | '/{-$locale}'
   id:
     | '__root__'
@@ -107,8 +107,8 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/{-$locale}'
-    | '/{-$locale}/cookies-policy'
-    | '/{-$locale}/privacy-policy'
+    | '/{-$locale}/cookies'
+    | '/{-$locale}/privacy'
     | '/{-$locale}/'
   fileRoutesById: FileRoutesById
 }
@@ -156,34 +156,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char123LocaleChar125IndexRouteImport
       parentRoute: typeof Char123LocaleChar125Route
     }
-    '/{-$locale}/cookies-policy': {
-      id: '/{-$locale}/cookies-policy'
-      path: '/cookies-policy'
-      fullPath: '/{-$locale}/cookies-policy'
-      preLoaderRoute: typeof Char123LocaleChar125CookiesPolicyRouteImport
+    '/{-$locale}/cookies': {
+      id: '/{-$locale}/cookies'
+      path: '/cookies'
+      fullPath: '/{-$locale}/cookies'
+      preLoaderRoute: typeof Char123LocaleChar125CookiesRouteImport
       parentRoute: typeof Char123LocaleChar125Route
     }
-    '/{-$locale}/privacy-policy': {
-      id: '/{-$locale}/privacy-policy'
-      path: '/privacy-policy'
-      fullPath: '/{-$locale}/privacy-policy'
-      preLoaderRoute: typeof Char123LocaleChar125PrivacyPolicyRouteImport
+    '/{-$locale}/privacy': {
+      id: '/{-$locale}/privacy'
+      path: '/privacy'
+      fullPath: '/{-$locale}/privacy'
+      preLoaderRoute: typeof Char123LocaleChar125PrivacyRouteImport
       parentRoute: typeof Char123LocaleChar125Route
     }
   }
 }
 
 interface Char123LocaleChar125RouteChildren {
-  Char123LocaleChar125CookiesPolicyRoute: typeof Char123LocaleChar125CookiesPolicyRoute
-  Char123LocaleChar125PrivacyPolicyRoute: typeof Char123LocaleChar125PrivacyPolicyRoute
+  Char123LocaleChar125CookiesRoute: typeof Char123LocaleChar125CookiesRoute
+  Char123LocaleChar125PrivacyRoute: typeof Char123LocaleChar125PrivacyRoute
   Char123LocaleChar125IndexRoute: typeof Char123LocaleChar125IndexRoute
 }
 
 const Char123LocaleChar125RouteChildren: Char123LocaleChar125RouteChildren = {
-  Char123LocaleChar125CookiesPolicyRoute:
-    Char123LocaleChar125CookiesPolicyRoute,
-  Char123LocaleChar125PrivacyPolicyRoute:
-    Char123LocaleChar125PrivacyPolicyRoute,
+  Char123LocaleChar125CookiesRoute: Char123LocaleChar125CookiesRoute,
+  Char123LocaleChar125PrivacyRoute: Char123LocaleChar125PrivacyRoute,
   Char123LocaleChar125IndexRoute: Char123LocaleChar125IndexRoute,
 }
 

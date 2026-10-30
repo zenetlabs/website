@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LLMS_TXT } from '@/lib/llms';
-import { PAGE_PATHS } from '@/lib/pages';
+import { PAGE_IDS, pagePath } from '@/lib/page-registry';
 import { PORTFOLIO } from '@/lib/portfolio';
 
 const LINK = /^- \[[^\]]+\]\((https?:\/\/|mailto:)[^)]+\)(: .+)?$/;
@@ -44,8 +44,8 @@ describe('LLMS_TXT', () => {
       true,
     );
     expect(urls.map((url) => new URL(url).pathname)).toEqual([
-      ...PAGE_PATHS,
-      ...PAGE_PATHS.map((path) => (path === '/' ? '/es' : `/es${path}`)),
+      ...PAGE_IDS.map((page) => pagePath('en', page)),
+      ...PAGE_IDS.map((page) => pagePath('es', page)),
     ]);
   });
 

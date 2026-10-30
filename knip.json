@@ -4,7 +4,8 @@
     "src/routes/**/*.{ts,tsx}",
     "e2e/**/*.e2e.ts",
     "site.config.ts",
-    "scripts/lhci-server.mjs"
+    "scripts/lhci-server.mjs",
+    "scripts/og-images.mjs"
   ],
   "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts", "test/**/*.ts"],
   "ignoreDependencies": ["tailwindcss", "@fontsource.*", "cloudflare"],

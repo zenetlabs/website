@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoHydrated, PAGES } from './helpers';
+import { gotoHydrated, PAGES, PAIRS, waitForHydration } from './helpers';
 
 for (const url of PAGES) {
   test(`${url} hydrates without errors`, async ({ page }) => {
@@ -19,15 +19,51 @@ for (const url of PAGES) {
   });
 }
 
-test('the language switch keeps the path', async ({ page }) => {
-  await gotoHydrated(page, '/privacy-policy');
-  await page
-    .getByRole('navigation', { name: 'Language' })
-    .first()
-    .getByRole('link', { name: 'ES' })
-    .click();
-  await expect(page).toHaveURL(/\/es\/privacy-policy$/);
-  await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+type Switch = readonly [
+  from: string,
+  label: 'ES' | 'EN',
+  to: string,
+  lang: string,
+];
+
+const SWITCHES: ReadonlyArray<Switch> = [
+  ...PAIRS.flatMap((pair): Switch[] => [
+    [pair.en, 'ES', pair.es, 'es'],
+    [pair.es, 'EN', pair.en, 'en'],
+  ]),
+  ['/privacy?x=1', 'ES', '/es/privacidad?x=1', 'es'],
+  ['/nope', 'ES', '/es', 'es'],
+  ['/es/nope', 'EN', '/', 'en'],
+];
+
+for (const [from, label, to, lang] of SWITCHES) {
+  test(`the language switch goes from ${from} to ${to}`, async ({ page }) => {
+    await gotoHydrated(page, from);
+    await page
+      .getByRole('navigation', { name: 'Language' })
+      .or(page.getByRole('navigation', { name: 'Idioma' }))
+      .first()
+      .getByRole('link', { name: label })
+      .click();
+    await expect(page).toHaveURL(to);
+    await expect(page.locator('html')).toHaveAttribute('lang', lang);
+    await waitForHydration(page);
+  });
+}
+
+test('the header anchors keep the locale home', async ({ page }) => {
+  for (const [path, home] of [
+    ['/privacy', '/'],
+    ['/es/privacidad', '/es'],
+  ] as const) {
+    await gotoHydrated(page, path);
+    const hrefs = await page
+      .getByRole('navigation', { name: /Main|Principal/ })
+      .first()
+      .getByRole('link')
+      .evaluateAll((links) => links.map((a) => a.getAttribute('href')));
+    expect(hrefs).toContain(`${home}#services`);
+  }
 });
 
 test('JS is fetched at low priority', async ({ request }) => {

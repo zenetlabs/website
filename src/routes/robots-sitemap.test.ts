@@ -1,13 +1,33 @@
 import { describe, expect, it } from 'vitest';
+import { locales } from '@/lib/i18n';
+import { PAGE_IDS, PAGES } from '@/lib/page-registry';
 import { robotsTxt } from '@/lib/robots';
+import { pageUrl } from '@/lib/seo';
 import { SITEMAP_XML } from '@/lib/sitemap';
+import { parseSitemap } from '../../test/sitemap';
 
 describe('robotsTxt', () => {
-  it('allows crawling on the canonical host and points at the sitemap', () => {
-    const body = robotsTxt('zenetlabs.com');
-    expect(body).toContain('Allow: /');
-    expect(body).toContain('Sitemap: https://zenetlabs.com/sitemap.xml');
-    expect(body).not.toContain('Disallow');
+  it('serves one group for every crawler on the canonical host', () => {
+    expect(robotsTxt('zenetlabs.com')).toBe(
+      [
+        'User-agent: Googlebot',
+        'User-agent: Bingbot',
+        'User-agent: GPTBot',
+        'User-agent: OAI-SearchBot',
+        'User-agent: ChatGPT-User',
+        'User-agent: ClaudeBot',
+        'User-agent: Claude-SearchBot',
+        'User-agent: PerplexityBot',
+        'User-agent: Google-Extended',
+        'User-agent: *',
+        'Allow: /',
+        'Disallow: /api/',
+        'Disallow: /_serverFn/',
+        '',
+        'Sitemap: https://zenetlabs.com/sitemap.xml',
+        '',
+      ].join('\n'),
+    );
   });
 
   it.each([
@@ -15,9 +35,7 @@ describe('robotsTxt', () => {
     'www.zenetlabs.com',
     'localhost:4173',
   ])('disallows everything on %s', (host) => {
-    const body = robotsTxt(host);
-    expect(body).toContain('Disallow: /');
-    expect(body).not.toContain('Sitemap');
+    expect(robotsTxt(host)).toBe('User-agent: *\nDisallow: /\n');
   });
 });
 
@@ -25,26 +43,36 @@ describe('sitemapXml', () => {
   const xml = SITEMAP_XML;
 
   it('lists 3 paths in 2 locales', () => {
-    const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(
-      (match) => match[1],
-    );
-    expect(locs).toEqual([
+    expect(parseSitemap(xml).map((entry) => entry.loc)).toEqual([
       'https://zenetlabs.com/',
-      'https://zenetlabs.com/privacy-policy',
-      'https://zenetlabs.com/cookies-policy',
+      'https://zenetlabs.com/privacy',
+      'https://zenetlabs.com/cookies',
       'https://zenetlabs.com/es',
-      'https://zenetlabs.com/es/privacy-policy',
-      'https://zenetlabs.com/es/cookies-policy',
+      'https://zenetlabs.com/es/privacidad',
+      'https://zenetlabs.com/es/cookies',
     ]);
   });
 
+  it('gives every url the registry lastmod', () => {
+    expect(parseSitemap(xml).map((entry) => entry.lastmod)).toEqual(
+      locales.flatMap(() => PAGE_IDS.map((page) => PAGES[page].lastmod)),
+    );
+  });
+
   it('gives every url its alternates', () => {
-    const urls = xml.split('<url>').slice(1);
-    expect(urls).toHaveLength(6);
-    for (const entry of urls) {
-      expect(entry).toContain('hreflang="en"');
-      expect(entry).toContain('hreflang="es"');
-      expect(entry).toContain('hreflang="x-default"');
+    const entries = parseSitemap(xml);
+    expect(entries).toHaveLength(6);
+    for (const { loc, alternates } of entries) {
+      const page = PAGE_IDS.find((id) =>
+        locales.some((locale) => pageUrl(locale, id) === loc),
+      );
+      expect(page).toBeDefined();
+      if (!page) continue;
+      expect([...alternates]).toEqual([
+        ['en', pageUrl('en', page)],
+        ['es', pageUrl('es', page)],
+        ['x-default', pageUrl('en', page)],
+      ]);
     }
   });
 

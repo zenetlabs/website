@@ -3,7 +3,8 @@ import { LanguageSwitch } from '@/components/language-switch';
 import { Logo } from '@/components/logo';
 import { Container } from '@/components/section';
 import { PRIMARY_BUTTON } from '@/components/ui';
-import { type Locale, localePath, useMessages } from '@/lib/i18n';
+import { type Locale, useMessages } from '@/lib/i18n';
+import { pagePath } from '@/lib/page-registry';
 
 const LINK =
   'rounded-input px-3 py-2 text-sm font-medium text-muted-fg motion-safe:transition-colors motion-safe:duration-200 hover:text-fg';
@@ -14,7 +15,7 @@ function closeMenu(event: MouseEvent<HTMLElement>) {
 
 export function SiteHeader({ locale }: { locale: Locale }) {
   const { nav } = useMessages();
-  const home = localePath(locale, '/');
+  const home = pagePath(locale, 'home');
   const links = [
     { href: `${home}#services`, label: nav.services },
     { href: `${home}#process`, label: nav.process },

@@ -19,7 +19,7 @@
     "check:i18n": "vitest run src/i18n/catalogues.test.ts",
     "check:colors": "vitest run src/styles/hardcoded-colors.test.ts",
     "e2e": "playwright test",
-    "lhci": "lhci autorun",
+    "lhci": "lhci autorun && lhci autorun --collect.settings.preset=desktop",
     "knip": "knip",
     "doctor": "react-doctor"
   },

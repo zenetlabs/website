@@ -1,11 +1,7 @@
 import { useLocation } from '@tanstack/react-router';
-import {
-  type Locale,
-  localePath,
-  locales,
-  stripLocale,
-  useMessages,
-} from '@/lib/i18n';
+import { useCurrentPage } from '@/lib/current-page';
+import { type Locale, locales, useMessages } from '@/lib/i18n';
+import { pagePath } from '@/lib/page-registry';
 
 const LABELS: Record<Locale, string> = { en: 'EN', es: 'ES' };
 
@@ -17,9 +13,8 @@ export function LanguageSwitch({
   footer?: boolean;
 }) {
   const messages = useMessages();
-  const pathname = useLocation({ select: (location) => location.pathname });
   const search = useLocation({ select: (location) => location.searchStr });
-  const base = stripLocale(pathname);
+  const page = useCurrentPage();
 
   return (
     <nav
@@ -29,7 +24,7 @@ export function LanguageSwitch({
       {locales.map((target) => (
         <a
           key={target}
-          href={`${localePath(target, base)}${search}`}
+          href={`${pagePath(target, page ?? 'home')}${page ? search : ''}`}
           hrefLang={target}
           lang={target}
           aria-current={target === locale ? 'page' : undefined}

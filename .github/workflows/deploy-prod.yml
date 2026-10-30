@@ -79,6 +79,10 @@ jobs:
           api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       - name: Smoke test
         run: bash scripts/smoke.sh
+      - name: Sitemap walk
+        env:
+          PLAYWRIGHT_BASE_URL: https://zenetlabs.com
+        run: pnpm exec playwright test e2e/sitemap.e2e.ts
       - name: Rollback command
         if: ${{ failure() }}
         run: |

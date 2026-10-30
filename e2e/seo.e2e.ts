@@ -1,12 +1,21 @@
 import { expect, test } from '@playwright/test';
-import { gotoHydrated, PAGES } from './helpers';
+import { decodeEntities } from '../src/lib/markdown';
+import { ogImagePath } from '../src/lib/og-image';
+import { PATH_CASES } from '../test/redirect-cases';
+import {
+  gotoHydrated,
+  htmlLang,
+  PAGES,
+  PAIRS,
+  type Tag,
+  tagsOf,
+} from './helpers';
 
-const PATHS = ['/', '/privacy-policy', '/cookies-policy'] as const;
+const OG_LOCALES = { en: 'en_SG', es: 'es_ES' } as const;
 
-for (const locale of ['en', 'es'] as const) {
-  for (const path of PATHS) {
-    const es = path === '/' ? '/es' : `/es${path}`;
-    const url = locale === 'en' ? path : es;
+for (const pair of PAIRS) {
+  for (const locale of ['en', 'es'] as const) {
+    const url = pair[locale];
 
     test(`${url} has lang, canonical and hreflang`, async ({ page }) => {
       await gotoHydrated(page, url);
@@ -28,16 +37,66 @@ for (const locale of ['en', 'es'] as const) {
           ]),
         );
       expect(alternates).toEqual([
-        ['en', path],
-        ['es', es],
-        ['x-default', path],
+        ['en', pair.en],
+        ['es', pair.es],
+        ['x-default', pair.en],
       ]);
+    });
+
+    test(`${url} has the same head in the SSR html and after hydration`, async ({
+      page,
+      request,
+    }) => {
+      const ssr = await (await request.get(url)).text();
+      await gotoHydrated(page, url);
+      const hydrated = await page.evaluate(() => document.head.innerHTML);
+
+      const relevant = (tag: Tag) =>
+        tag.rel === 'canonical' ||
+        (tag.rel === 'alternate' && 'hreflang' in tag) ||
+        tag.name === 'description' ||
+        tag.name === 'robots' ||
+        tag.name?.startsWith('twitter:') ||
+        tag.property?.startsWith('og:');
+      const key = (tag: Tag) => JSON.stringify(Object.entries(tag).sort());
+      expect(tagsOf(hydrated).filter(relevant).map(key).sort()).toEqual(
+        tagsOf(ssr).filter(relevant).map(key).sort(),
+      );
+      expect(htmlLang(ssr)).toBe(locale);
+      expect(
+        decodeEntities(ssr.match(/<title>([^<]*)<\/title>/)?.[1] ?? ''),
+      ).toBe(await page.title());
+    });
+
+    test(`${url} has per-locale open graph tags and a real image`, async ({
+      page,
+      request,
+    }) => {
+      await gotoHydrated(page, url);
+      const og = (property: string) =>
+        page.locator(`meta[property="${property}"]`).getAttribute('content');
+      expect(await og('og:locale')).toBe(OG_LOCALES[locale]);
+      const image = (await og('og:image')) ?? '';
+      expect(new URL(image).pathname).toBe(ogImagePath(locale));
+      const response = await request.get(new URL(image).pathname);
+      expect(response.status()).toBe(200);
+      expect(response.headers()['content-type']).toBe('image/png');
     });
   }
 }
 
+test('the home and its Spanish twin load one stylesheet', async ({
+  request,
+}) => {
+  for (const path of ['/', '/es']) {
+    const html = await (await request.get(path)).text();
+    const sheets = tagsOf(html).filter((tag) => tag.rel === 'stylesheet');
+    expect(sheets, path).toHaveLength(1);
+  }
+});
+
 test('unknown paths answer 404', async ({ request }) => {
-  for (const path of ['/nope', '/fr', '/fr/privacy-policy']) {
+  for (const path of ['/nope', '/fr', '/fr/privacy', '/es/nope']) {
     const response = await request.get(path);
     expect(response.status(), path).toBe(404);
   }
@@ -46,7 +105,7 @@ test('unknown paths answer 404', async ({ request }) => {
 const NOT_FOUND: ReadonlyArray<readonly [string, string]> = [
   ['/nope', 'Page not found | Zenet Labs'],
   ['/es/nope', 'Página no encontrada | Zenet Labs'],
-  ['/fr/privacy-policy', 'Page not found | Zenet Labs'],
+  ['/fr/privacy', 'Page not found | Zenet Labs'],
 ];
 
 for (const [path, title] of NOT_FOUND) {
@@ -54,6 +113,11 @@ for (const [path, title] of NOT_FOUND) {
     await gotoHydrated(page, path);
     await expect(page).toHaveTitle(title);
     await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
+    await expect(page.locator('meta[name="robots"]')).toHaveCount(1);
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      'content',
+      'noindex',
+    );
     for (const landmark of ['header', 'main', 'footer']) {
       await expect(page.locator(landmark)).toHaveCount(1);
     }
@@ -87,33 +151,21 @@ test('404 markdown starts with the title and the heading only', async ({
   }
 });
 
-const LEGACY: ReadonlyArray<readonly [string, string]> = [
-  ['/blog/x', '/'],
-  ['/es/blog', '/es'],
-  ['/privacy', '/privacy-policy'],
-  ['/es/cookies', '/es/cookies-policy'],
-  ['/about-us', '/'],
-  ['/en', '/'],
-  ['/en/cookies-policy', '/cookies-policy'],
-  ['/privacy?x=1', '/privacy-policy?x=1'],
-  ['/es/', '/es'],
-  ['/privacy-policy/', '/privacy-policy'],
-  ['/es/cookies-policy/?x=1', '/es/cookies-policy?x=1'],
-];
-
-for (const [from, to] of LEGACY) {
+for (const [from, to] of PATH_CASES) {
   test(`${from} redirects once to ${to}`, async ({ request, baseURL }) => {
     const response = await request.get(from, { maxRedirects: 0 });
     expect(response.status()).toBe(301);
     expect(response.headers().location).toBe(`${baseURL}${to}`);
+    expect(response.headers()['cache-control']).toBe('max-age=3600');
   });
 }
 
 test('robots and sitemap are served', async ({ request }) => {
   const sitemap = await request.get('/sitemap.xml');
   expect(sitemap.status()).toBe(200);
-  expect((await sitemap.text()).match(/<loc>/g)).toHaveLength(6);
-  expect((await request.get('/robots.txt')).status()).toBe(200);
+  const robots = await request.get('/robots.txt');
+  expect(robots.status()).toBe(200);
+  expect(await robots.text()).toContain('Disallow: /_serverFn/');
 });
 
 test('llms.txt is served as plain text', async ({ request }) => {
