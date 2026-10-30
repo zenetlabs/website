@@ -50,7 +50,7 @@ header_matches() {
   curl -s -D - -o /dev/null -H "Accept: ${accept}" --max-time 20 "$url" | tr -d '\r' | grep -qiE "$pattern"
 }
 
-for path in / /es /privacy /es/privacidad /es/cookies /es/aviso-legal /robots.txt /sitemap.xml /llms.txt; do
+for path in / /es /pricing /es/precios /about /es/sobre-nosotros /privacy /es/privacidad /es/cookies /es/aviso-legal /robots.txt /sitemap.xml /llms.txt; do
   attempt "200 ${SITE}${path}" status_is 200 "${SITE}${path}"
 done
 
@@ -67,6 +67,10 @@ for rule in \
   "/es/privacy-policy|/es/privacidad" \
   "/es/cookies-policy|/es/cookies" \
   "/es/privacy|/es/privacidad" \
+  "/es/pricing|/es/precios" \
+  "/precios|/pricing" \
+  "/es/about|/es/sobre-nosotros" \
+  "/sobre-nosotros|/about" \
   "/aviso-legal|/es/aviso-legal" \
   "/en/aviso-legal|/es/aviso-legal" \
   "/legal-notice|/es/aviso-legal" \
@@ -81,12 +85,14 @@ for host in www.zenetlabs.com zenettech.com www.zenettech.com zenettechnology.co
     redirects_to "https://${host}/es/cookies-policy?x=1" "${SITE}/es/cookies?x=1"
 done
 
-for path in / /es /privacy /es/privacidad /cookies /es/cookies /es/aviso-legal; do
+for path in / /es /pricing /es/precios /about /es/sobre-nosotros /privacy /es/privacidad /cookies /es/cookies /es/aviso-legal; do
   attempt "markdown ${SITE}${path}" content_type_is 'text/markdown; charset=utf-8' 'text/markdown' "${SITE}${path}"
 done
 attempt "html for */* ${SITE}/" content_type_is 'text/html; charset=utf-8' '*/*' "${SITE}/"
 attempt "vary accept ${SITE}/" header_matches '*/*' "${SITE}/" '^vary:(.*[ ,])?accept([ ,]|$)'
 attempt "footer names the entity" body_contains "${SITE}/es" 'Zenet Technology Pte. Ltd.'
+attempt "home carries the FAQ JSON-LD" body_contains "${SITE}/" '"@type":"FAQPage"'
+attempt "es pricing states the tax" body_contains "${SITE}/es/precios" 'no incluyen el IVA'
 attempt "robots disallows server functions" body_contains "${SITE}/robots.txt" 'Disallow: /_serverFn/'
 attempt "canonical link ${SITE}/es" header_matches 'text/markdown' "${SITE}/es" '^link: <https://zenetlabs\.com/es>; rel="canonical"$'
 

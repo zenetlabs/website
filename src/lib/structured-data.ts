@@ -1,14 +1,17 @@
 import type {
   Organization,
+  Person,
   ProfessionalService,
   WebSite,
   WithContext,
 } from 'schema-dts';
 import type { PublishedEntity } from '@/content/types';
-import { legalEntity } from '@/lib/content';
+import { CONTENT, legalEntity } from '@/lib/content';
 import { type Locale, localePath, messages } from '@/lib/i18n';
 import { jsonLd, pageUrl, SITE_NAME } from '@/lib/seo';
 import { PUBLIC_EMAIL, SITE } from '@/lib/site';
+
+export const FOUNDER_ID = `${pageUrl('en', 'about')}#founder`;
 
 function entityNode(
   entity: PublishedEntity,
@@ -30,7 +33,7 @@ function entityNode(
     logo: `${SITE.url}/icons/android-chrome-512x512.png`,
     email: PUBLIC_EMAIL,
     ...(foundingYear ? { foundingDate: foundingYear } : {}),
-    ...(founder ? { founder: { '@type': 'Person', name: founder } } : {}),
+    ...(founder ? { founder: { '@id': FOUNDER_ID } } : {}),
     address: {
       '@type': 'PostalAddress',
       streetAddress: address.streetAddress,
@@ -58,11 +61,28 @@ function websiteNode(
   };
 }
 
+function personNode(): WithContext<Person> {
+  const { name, photo, sameAs } = CONTENT.en.founder;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    '@id': FOUNDER_ID,
+    name,
+    url: pageUrl('en', 'about'),
+    ...(photo ? { image: `${SITE.url}${photo.src}` } : {}),
+    ...(sameAs.length > 0 ? { sameAs: [...sameAs] } : {}),
+  };
+}
+
 export function structuredData(
   locale: Locale,
   entity: PublishedEntity = legalEntity(locale),
 ) {
-  return [jsonLd(entityNode(entity)), jsonLd(websiteNode(locale, entity))];
+  return [
+    jsonLd(entityNode(entity)),
+    jsonLd(websiteNode(locale, entity)),
+    jsonLd(personNode()),
+  ];
 }
 
 export const STRUCTURED_DATA: Record<

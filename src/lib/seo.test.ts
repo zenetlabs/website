@@ -74,10 +74,10 @@ describe.each(cases)('pageHeadFor(%s, %s)', (locale, page) => {
   });
 });
 
-describe('legal descriptions', () => {
-  const legal = cases.filter(([, page]) => page !== 'home');
+describe('inner page descriptions', () => {
+  const inner = cases.filter(([, page]) => page !== 'home');
 
-  it.each(legal)('%s %s is 120 to 155 characters', (locale, page) => {
+  it.each(inner)('%s %s is 120 to 155 characters', (locale, page) => {
     const [description] = contents(
       pageHeadFor(locale, page).meta,
       'name',
@@ -129,9 +129,13 @@ describe('titles and descriptions', () => {
 describe('pageUrl', () => {
   it.each([
     ['en', 'home', `${SITE}/`],
+    ['en', 'pricing', `${SITE}/pricing`],
+    ['en', 'about', `${SITE}/about`],
     ['en', 'privacy', `${SITE}/privacy`],
     ['en', 'cookies', `${SITE}/cookies`],
     ['es', 'home', `${SITE}/es`],
+    ['es', 'pricing', `${SITE}/es/precios`],
+    ['es', 'about', `${SITE}/es/sobre-nosotros`],
     ['es', 'privacy', `${SITE}/es/privacidad`],
     ['es', 'cookies', `${SITE}/es/cookies`],
     ['es', 'legalNotice', `${SITE}/es/aviso-legal`],

@@ -15,12 +15,19 @@ async function load(path: string) {
 }
 
 describe('{-$locale} layout', () => {
-  it.each(['/', '/privacy', '/es', '/es/privacidad', '/es/aviso-legal'])(
-    'serves %s',
-    async (path) => {
-      expect(hasNotFound(await load(path))).toBe(false);
-    },
-  );
+  it.each([
+    '/',
+    '/pricing',
+    '/about',
+    '/privacy',
+    '/es',
+    '/es/precios',
+    '/es/sobre-nosotros',
+    '/es/privacidad',
+    '/es/aviso-legal',
+  ])('serves %s', async (path) => {
+    expect(hasNotFound(await load(path))).toBe(false);
+  });
 
   it.each(['/legal-notice', '/fr/privacy'])(
     'answers 404 for %s',

@@ -1,3 +1,4 @@
+import { decodeEntities } from '../src/lib/markdown';
 import { PLACEHOLDER } from './placeholders';
 
 const REQUIRED: Record<string, readonly string[]> = {
@@ -10,10 +11,18 @@ const REQUIRED: Record<string, readonly string[]> = {
     'postalCode',
     'addressCountry',
   ],
-  Person: ['name'],
+  Person: ['name', 'url'],
   PropertyValue: ['propertyID', 'value'],
-  Offer: ['itemOffered'],
-  Service: ['name'],
+  FAQPage: ['mainEntity'],
+  Question: ['name', 'acceptedAnswer'],
+  Answer: ['text'],
+  BreadcrumbList: ['itemListElement'],
+  ListItem: ['position', 'name', 'item'],
+  OfferCatalog: ['name', 'itemListElement'],
+  Offer: ['itemOffered', 'priceSpecification'],
+  PriceSpecification: ['priceCurrency'],
+  UnitPriceSpecification: ['priceCurrency', 'unitCode'],
+  Service: ['name', 'provider'],
 };
 
 const URL_KEYS = new Set(['url', 'logo', 'image', '@id', 'item', 'sameAs']);
@@ -89,9 +98,43 @@ export function validateJsonLd(
           problems.push(`${path}: ${type} lacks ${key}`);
       }
     }
+    if (type === 'PriceSpecification' || type === 'UnitPriceSpecification') {
+      checkPriceSpecification(node, path);
+    }
+    if (type === 'BreadcrumbList') checkPositions(node, path);
     for (const [key, value] of Object.entries(node)) {
       if (key === '@context' || key === '@type') continue;
       checkValue(key, value, `${path}.${key}`);
+    }
+  }
+
+  function checkPriceSpecification(
+    node: Record<string, unknown>,
+    path: string,
+  ) {
+    if (node.valueAddedTaxIncluded !== false) {
+      problems.push(`${path}: valueAddedTaxIncluded must be false`);
+    }
+    if (node.price === undefined && node.minPrice === undefined) {
+      problems.push(`${path}: no price or minPrice`);
+    }
+    const { minPrice, maxPrice } = node;
+    if (
+      typeof maxPrice === 'number' &&
+      (typeof minPrice !== 'number' || maxPrice <= minPrice)
+    ) {
+      problems.push(`${path}: maxPrice must exceed minPrice`);
+    }
+  }
+
+  function checkPositions(node: Record<string, unknown>, path: string) {
+    const items = node.itemListElement;
+    if (!Array.isArray(items)) return;
+    const positions = items.map((item): unknown =>
+      isRecord(item) ? item.position : undefined,
+    );
+    if (!positions.every((position, index) => position === index + 1)) {
+      problems.push(`${path}: positions must run 1..n`);
     }
   }
 
@@ -147,4 +190,50 @@ export function identityProblems(
     }
   }
   return problems;
+}
+
+function visibleText(html: string): string {
+  const main = /<main\b[^>]*>([\s\S]*?)<\/main>/.exec(html)?.[1] ?? '';
+  return normalise(
+    main
+      .replace(/<(script|style)\b[\s\S]*?<\/\1>/g, ' ')
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/<[^>]+>/g, ' '),
+  );
+}
+
+function normalise(text: string): string {
+  return decodeEntities(text).replace(/\s+/g, ' ').trim();
+}
+
+function faqPairs(blocks: readonly unknown[]): [string, string][] {
+  return blocks.flatMap((block) => {
+    if (!isRecord(block) || block['@type'] !== 'FAQPage') return [];
+    const entities = block.mainEntity;
+    if (!Array.isArray(entities)) return [];
+    return entities.flatMap((entity): [string, string][] => {
+      if (!isRecord(entity)) return [];
+      const answer = entity.acceptedAnswer;
+      const name = entity.name;
+      const text = isRecord(answer) ? answer.text : undefined;
+      return typeof name === 'string' && typeof text === 'string'
+        ? [[name, text]]
+        : [];
+    });
+  });
+}
+
+export function faqVisibilityProblems(
+  html: string,
+  blocks: readonly unknown[],
+): string[] {
+  const visible = visibleText(html);
+  return faqPairs(blocks).flatMap(([name, text]) => [
+    ...(visible.includes(normalise(name))
+      ? []
+      : [`question not visible: ${name}`]),
+    ...(visible.includes(normalise(text))
+      ? []
+      : [`answer not visible: ${name}`]),
+  ]);
 }

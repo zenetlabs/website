@@ -1,7 +1,14 @@
 import type { LocationRewrite } from '@tanstack/react-router';
 import { defaultLocale, type Locale, localePath, locales } from '@/lib/i18n';
 
-export const PAGE_IDS = ['home', 'privacy', 'cookies', 'legalNotice'] as const;
+export const PAGE_IDS = [
+  'home',
+  'pricing',
+  'about',
+  'privacy',
+  'cookies',
+  'legalNotice',
+] as const;
 export type PageId = (typeof PAGE_IDS)[number];
 
 type Slugs = Partial<Record<Locale, string>>;
@@ -12,19 +19,27 @@ export type PageEntry = { lastmod: string } & (
 );
 
 export const PAGES: Record<PageId, PageEntry> = {
-  home: { slugs: { en: '/', es: '/' }, lastmod: '2026-10-30' },
+  home: { slugs: { en: '/', es: '/' }, lastmod: '2026-10-31' },
+  pricing: {
+    slugs: { en: '/pricing', es: '/precios' },
+    lastmod: '2026-10-31',
+  },
+  about: {
+    slugs: { en: '/about', es: '/sobre-nosotros' },
+    lastmod: '2026-10-31',
+  },
   privacy: {
     slugs: { en: '/privacy', es: '/privacidad' },
-    lastmod: '2026-10-30',
+    lastmod: '2026-10-31',
   },
   cookies: {
     slugs: { en: '/cookies', es: '/cookies' },
-    lastmod: '2026-10-30',
+    lastmod: '2026-10-31',
   },
   legalNotice: {
     slugs: { es: '/aviso-legal' },
     route: '/legal-notice',
-    lastmod: '2026-10-30',
+    lastmod: '2026-10-31',
   },
 };
 

@@ -1,4 +1,4 @@
-// TODO(albert): owner legal review (both entity variants)
+// TODO(albert): owner legal review (both entity variants, and the Precios clause)
 import { LegalPage, LegalSection } from '@/components/legal-page';
 import { TEXT_LINK } from '@/components/ui';
 import type { PublishedEntity } from '@/content/types';
@@ -18,7 +18,7 @@ export function LegalNoticeEs({
   return (
     <LegalPage
       title={title}
-      updated="Última actualización: 30 de octubre de 2026"
+      updated="Última actualización: 31 de octubre de 2026"
     >
       <LegalSection title="Datos identificativos">
         <p>
@@ -46,6 +46,16 @@ export function LegalNoticeEs({
           integraciones y desarrollo web y de aplicaciones a medida) y permite a
           los visitantes ponerse en contacto con el titular. En el sitio no se
           contratan servicios ni se realizan pagos.
+        </p>
+      </LegalSection>
+      <LegalSection title="Precios">
+        <p>
+          Los precios que se muestran en este sitio web están expresados en
+          euros y no incluyen el IVA ni otros impuestos indirectos aplicables.
+          El precio del diagnóstico es cerrado; los demás importes son precios
+          «desde» o rangos orientativos, y el precio definitivo de cada proyecto
+          se fija en el presupuesto que se entrega tras el diagnóstico. En este
+          sitio web no se contrata ni se paga ningún servicio.
         </p>
       </LegalSection>
       <LegalSection title="Condiciones de uso">

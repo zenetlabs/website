@@ -10,6 +10,8 @@ function canonicalPath(link: string | undefined): string {
 
 for (const path of PAGES) {
   test(`${path} is served as markdown`, async ({ request }) => {
+    const html = await (await request.get(path)).text();
+    const scripts = html.match(/<script\b[^>]*type="application\/ld\+json"/g);
     const response = await request.get(path, {
       headers: { accept: 'text/markdown' },
     });
@@ -30,7 +32,8 @@ for (const path of PAGES) {
     expect(body).not.toMatch(/<\/?[a-z][^>]*>/);
 
     const fences = Array.from(body.matchAll(/```json\n([\s\S]*?)\n```/g));
-    expect(fences).toHaveLength(2);
+    expect(fences).toHaveLength(scripts?.length ?? 0);
+    expect(fences.length).toBeGreaterThanOrEqual(3);
     for (const [, json] of fences) {
       const parsed: unknown = JSON.parse(json ?? '');
       expect(parsed).toBeTruthy();
@@ -46,12 +49,11 @@ test('the home markdown keeps content and drops chrome', async ({
   });
   const body = await response.text();
   for (const expected of [
-    '# Turn your company into an *agentic company*.',
-    '## From curiosity to an *AI-native* operating model',
-    '- AI literacy for leadership and teams\n- Hands-on workshops',
-    '### [Viatsy](https://viatsy.com/)\n\nSmall-group trips to Japan, China, Korea, Taiwan and Hong Kong.',
+    '# Stop doing *by hand* what your tools can do on their own.',
+    '## What we do, and *what it costs*',
+    'S$3,000',
+    "What do you do, and what don't you do?\n\nWe connect the tools",
     '[hello@zenetlabs.com](mailto:hello@zenetlabs.com)',
-    "We don't just advise.",
   ]) {
     expect(body).toContain(expected);
   }
@@ -59,11 +61,22 @@ test('the home markdown keeps content and drops chrome', async ({
     'Skip to content',
     'What should we look at?',
     'Send message',
-    'triaged the shared inbox',
+    'synced new Shopify orders',
     'UEN 202202371M',
   ]) {
     expect(body).not.toContain(unexpected);
   }
+});
+
+test('the Spanish pricing markdown keeps the ladder and its prices', async ({
+  request,
+}) => {
+  const response = await request.get('/es/precios', {
+    headers: { accept: 'text/markdown' },
+  });
+  const body = await response.text();
+  expect(body).toContain('## Diagnóstico de automatización');
+  expect(body).toContain('1.500 €');
 });
 
 const NEGOTIATION: ReadonlyArray<readonly [string, string]> = [

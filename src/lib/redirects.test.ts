@@ -16,9 +16,13 @@ const ALIAS_HOSTS = [
 
 const CANONICAL = [
   '/',
+  '/pricing',
+  '/about',
   '/privacy',
   '/cookies',
   '/es',
+  '/es/precios',
+  '/es/sobre-nosotros',
   '/es/privacidad',
   '/es/cookies',
   '/es/aviso-legal',

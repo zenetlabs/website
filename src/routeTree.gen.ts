@@ -14,8 +14,10 @@ import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as Char123LocaleChar125RouteImport } from './routes/{-$locale}'
 import { Route as Char123LocaleChar125IndexRouteImport } from './routes/{-$locale}/index'
+import { Route as Char123LocaleChar125AboutRouteImport } from './routes/{-$locale}/about'
 import { Route as Char123LocaleChar125CookiesRouteImport } from './routes/{-$locale}/cookies'
 import { Route as Char123LocaleChar125LegalNoticeRouteImport } from './routes/{-$locale}/legal-notice'
+import { Route as Char123LocaleChar125PricingRouteImport } from './routes/{-$locale}/pricing'
 import { Route as Char123LocaleChar125PrivacyRouteImport } from './routes/{-$locale}/privacy'
 
 const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
@@ -44,6 +46,12 @@ const Char123LocaleChar125IndexRoute =
     path: '/',
     getParentRoute: () => Char123LocaleChar125Route,
   } as any)
+const Char123LocaleChar125AboutRoute =
+  Char123LocaleChar125AboutRouteImport.update({
+    id: '/about',
+    path: '/about',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
 const Char123LocaleChar125CookiesRoute =
   Char123LocaleChar125CookiesRouteImport.update({
     id: '/cookies',
@@ -54,6 +62,12 @@ const Char123LocaleChar125LegalNoticeRoute =
   Char123LocaleChar125LegalNoticeRouteImport.update({
     id: '/legal-notice',
     path: '/legal-notice',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125PricingRoute =
+  Char123LocaleChar125PricingRouteImport.update({
+    id: '/pricing',
+    path: '/pricing',
     getParentRoute: () => Char123LocaleChar125Route,
   } as any)
 const Char123LocaleChar125PrivacyRoute =
@@ -68,8 +82,10 @@ export interface FileRoutesByFullPath {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/{-$locale}': typeof Char123LocaleChar125RouteWithChildren
+  '/{-$locale}/about': typeof Char123LocaleChar125AboutRoute
   '/{-$locale}/cookies': typeof Char123LocaleChar125CookiesRoute
   '/{-$locale}/legal-notice': typeof Char123LocaleChar125LegalNoticeRoute
+  '/{-$locale}/pricing': typeof Char123LocaleChar125PricingRoute
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
 }
@@ -77,8 +93,10 @@ export interface FileRoutesByTo {
   '/llms.txt': typeof LlmsDottxtRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/{-$locale}/about': typeof Char123LocaleChar125AboutRoute
   '/{-$locale}/cookies': typeof Char123LocaleChar125CookiesRoute
   '/{-$locale}/legal-notice': typeof Char123LocaleChar125LegalNoticeRoute
+  '/{-$locale}/pricing': typeof Char123LocaleChar125PricingRoute
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}': typeof Char123LocaleChar125IndexRoute
 }
@@ -88,8 +106,10 @@ export interface FileRoutesById {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/{-$locale}': typeof Char123LocaleChar125RouteWithChildren
+  '/{-$locale}/about': typeof Char123LocaleChar125AboutRoute
   '/{-$locale}/cookies': typeof Char123LocaleChar125CookiesRoute
   '/{-$locale}/legal-notice': typeof Char123LocaleChar125LegalNoticeRoute
+  '/{-$locale}/pricing': typeof Char123LocaleChar125PricingRoute
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
 }
@@ -100,8 +120,10 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/{-$locale}'
+    | '/{-$locale}/about'
     | '/{-$locale}/cookies'
     | '/{-$locale}/legal-notice'
+    | '/{-$locale}/pricing'
     | '/{-$locale}/privacy'
     | '/{-$locale}/'
   fileRoutesByTo: FileRoutesByTo
@@ -109,8 +131,10 @@ export interface FileRouteTypes {
     | '/llms.txt'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/{-$locale}/about'
     | '/{-$locale}/cookies'
     | '/{-$locale}/legal-notice'
+    | '/{-$locale}/pricing'
     | '/{-$locale}/privacy'
     | '/{-$locale}'
   id:
@@ -119,8 +143,10 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/{-$locale}'
+    | '/{-$locale}/about'
     | '/{-$locale}/cookies'
     | '/{-$locale}/legal-notice'
+    | '/{-$locale}/pricing'
     | '/{-$locale}/privacy'
     | '/{-$locale}/'
   fileRoutesById: FileRoutesById
@@ -169,6 +195,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char123LocaleChar125IndexRouteImport
       parentRoute: typeof Char123LocaleChar125Route
     }
+    '/{-$locale}/about': {
+      id: '/{-$locale}/about'
+      path: '/about'
+      fullPath: '/{-$locale}/about'
+      preLoaderRoute: typeof Char123LocaleChar125AboutRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
     '/{-$locale}/cookies': {
       id: '/{-$locale}/cookies'
       path: '/cookies'
@@ -183,6 +216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char123LocaleChar125LegalNoticeRouteImport
       parentRoute: typeof Char123LocaleChar125Route
     }
+    '/{-$locale}/pricing': {
+      id: '/{-$locale}/pricing'
+      path: '/pricing'
+      fullPath: '/{-$locale}/pricing'
+      preLoaderRoute: typeof Char123LocaleChar125PricingRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
     '/{-$locale}/privacy': {
       id: '/{-$locale}/privacy'
       path: '/privacy'
@@ -194,15 +234,19 @@ declare module '@tanstack/react-router' {
 }
 
 interface Char123LocaleChar125RouteChildren {
+  Char123LocaleChar125AboutRoute: typeof Char123LocaleChar125AboutRoute
   Char123LocaleChar125CookiesRoute: typeof Char123LocaleChar125CookiesRoute
   Char123LocaleChar125LegalNoticeRoute: typeof Char123LocaleChar125LegalNoticeRoute
+  Char123LocaleChar125PricingRoute: typeof Char123LocaleChar125PricingRoute
   Char123LocaleChar125PrivacyRoute: typeof Char123LocaleChar125PrivacyRoute
   Char123LocaleChar125IndexRoute: typeof Char123LocaleChar125IndexRoute
 }
 
 const Char123LocaleChar125RouteChildren: Char123LocaleChar125RouteChildren = {
+  Char123LocaleChar125AboutRoute: Char123LocaleChar125AboutRoute,
   Char123LocaleChar125CookiesRoute: Char123LocaleChar125CookiesRoute,
   Char123LocaleChar125LegalNoticeRoute: Char123LocaleChar125LegalNoticeRoute,
+  Char123LocaleChar125PricingRoute: Char123LocaleChar125PricingRoute,
   Char123LocaleChar125PrivacyRoute: Char123LocaleChar125PrivacyRoute,
   Char123LocaleChar125IndexRoute: Char123LocaleChar125IndexRoute,
 }

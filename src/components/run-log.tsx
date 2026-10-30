@@ -1,19 +1,19 @@
-import { useMessages } from '@/lib/i18n';
+import { CARD } from '@/components/ui';
+import type { HomeContent } from '@/content/types';
 
-export function RunLog() {
-  const { runlog } = useMessages();
-  const lines = Object.values(runlog.lines);
+export function RunLog({ copy }: { copy: HomeContent['runlog'] }) {
+  const { lines } = copy;
 
   return (
     <div>
-      <p className="sr-only">{runlog.description}</p>
+      <p className="sr-only">{copy.description}</p>
       <div
         aria-hidden="true"
-        className="rounded-card border border-hairline bg-surface font-mono text-[13px] leading-relaxed"
+        className={`${CARD} font-mono text-[13px] leading-relaxed`}
       >
         <div className="flex items-center gap-2.5 border-b border-hairline px-5 py-3.5 text-muted-fg">
           <span className="text-agent">●</span>
-          {runlog.title}
+          {copy.title}
         </div>
         <ul className="grid gap-3 px-5 py-5">
           {lines.map((line, index) => (

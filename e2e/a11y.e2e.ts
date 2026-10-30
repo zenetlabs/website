@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import { gotoHydrated, PAGES, settleAnimations } from './helpers';
+import { gotoHydrated, PAGES, PAIRS, settleAnimations } from './helpers';
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 const VIEWPORTS = [
@@ -43,11 +43,13 @@ test.describe('reduced motion', () => {
   }
 });
 
-test('home has no horizontal scroll on mobile', async ({ page }) => {
-  await page.setViewportSize({ width: 412, height: 915 });
-  await gotoHydrated(page, '/');
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - window.innerWidth,
-  );
-  expect(overflow).toBeLessThanOrEqual(0);
-});
+for (const url of PAIRS.slice(0, 3).flatMap(({ en, es }) => [en, es])) {
+  test(`${url} has no horizontal scroll on mobile`, async ({ page }) => {
+    await page.setViewportSize({ width: 412, height: 915 });
+    await gotoHydrated(page, url);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+}

@@ -66,6 +66,10 @@ describe('PAGES', () => {
     for (const [page, , slug] of presentSlugs) {
       expect(pageForSlug(slug)).toBe(page);
     }
+    expect(pageForSlug('/pricing')).toBe('pricing');
+    expect(pageForSlug('/precios')).toBe('pricing');
+    expect(pageForSlug('/about')).toBe('about');
+    expect(pageForSlug('/sobre-nosotros')).toBe('about');
     expect(pageForSlug('/legal-notice')).toBe('legalNotice');
     expect(pageForSlug('/aviso-legal')).toBe('legalNotice');
     expect(pageForSlug('/nope')).toBeUndefined();
@@ -83,6 +87,8 @@ describe('PAGES', () => {
 describe('pageLocales and hasLocale', () => {
   it.each([
     ['home', ['en', 'es']],
+    ['pricing', ['en', 'es']],
+    ['about', ['en', 'es']],
     ['privacy', ['en', 'es']],
     ['cookies', ['en', 'es']],
     ['legalNotice', ['es']],
@@ -96,9 +102,17 @@ describe('pageLocales and hasLocale', () => {
 
 describe('pagesIn and slugForms', () => {
   it('lists the pages present in each locale', () => {
-    expect(pagesIn('en')).toEqual(['home', 'privacy', 'cookies']);
+    expect(pagesIn('en')).toEqual([
+      'home',
+      'pricing',
+      'about',
+      'privacy',
+      'cookies',
+    ]);
     expect(pagesIn('es')).toEqual([
       'home',
+      'pricing',
+      'about',
       'privacy',
       'cookies',
       'legalNotice',
@@ -118,10 +132,14 @@ describe('pagesIn and slugForms', () => {
 describe('pagePath', () => {
   it.each([
     ['en', 'home', '/'],
+    ['en', 'pricing', '/pricing'],
+    ['en', 'about', '/about'],
     ['en', 'privacy', '/privacy'],
     ['en', 'cookies', '/cookies'],
     ['en', 'legalNotice', '/es/aviso-legal'],
     ['es', 'home', '/es'],
+    ['es', 'pricing', '/es/precios'],
+    ['es', 'about', '/es/sobre-nosotros'],
     ['es', 'privacy', '/es/privacidad'],
     ['es', 'cookies', '/es/cookies'],
     ['es', 'legalNotice', '/es/aviso-legal'],
@@ -166,6 +184,10 @@ describe('localizedRewrite', () => {
   it('maps the Spanish slug to the English route and back', () => {
     expect(run('input', '/es/privacidad')).toBe('/es/privacy');
     expect(run('output', '/es/privacy')).toBe('/es/privacidad');
+    expect(run('input', '/es/precios')).toBe('/es/pricing');
+    expect(run('output', '/es/pricing')).toBe('/es/precios');
+    expect(run('input', '/es/sobre-nosotros')).toBe('/es/about');
+    expect(run('output', '/es/about')).toBe('/es/sobre-nosotros');
     expect(run('input', '/es/aviso-legal')).toBe('/es/legal-notice');
     expect(run('output', '/es/legal-notice')).toBe('/es/aviso-legal');
   });
@@ -177,10 +199,14 @@ describe('localizedRewrite', () => {
 
   it.each([
     '/',
+    '/pricing',
+    '/about',
     '/privacy',
     '/cookies',
     '/es',
     '/es/cookies',
+    '/precios',
+    '/sobre-nosotros',
     '/robots.txt',
     '/_serverFn/x',
     '/es/nope',

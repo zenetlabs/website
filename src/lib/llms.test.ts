@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { legalEntity } from '@/lib/content';
-import { buildLlmsTxt, LLMS_TXT } from '@/lib/llms';
+import { buildLlmsTxt } from '@/lib/llms';
+import { formatPriceSummary } from '@/lib/money';
 import { pagePath, pagesIn } from '@/lib/page-registry';
 import { PORTFOLIO } from '@/lib/portfolio';
 import { FLIPPED } from '../../test/entities';
+import { FAQ } from '../../test/faq';
+import { SERVICES } from '../../test/page-content';
 
 const LINK = /^- \[[^\]]+\]\((https?:\/\/|mailto:)[^)]+\)(: .+)?$/;
 
+const LLMS_TXT = buildLlmsTxt();
 const lines = LLMS_TXT.split('\n');
 
 function section(heading: string): string[] {
@@ -29,19 +33,25 @@ describe('LLMS_TXT', () => {
 
   it('orders the sections', () => {
     const headings = lines.filter((line) => line.startsWith('## '));
-    expect(headings).toEqual(['## Pages', '## Portfolio', '## Contact']);
+    expect(headings).toEqual([
+      '## Services',
+      '## Pages',
+      '## FAQ',
+      '## Portfolio',
+      '## Contact',
+    ]);
   });
 
   it('writes every list line as a link', () => {
     const items = lines
-      .slice(lines.indexOf('## Pages'))
+      .slice(lines.indexOf('## Services'))
       .filter((line) => line.startsWith('- '));
     expect(items.filter((line) => !LINK.test(line))).toEqual([]);
   });
 
   it('lists every page in both locales on the production host', () => {
     const urls = hrefs(section('## Pages'));
-    expect(urls).toHaveLength(7);
+    expect(urls).toHaveLength(11);
     expect(urls.every((url) => url.startsWith('https://zenetlabs.com'))).toBe(
       true,
     );
@@ -68,6 +78,28 @@ describe('LLMS_TXT', () => {
     expect(flipped).toContain(
       'The Spanish site is operated by Albert Sabaté Martínez (NIF 47986151D), Calle Ejemplo 1, 08001 Barcelona.',
     );
+  });
+
+  it('lists every service with its price on the pricing page', () => {
+    const items = section('## Services');
+    const services = SERVICES.en;
+    expect(hrefs(items)).toEqual(
+      Object.keys(services).map((id) => `https://zenetlabs.com/pricing#${id}`),
+    );
+    for (const [index, service] of Object.values(services).entries()) {
+      expect(items[index]).toContain(formatPriceSummary('en', service.prices));
+    }
+  });
+
+  it('links every question to its anchor on the home page', () => {
+    expect(hrefs(section('## FAQ'))).toEqual(
+      FAQ.en.map(({ id }) => `https://zenetlabs.com/#faq-${id}`),
+    );
+    expect(section('## FAQ')).toHaveLength(15);
+  });
+
+  it('drops the old services preamble', () => {
+    expect(LLMS_TXT).not.toContain('\nServices:');
   });
 
   it('lists the portfolio and the contact address', () => {
