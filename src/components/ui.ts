@@ -6,3 +6,8 @@ export const EYEBROW =
 
 export const TEXT_LINK =
   'text-link underline underline-offset-4 motion-safe:transition-[text-underline-offset] motion-safe:duration-200 hover:underline-offset-2';
+
+export const CARD = 'rounded-card border border-hairline bg-surface';
+
+export const BULLET_ITEM =
+  'relative pl-5 before:absolute before:top-[0.7em] before:left-0 before:size-1.5 before:rounded-full before:bg-agent';

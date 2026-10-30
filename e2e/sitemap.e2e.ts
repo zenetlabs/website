@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import {
+  faqVisibilityProblems,
   identityProblems,
   jsonLdBlocks,
   validateJsonLd,
@@ -50,6 +51,7 @@ test('every sitemap url is a self-canonical, indexable, reciprocal page', async 
       const blocks = jsonLdBlocks(html);
       expect(blocks.length).toBeGreaterThan(0);
       expect(validateJsonLd(blocks, new URL(entry.loc).origin)).toEqual([]);
+      expect(faqVisibilityProblems(html, blocks)).toEqual([]);
       blocksByPage.set(path, blocks);
 
       for (const target of hreflangs.values()) {

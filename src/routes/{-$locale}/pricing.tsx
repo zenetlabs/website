@@ -1,0 +1,108 @@
+import { createFileRoute } from '@tanstack/react-router';
+import { CtaSection } from '@/components/cta-section';
+import { Container, EmphasisTitle } from '@/components/section';
+import { BULLET_ITEM, CARD, EYEBROW } from '@/components/ui';
+import { loadPricingContent } from '@/content/load';
+import { formatPrice } from '@/lib/money';
+import { navHref } from '@/lib/nav';
+import { pricingStructuredData } from '@/lib/page-structured-data';
+import { pageHeadFor } from '@/lib/pages';
+
+export const Route = createFileRoute('/{-$locale}/pricing')({
+  staticData: { page: 'pricing' },
+  loader: ({ context }) => loadPricingContent(context.locale),
+  head: ({ match }) => pageHeadFor(match.context.locale, 'pricing'),
+  scripts: ({ match, loaderData }) =>
+    loaderData
+      ? pricingStructuredData(match.context.locale, loaderData.services)
+      : [],
+  component: Pricing,
+});
+
+function Pricing() {
+  const { locale } = Route.useRouteContext();
+  const { page, services } = Route.useLoaderData();
+
+  return (
+    <>
+      <Container className="py-16 md:py-24">
+        <p className={EYEBROW}>{page.eyebrow}</p>
+        <h1 className="mt-6 max-w-4xl text-balance">
+          <EmphasisTitle parts={page.title} marker />
+        </h1>
+        <p className="mt-8 max-w-2xl text-lg text-muted-fg">{page.lead}</p>
+        <p className={`mt-6 ${EYEBROW}`}>{page.taxNote}</p>
+      </Container>
+      <Container className="grid gap-6 pb-20 md:pb-28">
+        {Object.values(services).map((service) => {
+          const detail = page.details[service.id];
+          return (
+            <article
+              key={service.id}
+              id={service.id}
+              className={`${CARD} grid gap-8 p-8 md:grid-cols-12 md:gap-10`}
+            >
+              <div className="md:col-span-5">
+                <h2 className="text-balance text-3xl md:text-4xl">
+                  {service.name}
+                </h2>
+                <p className="mt-4 text-muted-fg">{service.summary}</p>
+                <dl className="mt-6 grid gap-3">
+                  {service.prices.map((price) => (
+                    <div key={price.id}>
+                      <dt className={EYEBROW}>
+                        {price.label ?? page.labels.price}
+                      </dt>
+                      <dd className="font-mono text-lg">
+                        {formatPrice(locale, price)}
+                        {price.note ? (
+                          <span className="block font-sans text-sm text-muted-fg">
+                            {price.note}
+                          </span>
+                        ) : null}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+              <div className="md:col-span-7">
+                <p className={EYEBROW}>{page.labels.includes}</p>
+                <ul className="mt-4 grid gap-3">
+                  {detail.includes.map((line) => (
+                    <li key={line} className={BULLET_ITEM}>
+                      {line}
+                    </li>
+                  ))}
+                </ul>
+                {detail.timeline ? (
+                  <p className="mt-6">
+                    <span className={EYEBROW}>{page.labels.timeline}</span>{' '}
+                    {detail.timeline}
+                  </p>
+                ) : null}
+              </div>
+            </article>
+          );
+        })}
+      </Container>
+      <section aria-labelledby="how-title" className="border-t border-hairline">
+        <Container className="py-20 md:py-28">
+          <h2 id="how-title">{page.how.title}</h2>
+          <ol className="mt-10 grid max-w-3xl list-decimal gap-4 pl-6 text-lg text-muted-fg marker:font-mono">
+            {page.how.items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ol>
+        </Container>
+      </section>
+      <CtaSection
+        copy={page.cta}
+        locale={locale}
+        secondary={{
+          label: page.cta.faq,
+          href: navHref(locale, { page: 'home', section: 'faq' }),
+        }}
+      />
+    </>
+  );
+}

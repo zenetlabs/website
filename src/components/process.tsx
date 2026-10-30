@@ -1,14 +1,12 @@
 import { Section } from '@/components/section';
-import { useMessages } from '@/lib/i18n';
+import type { HomeContent } from '@/content/types';
 
-export function Process() {
-  const { process } = useMessages();
-
+export function Process({ copy }: { copy: HomeContent['process'] }) {
   return (
-    <Section id="process" eyebrow={process.eyebrow} title={process.title}>
+    <Section id="process" eyebrow={copy.eyebrow} title={copy.title}>
       <ol className="timeline">
-        {Object.values(process.steps).map((step) => (
-          <li key={step.label}>
+        {copy.steps.map((step) => (
+          <li key={step.id}>
             <h3 className="font-mono text-sm font-medium uppercase tracking-[0.08em]">
               {step.label}
             </h3>

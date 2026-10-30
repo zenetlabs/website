@@ -69,7 +69,13 @@ const STATES: ReadonlyArray<
     'LegalNoticeEs with Singapore',
     LegalNoticeEs,
     SINGAPORE,
-    [SINGAPORE_COMPANY, 'UEN 202202371M', SINGAPORE_ADDRESS_ES, 'ACRA'],
+    [
+      SINGAPORE_COMPANY,
+      'UEN 202202371M',
+      SINGAPORE_ADDRESS_ES,
+      'ACRA',
+      'no incluyen el IVA',
+    ],
     [],
   ],
   [
@@ -106,6 +112,7 @@ const STATES: ReadonlyArray<
       'Calle Ejemplo 1, 08001 Barcelona',
       'autónomo',
       'legislación española',
+      'no incluyen el IVA',
     ],
     SINGAPORE_ONLY,
   ],

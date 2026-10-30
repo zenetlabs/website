@@ -20,9 +20,11 @@ Decisions go through AskUserQuestion (recommended option first).
 - Locales: en (unprefixed) and es via `{-$locale}`. UI copy lives in `src/i18n/{en,es}.json` (`pnpm check:i18n`); legal prose lives per locale in `src/routes/{-$locale}/-legal/*.tsx`.
 - Colours only through `src/styles/tokens.css` utilities (`pnpm check:colors`). Dark mode = prefers-color-scheme.
 - Slugs per locale and `lastmod` live in `src/lib/page-registry.ts` (router `rewrite`, internal path = `route`, defaulting to the English slug); never build public URLs from `location.pathname`.
+- Nav targets live in `src/lib/nav.ts`; `CTA_TARGET` is the single booking CTA.
 - Public per-env values: `site.config.ts` (build-time, by CLOUDFLARE_ENV). Secrets: Secrets Store bindings via `import { env } from 'cloudflare:workers'`, read per request.
 
 ## Gotchas
+- Page-body copy (`home`, `pricing`, `about`, `cases`, `companies`) is imported only from its route component or server-only code, never from chrome, `head()`, `scripts()`, `pages.ts` or `content.ts`. `e2e/js-budget.e2e.ts` enforces it.
 - Bump a page's `lastmod` when its main content, JSON-LD or links change.
 - JSON-LD and inline scripts go in route `scripts()`, never `head()` (React #418). Theme-color pair lives in RootDocument.
 - No Date.now()/new Date() in render. Tailwind 4: `outline-hidden`, not `outline-none`.

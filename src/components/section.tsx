@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { EYEBROW } from '@/components/ui';
-
-export type TitleParts = { before: string; emphasis: string; after: string };
+import type { TitleParts } from '@/content/types';
 
 export function Container({
   className = '',

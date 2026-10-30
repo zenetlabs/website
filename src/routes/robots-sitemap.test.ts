@@ -51,9 +51,13 @@ describe('sitemapXml', () => {
   it('lists the pages present in each locale', () => {
     expect(parseSitemap(xml).map((entry) => entry.loc)).toEqual([
       'https://zenetlabs.com/',
+      'https://zenetlabs.com/pricing',
+      'https://zenetlabs.com/about',
       'https://zenetlabs.com/privacy',
       'https://zenetlabs.com/cookies',
       'https://zenetlabs.com/es',
+      'https://zenetlabs.com/es/precios',
+      'https://zenetlabs.com/es/sobre-nosotros',
       'https://zenetlabs.com/es/privacidad',
       'https://zenetlabs.com/es/cookies',
       'https://zenetlabs.com/es/aviso-legal',
@@ -70,7 +74,7 @@ describe('sitemapXml', () => {
 
   it('gives every url its alternates', () => {
     const entries = parseSitemap(xml);
-    expect(entries).toHaveLength(7);
+    expect(entries).toHaveLength(11);
     for (const { loc, alternates } of entries) {
       const page = PAGE_IDS.find((id) =>
         locales.some((locale) => pageUrl(locale, id) === loc),

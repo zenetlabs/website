@@ -1,3 +1,7 @@
+import { companies } from '@/content/en/companies';
+import { faq } from '@/content/en/faq';
+import { home } from '@/content/en/home';
+import { services } from '@/content/en/services';
 import type { PublishedEntity } from '@/content/types';
 import {
   formatAddress,
@@ -6,13 +10,14 @@ import {
   taxIdLabel,
 } from '@/lib/content';
 import { type Locale, locales, messages } from '@/lib/i18n';
+import { formatPriceSummary } from '@/lib/money';
 import { pagesIn } from '@/lib/page-registry';
 import { pageCopy } from '@/lib/pages';
 import { PORTFOLIO } from '@/lib/portfolio';
 import { pageUrl, SITE_NAME } from '@/lib/seo';
 import { PUBLIC_EMAIL } from '@/lib/site';
 
-const { meta, services, work, contact } = messages.en;
+const { meta } = messages.en;
 const SITE_LANGUAGE: Record<Locale, string> = {
   en: 'English',
   es: 'Spanish',
@@ -52,25 +57,31 @@ export function buildLlmsTxt(
     `> ${meta.description}`,
     `${operatorSentences(entityOf)} Every page is also served as Markdown to requests that send \`Accept: text/markdown\`.`,
     [
-      'Services:',
-      ...Object.values(services.items).map((item) => {
-        return `- ${item.title}: ${Object.values(item.bullets).join('; ')}.`;
-      }),
+      '## Services',
+      ...Object.values(services).map(
+        (service) =>
+          `- [${service.name}](${pageUrl('en', 'pricing')}#${service.id}): ${formatPriceSummary('en', service.prices)}. ${service.summary}`,
+      ),
     ].join('\n'),
     ['## Pages', ...pages].join('\n'),
+    [
+      '## FAQ',
+      ...faq.map(
+        ({ id, question, answer }) =>
+          `- [${question}](${pageUrl('en', 'home')}#faq-${id}): ${answer}`,
+      ),
+    ].join('\n'),
     [
       '## Portfolio',
       ...PORTFOLIO.map(
         ({ key, name, href }) =>
-          `- [${name}](${href}): ${work.items[key].description} (${work.items[key].category})`,
+          `- [${name}](${href}): ${companies[key].description} (${companies[key].category})`,
       ),
     ].join('\n'),
     [
       '## Contact',
-      `- [Email](mailto:${PUBLIC_EMAIL}): ${contact.human}`,
-      `- [Contact form](${pageUrl('en', 'home')}#contact): ${contact.text}`,
+      `- [Email](mailto:${PUBLIC_EMAIL}): ${home.contact.human}`,
+      `- [Contact form](${pageUrl('en', 'home')}#contact): ${home.contact.lead}`,
     ].join('\n'),
   ].join('\n\n')}\n`;
 }
-
-export const LLMS_TXT = buildLlmsTxt();

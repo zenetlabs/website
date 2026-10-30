@@ -6,6 +6,8 @@
       "url": [
         "http://localhost:4174/",
         "http://localhost:4174/es",
+        "http://localhost:4174/pricing",
+        "http://localhost:4174/es/precios",
         "http://localhost:4174/privacy",
         "http://localhost:4174/es/privacidad"
       ],

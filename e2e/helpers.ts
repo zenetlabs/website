@@ -3,6 +3,8 @@ import { decodeEntities } from '../src/lib/markdown';
 
 export const PAIRS = [
   { en: '/', es: '/es' },
+  { en: '/pricing', es: '/es/precios' },
+  { en: '/about', es: '/es/sobre-nosotros' },
   { en: '/privacy', es: '/es/privacidad' },
   { en: '/cookies', es: '/es/cookies' },
 ] as const;

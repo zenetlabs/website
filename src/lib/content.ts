@@ -1,19 +1,26 @@
 import * as en from '@/content/en/entity';
+import { founder as enFounder } from '@/content/en/founder';
 import * as es from '@/content/es/entity';
+import { founder as esFounder } from '@/content/es/founder';
 import type {
-  Country,
   LegalEntity,
   PostalAddress,
   PublishedEntity,
+  SiteContent,
 } from '@/content/types';
 import { type Locale, messages } from '@/lib/i18n';
 
-const CONTENT: Record<
-  Locale,
-  { entity: LegalEntity; countryNames: Record<Country, string> }
-> = {
-  en: { entity: en.entity, countryNames: en.countryNames },
-  es: { entity: es.entity, countryNames: es.countryNames },
+export const CONTENT: Record<Locale, SiteContent> = {
+  en: {
+    entity: en.entity,
+    countryNames: en.countryNames,
+    founder: enFounder,
+  },
+  es: {
+    entity: es.entity,
+    countryNames: es.countryNames,
+    founder: esFounder,
+  },
 };
 
 export function hasAddress(entity: LegalEntity): entity is PublishedEntity {
