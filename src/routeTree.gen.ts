@@ -15,6 +15,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as Char123LocaleChar125RouteImport } from './routes/{-$locale}'
 import { Route as Char123LocaleChar125IndexRouteImport } from './routes/{-$locale}/index'
 import { Route as Char123LocaleChar125CookiesRouteImport } from './routes/{-$locale}/cookies'
+import { Route as Char123LocaleChar125LegalNoticeRouteImport } from './routes/{-$locale}/legal-notice'
 import { Route as Char123LocaleChar125PrivacyRouteImport } from './routes/{-$locale}/privacy'
 
 const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
@@ -49,6 +50,12 @@ const Char123LocaleChar125CookiesRoute =
     path: '/cookies',
     getParentRoute: () => Char123LocaleChar125Route,
   } as any)
+const Char123LocaleChar125LegalNoticeRoute =
+  Char123LocaleChar125LegalNoticeRouteImport.update({
+    id: '/legal-notice',
+    path: '/legal-notice',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
 const Char123LocaleChar125PrivacyRoute =
   Char123LocaleChar125PrivacyRouteImport.update({
     id: '/privacy',
@@ -62,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/{-$locale}': typeof Char123LocaleChar125RouteWithChildren
   '/{-$locale}/cookies': typeof Char123LocaleChar125CookiesRoute
+  '/{-$locale}/legal-notice': typeof Char123LocaleChar125LegalNoticeRoute
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
 }
@@ -70,6 +78,7 @@ export interface FileRoutesByTo {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/{-$locale}/cookies': typeof Char123LocaleChar125CookiesRoute
+  '/{-$locale}/legal-notice': typeof Char123LocaleChar125LegalNoticeRoute
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}': typeof Char123LocaleChar125IndexRoute
 }
@@ -80,6 +89,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/{-$locale}': typeof Char123LocaleChar125RouteWithChildren
   '/{-$locale}/cookies': typeof Char123LocaleChar125CookiesRoute
+  '/{-$locale}/legal-notice': typeof Char123LocaleChar125LegalNoticeRoute
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
 }
@@ -91,6 +101,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/{-$locale}'
     | '/{-$locale}/cookies'
+    | '/{-$locale}/legal-notice'
     | '/{-$locale}/privacy'
     | '/{-$locale}/'
   fileRoutesByTo: FileRoutesByTo
@@ -99,6 +110,7 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/{-$locale}/cookies'
+    | '/{-$locale}/legal-notice'
     | '/{-$locale}/privacy'
     | '/{-$locale}'
   id:
@@ -108,6 +120,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/{-$locale}'
     | '/{-$locale}/cookies'
+    | '/{-$locale}/legal-notice'
     | '/{-$locale}/privacy'
     | '/{-$locale}/'
   fileRoutesById: FileRoutesById
@@ -163,6 +176,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char123LocaleChar125CookiesRouteImport
       parentRoute: typeof Char123LocaleChar125Route
     }
+    '/{-$locale}/legal-notice': {
+      id: '/{-$locale}/legal-notice'
+      path: '/legal-notice'
+      fullPath: '/{-$locale}/legal-notice'
+      preLoaderRoute: typeof Char123LocaleChar125LegalNoticeRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
     '/{-$locale}/privacy': {
       id: '/{-$locale}/privacy'
       path: '/privacy'
@@ -175,12 +195,14 @@ declare module '@tanstack/react-router' {
 
 interface Char123LocaleChar125RouteChildren {
   Char123LocaleChar125CookiesRoute: typeof Char123LocaleChar125CookiesRoute
+  Char123LocaleChar125LegalNoticeRoute: typeof Char123LocaleChar125LegalNoticeRoute
   Char123LocaleChar125PrivacyRoute: typeof Char123LocaleChar125PrivacyRoute
   Char123LocaleChar125IndexRoute: typeof Char123LocaleChar125IndexRoute
 }
 
 const Char123LocaleChar125RouteChildren: Char123LocaleChar125RouteChildren = {
   Char123LocaleChar125CookiesRoute: Char123LocaleChar125CookiesRoute,
+  Char123LocaleChar125LegalNoticeRoute: Char123LocaleChar125LegalNoticeRoute,
   Char123LocaleChar125PrivacyRoute: Char123LocaleChar125PrivacyRoute,
   Char123LocaleChar125IndexRoute: Char123LocaleChar125IndexRoute,
 }

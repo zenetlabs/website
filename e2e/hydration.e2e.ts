@@ -32,6 +32,8 @@ const SWITCHES: ReadonlyArray<Switch> = [
     [pair.es, 'EN', pair.en, 'en'],
   ]),
   ['/privacy?x=1', 'ES', '/es/privacidad?x=1', 'es'],
+  ['/es/aviso-legal', 'EN', '/', 'en'],
+  ['/es/aviso-legal?x=1', 'EN', '/', 'en'],
   ['/nope', 'ES', '/es', 'es'],
   ['/es/nope', 'EN', '/', 'en'],
 ];

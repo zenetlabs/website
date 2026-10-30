@@ -1,7 +1,7 @@
 import { useLocation } from '@tanstack/react-router';
 import { useCurrentPage } from '@/lib/current-page';
 import { type Locale, locales, useMessages } from '@/lib/i18n';
-import { pagePath } from '@/lib/page-registry';
+import { switchHref } from '@/lib/page-registry';
 
 const LABELS: Record<Locale, string> = { en: 'EN', es: 'ES' };
 
@@ -24,7 +24,7 @@ export function LanguageSwitch({
       {locales.map((target) => (
         <a
           key={target}
-          href={`${pagePath(target, page ?? 'home')}${page ? search : ''}`}
+          href={switchHref(target, page, search)}
           hrefLang={target}
           lang={target}
           aria-current={target === locale ? 'page' : undefined}

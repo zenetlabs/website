@@ -5,6 +5,7 @@ import { type FormEvent, type ReactNode, useId, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
 import type { ContactInput } from '@/lib/contact-schema';
+import { legalEntity } from '@/lib/content';
 import { useLocale, useMessages } from '@/lib/i18n';
 import { pagePath } from '@/lib/page-registry';
 import { PUBLIC_EMAIL, SITE } from '@/lib/site';
@@ -51,6 +52,9 @@ export function ContactForm() {
   const successHeading = useRef<HTMLParagraphElement>(null);
   const alert = useRef<HTMLParagraphElement>(null);
   const pending = status === 'pending';
+  const [consentBefore, consentAfter] = copy.consent
+    .replace('{legalName}', legalEntity(locale).legalName)
+    .split('{privacyLink}');
 
   function fail(next: 'errorSend' | 'errorCaptcha') {
     flushSync(() => {
@@ -180,11 +184,11 @@ export function ContactForm() {
                 className="mt-1 size-4 shrink-0 accent-accent"
               />
               <span>
-                {copy.consentBefore}
+                {consentBefore}
                 <a href={pagePath(locale, 'privacy')} className={TEXT_LINK}>
                   {copy.consentLink}
                 </a>
-                {copy.consentAfter}
+                {consentAfter}
               </span>
             </label>
             {engaged ? (

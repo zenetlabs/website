@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { locales } from '@/lib/i18n';
 import { ogImagePath } from '@/lib/og-image';
-import { PAGE_IDS } from '@/lib/page-registry';
+import { hasLocale, pageLocales, pagesIn } from '@/lib/page-registry';
 import { pageHeadFor } from '@/lib/pages';
 import { jsonLd, type pageHead, pageUrl } from '@/lib/seo';
 
@@ -11,7 +11,7 @@ const OG_LOCALE = { en: 'en_SG', es: 'es_ES' } as const;
 type Meta = ReturnType<typeof pageHead>['meta'];
 
 const cases = locales.flatMap((locale) =>
-  PAGE_IDS.map((page) => [locale, page] as const),
+  pagesIn(locale).map((page) => [locale, page] as const),
 );
 
 function contents(meta: Meta, key: 'name' | 'property', value: string) {
@@ -41,14 +41,13 @@ describe.each(cases)('pageHeadFor(%s, %s)', (locale, page) => {
     expect(canonicals).toEqual([{ rel: 'canonical', href: url }]);
   });
 
-  it('has hreflang en, es and x-default pointing at en', () => {
+  it('has hreflang for the locales present, and x-default only with en', () => {
     const alternates = head.links
       .filter((link) => link.rel === 'alternate')
       .map((link) => [link.hrefLang, link.href]);
     expect(alternates).toEqual([
-      ['en', pageUrl('en', page)],
-      ['es', pageUrl('es', page)],
-      ['x-default', pageUrl('en', page)],
+      ...pageLocales(page).map((l) => [l, pageUrl(l, page)]),
+      ...(hasLocale(page, 'en') ? [['x-default', pageUrl('en', page)]] : []),
     ]);
   });
 
@@ -63,9 +62,11 @@ describe.each(cases)('pageHeadFor(%s, %s)', (locale, page) => {
     expect(contents(head.meta, 'name', 'twitter:image')).toEqual([
       `${SITE}${ogImagePath(locale)}`,
     ]);
-    expect(contents(head.meta, 'property', 'og:locale:alternate')).toEqual([
-      OG_LOCALE[locale === 'en' ? 'es' : 'en'],
-    ]);
+    expect(contents(head.meta, 'property', 'og:locale:alternate')).toEqual(
+      pageLocales(page)
+        .filter((l) => l !== locale)
+        .map((l) => OG_LOCALE[l]),
+    );
   });
 
   it('is deterministic', () => {
@@ -73,19 +74,28 @@ describe.each(cases)('pageHeadFor(%s, %s)', (locale, page) => {
   });
 });
 
-describe.each(locales)('legal descriptions (%s)', (locale) => {
-  it.each(['privacy', 'cookies'] as const)(
-    '%s is 120 to 155 characters',
-    (page) => {
-      const [description] = contents(
-        pageHeadFor(locale, page).meta,
-        'name',
-        'description',
-      );
-      expect(description?.length).toBeGreaterThanOrEqual(120);
-      expect(description?.length).toBeLessThanOrEqual(155);
-    },
-  );
+describe('legal descriptions', () => {
+  const legal = cases.filter(([, page]) => page !== 'home');
+
+  it.each(legal)('%s %s is 120 to 155 characters', (locale, page) => {
+    const [description] = contents(
+      pageHeadFor(locale, page).meta,
+      'name',
+      'description',
+    );
+    expect(description?.length).toBeGreaterThanOrEqual(120);
+    expect(description?.length).toBeLessThanOrEqual(155);
+  });
+});
+
+describe('single-locale pages', () => {
+  const head = pageHeadFor('es', 'legalNotice');
+
+  it('has only its own hreflang and no x-default or alternate og locale', () => {
+    const alternates = head.links.filter((link) => link.rel === 'alternate');
+    expect(alternates.map((link) => link.hrefLang)).toEqual(['es']);
+    expect(contents(head.meta, 'property', 'og:locale:alternate')).toEqual([]);
+  });
 });
 
 describe('titles and descriptions', () => {
@@ -124,6 +134,8 @@ describe('pageUrl', () => {
     ['es', 'home', `${SITE}/es`],
     ['es', 'privacy', `${SITE}/es/privacidad`],
     ['es', 'cookies', `${SITE}/es/cookies`],
+    ['es', 'legalNotice', `${SITE}/es/aviso-legal`],
+    ['en', 'legalNotice', `${SITE}/es/aviso-legal`],
   ] as const)('%s %s is %s', (locale, page, expected) => {
     expect(pageUrl(locale, page)).toBe(expected);
   });
@@ -131,9 +143,14 @@ describe('pageUrl', () => {
 
 describe('jsonLd', () => {
   it('escapes the less-than sign', () => {
-    const entry = jsonLd({ name: '</script><b>' });
+    const data = {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: '</script><b>',
+    } as const;
+    const entry = jsonLd(data);
     expect(entry.type).toBe('application/ld+json');
     expect(entry.children).not.toContain('<');
-    expect(JSON.parse(entry.children)).toEqual({ name: '</script><b>' });
+    expect(JSON.parse(entry.children)).toEqual(data);
   });
 });

@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { locales } from '@/lib/i18n';
+import { hasLocale, PAGE_IDS, pagePath, slugForms } from '@/lib/page-registry';
 import { redirectTarget } from '@/lib/redirects';
 import { PATH_CASES } from '../../test/redirect-cases';
 
@@ -19,6 +21,7 @@ const CANONICAL = [
   '/es',
   '/es/privacidad',
   '/es/cookies',
+  '/es/aviso-legal',
 ];
 
 const SITE = 'https://zenetlabs.com';
@@ -51,6 +54,36 @@ describe('redirectTarget on alias hosts', () => {
     expect(redirectTarget(new URL('http://zenettech.com/es?x=1'))).toBe(
       `${SITE}/es?x=1`,
     );
+  });
+});
+
+describe('redirectTarget for single-locale pages', () => {
+  const cases = PAGE_IDS.flatMap((page) =>
+    locales
+      .filter((locale) => !hasLocale(page, locale))
+      .flatMap((missing) =>
+        slugForms(page).map((form) => [page, missing, form] as const),
+      ),
+  );
+
+  it('covers at least the legal notice', () => {
+    expect(cases.length).toBeGreaterThan(0);
+  });
+
+  it.each(cases)(
+    '%s requested in %s as %s goes to its only locale',
+    (page, missing, form) => {
+      const path = missing === 'en' ? form : `/${missing}${form}`;
+      expect(redirectTarget(new URL(`${SITE}${path}`))).toBe(
+        `${SITE}${pagePath(missing, page)}`,
+      );
+    },
+  );
+
+  it('keeps the query across host, protocol and slug in one hop', () => {
+    expect(
+      redirectTarget(new URL('http://zenettech.com/aviso-legal?x=1')),
+    ).toBe(`${SITE}/es/aviso-legal?x=1`);
   });
 });
 

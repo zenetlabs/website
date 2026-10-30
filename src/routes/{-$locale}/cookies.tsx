@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { legalEntity } from '@/lib/content';
 import { useLocale, useMessages } from '@/lib/i18n';
 import { pageHeadFor } from '@/lib/pages';
 import { CookiesEn } from './-legal/cookies-en';
@@ -12,6 +13,7 @@ export const Route = createFileRoute('/{-$locale}/cookies')({
 
 function Cookies() {
   const { cookies } = useMessages();
-  const Page = useLocale() === 'es' ? CookiesEs : CookiesEn;
-  return <Page title={cookies.title} />;
+  const locale = useLocale();
+  const Page = locale === 'es' ? CookiesEs : CookiesEn;
+  return <Page title={cookies.title} entity={legalEntity(locale)} />;
 }

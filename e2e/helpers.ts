@@ -7,7 +7,14 @@ export const PAIRS = [
   { en: '/cookies', es: '/es/cookies' },
 ] as const;
 
-export const PAGES = PAIRS.flatMap((pair) => [pair.en, pair.es]);
+export const CLUSTERS: ReadonlyArray<{ en?: string; es?: string }> = [
+  ...PAIRS,
+  { es: '/es/aviso-legal' },
+];
+
+export const PAGES = CLUSTERS.flatMap((cluster) =>
+  [cluster.en, cluster.es].flatMap((url) => url ?? []),
+);
 
 const TAG = /<(?:link|meta)\b[^>]*>/g;
 const ATTRIBUTE = /([\w:-]+)="([^"]*)"/g;

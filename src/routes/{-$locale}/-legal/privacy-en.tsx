@@ -1,16 +1,24 @@
 import { LegalPage, LegalSection } from '@/components/legal-page';
 import { TEXT_LINK } from '@/components/ui';
+import type { PublishedEntity } from '@/content/types';
+import { formatAddress, taxIdLabel } from '@/lib/content';
 import { PUBLIC_EMAIL } from '@/lib/site';
 
-export function PrivacyEn({ title }: { title: string }) {
+export function PrivacyEn({
+  title,
+  entity,
+}: {
+  title: string;
+  entity: PublishedEntity;
+}) {
   return (
-    <LegalPage title={title} updated="Last updated: 17 October 2026">
+    <LegalPage title={title} updated="Last updated: 30 October 2026">
       <LegalSection title="Who is responsible for your data">
         <p>
-          The controller of the personal data collected through zenetlabs.com is
-          Zenet Technology Pte. Ltd. (UEN 202202371M), 160 Robinson Road #14-04,
-          Singapore Business Federation Center, Singapore 068914. We operate
-          under the name Zenet Labs.
+          The controller of the personal data collected through zenetlabs.com is{' '}
+          {entity.legalName} ({taxIdLabel(entity)}),{' '}
+          {formatAddress(entity.address, 'en')}. We operate under the name Zenet
+          Labs.
         </p>
         <p>
           For any privacy question, write to{' '}

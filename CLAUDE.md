@@ -15,9 +15,11 @@ Decisions go through AskUserQuestion (recommended option first).
 
 ## Stack facts
 - TanStack Start SSR (no prerender) on Worker `prod-zenet-web`; all page requests hit `src/server.ts`, which does host/legacy-path 301s first.
+- Business data and the Spanish legal-notice meta live in `src/content/{en,es}/*.ts` (types in `types.ts`, built by `src/lib/content.ts`). `src/i18n/*.json` is UI chrome plus, until R2 moves it, the privacy/cookies page meta.
+- Single-locale page: registry `{ slugs: { es }, route }` (`route` is required only when there is no `en` slug); the `{-$locale}` layout 404s any page missing the request locale from its `staticData.page`, so routes need no per-route guard. Legal identity always comes from `legalEntity(locale)`.
 - Locales: en (unprefixed) and es via `{-$locale}`. UI copy lives in `src/i18n/{en,es}.json` (`pnpm check:i18n`); legal prose lives per locale in `src/routes/{-$locale}/-legal/*.tsx`.
 - Colours only through `src/styles/tokens.css` utilities (`pnpm check:colors`). Dark mode = prefers-color-scheme.
-- Slugs per locale and `lastmod` live in `src/lib/page-registry.ts` (router `rewrite`, internal path = English slug); never build public URLs from `location.pathname`.
+- Slugs per locale and `lastmod` live in `src/lib/page-registry.ts` (router `rewrite`, internal path = `route`, defaulting to the English slug); never build public URLs from `location.pathname`.
 - Public per-env values: `site.config.ts` (build-time, by CLOUDFLARE_ENV). Secrets: Secrets Store bindings via `import { env } from 'cloudflare:workers'`, read per request.
 
 ## Gotchas
@@ -27,6 +29,7 @@ Decisions go through AskUserQuestion (recommended option first).
 - workers-types shadows Element.append — use appendChild.
 - Playwright: wait for `body[data-hydrated="true"]` before clicking.
 - `pnpm e2e` serves whatever is in `dist/` and reuses any server already on :4173: after a `CLOUDFLARE_ENV=production pnpm build`, run `pnpm build` again and stop stale previews first (the real Turnstile key fails locally).
+- A missing input is `null` plus `// TODO(albert)`, never a placeholder string. The placeholder test greps the rendered site.
 - After any version bump run `pnpm dedupe`. wrangler can exit 0 without deploying — the deploy action greps for confirmation.
 
 ## Checks (local is allowed here; CI is the source of truth)

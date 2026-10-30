@@ -54,6 +54,7 @@
     "knip": "6.41.0",
     "playwright-core": "1.64.0",
     "react-doctor": "0.9.17",
+    "schema-dts": "2.1.0",
     "tailwindcss": "4.3.3",
     "typescript": "7.0.2",
     "vite": "8.3.4",

@@ -35,4 +35,13 @@ describe('i18n catalogues', () => {
     const empty = [...flat].filter(([, value]) => value.trim() === '');
     expect(empty.map(([key]) => key)).toEqual([]);
   });
+
+  it.each([
+    ['en', flatEn],
+    ['es', flatEs],
+  ])('puts both slots once in the %s consent template', (_locale, flat) => {
+    const template = flat.get('contact.form.consent') ?? '';
+    expect(template.split('{legalName}')).toHaveLength(2);
+    expect(template.split('{privacyLink}')).toHaveLength(2);
+  });
 });

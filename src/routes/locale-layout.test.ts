@@ -1,0 +1,31 @@
+import { createMemoryHistory } from '@tanstack/react-router';
+import { describe, expect, it, vi } from 'vitest';
+import { hasNotFound } from '@/lib/current-page';
+import { getRouter } from '@/router';
+
+vi.mock('@/server/contact.functions', () => ({ sendContact: vi.fn() }));
+
+async function load(path: string) {
+  const router = getRouter();
+  router.update({
+    history: createMemoryHistory({ initialEntries: [path] }),
+  });
+  await router.load();
+  return router.state.matches;
+}
+
+describe('{-$locale} layout', () => {
+  it.each(['/', '/privacy', '/es', '/es/privacidad', '/es/aviso-legal'])(
+    'serves %s',
+    async (path) => {
+      expect(hasNotFound(await load(path))).toBe(false);
+    },
+  );
+
+  it.each(['/legal-notice', '/fr/privacy'])(
+    'answers 404 for %s',
+    async (path) => {
+      expect(hasNotFound(await load(path))).toBe(true);
+    },
+  );
+});
