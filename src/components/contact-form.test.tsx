@@ -72,7 +72,7 @@ describe('ContactForm', () => {
     expect(screen.getByRole('checkbox')).toBeRequired();
     expect(
       screen.getByRole('link', { name: 'privacy policy' }),
-    ).toHaveAttribute('href', '/privacy-policy');
+    ).toHaveAttribute('href', '/privacy');
   });
 
   it('keeps the honeypot out of the tab order and the accessibility tree', () => {

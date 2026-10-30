@@ -1,6 +1,7 @@
 import { COMPANY } from '@/lib/company';
 import { locales, messages } from '@/lib/i18n';
-import { PAGE_PATHS, pageCopy } from '@/lib/pages';
+import { PAGE_IDS } from '@/lib/page-registry';
+import { pageCopy } from '@/lib/pages';
 import { PORTFOLIO } from '@/lib/portfolio';
 import { pageUrl, SITE_NAME } from '@/lib/seo';
 import { serviceSummary } from '@/lib/services';
@@ -9,9 +10,9 @@ import { PUBLIC_EMAIL } from '@/lib/site';
 const { meta, footer, services, work, contact } = messages.en;
 
 const pages = locales.flatMap((locale) =>
-  PAGE_PATHS.map((path) => {
-    const copy = pageCopy(locale, path);
-    return `- [${copy.title}](${pageUrl(locale, path)}): ${copy.description}`;
+  PAGE_IDS.map((page) => {
+    const copy = pageCopy(locale, page);
+    return `- [${copy.title}](${pageUrl(locale, page)}): ${copy.description}`;
   }),
 );
 
@@ -37,6 +38,6 @@ export const LLMS_TXT = `${[
   [
     '## Contact',
     `- [Email](mailto:${PUBLIC_EMAIL}): ${contact.human}`,
-    `- [Contact form](${pageUrl('en', '/')}#contact): ${contact.text}`,
+    `- [Contact form](${pageUrl('en', 'home')}#contact): ${contact.text}`,
   ].join('\n'),
 ].join('\n\n')}\n`;

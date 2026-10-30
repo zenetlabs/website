@@ -24,10 +24,6 @@ export function localeFromPath(pathname: string): Locale {
   return splitLocale(pathname).locale;
 }
 
-export function stripLocale(pathname: string): string {
-  return splitLocale(pathname).rest;
-}
-
 export function localePath(locale: Locale, path: string): string {
   if (locale === defaultLocale) return path;
   return path === '/' ? `/${locale}` : `/${locale}${path}`;

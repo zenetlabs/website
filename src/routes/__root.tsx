@@ -9,6 +9,7 @@ import {
 import type { ReactNode } from 'react';
 import { NotFound } from '@/components/not-found';
 import { PageShell } from '@/components/page-shell';
+import { hasNotFound } from '@/lib/current-page';
 import { localeFromPath, messages, useLocale, useMessages } from '@/lib/i18n';
 import { SITE_NAME } from '@/lib/seo';
 import { SITE } from '@/lib/site';
@@ -24,9 +25,7 @@ export const Route = createRootRoute({
   }),
   head: ({ match, matches }) => {
     const { meta, notFound } = messages[match.context.locale];
-    const missing = matches.some(
-      (entry) => entry.status === 'notFound' || entry._notFound === true,
-    );
+    const missing = hasNotFound(matches);
     return {
       meta: [
         { charSet: 'utf-8' },
@@ -36,6 +35,7 @@ export const Route = createRootRoute({
           name: 'description',
           content: missing ? notFound.description : meta.description,
         },
+        ...(missing ? [{ name: 'robots', content: 'noindex' }] : []),
       ],
       links: [
         { rel: 'manifest', href: '/manifest.webmanifest' },

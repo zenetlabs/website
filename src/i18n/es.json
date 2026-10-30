@@ -3,6 +3,9 @@
     "title": "Zenet Labs: consultoría de IA para empresas agénticas",
     "description": "Zenet Labs ayuda a las empresas a entender la IA, implementar agentes que hacen trabajo real y convertirse en empresas agénticas."
   },
+  "og": {
+    "tagline": "Consultoría de IA para empresas agénticas"
+  },
   "nav": {
     "skip": "Saltar al contenido",
     "language": "Idioma",
@@ -186,10 +189,12 @@
   },
   "privacy": {
     "title": "Política de privacidad",
+    "metaTitle": "Política de privacidad | Zenet Labs",
     "description": "Cómo recoge, usa y protege Zenet Labs (Zenet Technology Pte. Ltd.) los datos que nos envías por el formulario de contacto y cómo ejercer tus derechos."
   },
   "cookies": {
     "title": "Política de cookies",
+    "metaTitle": "Política de cookies | Zenet Labs",
     "description": "Zenet Labs no usa cookies analíticas ni publicitarias. Descubre qué cookies necesarias puede usar Cloudflare, cómo funciona Turnstile y cómo gestionarlas."
   },
   "organization": {

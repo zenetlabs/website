@@ -7,7 +7,7 @@ const VIEWPORTS = [
   { width: 412, height: 915 },
   { width: 1280, height: 900 },
 ];
-const URLS = [...PAGES, '/nope'];
+const URLS = [...PAGES, '/nope', '/es/nope'];
 
 for (const viewport of VIEWPORTS) {
   for (const colorScheme of ['light', 'dark'] as const) {

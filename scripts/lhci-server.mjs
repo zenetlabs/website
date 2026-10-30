@@ -1,18 +1,42 @@
 // Emulates edge brotli compression so local and CI Lighthouse scores match what visitors get.
 import { spawn } from 'node:child_process';
 import http from 'node:http';
+import net from 'node:net';
 import zlib from 'node:zlib';
 
 const PREVIEW_PORT = 4173;
 const PROXY_PORT = 4174;
 const COMPRESSIBLE = /text|javascript|json|svg|xml/;
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function isFree(port) {
+  return new Promise((resolve) => {
+    const probe = net.createServer();
+    probe.once('error', () => resolve(false));
+    probe.listen(port, () => probe.close(() => resolve(true)));
+  });
+}
+
+async function waitForFreePorts(ports, timeoutMs) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const free = await Promise.all(ports.map(isFree));
+    if (free.every(Boolean)) return;
+    await sleep(100);
+  }
+}
+
+await waitForFreePorts([PREVIEW_PORT, PROXY_PORT], 15_000);
+
 const preview = spawn('pnpm', ['preview'], { stdio: 'inherit' });
-preview.on('exit', (code) => process.exit(code ?? 1));
+let stopping = false;
+preview.on('exit', (code) => process.exit(stopping ? 0 : (code ?? 1)));
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.on(signal, () => {
+    stopping = true;
     preview.kill(signal);
-    process.exit(0);
+    setTimeout(() => process.exit(0), 5_000).unref();
   });
 }
 

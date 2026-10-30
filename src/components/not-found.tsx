@@ -1,6 +1,7 @@
 import { Container } from '@/components/section';
 import { TEXT_LINK } from '@/components/ui';
-import { type Locale, localePath, useMessages } from '@/lib/i18n';
+import { type Locale, useMessages } from '@/lib/i18n';
+import { pagePath } from '@/lib/page-registry';
 
 export function NotFound({ locale }: { locale: Locale }) {
   const { notFound } = useMessages();
@@ -10,7 +11,7 @@ export function NotFound({ locale }: { locale: Locale }) {
       <h1>{notFound.title}</h1>
       <p className="mt-6 text-muted-fg">{notFound.description}</p>
       <a
-        href={localePath(locale, '/')}
+        href={pagePath(locale, 'home')}
         className={`mt-8 inline-block ${TEXT_LINK}`}
       >
         {notFound.home}

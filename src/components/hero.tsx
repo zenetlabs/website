@@ -1,11 +1,12 @@
 import { RunLog } from '@/components/run-log';
 import { Container, EmphasisTitle } from '@/components/section';
 import { EYEBROW, PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
-import { localePath, useLocale, useMessages } from '@/lib/i18n';
+import { useLocale, useMessages } from '@/lib/i18n';
+import { pagePath } from '@/lib/page-registry';
 
 export function Hero() {
   const { hero } = useMessages();
-  const home = localePath(useLocale(), '/');
+  const home = pagePath(useLocale(), 'home');
 
   return (
     <section className="relative overflow-hidden">

@@ -26,9 +26,11 @@ pnpm dev                              # http://localhost:3000
 pnpm build && pnpm preview            # http://localhost:4173
 pnpm e2e                              # Playwright + axe against pnpm preview
 PLAYWRIGHT_BASE_URL=https://... pnpm e2e   # against a deployed site
+PLAYWRIGHT_BASE_URL=https://... pnpm exec playwright test e2e/sitemap.e2e.ts   # sitemap walk, no browser needed
+node scripts/og-images.mjs            # regenerate public/og-en.png and public/og-es.png
 ```
 
-Other checks: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm knip`, `pnpm run doctor`, `pnpm lhci`.
+Other checks: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm knip`, `pnpm run doctor`, `pnpm lhci` (Lighthouse, mobile then desktop).
 
 ## Deploy
 
@@ -38,7 +40,7 @@ Production deploys run from `main` through GitHub Actions and need a green push 
 gh workflow run deploy-prod.yml --ref main
 ```
 
-The job builds with `CLOUDFLARE_ENV=production`, deploys `dist/server/wrangler.json` and runs `bash scripts/smoke.sh`.
+The job builds with `CLOUDFLARE_ENV=production`, deploys `dist/server/wrangler.json`, runs `bash scripts/smoke.sh`, then walks the sitemap with `e2e/sitemap.e2e.ts` against production.
 
 To check a build on a Version URL without promoting it:
 

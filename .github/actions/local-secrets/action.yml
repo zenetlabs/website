@@ -1,0 +1,14 @@
+name: "Local-only secrets"
+description: >
+  Seed the local Secrets Store with dummy values (Turnstile always-pass test
+  secret, fake Resend key) so the built worker runs under preview.
+
+runs:
+  using: composite
+  steps:
+    - name: Create local-only secrets
+      shell: bash
+      run: |
+        set -euo pipefail
+        pnpm exec wrangler secrets-store secret create 5a96b366abb34e3991c881dab187adfd --name ZENETLABS_PROD_TURNSTILE_SECRET --value 1x0000000000000000000000000000000AA --scopes workers
+        pnpm exec wrangler secrets-store secret create 5a96b366abb34e3991c881dab187adfd --name PROD_RESEND_API_KEY --value re_local_dummy --scopes workers

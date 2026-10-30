@@ -13,7 +13,12 @@ export default createServerEntry({
       return new Response('Misdirected request', { status: 421 });
     }
     const target = redirectTarget(url);
-    if (target) return Response.redirect(target, 301);
+    if (target) {
+      return new Response(null, {
+        status: 301,
+        headers: { Location: target, 'Cache-Control': 'max-age=3600' },
+      });
+    }
     const negotiable = request.method === 'GET' || request.method === 'HEAD';
     const markdown =
       negotiable && prefersMarkdown(request.headers.get('Accept'));

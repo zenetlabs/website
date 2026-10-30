@@ -7,7 +7,8 @@ import { Services } from '@/components/services';
 import { pageHeadFor } from '@/lib/pages';
 
 export const Route = createFileRoute('/{-$locale}/')({
-  head: ({ match }) => pageHeadFor(match.context.locale, '/'),
+  staticData: { page: 'home' },
+  head: ({ match }) => pageHeadFor(match.context.locale, 'home'),
   component: Home,
 });
 

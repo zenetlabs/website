@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { locales } from '@/lib/i18n';
-import { PAGE_PATHS, pageHeadFor } from '@/lib/pages';
+import { ogImagePath } from '@/lib/og-image';
+import { PAGE_IDS } from '@/lib/page-registry';
+import { pageHeadFor } from '@/lib/pages';
 import { jsonLd, type pageHead, pageUrl } from '@/lib/seo';
 
 const SITE = 'https://zenetlabs.com';
-const OG_LOCALE = { en: 'en_US', es: 'es_ES' } as const;
+const OG_LOCALE = { en: 'en_SG', es: 'es_ES' } as const;
 
 type Meta = ReturnType<typeof pageHead>['meta'];
 
 const cases = locales.flatMap((locale) =>
-  PAGE_PATHS.map((path) => [locale, path] as const),
+  PAGE_IDS.map((page) => [locale, page] as const),
 );
 
 function contents(meta: Meta, key: 'name' | 'property', value: string) {
@@ -24,9 +26,9 @@ function contents(meta: Meta, key: 'name' | 'property', value: string) {
   });
 }
 
-describe.each(cases)('pageHeadFor(%s, %s)', (locale, path) => {
-  const head = pageHeadFor(locale, path);
-  const url = pageUrl(locale, path);
+describe.each(cases)('pageHeadFor(%s, %s)', (locale, page) => {
+  const head = pageHeadFor(locale, page);
+  const url = pageUrl(locale, page);
 
   it('has one title, one description and index robots', () => {
     expect(head.meta.filter((entry) => 'title' in entry)).toHaveLength(1);
@@ -44,9 +46,9 @@ describe.each(cases)('pageHeadFor(%s, %s)', (locale, path) => {
       .filter((link) => link.rel === 'alternate')
       .map((link) => [link.hrefLang, link.href]);
     expect(alternates).toEqual([
-      ['en', pageUrl('en', path)],
-      ['es', pageUrl('es', path)],
-      ['x-default', pageUrl('en', path)],
+      ['en', pageUrl('en', page)],
+      ['es', pageUrl('es', page)],
+      ['x-default', pageUrl('en', page)],
     ]);
   });
 
@@ -56,21 +58,27 @@ describe.each(cases)('pageHeadFor(%s, %s)', (locale, path) => {
     ]);
     expect(contents(head.meta, 'property', 'og:url')).toEqual([url]);
     expect(contents(head.meta, 'property', 'og:image')).toEqual([
-      `${SITE}/og.png`,
+      `${SITE}${ogImagePath(locale)}`,
+    ]);
+    expect(contents(head.meta, 'name', 'twitter:image')).toEqual([
+      `${SITE}${ogImagePath(locale)}`,
+    ]);
+    expect(contents(head.meta, 'property', 'og:locale:alternate')).toEqual([
+      OG_LOCALE[locale === 'en' ? 'es' : 'en'],
     ]);
   });
 
   it('is deterministic', () => {
-    expect(pageHeadFor(locale, path)).toEqual(head);
+    expect(pageHeadFor(locale, page)).toEqual(head);
   });
 });
 
 describe.each(locales)('legal descriptions (%s)', (locale) => {
-  it.each(['/privacy-policy', '/cookies-policy'] as const)(
+  it.each(['privacy', 'cookies'] as const)(
     '%s is 120 to 155 characters',
-    (path) => {
+    (page) => {
       const [description] = contents(
-        pageHeadFor(locale, path).meta,
+        pageHeadFor(locale, page).meta,
         'name',
         'description',
       );
@@ -80,11 +88,44 @@ describe.each(locales)('legal descriptions (%s)', (locale) => {
   );
 });
 
+describe('titles and descriptions', () => {
+  const heads = cases.map(([locale, page]) => pageHeadFor(locale, page));
+  const titles = heads.map((head) =>
+    head.meta.flatMap((entry) => ('title' in entry ? [entry.title] : [])),
+  );
+  const descriptions = heads.map(
+    (head) => contents(head.meta, 'name', 'description')[0] ?? '',
+  );
+
+  it('has a unique title of 30 to 60 characters per page and locale', () => {
+    const flat = titles.flat();
+    expect(flat).toHaveLength(cases.length);
+    expect(new Set(flat).size).toBe(cases.length);
+    for (const title of flat) {
+      expect(title.length).toBeGreaterThanOrEqual(30);
+      expect(title.length).toBeLessThanOrEqual(60);
+    }
+  });
+
+  it('has a unique description of 70 to 160 characters per page and locale', () => {
+    expect(new Set(descriptions).size).toBe(cases.length);
+    for (const description of descriptions) {
+      expect(description.length).toBeGreaterThanOrEqual(70);
+      expect(description.length).toBeLessThanOrEqual(160);
+    }
+  });
+});
+
 describe('pageUrl', () => {
-  it('keeps the default locale unprefixed', () => {
-    expect(pageUrl('en', '/')).toBe(`${SITE}/`);
-    expect(pageUrl('es', '/')).toBe(`${SITE}/es`);
-    expect(pageUrl('es', '/privacy-policy')).toBe(`${SITE}/es/privacy-policy`);
+  it.each([
+    ['en', 'home', `${SITE}/`],
+    ['en', 'privacy', `${SITE}/privacy`],
+    ['en', 'cookies', `${SITE}/cookies`],
+    ['es', 'home', `${SITE}/es`],
+    ['es', 'privacy', `${SITE}/es/privacidad`],
+    ['es', 'cookies', `${SITE}/es/cookies`],
+  ] as const)('%s %s is %s', (locale, page, expected) => {
+    expect(pageUrl(locale, page)).toBe(expected);
   });
 });
 

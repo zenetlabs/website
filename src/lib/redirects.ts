@@ -1,4 +1,5 @@
-import { defaultLocale, splitLocale } from '@/lib/i18n';
+import { splitLocale } from '@/lib/i18n';
+import { type PageId, pageForSlug, pagePath } from '@/lib/page-registry';
 
 export const SITE_HOST = 'zenetlabs.com';
 
@@ -12,17 +13,22 @@ export const ALIAS_HOSTS: ReadonlySet<string> = new Set([
   'www.sabatemartinez.com',
 ]);
 
-const LEGACY_RENAMES: ReadonlyMap<string, string> = new Map([
-  ['privacy', 'privacy-policy'],
-  ['cookies', 'cookies-policy'],
+const LEGACY_PAGES: ReadonlyMap<string, PageId> = new Map([
+  ['/privacy-policy', 'privacy'],
+  ['/cookies-policy', 'cookies'],
+  ['/about-us', 'home'],
 ]);
 
-const LEGACY_HOME = new Set(['about-us']);
+function collapseLeadingSlashes(pathname: string): string {
+  return pathname.replace(/^\/{2,}/, '/');
+}
 
 function stripDefaultLocale(pathname: string): string {
-  if (pathname === '/en') return '/';
-  if (pathname.startsWith('/en/')) return pathname.slice(3);
-  return pathname;
+  let path = collapseLeadingSlashes(pathname);
+  while (path === '/en' || path.startsWith('/en/')) {
+    path = collapseLeadingSlashes(path === '/en' ? '/' : path.slice(3));
+  }
+  return path;
 }
 
 function stripTrailingSlash(pathname: string): string {
@@ -34,20 +40,13 @@ function stripTrailingSlash(pathname: string): string {
 
 export function mapLegacyPath(pathname: string): string {
   const path = stripDefaultLocale(pathname);
-  const split = splitLocale(path);
-  const localePrefix = split.locale === defaultLocale ? '' : `/${split.locale}`;
-  const rest = split.rest.replace(/^\/+|\/+$/g, '');
-  const home = localePrefix || '/';
-  const [first = ''] = rest.split('/');
+  const { locale, rest } = splitLocale(path);
+  const slug = `/${rest.replace(/^\/+|\/+$/g, '')}`;
+  const [, first] = slug.split('/');
 
-  if (first === 'blog' || LEGACY_HOME.has(rest)) return home;
-  const renamed = LEGACY_RENAMES.get(rest);
-  if (renamed) return `${localePrefix}/${renamed}`;
-  return path;
-}
-
-function collapseLeadingSlashes(pathname: string): string {
-  return pathname.replace(/^\/{2,}/, '/');
+  const page =
+    first === 'blog' ? 'home' : (LEGACY_PAGES.get(slug) ?? pageForSlug(slug));
+  return page ? pagePath(locale, page) : path;
 }
 
 export function isOwnedHost(hostname: string): boolean {
@@ -65,9 +64,7 @@ export function redirectTarget(url: URL): string | null {
   const hostChange =
     ALIAS_HOSTS.has(url.hostname) ||
     (url.hostname === SITE_HOST && url.protocol === 'http:');
-  const pathname = stripTrailingSlash(
-    mapLegacyPath(collapseLeadingSlashes(url.pathname)),
-  );
+  const pathname = stripTrailingSlash(mapLegacyPath(url.pathname));
   if (!hostChange && pathname === url.pathname) return null;
 
   const target = new URL(url);

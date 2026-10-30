@@ -1,4 +1,6 @@
-import { defaultLocale, type Locale, localePath, locales } from '@/lib/i18n';
+import { defaultLocale, type Locale, locales } from '@/lib/i18n';
+import { ogImagePath } from '@/lib/og-image';
+import { type PageId, pagePath } from '@/lib/page-registry';
 import { SITE } from '@/lib/site';
 
 type Meta =
@@ -8,36 +10,35 @@ type Meta =
 
 type Link = { rel: string; href: string; hrefLang?: string };
 
-const OG_LOCALES: Record<Locale, string> = { en: 'en_US', es: 'es_ES' };
-const OG_IMAGE_PATH = '/og.png';
+const OG_LOCALES: Record<Locale, string> = { en: 'en_SG', es: 'es_ES' };
 export const SITE_NAME = 'Zenet Labs';
 
-export function pageUrl(locale: Locale, path: string): string {
-  return `${SITE.url}${localePath(locale, path)}`;
+export function pageUrl(locale: Locale, page: PageId): string {
+  return `${SITE.url}${pagePath(locale, page)}`;
 }
 
 export function alternateUrls(
-  path: string,
+  page: PageId,
 ): { hreflang: string; href: string }[] {
   return [
-    ...locales.map((l) => ({ hreflang: l, href: pageUrl(l, path) })),
-    { hreflang: 'x-default', href: pageUrl(defaultLocale, path) },
+    ...locales.map((l) => ({ hreflang: l, href: pageUrl(l, page) })),
+    { hreflang: 'x-default', href: pageUrl(defaultLocale, page) },
   ];
 }
 
 export function pageHead({
   locale,
-  path,
+  page,
   title,
   description,
 }: {
   locale: Locale;
-  path: string;
+  page: PageId;
   title: string;
   description: string;
 }): { meta: Meta[]; links: Link[] } {
-  const url = pageUrl(locale, path);
-  const image = `${SITE.url}${OG_IMAGE_PATH}`;
+  const url = pageUrl(locale, page);
+  const image = `${SITE.url}${ogImagePath(locale)}`;
   const alternateLocale = locales.filter((l) => l !== locale);
 
   const meta: Meta[] = [
@@ -65,7 +66,7 @@ export function pageHead({
 
   const links: Link[] = [
     { rel: 'canonical', href: url },
-    ...alternateUrls(path).map(({ hreflang, href }) => ({
+    ...alternateUrls(page).map(({ hreflang, href }) => ({
       rel: 'alternate',
       hrefLang: hreflang,
       href,
