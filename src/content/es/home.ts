@@ -76,9 +76,10 @@ export const home = {
       `Si facturas con un programa, tendrá que cumplir el Reglamento Verifactu (RD 1007/2023). Según la norma en vigor, las sociedades deben estar adaptadas antes del ${verifactuDates.companies} y los autónomos y el resto, antes del ${verifactuDates.others}.`,
       `Hacienda anunció el ${verifactuDates.announcedOn} que quiere aplazarlo a ${verifactuDates.announcedTo}, pero todavía no se ha publicado en el BOE.`,
       'No te afecta si ya llevas los libros por el SII o si tu domicilio fiscal está en el País Vasco o Navarra, donde rigen sus propias normas.',
+      // TODO(albert): confirm Holded shows its declaración responsable for the current version
       'Conectamos tu tienda, tu CRM o tu ERP con un programa de facturación adaptado, como Holded, para que las facturas salgan solas.',
     ],
-    cta: 'Revisemos tu caso',
+    cta: 'Cómo te ayudamos con Verifactu',
     checked: `Fechas revisadas el ${verifactuDates.checkedOn}.`,
   },
   services: {

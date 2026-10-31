@@ -7,15 +7,24 @@ import { CARD, EYEBROW } from '@/components/ui';
 import { loadAboutContent } from '@/content/load';
 import { CONTENT } from '@/lib/content';
 import { breadcrumbStructuredData } from '@/lib/page-structured-data';
-import { pageHeadFor } from '@/lib/pages';
+import { contentHead } from '@/lib/pages';
 import { PORTFOLIO } from '@/lib/portfolio';
 
 export const Route = createFileRoute('/{-$locale}/about')({
   staticData: { page: 'about' },
   loader: ({ context }) => loadAboutContent(context.locale),
-  head: ({ match }) => pageHeadFor(match.context.locale, 'about'),
-  scripts: ({ match }) =>
-    breadcrumbStructuredData(match.context.locale, 'about'),
+  head: ({ match, loaderData }) =>
+    loaderData
+      ? contentHead(match.context.locale, 'about', loaderData.page.meta)
+      : {},
+  scripts: ({ match, loaderData }) =>
+    loaderData
+      ? breadcrumbStructuredData(
+          match.context.locale,
+          'about',
+          loaderData.page.meta.title,
+        )
+      : [],
   component: About,
 });
 

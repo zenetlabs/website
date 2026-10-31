@@ -2,7 +2,7 @@ import { Container, EmphasisTitle } from '@/components/section';
 import { CARD, EYEBROW, TEXT_LINK } from '@/components/ui';
 import type { HomeContent } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
-import { CTA_TARGET, navHref } from '@/lib/nav';
+import { pagePath } from '@/lib/page-registry';
 
 export function VerifactuStrip({
   copy,
@@ -30,7 +30,7 @@ export function VerifactuStrip({
           </div>
           <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3">
             <a
-              href={navHref(locale, CTA_TARGET)}
+              href={pagePath(locale, 'verifactu')}
               className={`font-medium ${TEXT_LINK}`}
             >
               {copy.cta} →

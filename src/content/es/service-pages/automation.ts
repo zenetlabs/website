@@ -93,6 +93,7 @@ export const automation = {
   },
   // TODO(albert): confirm the case
   case: {
+    page: 'viatsyCase',
     eyebrow: 'Caso',
     title: {
       before: 'Cómo gestiona ',

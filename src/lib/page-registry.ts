@@ -10,6 +10,12 @@ export const PAGE_IDS = [
   'agents',
   'software',
   'training',
+  'holdedPrestashop',
+  'holdedWoocommerce',
+  'holdedHubspot',
+  'verifactu',
+  'travelAgencies',
+  'viatsyCase',
   'pricing',
   'about',
   'privacy',
@@ -22,6 +28,19 @@ export type ServicePageId = Extract<
   'automation' | 'integrations' | 'agents' | 'software' | 'training'
 >;
 
+export const HOLDED_PAGE_IDS = [
+  'holdedPrestashop',
+  'holdedWoocommerce',
+  'holdedHubspot',
+] as const satisfies readonly PageId[];
+export type HoldedPageId = (typeof HOLDED_PAGE_IDS)[number];
+export const LANDING_PAGE_IDS = [
+  ...HOLDED_PAGE_IDS,
+  'verifactu',
+  'travelAgencies',
+] as const satisfies readonly PageId[];
+export type LandingPageId = (typeof LANDING_PAGE_IDS)[number];
+
 type Slugs = Partial<Record<Locale, string>>;
 
 type BaseEntry = { lastmod: string; parent?: PageId } & (
@@ -29,12 +48,21 @@ type BaseEntry = { lastmod: string; parent?: PageId } & (
   | { slugs: Slugs & { en?: undefined }; route: string }
 );
 
-export type PageEntry = BaseEntry & { service?: ServiceId };
-type StaticPageEntry = BaseEntry & { service?: never };
-type ServicePageEntry = BaseEntry & { parent: PageId; service: ServiceId };
+export type PageEntry = BaseEntry & { kind?: 'service'; service?: ServiceId };
+type StaticPageEntry = BaseEntry & { kind?: never; service?: never };
+type ServicePageEntry = BaseEntry & {
+  kind: 'service';
+  parent: PageId;
+  service: ServiceId;
+};
+type LandingPageEntry = BaseEntry & { kind?: never; service: ServiceId };
 
-export const PAGES: Record<Exclude<PageId, ServicePageId>, StaticPageEntry> &
-  Record<ServicePageId, ServicePageEntry> = {
+export const PAGES: Record<
+  Exclude<PageId, ServicePageId | LandingPageId>,
+  StaticPageEntry
+> &
+  Record<ServicePageId, ServicePageEntry> &
+  Record<LandingPageId, LandingPageEntry> = {
   home: { slugs: { en: '/', es: '/' }, lastmod: '2026-10-31' },
   services: {
     slugs: { en: '/services', es: '/servicios' },
@@ -45,6 +73,7 @@ export const PAGES: Record<Exclude<PageId, ServicePageId>, StaticPageEntry> &
       en: '/services/ai-automation',
       es: '/servicios/automatizacion-de-procesos',
     },
+    kind: 'service',
     parent: 'services',
     service: 'integration',
     lastmod: '2026-10-31',
@@ -54,12 +83,14 @@ export const PAGES: Record<Exclude<PageId, ServicePageId>, StaticPageEntry> &
       en: '/services/integrations',
       es: '/servicios/integraciones',
     },
+    kind: 'service',
     parent: 'services',
     service: 'integration',
     lastmod: '2026-10-31',
   },
   agents: {
     slugs: { en: '/services/ai-agents', es: '/servicios/agentes-de-ia' },
+    kind: 'service',
     parent: 'services',
     service: 'agent',
     lastmod: '2026-10-31',
@@ -69,6 +100,7 @@ export const PAGES: Record<Exclude<PageId, ServicePageId>, StaticPageEntry> &
       en: '/services/custom-software',
       es: '/servicios/desarrollo-de-software-a-medida',
     },
+    kind: 'service',
     parent: 'services',
     service: 'web',
     lastmod: '2026-10-31',
@@ -78,8 +110,46 @@ export const PAGES: Record<Exclude<PageId, ServicePageId>, StaticPageEntry> &
       en: '/services/ai-training',
       es: '/servicios/formacion-ia-equipos',
     },
+    kind: 'service',
     parent: 'services',
     service: 'training',
+    lastmod: '2026-10-31',
+  },
+  holdedPrestashop: {
+    slugs: { es: '/servicios/integraciones/holded-prestashop' },
+    route: '/services/integrations/holded-prestashop',
+    parent: 'integrations',
+    service: 'integration',
+    lastmod: '2026-10-31',
+  },
+  holdedWoocommerce: {
+    slugs: { es: '/servicios/integraciones/holded-woocommerce' },
+    route: '/services/integrations/holded-woocommerce',
+    parent: 'integrations',
+    service: 'integration',
+    lastmod: '2026-10-31',
+  },
+  holdedHubspot: {
+    slugs: { es: '/servicios/integraciones/holded-hubspot' },
+    route: '/services/integrations/holded-hubspot',
+    parent: 'integrations',
+    service: 'integration',
+    lastmod: '2026-10-31',
+  },
+  verifactu: {
+    slugs: { es: '/verifactu-integracion' },
+    route: '/verifactu',
+    service: 'integration',
+    lastmod: '2026-10-31',
+  },
+  travelAgencies: {
+    slugs: { es: '/sectores/agencias-de-viaje' },
+    route: '/industries/travel-agencies',
+    service: 'integration',
+    lastmod: '2026-10-31',
+  },
+  viatsyCase: {
+    slugs: { en: '/case-studies/viatsy', es: '/casos/viatsy' },
     lastmod: '2026-10-31',
   },
   pricing: {
@@ -109,14 +179,22 @@ function routeFor({ route, slugs }: PageEntry): string {
   return route ?? slugs.en ?? '/';
 }
 
+export function isHoldedPage(page: PageId): page is HoldedPageId {
+  return HOLDED_PAGE_IDS.some((id) => id === page);
+}
+
+export function isLandingPage(page: PageId): page is LandingPageId {
+  return LANDING_PAGE_IDS.some((id) => id === page);
+}
+
 export function isServicePage(page: PageId): page is ServicePageId {
-  return PAGES[page].service !== undefined;
+  return PAGES[page].kind === 'service';
 }
 
 export const SERVICE_PAGE_IDS: readonly ServicePageId[] =
   PAGE_IDS.filter(isServicePage);
 
-export function serviceOf(page: ServicePageId): ServiceId {
+export function serviceOf(page: ServicePageId | LandingPageId): ServiceId {
   return PAGES[page].service;
 }
 
@@ -176,9 +254,13 @@ export function switchHref(
   page: PageId | undefined,
   search: string,
 ): string {
-  return page && hasLocale(page, target)
-    ? `${pagePath(target, page)}${search}`
-    : pagePath(target, 'home');
+  if (page && hasLocale(page, target))
+    return `${pagePath(target, page)}${search}`;
+  const parent = page ? PAGES[page].parent : undefined;
+  return pagePath(
+    target,
+    parent && hasLocale(parent, target) ? parent : 'home',
+  );
 }
 
 const pageBySlug = new Map<string, PageId>();

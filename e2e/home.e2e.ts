@@ -161,6 +161,16 @@ for (const home of HOMES) {
       ).toHaveAttribute('href', home.about);
       await expect(page.locator('#cases dl')).toHaveCount(0);
     });
+
+    test('links only the Viatsy card to its case page', async ({ page }) => {
+      await gotoHydrated(page, home.path);
+      const links = page.locator('#cases li a');
+      await expect(links).toHaveCount(1);
+      await expect(links).toHaveAttribute(
+        'href',
+        home.path === '/' ? '/case-studies/viatsy' : '/es/casos/viatsy',
+      );
+    });
   });
 }
 
@@ -178,6 +188,9 @@ test('the Verifactu strip is Spanish only and dated', async ({ page }) => {
   ]) {
     await expect(strip).toContainText(text);
   }
+  await expect(
+    strip.getByRole('link', { name: /Verifactu →$/ }),
+  ).toHaveAttribute('href', '/es/verifactu-integracion');
 });
 
 test('marks the current page in the header', async ({ page }) => {

@@ -23,7 +23,20 @@ const REQUIRED: Record<string, readonly string[]> = {
   PriceSpecification: ['priceCurrency'],
   UnitPriceSpecification: ['priceCurrency', 'unitCode'],
   Service: ['name', 'provider'],
+  Article: [
+    'headline',
+    'description',
+    'author',
+    'publisher',
+    'datePublished',
+    'dateModified',
+    'image',
+    'inLanguage',
+  ],
 };
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const DATE_KEYS = new Set(['datePublished', 'dateModified']);
 
 const URL_KEYS = new Set(['url', 'logo', 'image', '@id', 'item', 'sameAs']);
 const SCRIPT =
@@ -61,6 +74,9 @@ export function validateJsonLd(
     }
     if (key === 'inLanguage' && !['en', 'es'].includes(value)) {
       problems.push(`${path}: bad language`);
+    }
+    if (DATE_KEYS.has(key) && !ISO_DATE.test(value)) {
+      problems.push(`${path}: not a yyyy-mm-dd date`);
     }
   }
 
@@ -102,6 +118,7 @@ export function validateJsonLd(
       checkPriceSpecification(node, path);
     }
     if (type === 'BreadcrumbList') checkPositions(node, path);
+    if (type === 'Article') checkDates(node, path);
     for (const [key, value] of Object.entries(node)) {
       if (key === '@context' || key === '@type') continue;
       checkValue(key, value, `${path}.${key}`);
@@ -124,6 +141,19 @@ export function validateJsonLd(
       (typeof minPrice !== 'number' || maxPrice <= minPrice)
     ) {
       problems.push(`${path}: maxPrice must exceed minPrice`);
+    }
+  }
+
+  function checkDates(node: Record<string, unknown>, path: string) {
+    const { datePublished, dateModified } = node;
+    if (
+      typeof datePublished === 'string' &&
+      typeof dateModified === 'string' &&
+      ISO_DATE.test(datePublished) &&
+      ISO_DATE.test(dateModified) &&
+      dateModified < datePublished
+    ) {
+      problems.push(`${path}: dateModified is before datePublished`);
     }
   }
 

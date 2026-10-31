@@ -48,38 +48,5 @@
     "title": "Página no encontrada",
     "description": "La página que buscas no existe.",
     "home": "Volver al inicio"
-  },
-  "privacy": {
-    "title": "Política de privacidad",
-    "metaTitle": "Política de privacidad | Zenet Labs",
-    "description": "Cómo recoge, usa y protege Zenet Labs los datos que nos envías por el formulario de contacto, quién es el responsable y cómo ejercer tus derechos."
-  },
-  "cookies": {
-    "title": "Política de cookies",
-    "metaTitle": "Política de cookies | Zenet Labs",
-    "description": "Zenet Labs no usa cookies analíticas ni publicitarias. Descubre qué cookies necesarias puede usar Cloudflare, cómo funciona Turnstile y cómo gestionarlas."
-  },
-  "pricing": {
-    "title": "Precios",
-    "metaTitle": "Precios de automatización y agentes de IA | Zenet Labs",
-    "description": "Precios publicados en euros, IVA no incluido: diagnóstico, integraciones, agentes de IA en producción, web a medida, formación, mantenimiento y SEO.",
-    "catalog": "Servicios y precios de Zenet Labs"
-  },
-  "about": {
-    "title": "Sobre nosotros",
-    "metaTitle": "Sobre Zenet Labs y su fundador, Albert Sabaté",
-    "description": "Zenet Labs la dirige Albert Sabaté, con más de 15 años creando equipos de ingeniería, que automatiza sus propias empresas antes que las de sus clientes."
-  },
-  "servicePage": {
-    "breadcrumb": "Ruta de navegación",
-    "who": "Para quién",
-    "price": "Precio",
-    "timeline": "Plazo",
-    "start": "Primer paso",
-    "taxNote": "IVA no incluido",
-    "pricing": "Ver precios",
-    "mail": "¿Prefieres el correo? Escribe a",
-    "related": "Servicios relacionados",
-    "allServices": "Todos los servicios"
   }
 }

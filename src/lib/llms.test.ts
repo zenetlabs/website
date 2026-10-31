@@ -16,7 +16,14 @@ import { CONTENT, legalEntity } from '@/lib/content';
 import { type Locale, locales, messages } from '@/lib/i18n';
 import { buildLlmsFull, buildLlmsTxt, llmsResponse } from '@/lib/llms';
 import { formatPrice, formatPriceSummary } from '@/lib/money';
-import { pagesIn, SERVICE_PAGE_IDS, serviceOf } from '@/lib/page-registry';
+import {
+  HOLDED_PAGE_IDS,
+  hasLocale,
+  LANDING_PAGE_IDS,
+  pagesIn,
+  SERVICE_PAGE_IDS,
+  serviceOf,
+} from '@/lib/page-registry';
 import { PORTFOLIO } from '@/lib/portfolio';
 import { markdownUrl, pageUrl } from '@/lib/seo';
 import { titleText } from '@/lib/title-text';
@@ -43,6 +50,18 @@ const PRICING: Record<Locale, PricingPageContent> = {
   en: enPricing,
   es: esPricing,
 };
+
+function landingFaqOf(locale: Locale) {
+  const { spanish } = SERVICE_BODIES[locale].landing;
+  if (!spanish) return [];
+  return [
+    ...HOLDED_PAGE_IDS.map((page) => [page, spanish[page]] as const),
+    ['verifactu', spanish.verifactu] as const,
+    ['travelAgencies', spanish.travelAgencies] as const,
+  ].flatMap(([page, copy]) =>
+    copy.faq.items.map((item) => ({ item, page: pageUrl(locale, page) })),
+  );
+}
 
 function linesOf(text: string): string[] {
   return text.split('\n');
@@ -133,8 +152,9 @@ describe.each(locales)('LLMS_TXT %s', (locale) => {
           page: pageUrl(locale, page),
         })),
       ),
+      ...landingFaqOf(locale),
     ];
-    expect(items).toHaveLength(locale === 'en' ? 35 : 36);
+    expect(items).toHaveLength(locale === 'en' ? 35 : 57);
     expect(hrefs(items)).toEqual(
       entries.map(({ item, page }) => `${page}#faq-${item.id}`),
     );
@@ -145,11 +165,16 @@ describe.each(locales)('LLMS_TXT %s', (locale) => {
 
   it('links the service pages first among the commercial pages', () => {
     const pages = hrefs(section(text, headings.pages));
-    expect(pages).toHaveLength(locale === 'en' ? 11 : 12);
+    expect(pages).toHaveLength(locale === 'en' ? 12 : 18);
     expect(pages.slice(1, 7)).toEqual([
       markdownUrl(locale, 'services'),
       ...SERVICE_PAGE_IDS.map((page) => markdownUrl(locale, page)),
     ]);
+    expect(pages.slice(7, 7 + (locale === 'en' ? 1 : 6))).toEqual(
+      [...LANDING_PAGE_IDS, 'viatsyCase' as const]
+        .filter((page) => hasLocale(page, locale))
+        .map((page) => markdownUrl(locale, page)),
+    );
   });
 
   it('lists the portfolio and the contact address', () => {
@@ -241,7 +266,7 @@ describe.each(locales)('LLMS_FULL %s', (locale) => {
   it('describes every service page with its price and FAQ', () => {
     const body = section(text, headings.servicePages);
     const { hub } = SERVICE_BODIES[locale];
-    const labels = messages[locale].servicePage;
+    const labels = SERVICE_BODIES[locale].hub.labels;
     expect(text).toContain(`${titleText(hub.title)}. ${hub.lead}`);
     expect(body.filter((line) => line.startsWith('### ['))).toEqual(
       SERVICE_PAGE_IDS.map(
@@ -266,6 +291,27 @@ describe.each(locales)('LLMS_FULL %s', (locale) => {
       for (const { question, answer } of copyOf.faq.items) {
         expect(text).toContain(`#### ${question}\n\n${answer}\n`);
       }
+    }
+  });
+
+  it('describes the case page in both languages', () => {
+    const { viatsy } = SERVICE_BODIES[locale].landing;
+    const cases = section(text, headings.cases).join('\n');
+    expect(text).toContain(
+      `[${SERVICE_BODIES[locale].hub.landing.viatsyCase}](${pageUrl(locale, 'viatsyCase')})`,
+    );
+    expect(cases).toContain(`#### ${titleText(viatsy.problem.title)}`);
+    for (const paragraph of viatsy.problem.paragraphs) {
+      expect(text).toContain(paragraph);
+    }
+    for (const item of viatsy.built.items) {
+      expect(text).toContain(`- ${item.title}: ${item.text}`);
+    }
+    for (const [index, step] of viatsy.operations.steps.entries()) {
+      expect(text).toContain(`${index + 1}. ${step.label}: ${step.text}`);
+    }
+    for (const point of viatsy.results.points) {
+      expect(text).toContain(`- ${point}`);
     }
   });
 
@@ -315,6 +361,7 @@ describe.each(locales)('LLMS_FULL %s', (locale) => {
     const order = [
       headings.pricing,
       headings.servicePages,
+      ...(locale === 'es' ? [headings.holded] : []),
       headings.problems,
       headings.process,
       headings.cases,
@@ -334,6 +381,93 @@ describe.each(locales)('LLMS_FULL %s', (locale) => {
   it('leaves no placeholder or stray token', () => {
     expect(text).not.toMatch(LEFTOVER);
     expect(text).not.toMatch(PLACEHOLDER);
+  });
+});
+
+describe('LLMS_FULL Spanish landing pages', () => {
+  const text = LLMS_FULL.es;
+  const bodies = SERVICE_BODIES.es;
+  const { spanish } = bodies.landing;
+  const labels = bodies.hub.labels;
+
+  it('describes each Holded pair with its price, table, edge cases and FAQ', () => {
+    const body = section(text, esLlms.headings.holded);
+    expect(body.filter((line) => line.startsWith('### ['))).toEqual(
+      HOLDED_PAGE_IDS.map(
+        (page) => `### [${bodies.hub.landing[page]}](${pageUrl('es', page)})`,
+      ),
+    );
+    expect(body.filter((line) => line.startsWith('#### '))).toHaveLength(12);
+    for (const page of HOLDED_PAGE_IDS) {
+      const pair = spanish?.[page];
+      expect(pair).toBeDefined();
+      if (!pair) continue;
+      expect(text).toContain(pair.hero.lead);
+      expect(text).toContain(
+        `- ${labels.price}: ${formatPriceSummary('es', SERVICES.es.integration.prices)} (${labels.taxNote})`,
+      );
+      for (const row of pair.sync.rows) {
+        expect(text).toContain(`- ${row.data}: ${row.direction}. ${row.when}`);
+      }
+      expect(text).toContain(pair.sync.note);
+      for (const item of pair.edgeCases.items) {
+        expect(text).toContain(`- ${item.title}: ${item.text}`);
+      }
+      for (const { question, answer } of pair.faq.items) {
+        expect(text).toContain(`#### ${question}\n\n${answer}\n`);
+      }
+    }
+  });
+
+  it('holds the Verifactu page with its checked dates inside the home section', () => {
+    const verifactu = spanish?.verifactu;
+    expect(verifactu).toBeDefined();
+    if (!verifactu) return;
+    const body = section(
+      text,
+      'Que cada venta genere su factura, y que cumpla',
+    );
+    expect(body.join('\n')).toContain(
+      `### [${bodies.hub.landing.verifactu}](${pageUrl('es', 'verifactu')})`,
+    );
+    for (const row of verifactu.deadlines.rows) {
+      expect(text).toContain(`- ${row.who}: ${row.date}`);
+    }
+    expect(text).toContain(verifactu.deadlines.announced);
+    expect(text).toContain(verifactu.deadlines.checked);
+    expect(text).toContain(verifactu.disclaimer);
+    for (const item of verifactu.requirements.items) {
+      expect(text).toContain(`- ${item.title}: ${item.text}`);
+    }
+    for (const { question, answer } of verifactu.faq.items) {
+      expect(text).toContain(`#### ${question}\n\n${answer}\n`);
+    }
+  });
+
+  it('holds the travel-agency page after the cases', () => {
+    const sector = spanish?.travelAgencies;
+    expect(sector).toBeDefined();
+    if (!sector) return;
+    const heading = `## [${bodies.hub.landing.travelAgencies}](${pageUrl('es', 'travelAgencies')})`;
+    expect(h2(text)).toContain(heading);
+    expect(h2(text).indexOf(heading)).toBe(
+      h2(text).indexOf(`## ${esLlms.headings.cases}`) + 1,
+    );
+    expect(text).toContain(sector.hero.lead);
+    for (const item of sector.work.items) {
+      expect(text).toContain(
+        `- ${item.title}: ${item.today} → ${item.automated}`,
+      );
+    }
+    for (const { question, answer } of sector.faq.items) {
+      expect(text).toContain(`#### ${question}\n\n${answer}\n`);
+    }
+  });
+
+  it('keeps the English file free of the Spanish landing pages', () => {
+    expect(LLMS_FULL.en).not.toContain(enLlms.headings.holded);
+    expect(LLMS_FULL.en).not.toContain('holded-prestashop');
+    expect(LLMS_FULL.en).not.toContain('agencias-de-viaje');
   });
 });
 

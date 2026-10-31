@@ -1,3 +1,4 @@
+import { viatsyCaseName } from '@/content/es/case-name';
 import { services } from '@/content/es/services';
 import type { ServicesHubContent } from '@/content/types';
 import { formatPriceSummary } from '@/lib/money';
@@ -45,6 +46,26 @@ export const servicesHub = {
       summary:
         'Talleres prácticos sobre tus propios procesos y mentoría mensual mientras el equipo adopta la IA.',
     },
+  },
+  landing: {
+    holdedPrestashop: 'Integración de Holded con PrestaShop',
+    holdedWoocommerce: 'Integración de Holded con WooCommerce',
+    holdedHubspot: 'Integración de Holded con HubSpot',
+    verifactu: 'Integración con Verifactu',
+    travelAgencies: 'Automatización para agencias de viajes',
+    viatsyCase: viatsyCaseName,
+  },
+  labels: {
+    breadcrumb: 'Ruta de navegación',
+    who: 'Para quién',
+    price: 'Precio',
+    timeline: 'Plazo',
+    start: 'Primer paso',
+    taxNote: 'IVA no incluido',
+    pricing: 'Ver precios',
+    mail: '¿Prefieres el correo? Escribe a',
+    related: 'Servicios relacionados',
+    allServices: 'Todos los servicios',
   },
   also: {
     title: 'Diagnóstico, mantenimiento y crecimiento',

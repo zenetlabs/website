@@ -1,21 +1,29 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { CtaSection } from '@/components/cta-section';
+import { BulletList } from '@/components/lists';
 import { Container, EmphasisTitle } from '@/components/section';
-import { BULLET_ITEM, CARD, EYEBROW, TEXT_LINK } from '@/components/ui';
+import { CARD, EYEBROW, TEXT_LINK } from '@/components/ui';
 import { loadPricingContent } from '@/content/load';
 import { formatPrice } from '@/lib/money';
 import { navHref } from '@/lib/nav';
 import { pagePath, pagesForService } from '@/lib/page-registry';
 import { pricingStructuredData } from '@/lib/page-structured-data';
-import { pageHeadFor } from '@/lib/pages';
+import { contentHead } from '@/lib/pages';
 
 export const Route = createFileRoute('/{-$locale}/pricing')({
   staticData: { page: 'pricing' },
   loader: ({ context }) => loadPricingContent(context.locale),
-  head: ({ match }) => pageHeadFor(match.context.locale, 'pricing'),
+  head: ({ match, loaderData }) =>
+    loaderData
+      ? contentHead(match.context.locale, 'pricing', loaderData.page.meta)
+      : {},
   scripts: ({ match, loaderData }) =>
     loaderData
-      ? pricingStructuredData(match.context.locale, loaderData.services)
+      ? pricingStructuredData(
+          match.context.locale,
+          loaderData.page,
+          loaderData.services,
+        )
       : [],
   component: Pricing,
 });
@@ -69,13 +77,7 @@ function Pricing() {
               </div>
               <div className="md:col-span-7">
                 <p className={EYEBROW}>{page.labels.includes}</p>
-                <ul className="mt-4 grid gap-3">
-                  {detail.includes.map((line) => (
-                    <li key={line} className={BULLET_ITEM}>
-                      {line}
-                    </li>
-                  ))}
-                </ul>
+                <BulletList items={detail.includes} className="mt-4" />
                 {detail.timeline ? (
                   <p className="mt-6">
                     <span className={EYEBROW}>{page.labels.timeline}</span>{' '}

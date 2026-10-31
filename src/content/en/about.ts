@@ -1,6 +1,12 @@
 import type { AboutPageContent } from '@/content/types';
 
 export const aboutPage = {
+  meta: {
+    title: 'About',
+    metaTitle: 'About Zenet Labs and its founder, Albert Sabaté',
+    description:
+      'Zenet Labs is run by Albert Sabaté, who has spent 15+ years building engineering teams and runs his own companies with AI agents before building yours.',
+  },
   eyebrow: 'About',
   title: {
     before: 'Automation built by people who ',

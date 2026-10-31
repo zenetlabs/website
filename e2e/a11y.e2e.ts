@@ -1,6 +1,15 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import { gotoHydrated, PAGES, PAIRS, settleAnimations } from './helpers';
+import {
+  CASE_PAIR,
+  gotoHydrated,
+  HOLDED_PAGES,
+  PAGES,
+  PAIRS,
+  SECTOR_PAGE,
+  settleAnimations,
+  VERIFACTU_PAGE,
+} from './helpers';
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 const VIEWPORTS = [
@@ -49,6 +58,11 @@ const OVERFLOW_URLS = [
   '/es/servicios',
   '/services/ai-automation',
   '/es/servicios/desarrollo-de-software-a-medida',
+  ...HOLDED_PAGES,
+  VERIFACTU_PAGE,
+  SECTOR_PAGE,
+  CASE_PAIR.en,
+  CASE_PAIR.es,
 ];
 
 for (const url of OVERFLOW_URLS) {

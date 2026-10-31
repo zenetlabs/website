@@ -10,7 +10,11 @@ export const Route = createFileRoute('/{-$locale}/legal-notice')({
   staticData: { page: 'legalNotice' },
   head: ({ match }) => pageHeadFor(match.context.locale, 'legalNotice'),
   scripts: ({ match }) =>
-    breadcrumbStructuredData(match.context.locale, 'legalNotice'),
+    breadcrumbStructuredData(
+      match.context.locale,
+      'legalNotice',
+      legalNotice.title,
+    ),
   component: LegalNotice,
 });
 

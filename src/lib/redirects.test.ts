@@ -26,6 +26,14 @@ const CANONICAL = [
   '/es/privacidad',
   '/es/cookies',
   '/es/aviso-legal',
+  '/services/integrations',
+  '/es/servicios/integraciones/holded-prestashop',
+  '/es/servicios/integraciones/holded-woocommerce',
+  '/es/servicios/integraciones/holded-hubspot',
+  '/es/verifactu-integracion',
+  '/es/sectores/agencias-de-viaje',
+  '/case-studies/viatsy',
+  '/es/casos/viatsy',
 ];
 
 const SITE = 'https://zenetlabs.com';
@@ -70,8 +78,11 @@ describe('redirectTarget for single-locale pages', () => {
       ),
   );
 
-  it('covers at least the legal notice', () => {
-    expect(cases.length).toBeGreaterThan(0);
+  it('covers the legal notice and every es-only landing page', () => {
+    expect(cases.length).toBeGreaterThan(10);
+    expect(cases.map(([page]) => page)).toEqual(
+      expect.arrayContaining(['legalNotice', 'verifactu', 'holdedHubspot']),
+    );
   });
 
   it.each(cases)(

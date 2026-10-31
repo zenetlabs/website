@@ -1,4 +1,4 @@
-import type { ServicePageId } from '@/lib/page-registry';
+import type { LandingPageId, PageId, ServicePageId } from '@/lib/page-registry';
 import type { PortfolioKey } from '@/lib/portfolio';
 
 export type Currency = 'SGD' | 'EUR';
@@ -28,7 +28,6 @@ export type LegalEntity = {
   address: PostalAddress | null;
   foundingYear?: string;
   founder?: string;
-  legalEs: SpanishLegalClauses;
   jsonLd: {
     type: 'Organization' | 'ProfessionalService';
     idPath: `/${string}`;
@@ -88,6 +87,8 @@ export type Metric = {
   value: number | null;
   unit: string;
 };
+export type PageLink = { page: PageId; label: string };
+
 export type CaseStudy = {
   id: 'viatsy' | 'taplany';
   name: string;
@@ -95,6 +96,7 @@ export type CaseStudy = {
   context: string;
   automated: readonly string[];
   metrics: readonly Metric[];
+  link?: PageLink;
 };
 
 export type Photo = { src: `/${string}`; width: number; height: number };
@@ -158,6 +160,8 @@ export type HomeContent = {
 };
 
 export type PricingPageContent = {
+  meta: PageMeta;
+  catalog: string;
   eyebrow: string;
   title: TitleParts;
   lead: string;
@@ -172,6 +176,7 @@ export type PricingPageContent = {
 };
 
 export type AboutPageContent = {
+  meta: PageMeta;
   eyebrow: string;
   title: TitleParts;
   lead: string;
@@ -188,28 +193,149 @@ export type AboutPageContent = {
 export type ProcessStep = { id: string; label: string; text: string };
 export type ProcessCopy = SectionCopy & { steps: readonly ProcessStep[] };
 
+export type PageHero = { eyebrow: string; title: TitleParts; lead: string };
+export type PageFacts = { who: string; timeline: string; start: string };
+export type PageCta = { title: string; text: string; button: string };
+export type Card = { id: string; title: string; text: string };
+
 export type ServicePageContent = {
   meta: Pick<PageMeta, 'metaTitle' | 'description'>;
-  hero: { eyebrow: string; title: TitleParts; lead: string };
-  facts: { who: string; timeline: string; start: string };
-  cta: { title: string; text: string; button: string };
+  hero: PageHero;
+  facts: PageFacts;
+  cta: PageCta;
   useCases: SectionCopy & {
-    items: readonly { id: string; title: string; text: string }[];
+    items: readonly (Card & { page?: PageId })[];
   };
   how: ProcessCopy & {
     steps: readonly [ProcessStep, ProcessStep, ProcessStep, ProcessStep];
   };
-  case: SectionCopy & { text: string; points: readonly string[] };
+  case: SectionCopy & {
+    text: string;
+    points: readonly string[];
+    page?: PageId;
+  };
   faq: SectionCopy & { items: readonly FaqItem[] };
   related: readonly [ServicePageId, ServicePageId];
 };
 
+export type LandingMeta = Pick<PageMeta, 'metaTitle' | 'description'>;
+
+export type SyncRow = {
+  id: string;
+  data: string;
+  direction: string;
+  when: string;
+};
+
+export type SyncColumns = { data: string; direction: string; when: string };
+
+export type HoldedPairContent = {
+  meta: LandingMeta;
+  hero: PageHero;
+  facts: PageFacts;
+  cta: PageCta;
+  sync: SectionCopy & {
+    columns: SyncColumns;
+    rows: readonly SyncRow[];
+    note: string;
+  };
+  edgeCases: SectionCopy & { items: readonly Card[] };
+  faq: SectionCopy & { items: readonly FaqItem[] };
+  related: readonly PageId[];
+};
+
+export type VerifactuPageContent = {
+  meta: LandingMeta;
+  hero: PageHero;
+  facts: PageFacts;
+  cta: PageCta;
+  deadlines: SectionCopy & {
+    columns: { who: string; date: string };
+    rows: readonly { id: 'companies' | 'others'; who: string; date: string }[];
+    announced: string;
+    producers: string;
+    exclusionsTitle: string;
+    exclusions: readonly string[];
+    checked: string;
+  };
+  requirements: SectionCopy & { items: readonly Card[] };
+  work: SectionCopy & { items: readonly Card[]; limits: string };
+  disclaimer: string;
+  faq: SectionCopy & { items: readonly FaqItem[] };
+  related: readonly PageId[];
+};
+
+export type SectorPageContent = {
+  meta: LandingMeta;
+  hero: PageHero;
+  facts: PageFacts;
+  cta: PageCta;
+  work: SectionCopy & {
+    todayLabel: string;
+    automatedLabel: string;
+    items: readonly {
+      id: string;
+      title: string;
+      today: string;
+      automated: string;
+    }[];
+  };
+  platform: { title: string; text: string; link: string };
+  case: SectionCopy & { text: string };
+  faq: SectionCopy & { items: readonly FaqItem[] };
+  related: readonly PageId[];
+};
+
+export type LandingContentMap = {
+  holdedPrestashop: HoldedPairContent;
+  holdedWoocommerce: HoldedPairContent;
+  holdedHubspot: HoldedPairContent;
+  verifactu: VerifactuPageContent;
+  travelAgencies: SectorPageContent;
+};
+
+export type CaseFact = { id: string; label: string; value: string };
+export type CaseStep = { id: string; label: string; text: string };
+
+export type CasePageContent = {
+  meta: LandingMeta;
+  eyebrow: string;
+  title: TitleParts;
+  lead: string;
+  published: string;
+  labels: { published: string; updated: string };
+  facts: readonly CaseFact[];
+  problem: SectionCopy & { paragraphs: readonly string[] };
+  built: SectionCopy & { items: readonly Card[] };
+  operations: SectionCopy & {
+    steps: readonly [CaseStep, CaseStep, CaseStep, CaseStep];
+  };
+  results: SectionCopy & { points: readonly string[] };
+  cta: PageCta;
+  related: readonly PageId[];
+};
+
+export type ServicePageLabels = {
+  breadcrumb: string;
+  who: string;
+  price: string;
+  timeline: string;
+  start: string;
+  taxNote: string;
+  pricing: string;
+  mail: string;
+  related: string;
+  allServices: string;
+};
+
 export type ServicesHubContent = {
+  labels: ServicePageLabels;
   meta: PageMeta;
   eyebrow: string;
   title: TitleParts;
   lead: string;
   cards: Record<ServicePageId, { name: string; summary: string }>;
+  landing: Partial<Record<LandingPageId | 'viatsyCase', string>>;
   also: { title: string; lead: string };
   start: { title: string; text: string; button: string };
   pricing: string;
@@ -230,7 +356,8 @@ export type LlmsCopy = {
     | 'process'
     | 'cases'
     | 'about'
-    | 'servicePages',
+    | 'servicePages'
+    | 'holded',
     string
   >;
   labels: Record<'email' | 'form' | 'full' | 'index' | 'otherLanguage', string>;

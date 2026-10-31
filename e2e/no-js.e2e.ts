@@ -1,13 +1,17 @@
 import { expect, test } from '@playwright/test';
+import { verifactuDates } from '../src/content/es/verifactu';
 import { formatPrice, formatPriceSummary } from '../src/lib/money';
 import { faqPairs, jsonLdBlocks } from '../test/json-ld';
 import { SERVICES } from '../test/page-content';
 import {
+  CASE_PAIR,
+  HOLDED_PAGES,
   LOCALES,
   normalise,
   PAIRS,
   SERVICE_PAIRS,
   SERVICES_HUB,
+  VERIFACTU_PAGE,
 } from './helpers';
 
 test.use({ javaScriptEnabled: false });
@@ -124,5 +128,46 @@ for (const { path, locale } of PRICING) {
       }
     }
     await expect(page.getByText(TAX_NOTE[locale])).toBeVisible();
+  });
+}
+
+test('the Verifactu page shows both dates, the check date and the price without JavaScript', async ({
+  page,
+}) => {
+  await page.goto(VERIFACTU_PAGE);
+  const text = normalise(await page.locator('main').innerText());
+  for (const expected of [
+    verifactuDates.companies,
+    verifactuDates.others,
+    `Fechas revisadas el ${verifactuDates.checkedOn}.`,
+    normalise(formatPriceSummary('es', SERVICES.es.integration.prices)),
+  ]) {
+    expect(text).toContain(expected);
+  }
+});
+
+test('a Holded pair opens a question natively and lists the email without JavaScript', async ({
+  page,
+}) => {
+  const [path = ''] = HOLDED_PAGES;
+  await page.goto(path);
+  const item = page.locator('#faq details').first();
+  await item.locator('summary').click();
+  await expect(item).toHaveAttribute('open', '');
+  await expect(item.locator('p')).toBeVisible();
+  await expect(
+    page.locator('main a[href="mailto:hello@zenetlabs.com"]'),
+  ).toBeVisible();
+  await expect(page.locator('#sync tbody tr')).toHaveCount(6);
+});
+
+for (const locale of LOCALES) {
+  test(`the ${locale} case page shows the lead and the date without JavaScript`, async ({
+    page,
+  }) => {
+    await page.goto(CASE_PAIR[locale]);
+    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page.locator('header time').first()).toBeVisible();
+    await expect(page.locator('main')).toContainText('Viatsy');
   });
 }

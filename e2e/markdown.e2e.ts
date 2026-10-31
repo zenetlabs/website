@@ -281,3 +281,38 @@ for (const { locale, home, pricing } of AGENT_PAGES) {
     }
   });
 }
+
+test('the Verifactu markdown keeps the dates, the price and the note', async ({
+  request,
+}) => {
+  const body = normalise(
+    await (await request.get('/es/verifactu-integracion.md')).text(),
+  );
+  for (const expected of [
+    'Fechas revisadas el',
+    'desde 4.000 €',
+    'no es asesoramiento fiscal ni jurídico',
+    '1 de enero de 2027',
+    '1 de julio de 2027',
+  ]) {
+    expect(body).toContain(normalise(expected));
+  }
+  expect(body).not.toContain('Ruta de navegación');
+  expect(body).not.toMatch(/certificad/i);
+});
+
+test('the case markdown keeps the title, the date and no placeholder', async ({
+  request,
+}) => {
+  const es = await (await request.get('/es/casos/viatsy.md')).text();
+  expect(es).toContain(
+    '# Viatsy, una agencia de viajes que *funciona con agentes de IA*',
+  );
+  expect(es).toContain('Publicado');
+  expect(es).not.toContain('Ruta de navegación');
+  expect(es).not.toContain('[X]');
+  expect(es.match(/```json/g)).toHaveLength(5);
+  const en = await (await request.get('/case-studies/viatsy.md')).text();
+  expect(en).toContain('# Viatsy, a travel company *run with AI agents*');
+  expect(en.match(/```json/g)).toHaveLength(5);
+});

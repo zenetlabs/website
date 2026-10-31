@@ -3,6 +3,7 @@ import { LegalPage, LegalSection } from '@/components/legal-page';
 import { TEXT_LINK } from '@/components/ui';
 import type { PublishedEntity } from '@/content/types';
 import { describeEntity } from '@/lib/content';
+import { legalClausesFor } from '@/lib/legal-clauses';
 import { pagePath } from '@/lib/page-registry';
 import { PUBLIC_EMAIL } from '@/lib/site';
 
@@ -13,7 +14,7 @@ export function LegalNoticeEs({
   title: string;
   entity: PublishedEntity;
 }) {
-  const { legalEs } = entity;
+  const legalEs = legalClausesFor(entity);
 
   return (
     <LegalPage

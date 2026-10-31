@@ -10,6 +10,7 @@ export default defineConfig({
   define: {
     __SITE__: JSON.stringify(siteConfig(process.env.CLOUDFLARE_ENV)),
   },
+  build: { modulePreload: false },
   plugins: [
     tailwindcss(),
     cloudflare({ viteEnvironment: { name: 'ssr' } }),

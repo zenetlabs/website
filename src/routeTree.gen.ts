@@ -20,12 +20,18 @@ import { Route as Char123LocaleChar125LlmsFullDottxtRouteImport } from './routes
 import { Route as Char123LocaleChar125LlmsDottxtRouteImport } from './routes/{-$locale}/llms[.]txt'
 import { Route as Char123LocaleChar125PricingRouteImport } from './routes/{-$locale}/pricing'
 import { Route as Char123LocaleChar125PrivacyRouteImport } from './routes/{-$locale}/privacy'
+import { Route as Char123LocaleChar125VerifactuRouteImport } from './routes/{-$locale}/verifactu'
+import { Route as Char123LocaleChar125CaseStudiesViatsyRouteImport } from './routes/{-$locale}/case-studies/viatsy'
+import { Route as Char123LocaleChar125IndustriesTravelAgenciesRouteImport } from './routes/{-$locale}/industries/travel-agencies'
 import { Route as Char123LocaleChar125ServicesIndexRouteImport } from './routes/{-$locale}/services/index'
 import { Route as Char123LocaleChar125ServicesAiAgentsRouteImport } from './routes/{-$locale}/services/ai-agents'
 import { Route as Char123LocaleChar125ServicesAiAutomationRouteImport } from './routes/{-$locale}/services/ai-automation'
 import { Route as Char123LocaleChar125ServicesAiTrainingRouteImport } from './routes/{-$locale}/services/ai-training'
 import { Route as Char123LocaleChar125ServicesCustomSoftwareRouteImport } from './routes/{-$locale}/services/custom-software'
-import { Route as Char123LocaleChar125ServicesIntegrationsRouteImport } from './routes/{-$locale}/services/integrations'
+import { Route as Char123LocaleChar125ServicesIntegrationsIndexRouteImport } from './routes/{-$locale}/services/integrations/index'
+import { Route as Char123LocaleChar125ServicesIntegrationsHoldedHubspotRouteImport } from './routes/{-$locale}/services/integrations/holded-hubspot'
+import { Route as Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRouteImport } from './routes/{-$locale}/services/integrations/holded-prestashop'
+import { Route as Char123LocaleChar125ServicesIntegrationsHoldedWoocommerceRouteImport } from './routes/{-$locale}/services/integrations/holded-woocommerce'
 
 const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
   id: '/robots.txt',
@@ -90,6 +96,24 @@ const Char123LocaleChar125PrivacyRoute =
     path: '/privacy',
     getParentRoute: () => Char123LocaleChar125Route,
   } as any)
+const Char123LocaleChar125VerifactuRoute =
+  Char123LocaleChar125VerifactuRouteImport.update({
+    id: '/verifactu',
+    path: '/verifactu',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125CaseStudiesViatsyRoute =
+  Char123LocaleChar125CaseStudiesViatsyRouteImport.update({
+    id: '/case-studies/viatsy',
+    path: '/case-studies/viatsy',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125IndustriesTravelAgenciesRoute =
+  Char123LocaleChar125IndustriesTravelAgenciesRouteImport.update({
+    id: '/industries/travel-agencies',
+    path: '/industries/travel-agencies',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
 const Char123LocaleChar125ServicesIndexRoute =
   Char123LocaleChar125ServicesIndexRouteImport.update({
     id: '/services/',
@@ -120,10 +144,28 @@ const Char123LocaleChar125ServicesCustomSoftwareRoute =
     path: '/services/custom-software',
     getParentRoute: () => Char123LocaleChar125Route,
   } as any)
-const Char123LocaleChar125ServicesIntegrationsRoute =
-  Char123LocaleChar125ServicesIntegrationsRouteImport.update({
-    id: '/services/integrations',
-    path: '/services/integrations',
+const Char123LocaleChar125ServicesIntegrationsIndexRoute =
+  Char123LocaleChar125ServicesIntegrationsIndexRouteImport.update({
+    id: '/services/integrations/',
+    path: '/services/integrations/',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125ServicesIntegrationsHoldedHubspotRoute =
+  Char123LocaleChar125ServicesIntegrationsHoldedHubspotRouteImport.update({
+    id: '/services/integrations/holded-hubspot',
+    path: '/services/integrations/holded-hubspot',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRoute =
+  Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRouteImport.update({
+    id: '/services/integrations/holded-prestashop',
+    path: '/services/integrations/holded-prestashop',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125ServicesIntegrationsHoldedWoocommerceRoute =
+  Char123LocaleChar125ServicesIntegrationsHoldedWoocommerceRouteImport.update({
+    id: '/services/integrations/holded-woocommerce',
+    path: '/services/integrations/holded-woocommerce',
     getParentRoute: () => Char123LocaleChar125Route,
   } as any)
 
@@ -138,13 +180,19 @@ export interface FileRoutesByFullPath {
   '/{-$locale}/llms.txt': typeof Char123LocaleChar125LlmsDottxtRoute
   '/{-$locale}/pricing': typeof Char123LocaleChar125PricingRoute
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
+  '/{-$locale}/verifactu': typeof Char123LocaleChar125VerifactuRoute
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
+  '/{-$locale}/case-studies/viatsy': typeof Char123LocaleChar125CaseStudiesViatsyRoute
+  '/{-$locale}/industries/travel-agencies': typeof Char123LocaleChar125IndustriesTravelAgenciesRoute
   '/{-$locale}/services/ai-agents': typeof Char123LocaleChar125ServicesAiAgentsRoute
   '/{-$locale}/services/ai-automation': typeof Char123LocaleChar125ServicesAiAutomationRoute
   '/{-$locale}/services/ai-training': typeof Char123LocaleChar125ServicesAiTrainingRoute
   '/{-$locale}/services/custom-software': typeof Char123LocaleChar125ServicesCustomSoftwareRoute
-  '/{-$locale}/services/integrations': typeof Char123LocaleChar125ServicesIntegrationsRoute
   '/{-$locale}/services/': typeof Char123LocaleChar125ServicesIndexRoute
+  '/{-$locale}/services/integrations/holded-hubspot': typeof Char123LocaleChar125ServicesIntegrationsHoldedHubspotRoute
+  '/{-$locale}/services/integrations/holded-prestashop': typeof Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRoute
+  '/{-$locale}/services/integrations/holded-woocommerce': typeof Char123LocaleChar125ServicesIntegrationsHoldedWoocommerceRoute
+  '/{-$locale}/services/integrations/': typeof Char123LocaleChar125ServicesIntegrationsIndexRoute
 }
 export interface FileRoutesByTo {
   '/robots.txt': typeof RobotsDottxtRoute
@@ -156,13 +204,19 @@ export interface FileRoutesByTo {
   '/{-$locale}/llms.txt': typeof Char123LocaleChar125LlmsDottxtRoute
   '/{-$locale}/pricing': typeof Char123LocaleChar125PricingRoute
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
+  '/{-$locale}/verifactu': typeof Char123LocaleChar125VerifactuRoute
   '/{-$locale}': typeof Char123LocaleChar125IndexRoute
+  '/{-$locale}/case-studies/viatsy': typeof Char123LocaleChar125CaseStudiesViatsyRoute
+  '/{-$locale}/industries/travel-agencies': typeof Char123LocaleChar125IndustriesTravelAgenciesRoute
   '/{-$locale}/services/ai-agents': typeof Char123LocaleChar125ServicesAiAgentsRoute
   '/{-$locale}/services/ai-automation': typeof Char123LocaleChar125ServicesAiAutomationRoute
   '/{-$locale}/services/ai-training': typeof Char123LocaleChar125ServicesAiTrainingRoute
   '/{-$locale}/services/custom-software': typeof Char123LocaleChar125ServicesCustomSoftwareRoute
-  '/{-$locale}/services/integrations': typeof Char123LocaleChar125ServicesIntegrationsRoute
   '/{-$locale}/services': typeof Char123LocaleChar125ServicesIndexRoute
+  '/{-$locale}/services/integrations/holded-hubspot': typeof Char123LocaleChar125ServicesIntegrationsHoldedHubspotRoute
+  '/{-$locale}/services/integrations/holded-prestashop': typeof Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRoute
+  '/{-$locale}/services/integrations/holded-woocommerce': typeof Char123LocaleChar125ServicesIntegrationsHoldedWoocommerceRoute
+  '/{-$locale}/services/integrations': typeof Char123LocaleChar125ServicesIntegrationsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -176,13 +230,19 @@ export interface FileRoutesById {
   '/{-$locale}/llms.txt': typeof Char123LocaleChar125LlmsDottxtRoute
   '/{-$locale}/pricing': typeof Char123LocaleChar125PricingRoute
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
+  '/{-$locale}/verifactu': typeof Char123LocaleChar125VerifactuRoute
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
+  '/{-$locale}/case-studies/viatsy': typeof Char123LocaleChar125CaseStudiesViatsyRoute
+  '/{-$locale}/industries/travel-agencies': typeof Char123LocaleChar125IndustriesTravelAgenciesRoute
   '/{-$locale}/services/ai-agents': typeof Char123LocaleChar125ServicesAiAgentsRoute
   '/{-$locale}/services/ai-automation': typeof Char123LocaleChar125ServicesAiAutomationRoute
   '/{-$locale}/services/ai-training': typeof Char123LocaleChar125ServicesAiTrainingRoute
   '/{-$locale}/services/custom-software': typeof Char123LocaleChar125ServicesCustomSoftwareRoute
-  '/{-$locale}/services/integrations': typeof Char123LocaleChar125ServicesIntegrationsRoute
   '/{-$locale}/services/': typeof Char123LocaleChar125ServicesIndexRoute
+  '/{-$locale}/services/integrations/holded-hubspot': typeof Char123LocaleChar125ServicesIntegrationsHoldedHubspotRoute
+  '/{-$locale}/services/integrations/holded-prestashop': typeof Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRoute
+  '/{-$locale}/services/integrations/holded-woocommerce': typeof Char123LocaleChar125ServicesIntegrationsHoldedWoocommerceRoute
+  '/{-$locale}/services/integrations/': typeof Char123LocaleChar125ServicesIntegrationsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -197,13 +257,19 @@ export interface FileRouteTypes {
     | '/{-$locale}/llms.txt'
     | '/{-$locale}/pricing'
     | '/{-$locale}/privacy'
+    | '/{-$locale}/verifactu'
     | '/{-$locale}/'
+    | '/{-$locale}/case-studies/viatsy'
+    | '/{-$locale}/industries/travel-agencies'
     | '/{-$locale}/services/ai-agents'
     | '/{-$locale}/services/ai-automation'
     | '/{-$locale}/services/ai-training'
     | '/{-$locale}/services/custom-software'
-    | '/{-$locale}/services/integrations'
     | '/{-$locale}/services/'
+    | '/{-$locale}/services/integrations/holded-hubspot'
+    | '/{-$locale}/services/integrations/holded-prestashop'
+    | '/{-$locale}/services/integrations/holded-woocommerce'
+    | '/{-$locale}/services/integrations/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/robots.txt'
@@ -215,13 +281,19 @@ export interface FileRouteTypes {
     | '/{-$locale}/llms.txt'
     | '/{-$locale}/pricing'
     | '/{-$locale}/privacy'
+    | '/{-$locale}/verifactu'
     | '/{-$locale}'
+    | '/{-$locale}/case-studies/viatsy'
+    | '/{-$locale}/industries/travel-agencies'
     | '/{-$locale}/services/ai-agents'
     | '/{-$locale}/services/ai-automation'
     | '/{-$locale}/services/ai-training'
     | '/{-$locale}/services/custom-software'
-    | '/{-$locale}/services/integrations'
     | '/{-$locale}/services'
+    | '/{-$locale}/services/integrations/holded-hubspot'
+    | '/{-$locale}/services/integrations/holded-prestashop'
+    | '/{-$locale}/services/integrations/holded-woocommerce'
+    | '/{-$locale}/services/integrations'
   id:
     | '__root__'
     | '/robots.txt'
@@ -234,13 +306,19 @@ export interface FileRouteTypes {
     | '/{-$locale}/llms.txt'
     | '/{-$locale}/pricing'
     | '/{-$locale}/privacy'
+    | '/{-$locale}/verifactu'
     | '/{-$locale}/'
+    | '/{-$locale}/case-studies/viatsy'
+    | '/{-$locale}/industries/travel-agencies'
     | '/{-$locale}/services/ai-agents'
     | '/{-$locale}/services/ai-automation'
     | '/{-$locale}/services/ai-training'
     | '/{-$locale}/services/custom-software'
-    | '/{-$locale}/services/integrations'
     | '/{-$locale}/services/'
+    | '/{-$locale}/services/integrations/holded-hubspot'
+    | '/{-$locale}/services/integrations/holded-prestashop'
+    | '/{-$locale}/services/integrations/holded-woocommerce'
+    | '/{-$locale}/services/integrations/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -328,6 +406,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char123LocaleChar125PrivacyRouteImport
       parentRoute: typeof Char123LocaleChar125Route
     }
+    '/{-$locale}/verifactu': {
+      id: '/{-$locale}/verifactu'
+      path: '/verifactu'
+      fullPath: '/{-$locale}/verifactu'
+      preLoaderRoute: typeof Char123LocaleChar125VerifactuRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
+    '/{-$locale}/case-studies/viatsy': {
+      id: '/{-$locale}/case-studies/viatsy'
+      path: '/case-studies/viatsy'
+      fullPath: '/{-$locale}/case-studies/viatsy'
+      preLoaderRoute: typeof Char123LocaleChar125CaseStudiesViatsyRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
+    '/{-$locale}/industries/travel-agencies': {
+      id: '/{-$locale}/industries/travel-agencies'
+      path: '/industries/travel-agencies'
+      fullPath: '/{-$locale}/industries/travel-agencies'
+      preLoaderRoute: typeof Char123LocaleChar125IndustriesTravelAgenciesRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
     '/{-$locale}/services/': {
       id: '/{-$locale}/services/'
       path: '/services'
@@ -363,11 +462,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char123LocaleChar125ServicesCustomSoftwareRouteImport
       parentRoute: typeof Char123LocaleChar125Route
     }
-    '/{-$locale}/services/integrations': {
-      id: '/{-$locale}/services/integrations'
+    '/{-$locale}/services/integrations/': {
+      id: '/{-$locale}/services/integrations/'
       path: '/services/integrations'
-      fullPath: '/{-$locale}/services/integrations'
-      preLoaderRoute: typeof Char123LocaleChar125ServicesIntegrationsRouteImport
+      fullPath: '/{-$locale}/services/integrations/'
+      preLoaderRoute: typeof Char123LocaleChar125ServicesIntegrationsIndexRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
+    '/{-$locale}/services/integrations/holded-hubspot': {
+      id: '/{-$locale}/services/integrations/holded-hubspot'
+      path: '/services/integrations/holded-hubspot'
+      fullPath: '/{-$locale}/services/integrations/holded-hubspot'
+      preLoaderRoute: typeof Char123LocaleChar125ServicesIntegrationsHoldedHubspotRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
+    '/{-$locale}/services/integrations/holded-prestashop': {
+      id: '/{-$locale}/services/integrations/holded-prestashop'
+      path: '/services/integrations/holded-prestashop'
+      fullPath: '/{-$locale}/services/integrations/holded-prestashop'
+      preLoaderRoute: typeof Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
+    '/{-$locale}/services/integrations/holded-woocommerce': {
+      id: '/{-$locale}/services/integrations/holded-woocommerce'
+      path: '/services/integrations/holded-woocommerce'
+      fullPath: '/{-$locale}/services/integrations/holded-woocommerce'
+      preLoaderRoute: typeof Char123LocaleChar125ServicesIntegrationsHoldedWoocommerceRouteImport
       parentRoute: typeof Char123LocaleChar125Route
     }
   }
@@ -381,13 +501,19 @@ interface Char123LocaleChar125RouteChildren {
   Char123LocaleChar125LlmsDottxtRoute: typeof Char123LocaleChar125LlmsDottxtRoute
   Char123LocaleChar125PricingRoute: typeof Char123LocaleChar125PricingRoute
   Char123LocaleChar125PrivacyRoute: typeof Char123LocaleChar125PrivacyRoute
+  Char123LocaleChar125VerifactuRoute: typeof Char123LocaleChar125VerifactuRoute
   Char123LocaleChar125IndexRoute: typeof Char123LocaleChar125IndexRoute
+  Char123LocaleChar125CaseStudiesViatsyRoute: typeof Char123LocaleChar125CaseStudiesViatsyRoute
+  Char123LocaleChar125IndustriesTravelAgenciesRoute: typeof Char123LocaleChar125IndustriesTravelAgenciesRoute
   Char123LocaleChar125ServicesAiAgentsRoute: typeof Char123LocaleChar125ServicesAiAgentsRoute
   Char123LocaleChar125ServicesAiAutomationRoute: typeof Char123LocaleChar125ServicesAiAutomationRoute
   Char123LocaleChar125ServicesAiTrainingRoute: typeof Char123LocaleChar125ServicesAiTrainingRoute
   Char123LocaleChar125ServicesCustomSoftwareRoute: typeof Char123LocaleChar125ServicesCustomSoftwareRoute
-  Char123LocaleChar125ServicesIntegrationsRoute: typeof Char123LocaleChar125ServicesIntegrationsRoute
   Char123LocaleChar125ServicesIndexRoute: typeof Char123LocaleChar125ServicesIndexRoute
+  Char123LocaleChar125ServicesIntegrationsHoldedHubspotRoute: typeof Char123LocaleChar125ServicesIntegrationsHoldedHubspotRoute
+  Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRoute: typeof Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRoute
+  Char123LocaleChar125ServicesIntegrationsHoldedWoocommerceRoute: typeof Char123LocaleChar125ServicesIntegrationsHoldedWoocommerceRoute
+  Char123LocaleChar125ServicesIntegrationsIndexRoute: typeof Char123LocaleChar125ServicesIntegrationsIndexRoute
 }
 
 const Char123LocaleChar125RouteChildren: Char123LocaleChar125RouteChildren = {
@@ -399,7 +525,12 @@ const Char123LocaleChar125RouteChildren: Char123LocaleChar125RouteChildren = {
   Char123LocaleChar125LlmsDottxtRoute: Char123LocaleChar125LlmsDottxtRoute,
   Char123LocaleChar125PricingRoute: Char123LocaleChar125PricingRoute,
   Char123LocaleChar125PrivacyRoute: Char123LocaleChar125PrivacyRoute,
+  Char123LocaleChar125VerifactuRoute: Char123LocaleChar125VerifactuRoute,
   Char123LocaleChar125IndexRoute: Char123LocaleChar125IndexRoute,
+  Char123LocaleChar125CaseStudiesViatsyRoute:
+    Char123LocaleChar125CaseStudiesViatsyRoute,
+  Char123LocaleChar125IndustriesTravelAgenciesRoute:
+    Char123LocaleChar125IndustriesTravelAgenciesRoute,
   Char123LocaleChar125ServicesAiAgentsRoute:
     Char123LocaleChar125ServicesAiAgentsRoute,
   Char123LocaleChar125ServicesAiAutomationRoute:
@@ -408,10 +539,16 @@ const Char123LocaleChar125RouteChildren: Char123LocaleChar125RouteChildren = {
     Char123LocaleChar125ServicesAiTrainingRoute,
   Char123LocaleChar125ServicesCustomSoftwareRoute:
     Char123LocaleChar125ServicesCustomSoftwareRoute,
-  Char123LocaleChar125ServicesIntegrationsRoute:
-    Char123LocaleChar125ServicesIntegrationsRoute,
   Char123LocaleChar125ServicesIndexRoute:
     Char123LocaleChar125ServicesIndexRoute,
+  Char123LocaleChar125ServicesIntegrationsHoldedHubspotRoute:
+    Char123LocaleChar125ServicesIntegrationsHoldedHubspotRoute,
+  Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRoute:
+    Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRoute,
+  Char123LocaleChar125ServicesIntegrationsHoldedWoocommerceRoute:
+    Char123LocaleChar125ServicesIntegrationsHoldedWoocommerceRoute,
+  Char123LocaleChar125ServicesIntegrationsIndexRoute:
+    Char123LocaleChar125ServicesIntegrationsIndexRoute,
 }
 
 const Char123LocaleChar125RouteWithChildren =

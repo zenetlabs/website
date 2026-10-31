@@ -3,8 +3,13 @@ import { z } from 'zod';
 import { legalEntity } from '@/lib/content';
 import { type Locale, locales, messages } from '@/lib/i18n';
 import {
+  HOLDED_PAGE_IDS,
+  isHoldedPage,
   isServicePage,
+  LANDING_PAGE_IDS,
+  type LandingPageId,
   PAGE_IDS,
+  PAGES,
   type PageId,
   pageLocales,
   SERVICE_PAGE_IDS,
@@ -12,6 +17,7 @@ import {
 } from '@/lib/page-registry';
 import {
   breadcrumbStructuredData,
+  caseStructuredData,
   homeStructuredData,
   pricingStructuredData,
   serviceStructuredData,
@@ -23,6 +29,7 @@ import {
   STRUCTURED_DATA,
   structuredData,
 } from '@/lib/structured-data';
+import { titleText } from '@/lib/title-text';
 import { FLIPPED } from '../../test/entities';
 import { FAQ } from '../../test/faq';
 import {
@@ -31,7 +38,7 @@ import {
   jsonLdBlocks,
   validateJsonLd,
 } from '../../test/json-ld';
-import { SERVICES } from '../../test/page-content';
+import { PRICING_PAGE, SERVICES } from '../../test/page-content';
 import { SERVICE_BODIES } from '../../test/service-bodies';
 
 const ORIGIN = 'https://zenetlabs.com';
@@ -351,12 +358,22 @@ describe('structured data for the flipped Spanish entity', () => {
   });
 });
 
+function landingCopy(id: LandingPageId) {
+  const { spanish } = SERVICE_BODIES.es.landing;
+  if (!spanish) throw new Error('No Spanish landing content');
+  return spanish[id];
+}
+
 function routeData(locale: Locale, id: PageId) {
   switch (id) {
     case 'home':
       return homeStructuredData(locale, FAQ[locale]);
     case 'pricing':
-      return pricingStructuredData(locale, SERVICES[locale]);
+      return pricingStructuredData(
+        locale,
+        PRICING_PAGE[locale],
+        SERVICES[locale],
+      );
     case 'automation':
     case 'integrations':
     case 'agents':
@@ -371,8 +388,26 @@ function routeData(locale: Locale, id: PageId) {
       );
     case 'services':
       return servicesHubStructuredData(locale, SERVICE_BODIES[locale].hub);
+    case 'holdedPrestashop':
+    case 'holdedWoocommerce':
+    case 'holdedHubspot':
+    case 'verifactu':
+    case 'travelAgencies':
+      return serviceStructuredData(
+        locale,
+        id,
+        landingCopy(id),
+        SERVICE_BODIES.es.hub,
+        SERVICES.es,
+      );
+    case 'viatsyCase':
+      return caseStructuredData(
+        locale,
+        SERVICE_BODIES[locale].landing.viatsy,
+        SERVICE_BODIES[locale].hub,
+      );
     default:
-      return breadcrumbStructuredData(locale, id);
+      return breadcrumbStructuredData(locale, id, `Name of ${id}`);
   }
 }
 
@@ -449,7 +484,7 @@ describe.each(locales)('route structured data (%s)', (locale) => {
     expect(catalog.itemListElement).toHaveLength(10);
     const pricing = `${base}${locale === 'en' ? '/pricing' : '/precios'}`;
     expect(catalog['@id']).toBe(`${pricing}#catalog`);
-    expect(catalog.name).toBe(messages[locale].pricing.catalog);
+    expect(catalog.name).toBe(PRICING_PAGE[locale].catalog);
 
     for (const [index, { service, price }] of rows.entries()) {
       const offer = catalog.itemListElement[index];
@@ -488,22 +523,23 @@ describe.each(locales)('route structured data (%s)', (locale) => {
     }
   });
 
-  it.each(PAGE_IDS.filter((id) => id !== 'home' && !isServicePage(id)))(
-    'adds a two-step breadcrumb to %s',
-    (id) => {
-      if (!pageLocales(id).includes(locale)) return;
-      const crumbs = page(id).find(
-        (block) => breadcrumbSchema.safeParse(block).success,
-      );
-      const { itemListElement } = breadcrumbSchema.parse(crumbs);
-      expect(itemListElement.map((entry) => entry.position)).toEqual([1, 2]);
-      expect(itemListElement[0]).toMatchObject({
-        name: 'Zenet Labs',
-        item: `${base}${locale === 'en' ? '/' : ''}`,
-      });
-      expect(itemListElement[1]?.item.startsWith(ORIGIN)).toBe(true);
-    },
-  );
+  it.each(
+    PAGE_IDS.filter(
+      (id) => id !== 'home' && !isServicePage(id) && !isHoldedPage(id),
+    ),
+  )('adds a two-step breadcrumb to %s', (id) => {
+    if (!pageLocales(id).includes(locale)) return;
+    const crumbs = page(id).find(
+      (block) => breadcrumbSchema.safeParse(block).success,
+    );
+    const { itemListElement } = breadcrumbSchema.parse(crumbs);
+    expect(itemListElement.map((entry) => entry.position)).toEqual([1, 2]);
+    expect(itemListElement[0]).toMatchObject({
+      name: 'Zenet Labs',
+      item: `${base}${locale === 'en' ? '/' : ''}`,
+    });
+    expect(itemListElement[1]?.item.startsWith(ORIGIN)).toBe(true);
+  });
 
   it.each(SERVICE_PAGE_IDS)('adds a three-step breadcrumb to %s', (id) => {
     const { itemListElement } = breadcrumbSchema.parse(
@@ -719,7 +755,11 @@ describe('service structured data for the flipped Spanish entity', () => {
 describe('pricing structured data for the flipped Spanish entity', () => {
   const providers = (entity?: typeof FLIPPED) =>
     catalogSchema
-      .parse(blocks(pricingStructuredData('es', SERVICES.es, entity))[0])
+      .parse(
+        blocks(
+          pricingStructuredData('es', PRICING_PAGE.es, SERVICES.es, entity),
+        )[0],
+      )
       .itemListElement.map((offer) => offer.itemOffered.provider['@id']);
 
   it('points every offer at the entity of the moment, without cache leaks', () => {
@@ -899,6 +939,221 @@ describe('validateJsonLd on the new types', () => {
     ['a breadcrumb starting at zero', crumbs([0, 1])],
   ])('rejects %s', (_name, block) => {
     expect(check(block)).not.toEqual([]);
+  });
+});
+
+const typeOf = z.object({ '@type': z.string() });
+
+describe('landing page structured data (es)', () => {
+  const layout = blocks(STRUCTURED_DATA.es);
+  const { hub } = SERVICE_BODIES.es;
+  it.each(LANDING_PAGE_IDS)(
+    'describes %s as one integration service excluding tax, with a breadcrumb and a FAQ',
+    (id) => {
+      const [serviceBlock, crumbs, faqBlock, ...rest] = blocks(
+        routeData('es', id),
+      );
+      expect(rest).toEqual([]);
+      const service = serviceSchema.parse(serviceBlock);
+      const url = pageUrl('es', id);
+      expect(service['@id']).toBe(`${url}#service`);
+      expect(service.name).toBe(hub.landing[id]);
+      expect(service.description).toBe(landingCopy(id).meta.description);
+      expect(service.areaServed).toBe('ES');
+      expect(service.provider['@id']).toBe(`${ORIGIN}/#organization`);
+      expect(service.offers).toHaveLength(1);
+      const [offer] = service.offers;
+      expect(offer?.itemOffered['@id']).toBe(service['@id']);
+      expect(offer?.priceSpecification).toMatchObject({
+        '@type': 'PriceSpecification',
+        minPrice: 4000,
+        priceCurrency: 'EUR',
+        valueAddedTaxIncluded: false,
+      });
+      expect(typeOf.parse(crumbs)['@type']).toBe('BreadcrumbList');
+      expect(faqBlock).toEqual({
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        '@id': `${url}#faq`,
+        inLanguage: 'es',
+        mainEntity: landingCopy(id).faq.items.map(({ question, answer }) => ({
+          '@type': 'Question',
+          name: question,
+          acceptedAnswer: { '@type': 'Answer', text: answer },
+        })),
+      });
+      expect(
+        validateJsonLd([...layout, ...blocks(routeData('es', id))], ORIGIN),
+      ).toEqual([]);
+    },
+  );
+
+  it('nests the Holded pairs under services and integrations', () => {
+    for (const id of HOLDED_PAGE_IDS) {
+      const crumbs = blocks(routeData('es', id)).find(
+        (block) => breadcrumbSchema.safeParse(block).success,
+      );
+      const { itemListElement } = breadcrumbSchema.parse(crumbs);
+      expect(itemListElement.map((entry) => entry.name)).toEqual([
+        'Zenet Labs',
+        hub.meta.title,
+        hub.cards.integrations.name,
+        hub.landing[id],
+      ]);
+      expect(itemListElement.map((entry) => entry.item)).toEqual([
+        `${ORIGIN}/es`,
+        `${ORIGIN}/es/servicios`,
+        `${ORIGIN}/es/servicios/integraciones`,
+        pageUrl('es', id),
+      ]);
+    }
+  });
+
+  it('follows the entity of the moment for the service provider', () => {
+    const provider = (entity?: typeof FLIPPED) =>
+      serviceSchema.parse(
+        blocks(
+          serviceStructuredData(
+            'es',
+            'verifactu',
+            landingCopy('verifactu'),
+            hub,
+            SERVICES.es,
+            entity,
+          ),
+        )[0],
+      ).provider['@id'];
+    expect(provider()).toBe(`${ORIGIN}/#organization`);
+    expect(provider(FLIPPED)).toBe(`${ORIGIN}/es#business`);
+    expect(provider()).toBe(`${ORIGIN}/#organization`);
+  });
+
+  it('keeps one identity per node across landing pages and the flipped entity', () => {
+    const flipped = structuredData('es', FLIPPED);
+    const pages = new Map(
+      LANDING_PAGE_IDS.map((id) => [
+        pageUrl('es', id),
+        [
+          ...blocks(flipped),
+          ...blocks(
+            serviceStructuredData(
+              'es',
+              id,
+              landingCopy(id),
+              hub,
+              SERVICES.es,
+              FLIPPED,
+            ),
+          ),
+        ],
+      ]),
+    );
+    expect(identityProblems(pages)).toEqual([]);
+  });
+});
+
+const articleSchema = z.object({
+  '@type': z.literal('Article'),
+  '@id': z.string(),
+  headline: z.string(),
+  description: z.string(),
+  inLanguage: z.string(),
+  url: z.string(),
+  datePublished: z.string(),
+  dateModified: z.string(),
+  image: z.string(),
+  author: z.object({ '@id': z.string() }),
+  publisher: z.object({ '@id': z.string() }),
+});
+
+describe.each(locales)('case page structured data (%s)', (locale) => {
+  const { landing } = SERVICE_BODIES[locale];
+  const data = blocks(routeData(locale, 'viatsyCase'));
+
+  it('holds a two-step breadcrumb and one article', () => {
+    expect(data.map((block) => typeOf.parse(block)['@type'])).toEqual([
+      'BreadcrumbList',
+      'Article',
+    ]);
+  });
+
+  it('describes the article with the copy, the dates and the entity ids', () => {
+    const article = articleSchema.parse(data[1]);
+    const url = pageUrl(locale, 'viatsyCase');
+    expect(article['@id']).toBe(`${url}#article`);
+    expect(article.url).toBe(url);
+    expect(article.headline).toBe(titleText(landing.viatsy.title));
+    expect(article.description).toBe(landing.viatsy.meta.description);
+    expect(article.inLanguage).toBe(locale);
+    expect(article.datePublished).toBe(landing.viatsy.published);
+    expect(article.dateModified).toBe(PAGES.viatsyCase.lastmod);
+    expect(article.image).toBe(`${ORIGIN}/og-${locale}.png`);
+    expect(article.author['@id']).toBe(FOUNDER_ID);
+    expect(article.publisher['@id']).toBe(`${ORIGIN}/#organization`);
+  });
+
+  it('never publishes after the last modification', () => {
+    expect(landing.viatsy.published <= PAGES.viatsyCase.lastmod).toBe(true);
+  });
+
+  it('follows the entity of the moment for the publisher', () => {
+    const publisher = (entity?: typeof FLIPPED) =>
+      articleSchema.parse(
+        blocks(
+          caseStructuredData(
+            locale,
+            landing.viatsy,
+            SERVICE_BODIES[locale].hub,
+            entity,
+          ),
+        )[1],
+      ).publisher['@id'];
+    expect(publisher()).toBe(`${ORIGIN}/#organization`);
+    expect(publisher(FLIPPED)).toBe(`${ORIGIN}/es#business`);
+  });
+});
+
+describe('validateJsonLd on Article', () => {
+  const article = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    '@id': `${ORIGIN}/case-studies/x#article`,
+    headline: 'A case',
+    description: 'What happened.',
+    inLanguage: 'en',
+    url: `${ORIGIN}/case-studies/x`,
+    datePublished: '2026-10-31',
+    dateModified: '2026-11-02',
+    image: `${ORIGIN}/og-en.png`,
+    author: { '@id': FOUNDER_ID },
+    publisher: { '@id': `${ORIGIN}/#organization` },
+  };
+  const layout = [GOOD, { ...person(), '@id': FOUNDER_ID }];
+
+  function person() {
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      name: 'x',
+      url: `${ORIGIN}/about`,
+    };
+  }
+
+  it('accepts a complete article', () => {
+    expect(validateJsonLd([...layout, article], ORIGIN)).toEqual([]);
+  });
+
+  it.each([
+    ['a missing headline', { headline: undefined }],
+    ['a slash date', { datePublished: '30/10/2026' }],
+    ['a date with a time', { dateModified: '2026-11-02T10:00:00Z' }],
+    ['a modification before the publication', { dateModified: '2026-10-30' }],
+    ['a missing author', { author: undefined }],
+    ['a missing image', { image: undefined }],
+  ])('rejects %s', (_name, patch) => {
+    expect(
+      validateJsonLd([...layout, { ...article, ...patch }], ORIGIN),
+    ).not.toEqual([]);
   });
 });
 

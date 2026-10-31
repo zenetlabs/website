@@ -1,4 +1,5 @@
 import type {
+  Article,
   BreadcrumbList,
   FAQPage,
   Offer,
@@ -9,9 +10,11 @@ import type {
   WithContext,
 } from 'schema-dts';
 import type {
+  CasePageContent,
   Country,
   FaqItem,
   Price,
+  PricingPageContent,
   PublishedEntity,
   Service,
   ServicePageContent,
@@ -19,22 +22,21 @@ import type {
   ServicesHubContent,
 } from '@/content/types';
 import { legalEntity } from '@/lib/content';
-import {
-  crumbName,
-  hubNames,
-  type Names,
-  servicePageNames,
-} from '@/lib/crumb-names';
-import { type Locale, messages } from '@/lib/i18n';
+import { crumbName, hubNames, type Names } from '@/lib/crumb-names';
+import type { Locale } from '@/lib/i18n';
+import { ogImagePath } from '@/lib/og-image';
 import {
   breadcrumbTrail,
+  type LandingPageId,
+  PAGES,
   type PageId,
   type ServicePageId,
   serviceOf,
 } from '@/lib/page-registry';
-import { pageName, type StaticPageId } from '@/lib/pages';
 import { jsonLd, pageUrl, SITE_NAME } from '@/lib/seo';
 import { SITE } from '@/lib/site';
+import { FOUNDER_ID } from '@/lib/structured-data';
+import { titleText } from '@/lib/title-text';
 
 type Entries = ReturnType<typeof jsonLd>[];
 
@@ -73,10 +75,6 @@ function breadcrumbNode(
       item: pageUrl(locale, step),
     })),
   };
-}
-
-function staticNames(locale: Locale, page: StaticPageId): Names {
-  return { home: SITE_NAME, [page]: pageName(locale, page) };
 }
 
 function priceSpecification(
@@ -128,6 +126,7 @@ function offerNode(
 
 function catalogNode(
   locale: Locale,
+  catalog: string,
   services: Services,
   entity: PublishedEntity,
 ): WithContext<OfferCatalog> {
@@ -136,7 +135,7 @@ function catalogNode(
     '@context': 'https://schema.org',
     '@type': 'OfferCatalog',
     '@id': `${pageUrl(locale, 'pricing')}#catalog`,
-    name: messages[locale].pricing.catalog,
+    name: catalog,
     url: pageUrl(locale, 'pricing'),
     itemListElement: Object.values(services).flatMap((service) =>
       service.prices.map((price) =>
@@ -148,15 +147,15 @@ function catalogNode(
 
 function serviceNode(
   locale: Locale,
-  page: ServicePageId,
-  copy: ServicePageContent,
+  page: ServicePageId | LandingPageId,
+  copy: Pick<ServicePageContent, 'meta'>,
   hub: ServicesHubContent,
   services: Services,
   entity: PublishedEntity,
 ): WithContext<ServiceSchema> {
   const url = pageUrl(locale, page);
   const id = `${url}#service`;
-  const { name } = hub.cards[page];
+  const name = crumbName(hubNames(hub), page);
   return {
     '@context': 'https://schema.org',
     '@type': 'Service',
@@ -178,6 +177,28 @@ function serviceNode(
   };
 }
 
+function articleNode(
+  locale: Locale,
+  copy: CasePageContent,
+  entity: PublishedEntity,
+): WithContext<Article> {
+  const url = pageUrl(locale, 'viatsyCase');
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    '@id': `${url}#article`,
+    headline: titleText(copy.title),
+    description: copy.meta.description,
+    inLanguage: locale,
+    url,
+    datePublished: copy.published,
+    dateModified: PAGES.viatsyCase.lastmod,
+    image: `${SITE.url}${ogImagePath(locale)}`,
+    author: { '@id': FOUNDER_ID },
+    publisher: { '@id': `${SITE.url}${entity.jsonLd.idPath}` },
+  };
+}
+
 const byFaq = new WeakMap<object, Entries>();
 const byEntity = new WeakMap<object, WeakMap<object, Entries>>();
 const byPage = new Map<string, Entries>();
@@ -191,29 +212,47 @@ export function homeStructuredData(locale: Locale, faq: readonly FaqItem[]) {
   return made;
 }
 
-export function pricingStructuredData(
-  locale: Locale,
-  services: Services,
-  entity: PublishedEntity = legalEntity(locale),
-) {
+function cached(
+  entity: PublishedEntity,
+  key: object,
+  make: () => Entries,
+): Entries {
   const forEntity = byEntity.get(entity) ?? new WeakMap<object, Entries>();
   byEntity.set(entity, forEntity);
-  const found = forEntity.get(services);
+  const found = forEntity.get(key);
   if (found) return found;
-  const made = [
-    jsonLd(catalogNode(locale, services, entity)),
-    jsonLd(breadcrumbNode(locale, 'pricing', staticNames(locale, 'pricing'))),
-  ];
-  forEntity.set(services, made);
+  const made = make();
+  forEntity.set(key, made);
   return made;
 }
 
-export function breadcrumbStructuredData(locale: Locale, page: StaticPageId) {
+export function pricingStructuredData(
+  locale: Locale,
+  page: PricingPageContent,
+  services: Services,
+  entity: PublishedEntity = legalEntity(locale),
+) {
+  return cached(entity, page, () => [
+    jsonLd(catalogNode(locale, page.catalog, services, entity)),
+    jsonLd(
+      breadcrumbNode(locale, 'pricing', {
+        home: SITE_NAME,
+        pricing: page.meta.title,
+      }),
+    ),
+  ]);
+}
+
+export function breadcrumbStructuredData(
+  locale: Locale,
+  page: PageId,
+  name: string,
+) {
   const key = `${locale}:${page}`;
   const found = byPage.get(key);
   if (found) return found;
   const made = [
-    jsonLd(breadcrumbNode(locale, page, staticNames(locale, page))),
+    jsonLd(breadcrumbNode(locale, page, { home: SITE_NAME, [page]: name })),
   ];
   byPage.set(key, made);
   return made;
@@ -232,21 +271,27 @@ export function servicesHubStructuredData(
 
 export function serviceStructuredData(
   locale: Locale,
-  page: ServicePageId,
-  copy: ServicePageContent,
+  page: ServicePageId | LandingPageId,
+  copy: Pick<ServicePageContent, 'meta' | 'faq'>,
   hub: ServicesHubContent,
   services: Services,
   entity: PublishedEntity = legalEntity(locale),
 ) {
-  const forEntity = byEntity.get(entity) ?? new WeakMap<object, Entries>();
-  byEntity.set(entity, forEntity);
-  const found = forEntity.get(copy);
-  if (found) return found;
-  const made = [
+  return cached(entity, copy, () => [
     jsonLd(serviceNode(locale, page, copy, hub, services, entity)),
-    jsonLd(breadcrumbNode(locale, page, servicePageNames(hub, page))),
+    jsonLd(breadcrumbNode(locale, page, hubNames(hub))),
     jsonLd(faqPageNode(locale, page, copy.faq.items)),
-  ];
-  forEntity.set(copy, made);
-  return made;
+  ]);
+}
+
+export function caseStructuredData(
+  locale: Locale,
+  copy: CasePageContent,
+  hub: ServicesHubContent,
+  entity: PublishedEntity = legalEntity(locale),
+) {
+  return cached(entity, copy, () => [
+    jsonLd(breadcrumbNode(locale, 'viatsyCase', hubNames(hub))),
+    jsonLd(articleNode(locale, copy, entity)),
+  ]);
 }

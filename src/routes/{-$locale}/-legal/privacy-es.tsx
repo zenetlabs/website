@@ -2,6 +2,7 @@ import { LegalPage, LegalSection } from '@/components/legal-page';
 import { TEXT_LINK } from '@/components/ui';
 import type { PublishedEntity } from '@/content/types';
 import { describeEntity } from '@/lib/content';
+import { legalClausesFor } from '@/lib/legal-clauses';
 import { PUBLIC_EMAIL } from '@/lib/site';
 
 export function PrivacyEs({
@@ -11,7 +12,7 @@ export function PrivacyEs({
   title: string;
   entity: PublishedEntity;
 }) {
-  const { legalEs } = entity;
+  const legalEs = legalClausesFor(entity);
 
   return (
     <LegalPage

@@ -36,6 +36,23 @@ export const SERVICE_PAIRS = {
   { en: string; es: string; service: ServiceId }
 >;
 
+export const HOLDED_PAGES = [
+  '/es/servicios/integraciones/holded-prestashop',
+  '/es/servicios/integraciones/holded-woocommerce',
+  '/es/servicios/integraciones/holded-hubspot',
+] as const;
+
+export const VERIFACTU_PAGE = '/es/verifactu-integracion';
+export const SECTOR_PAGE = '/es/sectores/agencias-de-viaje';
+export const CASE_PAIR = { en: '/case-studies/viatsy', es: '/es/casos/viatsy' };
+
+export const ES_ONLY_PAGES = [
+  ...HOLDED_PAGES,
+  VERIFACTU_PAGE,
+  SECTOR_PAGE,
+  '/es/aviso-legal',
+] as const;
+
 export const PAIRS = [
   { en: '/', es: '/es' },
   { en: '/pricing', es: '/es/precios' },
@@ -48,6 +65,7 @@ export const PAIRS = [
   SERVICE_PAIRS.agents,
   SERVICE_PAIRS.software,
   SERVICE_PAIRS.training,
+  CASE_PAIR,
 ] as const;
 
 export const LOCALES = ['en', 'es'] as const;
@@ -61,7 +79,7 @@ export const LLMS_PATHS = [
 
 export const CLUSTERS: ReadonlyArray<{ en?: string; es?: string }> = [
   ...PAIRS,
-  { es: '/es/aviso-legal' },
+  ...ES_ONLY_PAGES.map((es) => ({ es })),
 ];
 
 export const PAGES = CLUSTERS.flatMap((cluster) =>

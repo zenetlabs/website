@@ -57,7 +57,10 @@ for path in / /es /pricing /es/precios /about /es/sobre-nosotros /privacy /es/pr
   /services/ai-agents /es/servicios/agentes-de-ia \
   /services/custom-software /es/servicios/desarrollo-de-software-a-medida \
   /services/ai-training /es/servicios/formacion-ia-equipos \
+  /es/servicios/integraciones/holded-prestashop /es/servicios/integraciones/holded-woocommerce /es/servicios/integraciones/holded-hubspot \
+  /es/verifactu-integracion /es/sectores/agencias-de-viaje /case-studies/viatsy /es/casos/viatsy \
   /services.md /services/ai-automation.md /es/servicios.md /es/servicios/automatizacion-de-procesos.md \
+  /es/verifactu-integracion.md /case-studies/viatsy.md \
   /robots.txt /sitemap.xml /llms.txt /es/llms.txt /llms-full.txt /es/llms-full.txt; do
   attempt "200 ${SITE}${path}" status_is 200 "${SITE}${path}"
 done
@@ -90,7 +93,11 @@ for rule in \
   "/es/services|/es/servicios" \
   "/servicios|/services" \
   "/es/services/ai-agents|/es/servicios/agentes-de-ia" \
-  "/services/ai-agents/|/services/ai-agents"; do
+  "/services/ai-agents/|/services/ai-agents" \
+  "/verifactu|/es/verifactu-integracion" \
+  "/es/case-studies/viatsy|/es/casos/viatsy" \
+  "/servicios/integraciones/holded-hubspot|/es/servicios/integraciones/holded-hubspot" \
+  "/case-studies/viatsy/|/case-studies/viatsy"; do
   attempt "301 ${SITE}${rule%%|*}" redirects_to "${SITE}${rule%%|*}" "${SITE}${rule#*|}"
 done
 
@@ -116,6 +123,9 @@ attempt "footer names the entity" body_contains "${SITE}/es" 'Zenet Technology P
 attempt "home carries the FAQ JSON-LD" body_contains "${SITE}/" '"@type":"FAQPage"'
 attempt "service page carries the Service JSON-LD" body_contains "${SITE}/services/ai-automation" '"@type":"Service"'
 attempt "service page carries the FAQ JSON-LD" body_contains "${SITE}/services/ai-automation" '"@type":"FAQPage"'
+attempt "case page carries the Article JSON-LD" body_contains "${SITE}/case-studies/viatsy" '"@type":"Article"'
+attempt "pair page carries the Service JSON-LD" body_contains "${SITE}/es/servicios/integraciones/holded-prestashop" '"@type":"Service"'
+attempt "Verifactu page shows when the dates were checked" body_contains "${SITE}/es/verifactu-integracion" 'Fechas revisadas el'
 attempt "es service page states the tax" body_contains "${SITE}/es/servicios/agentes-de-ia" 'IVA no incluido'
 attempt "es pricing states the tax" body_contains "${SITE}/es/precios" 'no incluyen el IVA'
 attempt "robots disallows server functions" body_contains "${SITE}/robots.txt" 'Disallow: /_serverFn/'

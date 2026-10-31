@@ -122,6 +122,11 @@ test('unknown paths answer 404', async ({ request }) => {
     '/es/nope',
     '/services/nope',
     '/es/servicios/nope',
+    '/case-studies',
+    '/es/casos',
+    '/industries',
+    '/es/sectores',
+    '/es/servicios/integraciones/nope',
   ]) {
     const response = await request.get(path);
     expect(response.status(), path).toBe(404);
@@ -134,6 +139,9 @@ const NOT_FOUND: ReadonlyArray<readonly [string, string]> = [
   ['/fr/privacy', 'Page not found | Zenet Labs'],
   ['/services/nope', 'Page not found | Zenet Labs'],
   ['/es/servicios/nope', 'Página no encontrada | Zenet Labs'],
+  ['/es/servicios/integraciones/nope', 'Página no encontrada | Zenet Labs'],
+  ['/case-studies', 'Page not found | Zenet Labs'],
+  ['/es/casos', 'Página no encontrada | Zenet Labs'],
 ];
 
 for (const [path, title] of NOT_FOUND) {

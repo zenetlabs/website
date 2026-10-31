@@ -46,16 +46,19 @@ export const integrations = {
     items: [
       {
         id: 'pair-1',
+        page: 'holdedPrestashop',
         title: 'Holded y PrestaShop',
         text: 'Cada pedido de PrestaShop entra en Holded como factura, con el cliente y el stock al día, sin volver a teclearlo.',
       },
       {
         id: 'pair-2',
+        page: 'holdedWoocommerce',
         title: 'Holded y WooCommerce',
         text: 'Pedidos, devoluciones y cobros de WooCommerce llegan a Holded, para que la contabilidad cuadre con la tienda sin conciliar a mano a fin de mes.',
       },
       {
         id: 'pair-3',
+        page: 'holdedHubspot',
         title: 'Holded y HubSpot',
         text: 'Una oportunidad ganada en HubSpot crea el contacto y la factura en Holded, y el estado del cobro vuelve a HubSpot para que ventas sepa quién ha pagado.',
       },

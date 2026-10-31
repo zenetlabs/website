@@ -1,3 +1,4 @@
+import { viatsyCaseName } from '@/content/en/case-name';
 import { services } from '@/content/en/services';
 import type { ServicesHubContent } from '@/content/types';
 import { formatPriceSummary } from '@/lib/money';
@@ -45,6 +46,21 @@ export const servicesHub = {
       summary:
         'Hands-on workshops on your own processes, and monthly mentoring while the team adopts AI.',
     },
+  },
+  landing: {
+    viatsyCase: viatsyCaseName,
+  },
+  labels: {
+    breadcrumb: 'Breadcrumb',
+    who: "Who it's for",
+    price: 'Price',
+    timeline: 'Timeline',
+    start: 'First step',
+    taxNote: 'excl. GST',
+    pricing: 'See pricing',
+    mail: 'Prefer email? Write to',
+    related: 'Related services',
+    allServices: 'All services',
   },
   also: {
     title: 'Diagnostic, maintenance and growth',
