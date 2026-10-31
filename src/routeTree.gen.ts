@@ -20,6 +20,12 @@ import { Route as Char123LocaleChar125LlmsFullDottxtRouteImport } from './routes
 import { Route as Char123LocaleChar125LlmsDottxtRouteImport } from './routes/{-$locale}/llms[.]txt'
 import { Route as Char123LocaleChar125PricingRouteImport } from './routes/{-$locale}/pricing'
 import { Route as Char123LocaleChar125PrivacyRouteImport } from './routes/{-$locale}/privacy'
+import { Route as Char123LocaleChar125ServicesIndexRouteImport } from './routes/{-$locale}/services/index'
+import { Route as Char123LocaleChar125ServicesAiAgentsRouteImport } from './routes/{-$locale}/services/ai-agents'
+import { Route as Char123LocaleChar125ServicesAiAutomationRouteImport } from './routes/{-$locale}/services/ai-automation'
+import { Route as Char123LocaleChar125ServicesAiTrainingRouteImport } from './routes/{-$locale}/services/ai-training'
+import { Route as Char123LocaleChar125ServicesCustomSoftwareRouteImport } from './routes/{-$locale}/services/custom-software'
+import { Route as Char123LocaleChar125ServicesIntegrationsRouteImport } from './routes/{-$locale}/services/integrations'
 
 const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
   id: '/robots.txt',
@@ -84,6 +90,42 @@ const Char123LocaleChar125PrivacyRoute =
     path: '/privacy',
     getParentRoute: () => Char123LocaleChar125Route,
   } as any)
+const Char123LocaleChar125ServicesIndexRoute =
+  Char123LocaleChar125ServicesIndexRouteImport.update({
+    id: '/services/',
+    path: '/services/',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125ServicesAiAgentsRoute =
+  Char123LocaleChar125ServicesAiAgentsRouteImport.update({
+    id: '/services/ai-agents',
+    path: '/services/ai-agents',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125ServicesAiAutomationRoute =
+  Char123LocaleChar125ServicesAiAutomationRouteImport.update({
+    id: '/services/ai-automation',
+    path: '/services/ai-automation',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125ServicesAiTrainingRoute =
+  Char123LocaleChar125ServicesAiTrainingRouteImport.update({
+    id: '/services/ai-training',
+    path: '/services/ai-training',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125ServicesCustomSoftwareRoute =
+  Char123LocaleChar125ServicesCustomSoftwareRouteImport.update({
+    id: '/services/custom-software',
+    path: '/services/custom-software',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125ServicesIntegrationsRoute =
+  Char123LocaleChar125ServicesIntegrationsRouteImport.update({
+    id: '/services/integrations',
+    path: '/services/integrations',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/robots.txt': typeof RobotsDottxtRoute
@@ -97,6 +139,12 @@ export interface FileRoutesByFullPath {
   '/{-$locale}/pricing': typeof Char123LocaleChar125PricingRoute
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
+  '/{-$locale}/services/ai-agents': typeof Char123LocaleChar125ServicesAiAgentsRoute
+  '/{-$locale}/services/ai-automation': typeof Char123LocaleChar125ServicesAiAutomationRoute
+  '/{-$locale}/services/ai-training': typeof Char123LocaleChar125ServicesAiTrainingRoute
+  '/{-$locale}/services/custom-software': typeof Char123LocaleChar125ServicesCustomSoftwareRoute
+  '/{-$locale}/services/integrations': typeof Char123LocaleChar125ServicesIntegrationsRoute
+  '/{-$locale}/services/': typeof Char123LocaleChar125ServicesIndexRoute
 }
 export interface FileRoutesByTo {
   '/robots.txt': typeof RobotsDottxtRoute
@@ -109,6 +157,12 @@ export interface FileRoutesByTo {
   '/{-$locale}/pricing': typeof Char123LocaleChar125PricingRoute
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}': typeof Char123LocaleChar125IndexRoute
+  '/{-$locale}/services/ai-agents': typeof Char123LocaleChar125ServicesAiAgentsRoute
+  '/{-$locale}/services/ai-automation': typeof Char123LocaleChar125ServicesAiAutomationRoute
+  '/{-$locale}/services/ai-training': typeof Char123LocaleChar125ServicesAiTrainingRoute
+  '/{-$locale}/services/custom-software': typeof Char123LocaleChar125ServicesCustomSoftwareRoute
+  '/{-$locale}/services/integrations': typeof Char123LocaleChar125ServicesIntegrationsRoute
+  '/{-$locale}/services': typeof Char123LocaleChar125ServicesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -123,6 +177,12 @@ export interface FileRoutesById {
   '/{-$locale}/pricing': typeof Char123LocaleChar125PricingRoute
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
+  '/{-$locale}/services/ai-agents': typeof Char123LocaleChar125ServicesAiAgentsRoute
+  '/{-$locale}/services/ai-automation': typeof Char123LocaleChar125ServicesAiAutomationRoute
+  '/{-$locale}/services/ai-training': typeof Char123LocaleChar125ServicesAiTrainingRoute
+  '/{-$locale}/services/custom-software': typeof Char123LocaleChar125ServicesCustomSoftwareRoute
+  '/{-$locale}/services/integrations': typeof Char123LocaleChar125ServicesIntegrationsRoute
+  '/{-$locale}/services/': typeof Char123LocaleChar125ServicesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -138,6 +198,12 @@ export interface FileRouteTypes {
     | '/{-$locale}/pricing'
     | '/{-$locale}/privacy'
     | '/{-$locale}/'
+    | '/{-$locale}/services/ai-agents'
+    | '/{-$locale}/services/ai-automation'
+    | '/{-$locale}/services/ai-training'
+    | '/{-$locale}/services/custom-software'
+    | '/{-$locale}/services/integrations'
+    | '/{-$locale}/services/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/robots.txt'
@@ -150,6 +216,12 @@ export interface FileRouteTypes {
     | '/{-$locale}/pricing'
     | '/{-$locale}/privacy'
     | '/{-$locale}'
+    | '/{-$locale}/services/ai-agents'
+    | '/{-$locale}/services/ai-automation'
+    | '/{-$locale}/services/ai-training'
+    | '/{-$locale}/services/custom-software'
+    | '/{-$locale}/services/integrations'
+    | '/{-$locale}/services'
   id:
     | '__root__'
     | '/robots.txt'
@@ -163,6 +235,12 @@ export interface FileRouteTypes {
     | '/{-$locale}/pricing'
     | '/{-$locale}/privacy'
     | '/{-$locale}/'
+    | '/{-$locale}/services/ai-agents'
+    | '/{-$locale}/services/ai-automation'
+    | '/{-$locale}/services/ai-training'
+    | '/{-$locale}/services/custom-software'
+    | '/{-$locale}/services/integrations'
+    | '/{-$locale}/services/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -250,6 +328,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char123LocaleChar125PrivacyRouteImport
       parentRoute: typeof Char123LocaleChar125Route
     }
+    '/{-$locale}/services/': {
+      id: '/{-$locale}/services/'
+      path: '/services'
+      fullPath: '/{-$locale}/services/'
+      preLoaderRoute: typeof Char123LocaleChar125ServicesIndexRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
+    '/{-$locale}/services/ai-agents': {
+      id: '/{-$locale}/services/ai-agents'
+      path: '/services/ai-agents'
+      fullPath: '/{-$locale}/services/ai-agents'
+      preLoaderRoute: typeof Char123LocaleChar125ServicesAiAgentsRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
+    '/{-$locale}/services/ai-automation': {
+      id: '/{-$locale}/services/ai-automation'
+      path: '/services/ai-automation'
+      fullPath: '/{-$locale}/services/ai-automation'
+      preLoaderRoute: typeof Char123LocaleChar125ServicesAiAutomationRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
+    '/{-$locale}/services/ai-training': {
+      id: '/{-$locale}/services/ai-training'
+      path: '/services/ai-training'
+      fullPath: '/{-$locale}/services/ai-training'
+      preLoaderRoute: typeof Char123LocaleChar125ServicesAiTrainingRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
+    '/{-$locale}/services/custom-software': {
+      id: '/{-$locale}/services/custom-software'
+      path: '/services/custom-software'
+      fullPath: '/{-$locale}/services/custom-software'
+      preLoaderRoute: typeof Char123LocaleChar125ServicesCustomSoftwareRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
+    '/{-$locale}/services/integrations': {
+      id: '/{-$locale}/services/integrations'
+      path: '/services/integrations'
+      fullPath: '/{-$locale}/services/integrations'
+      preLoaderRoute: typeof Char123LocaleChar125ServicesIntegrationsRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
   }
 }
 
@@ -262,6 +382,12 @@ interface Char123LocaleChar125RouteChildren {
   Char123LocaleChar125PricingRoute: typeof Char123LocaleChar125PricingRoute
   Char123LocaleChar125PrivacyRoute: typeof Char123LocaleChar125PrivacyRoute
   Char123LocaleChar125IndexRoute: typeof Char123LocaleChar125IndexRoute
+  Char123LocaleChar125ServicesAiAgentsRoute: typeof Char123LocaleChar125ServicesAiAgentsRoute
+  Char123LocaleChar125ServicesAiAutomationRoute: typeof Char123LocaleChar125ServicesAiAutomationRoute
+  Char123LocaleChar125ServicesAiTrainingRoute: typeof Char123LocaleChar125ServicesAiTrainingRoute
+  Char123LocaleChar125ServicesCustomSoftwareRoute: typeof Char123LocaleChar125ServicesCustomSoftwareRoute
+  Char123LocaleChar125ServicesIntegrationsRoute: typeof Char123LocaleChar125ServicesIntegrationsRoute
+  Char123LocaleChar125ServicesIndexRoute: typeof Char123LocaleChar125ServicesIndexRoute
 }
 
 const Char123LocaleChar125RouteChildren: Char123LocaleChar125RouteChildren = {
@@ -274,6 +400,18 @@ const Char123LocaleChar125RouteChildren: Char123LocaleChar125RouteChildren = {
   Char123LocaleChar125PricingRoute: Char123LocaleChar125PricingRoute,
   Char123LocaleChar125PrivacyRoute: Char123LocaleChar125PrivacyRoute,
   Char123LocaleChar125IndexRoute: Char123LocaleChar125IndexRoute,
+  Char123LocaleChar125ServicesAiAgentsRoute:
+    Char123LocaleChar125ServicesAiAgentsRoute,
+  Char123LocaleChar125ServicesAiAutomationRoute:
+    Char123LocaleChar125ServicesAiAutomationRoute,
+  Char123LocaleChar125ServicesAiTrainingRoute:
+    Char123LocaleChar125ServicesAiTrainingRoute,
+  Char123LocaleChar125ServicesCustomSoftwareRoute:
+    Char123LocaleChar125ServicesCustomSoftwareRoute,
+  Char123LocaleChar125ServicesIntegrationsRoute:
+    Char123LocaleChar125ServicesIntegrationsRoute,
+  Char123LocaleChar125ServicesIndexRoute:
+    Char123LocaleChar125ServicesIndexRoute,
 }
 
 const Char123LocaleChar125RouteWithChildren =

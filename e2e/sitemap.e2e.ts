@@ -21,6 +21,7 @@ test('every sitemap url is a self-canonical, indexable, reciprocal page', async 
   const locs = new Set(entries.map((entry) => entry.loc));
   const internalLinks = new Set<string>();
   const blocksByPage = new Map<string, unknown[]>();
+  const linksByPage = new Map<string, Set<string>>();
 
   for (const entry of entries) {
     await test.step(entry.loc, async () => {
@@ -76,15 +77,32 @@ test('every sitemap url is a self-canonical, indexable, reciprocal page', async 
       expect(html.match(/<h1\b/g)).toHaveLength(1);
       expect(entry.lastmod).toMatch(LASTMOD);
 
+      const links = new Set<string>();
       for (const [, href] of html.matchAll(/<a\b[^>]*\shref="([^"]+)"/g)) {
         if (!href || !/^\/(?!\/)/.test(href)) continue;
-        internalLinks.add(href.split('#')[0] || '/');
+        const target = href.split('#')[0] || '/';
+        internalLinks.add(target);
+        links.add(target);
       }
+      linksByPage.set(path, links);
     });
   }
 
   await test.step('one @id keeps one identity on every page', () => {
     expect(identityProblems(blocksByPage)).toEqual([]);
+  });
+
+  await test.step('every page but the homes is linked from another page', () => {
+    const linked = new Set(
+      [...linksByPage].flatMap(([from, hrefs]) =>
+        [...hrefs].filter((href) => href !== from),
+      ),
+    );
+    const orphans = entries
+      .map((entry) => new URL(entry.loc).pathname)
+      .filter((path) => path !== '/' && path !== '/es')
+      .filter((path) => !linked.has(path));
+    expect(orphans).toEqual([]);
   });
 
   await test.step('internal links answer 200 without a redirect', async () => {

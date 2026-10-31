@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { jsonLdBlocks } from '../test/json-ld';
-import { gotoHydrated } from './helpers';
+import { gotoHydrated, typesOf } from './helpers';
 
 const SERVICE_IDS = [
   'diagnostic',
@@ -32,13 +32,26 @@ const ABOUT = [
   { path: '/es/sobre-nosotros', cta: '/es#contact' },
 ] as const;
 
-function typesOf(blocks: unknown[]): unknown[] {
-  return blocks.map((block) =>
-    typeof block === 'object' && block !== null && '@type' in block
-      ? block['@type']
-      : undefined,
-  );
-}
+const CARD_LINKS: Record<string, (string | null)[][]> = {
+  '/pricing': [
+    [],
+    ['/services/ai-automation', '/services/integrations'],
+    ['/services/ai-agents'],
+    ['/services/custom-software'],
+    ['/services/ai-training'],
+    [],
+    [],
+  ],
+  '/es/precios': [
+    [],
+    ['/es/servicios/automatizacion-de-procesos', '/es/servicios/integraciones'],
+    ['/es/servicios/agentes-de-ia'],
+    ['/es/servicios/desarrollo-de-software-a-medida'],
+    ['/es/servicios/formacion-ia-equipos'],
+    [],
+    [],
+  ],
+};
 
 for (const { path, tax, cta, faq } of PRICING) {
   test.describe(path, () => {
@@ -51,6 +64,18 @@ for (const { path, tax, cta, faq } of PRICING) {
       await expect(page.locator('main article > div h2')).toHaveCount(7);
       await expect(page.locator('h1')).toHaveCount(1);
       await expect(page.locator('main')).toContainText(tax);
+    });
+
+    test('links each card to its service pages', async ({ page }) => {
+      await gotoHydrated(page, path);
+      const hrefs = await page
+        .locator('main article')
+        .evaluateAll((cards) =>
+          cards.map((card) =>
+            [...card.querySelectorAll('a')].map((a) => a.getAttribute('href')),
+          ),
+        );
+      expect(hrefs).toEqual(CARD_LINKS[path]);
     });
 
     test('links the CTA and the FAQ', async ({ page }) => {

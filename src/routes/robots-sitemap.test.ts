@@ -51,11 +51,23 @@ describe('sitemapXml', () => {
   it('lists the pages present in each locale', () => {
     expect(parseSitemap(xml).map((entry) => entry.loc)).toEqual([
       'https://zenetlabs.com/',
+      'https://zenetlabs.com/services',
+      'https://zenetlabs.com/services/ai-automation',
+      'https://zenetlabs.com/services/integrations',
+      'https://zenetlabs.com/services/ai-agents',
+      'https://zenetlabs.com/services/custom-software',
+      'https://zenetlabs.com/services/ai-training',
       'https://zenetlabs.com/pricing',
       'https://zenetlabs.com/about',
       'https://zenetlabs.com/privacy',
       'https://zenetlabs.com/cookies',
       'https://zenetlabs.com/es',
+      'https://zenetlabs.com/es/servicios',
+      'https://zenetlabs.com/es/servicios/automatizacion-de-procesos',
+      'https://zenetlabs.com/es/servicios/integraciones',
+      'https://zenetlabs.com/es/servicios/agentes-de-ia',
+      'https://zenetlabs.com/es/servicios/desarrollo-de-software-a-medida',
+      'https://zenetlabs.com/es/servicios/formacion-ia-equipos',
       'https://zenetlabs.com/es/precios',
       'https://zenetlabs.com/es/sobre-nosotros',
       'https://zenetlabs.com/es/privacidad',
@@ -74,7 +86,7 @@ describe('sitemapXml', () => {
 
   it('gives every url its alternates', () => {
     const entries = parseSitemap(xml);
-    expect(entries).toHaveLength(11);
+    expect(entries).toHaveLength(23);
     for (const { loc, alternates } of entries) {
       const page = PAGE_IDS.find((id) =>
         locales.some((locale) => pageUrl(locale, id) === loc),

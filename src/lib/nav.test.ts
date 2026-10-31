@@ -4,8 +4,8 @@ import { CTA_TARGET, isCurrent, NAV, navHref } from '@/lib/nav';
 
 describe('navHref', () => {
   it.each([
-    ['en', ['/#services', '/pricing', '/#cases', '/about']],
-    ['es', ['/es#services', '/es/precios', '/es#cases', '/es/sobre-nosotros']],
+    ['en', ['/services', '/pricing', '/#cases', '/about']],
+    ['es', ['/es/servicios', '/es/precios', '/es#cases', '/es/sobre-nosotros']],
   ] as const)('resolves the header targets in %s', (locale, expected) => {
     expect(NAV.map((item) => navHref(locale, item.target))).toEqual(expected);
   });
@@ -31,6 +31,11 @@ describe('isCurrent', () => {
     expect(isCurrent({ page: 'home', section: 'services' }, 'home')).toBe(
       false,
     );
+  });
+
+  it('marks the services hub but not a service page', () => {
+    expect(isCurrent({ page: 'services' }, 'services')).toBe(true);
+    expect(isCurrent({ page: 'services' }, 'automation')).toBe(false);
   });
 
   it('marks nothing without a current page', () => {

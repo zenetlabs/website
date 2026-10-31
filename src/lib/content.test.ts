@@ -43,6 +43,7 @@ import { BARCELONA, FLIPPED } from '../../test/entities';
 import { FAQ } from '../../test/faq';
 import { CURRENCY, SERVICES } from '../../test/page-content';
 import { PLACEHOLDER, stringsOf } from '../../test/placeholders';
+import { SERVICE_BODIES } from '../../test/service-bodies';
 
 describe('entities', () => {
   it('gives the English entity an address and a valid UEN', () => {
@@ -170,7 +171,7 @@ describe('placeholders', () => {
     },
   );
 
-  it('keeps every content string free of placeholders', () => {
+  it('keeps every content string free of placeholders', async () => {
     const strings = stringsOf([
       enEntity,
       esEntity,
@@ -179,10 +180,12 @@ describe('placeholders', () => {
       legalNotice,
       en,
       es,
-      locales.flatMap((locale) => [
-        buildLlmsTxt(locale),
-        buildLlmsFull(locale),
-      ]),
+      await Promise.all(
+        locales.flatMap((locale) => [
+          buildLlmsTxt(locale),
+          buildLlmsFull(locale),
+        ]),
+      ),
       enLlms,
       esLlms,
       CONTENT,
@@ -199,6 +202,7 @@ describe('placeholders', () => {
       verifactuDates,
       FAQ,
       SERVICES,
+      SERVICE_BODIES,
     ]);
     expect(strings.length).toBeGreaterThan(100);
     expect(strings.filter((text) => PLACEHOLDER.test(text))).toEqual([]);
@@ -393,6 +397,21 @@ describe('typed prices', () => {
           !file.endsWith('services.ts'),
       );
   }
+
+  it('scans the service page and hub modules', () => {
+    const scanned = files('src/content').map((file) =>
+      file.slice(process.cwd().length + 1),
+    );
+    expect(scanned).toEqual(
+      expect.arrayContaining([
+        'src/content/en/service-pages/automation.ts',
+        'src/content/es/service-pages/training.ts',
+        'src/content/en/services-hub.ts',
+        'src/content/es/services-hub.ts',
+      ]),
+    );
+    expect(scanned).not.toContain('src/content/en/services.ts');
+  });
 
   it('finds no formatted price outside the services modules', () => {
     const offenders = ['src/content', 'src/components', 'src/i18n'].flatMap(

@@ -17,7 +17,17 @@ const BUDGET = R1_ENTRY_JS_GZIP + 10_240;
 
 const URLS = PAIRS.flatMap(({ en, es }) => [en, es]);
 
-type Kind = 'home' | 'faq' | 'pricing' | 'about';
+type Kind =
+  | 'home'
+  | 'faq'
+  | 'pricing'
+  | 'about'
+  | 'hub'
+  | 'automation'
+  | 'integrations'
+  | 'agents'
+  | 'software'
+  | 'training';
 type Locale = 'en' | 'es';
 
 const NEEDLES: Record<Kind, Record<Locale, string>> = {
@@ -31,6 +41,30 @@ const NEEDLES: Record<Kind, Record<Locale, string>> = {
   },
   pricing: { en: enPricing.how.title, es: esPricing.how.title },
   about: { en: enAbout.vision.title, es: esAbout.vision.title },
+  hub: {
+    en: 'AI consulting that ends in',
+    es: 'Programas que hacen los pasos repetitivos',
+  },
+  automation: {
+    en: 'Which processes are worth automating first',
+    es: 'conviene automatizar primero',
+  },
+  integrations: {
+    en: 'Why not just install a ready-made connector',
+    es: 'instalar un conector ya hecho',
+  },
+  agents: {
+    en: 'How is an AI agent different from a chatbot',
+    es: 'se diferencia un agente de IA de un chatbot',
+  },
+  software: {
+    en: 'Should we build custom software or buy a product',
+    es: 'desarrollar a medida o comprar un producto',
+  },
+  training: {
+    en: 'Who should attend',
+    es: 'Cualquiera que escriba, analice o responda',
+  },
 };
 
 const PAGES: ReadonlyArray<{
@@ -44,9 +78,48 @@ const PAGES: ReadonlyArray<{
   { path: '/es/precios', locale: 'es', kinds: ['pricing'] },
   { path: '/about', locale: 'en', kinds: ['about'] },
   { path: '/es/sobre-nosotros', locale: 'es', kinds: ['about'] },
+  { path: '/services', locale: 'en', kinds: ['hub'] },
+  { path: '/es/servicios', locale: 'es', kinds: ['hub'] },
+  { path: '/services/ai-automation', locale: 'en', kinds: ['automation'] },
+  {
+    path: '/es/servicios/automatizacion-de-procesos',
+    locale: 'es',
+    kinds: ['automation'],
+  },
+  { path: '/services/integrations', locale: 'en', kinds: ['integrations'] },
+  {
+    path: '/es/servicios/integraciones',
+    locale: 'es',
+    kinds: ['integrations'],
+  },
+  { path: '/services/ai-agents', locale: 'en', kinds: ['agents'] },
+  { path: '/es/servicios/agentes-de-ia', locale: 'es', kinds: ['agents'] },
+  { path: '/services/custom-software', locale: 'en', kinds: ['software'] },
+  {
+    path: '/es/servicios/desarrollo-de-software-a-medida',
+    locale: 'es',
+    kinds: ['software'],
+  },
+  { path: '/services/ai-training', locale: 'en', kinds: ['training'] },
+  {
+    path: '/es/servicios/formacion-ia-equipos',
+    locale: 'es',
+    kinds: ['training'],
+  },
 ];
 
-const KINDS: readonly Kind[] = ['home', 'faq', 'pricing', 'about'];
+const KINDS: readonly Kind[] = [
+  'home',
+  'faq',
+  'pricing',
+  'about',
+  'hub',
+  'automation',
+  'integrations',
+  'agents',
+  'software',
+  'training',
+];
 const LOCALES: readonly Locale[] = ['en', 'es'];
 
 async function upFrontScripts(request: APIRequestContext, html: string) {

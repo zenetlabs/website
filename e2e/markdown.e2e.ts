@@ -206,6 +206,40 @@ for (const path of [
   });
 }
 
+test('the service page markdown keeps the answer, the FAQ and the contact', async ({
+  request,
+}) => {
+  const en = await (
+    await request.get('/services/ai-automation', {
+      headers: { accept: 'text/markdown' },
+    })
+  ).text();
+  for (const expected of [
+    '# AI automation for the work your team *still does by hand*',
+    'from S$8,000 (excl. GST)',
+    'Which processes are worth automating first?',
+    '[hello@zenetlabs.com](mailto:hello@zenetlabs.com)',
+  ]) {
+    expect(en).toContain(expected);
+  }
+  const [, afterFrontmatter = ''] = en.split('\n---\n');
+  expect(afterFrontmatter.split('\n# ')[0]?.trim()).toBe(
+    'Services · AI automation',
+  );
+  expect(en.match(/```json/g)).toHaveLength(6);
+
+  const es = await (await request.get('/es/servicios.md')).text();
+  for (const row of [
+    'Automatización de procesos',
+    'Integraciones',
+    'Agentes de IA',
+    'Software a medida',
+    'Formación en IA para equipos',
+  ]) {
+    expect(es).toMatch(new RegExp(`^## \\[${row}\\]\\(`, 'm'));
+  }
+});
+
 const AGENT_PAGES = LOCALES.map((locale) => ({
   locale,
   home: PAIRS[0][locale],

@@ -17,6 +17,7 @@ export const llms = {
     process: 'Cómo trabajamos',
     cases: 'Casos',
     about: 'Sobre Zenet Labs',
+    servicePages: 'Servicios en detalle',
   },
   labels: {
     email: 'Correo',

@@ -1,14 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { locales } from '@/lib/i18n';
+import { type Locale, locales } from '@/lib/i18n';
+import { metaOf } from '@/lib/llms';
 import { ogImagePath } from '@/lib/og-image';
-import { hasLocale, pageLocales, pagesIn } from '@/lib/page-registry';
-import { pageHeadFor } from '@/lib/pages';
-import { jsonLd, markdownUrl, type pageHead, pageUrl } from '@/lib/seo';
+import {
+  hasLocale,
+  type PageId,
+  pageLocales,
+  pagesIn,
+} from '@/lib/page-registry';
+import { jsonLd, markdownUrl, pageHead, pageUrl } from '@/lib/seo';
+import { SERVICE_BODIES } from '../../test/service-bodies';
 
 const SITE = 'https://zenetlabs.com';
 const OG_LOCALE = { en: 'en_SG', es: 'es_ES' } as const;
 
 type Meta = ReturnType<typeof pageHead>['meta'];
+
+function pageHeadFor(locale: Locale, page: PageId) {
+  return pageHead({
+    locale,
+    page,
+    ...metaOf(locale, page, SERVICE_BODIES[locale]),
+  });
+}
 
 const cases = locales.flatMap((locale) =>
   pagesIn(locale).map((page) => [locale, page] as const),

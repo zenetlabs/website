@@ -2,12 +2,22 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { legalEntity } from '@/lib/content';
 import { type Locale, locales, messages } from '@/lib/i18n';
-import { PAGE_IDS, type PageId, pageLocales } from '@/lib/page-registry';
+import {
+  isServicePage,
+  PAGE_IDS,
+  type PageId,
+  pageLocales,
+  SERVICE_PAGE_IDS,
+  type ServicePageId,
+} from '@/lib/page-registry';
 import {
   breadcrumbStructuredData,
   homeStructuredData,
   pricingStructuredData,
+  serviceStructuredData,
+  servicesHubStructuredData,
 } from '@/lib/page-structured-data';
+import { pageUrl } from '@/lib/seo';
 import {
   FOUNDER_ID,
   STRUCTURED_DATA,
@@ -22,6 +32,7 @@ import {
   validateJsonLd,
 } from '../../test/json-ld';
 import { SERVICES } from '../../test/page-content';
+import { SERVICE_BODIES } from '../../test/service-bodies';
 
 const ORIGIN = 'https://zenetlabs.com';
 
@@ -346,6 +357,20 @@ function routeData(locale: Locale, id: PageId) {
       return homeStructuredData(locale, FAQ[locale]);
     case 'pricing':
       return pricingStructuredData(locale, SERVICES[locale]);
+    case 'automation':
+    case 'integrations':
+    case 'agents':
+    case 'software':
+    case 'training':
+      return serviceStructuredData(
+        locale,
+        id,
+        SERVICE_BODIES[locale].pages[id],
+        SERVICE_BODIES[locale].hub,
+        SERVICES[locale],
+      );
+    case 'services':
+      return servicesHubStructuredData(locale, SERVICE_BODIES[locale].hub);
     default:
       return breadcrumbStructuredData(locale, id);
   }
@@ -463,7 +488,7 @@ describe.each(locales)('route structured data (%s)', (locale) => {
     }
   });
 
-  it.each(PAGE_IDS.filter((id) => id !== 'home'))(
+  it.each(PAGE_IDS.filter((id) => id !== 'home' && !isServicePage(id)))(
     'adds a two-step breadcrumb to %s',
     (id) => {
       if (!pageLocales(id).includes(locale)) return;
@@ -479,6 +504,216 @@ describe.each(locales)('route structured data (%s)', (locale) => {
       expect(itemListElement[1]?.item.startsWith(ORIGIN)).toBe(true);
     },
   );
+
+  it.each(SERVICE_PAGE_IDS)('adds a three-step breadcrumb to %s', (id) => {
+    const { itemListElement } = breadcrumbSchema.parse(
+      page(id).find((block) => breadcrumbSchema.safeParse(block).success),
+    );
+    expect(itemListElement.map((entry) => entry.position)).toEqual([1, 2, 3]);
+    expect(itemListElement.map((entry) => entry.name)).toEqual([
+      'Zenet Labs',
+      SERVICE_BODIES[locale].hub.meta.title,
+      SERVICE_BODIES[locale].hub.cards[id].name,
+    ]);
+    expect(itemListElement.map((entry) => entry.item)).toEqual([
+      `${base}${locale === 'en' ? '/' : ''}`,
+      `${base}${locale === 'en' ? '/services' : '/servicios'}`,
+      pageUrl(locale, id),
+    ]);
+  });
+
+  it('gives the services hub a two-step breadcrumb only', () => {
+    const [crumbs, ...rest] = page('services');
+    expect(rest).toEqual([]);
+    expect(
+      breadcrumbSchema
+        .parse(crumbs)
+        .itemListElement.map((entry) => entry.position),
+    ).toEqual([1, 2]);
+  });
+});
+
+const offerSchema = z.object({
+  '@type': z.literal('Offer'),
+  name: z.string(),
+  url: z.string(),
+  itemOffered: z.object({ '@id': z.string() }),
+  priceSpecification: specSchema,
+});
+
+const serviceSchema = z.object({
+  '@type': z.literal('Service'),
+  '@id': z.string(),
+  name: z.string(),
+  description: z.string(),
+  url: z.string(),
+  provider: z.object({ '@id': z.string() }),
+  areaServed: z.string(),
+  offers: z.array(offerSchema),
+});
+
+type ExpectedOffer = {
+  name?: string;
+  type: string;
+  min?: number;
+  max?: number;
+  price?: number;
+  unitCode?: string;
+};
+
+const OFFERS: Record<Locale, Record<ServicePageId, ExpectedOffer[]>> = {
+  en: {
+    automation: [{ type: 'PriceSpecification', min: 8000 }],
+    integrations: [{ type: 'PriceSpecification', min: 8000 }],
+    agents: [{ type: 'PriceSpecification', min: 15000, max: 35000 }],
+    software: [{ type: 'PriceSpecification', min: 12000 }],
+    training: [
+      {
+        name: 'AI training for teams: Workshop',
+        type: 'PriceSpecification',
+        min: 2500,
+      },
+      {
+        name: 'AI training for teams: Mentoring',
+        type: 'UnitPriceSpecification',
+        unitCode: 'MON',
+        price: 1200,
+      },
+    ],
+  },
+  es: {
+    automation: [{ type: 'PriceSpecification', min: 4000 }],
+    integrations: [{ type: 'PriceSpecification', min: 4000 }],
+    agents: [{ type: 'PriceSpecification', min: 8000, max: 20000 }],
+    software: [{ type: 'PriceSpecification', min: 6000 }],
+    training: [
+      {
+        name: 'Formación en IA para equipos: Taller',
+        type: 'PriceSpecification',
+        min: 1200,
+      },
+      {
+        name: 'Formación en IA para equipos: Mentoría',
+        type: 'UnitPriceSpecification',
+        unitCode: 'MON',
+        price: 600,
+      },
+    ],
+  },
+};
+
+describe.each(locales)('service pages structured data (%s)', (locale) => {
+  const layout = blocks(STRUCTURED_DATA[locale]);
+
+  it.each(SERVICE_PAGE_IDS)(
+    'describes %s as a service of the entity with its offers',
+    (id) => {
+      const [serviceBlock, , faqBlock, ...rest] = blocks(routeData(locale, id));
+      expect(rest).toEqual([]);
+      const service = serviceSchema.parse(serviceBlock);
+      const url = pageUrl(locale, id);
+      expect(service['@id']).toBe(`${url}#service`);
+      expect(service.url).toBe(url);
+      expect(service.name).toBe(SERVICE_BODIES[locale].hub.cards[id].name);
+      expect(service.description).toBe(
+        SERVICE_BODIES[locale].pages[id].meta.description,
+      );
+      expect(service.provider['@id']).toBe(
+        `${ORIGIN}${legalEntity(locale).jsonLd.idPath}`,
+      );
+      expect(service.areaServed).toBe(locale === 'en' ? 'SG' : 'ES');
+      const expected = OFFERS[locale][id];
+      expect(service.offers).toHaveLength(expected.length);
+      for (const [index, offer] of service.offers.entries()) {
+        const want = expected[index];
+        const spec = offer.priceSpecification;
+        expect(offer.itemOffered['@id']).toBe(service['@id']);
+        expect(offer.url).toBe(url);
+        expect(offer.name).toBe(want?.name ?? service.name);
+        expect(spec['@type']).toBe(want?.type);
+        expect(spec.minPrice).toBe(want?.min);
+        expect(spec.maxPrice).toBe(want?.max);
+        expect(spec.price).toBe(want?.price);
+        expect(spec.unitCode).toBe(want?.unitCode);
+        expect(spec.priceCurrency).toBe(locale === 'en' ? 'SGD' : 'EUR');
+        expect(spec.valueAddedTaxIncluded).toBe(false);
+      }
+      expect(faqBlock).toEqual({
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        '@id': `${url}#faq`,
+        inLanguage: locale,
+        mainEntity: SERVICE_BODIES[locale].pages[id].faq.items.map(
+          ({ question, answer }) => ({
+            '@type': 'Question',
+            name: question,
+            acceptedAnswer: { '@type': 'Answer', text: answer },
+          }),
+        ),
+      });
+      expect(
+        validateJsonLd([...layout, ...blocks(routeData(locale, id))], ORIGIN),
+      ).toEqual([]);
+    },
+  );
+
+  it('keeps the Service, breadcrumb and FAQ order on every service page', () => {
+    for (const id of SERVICE_PAGE_IDS) {
+      expect(
+        blocks(routeData(locale, id)).map(
+          (block) => z.object({ '@type': z.string() }).parse(block)['@type'],
+        ),
+      ).toEqual(['Service', 'BreadcrumbList', 'FAQPage']);
+    }
+  });
+});
+
+describe('service structured data for the flipped Spanish entity', () => {
+  const provider = (entity?: typeof FLIPPED) =>
+    serviceSchema.parse(
+      blocks(
+        serviceStructuredData(
+          'es',
+          'agents',
+          SERVICE_BODIES.es.pages.agents,
+          SERVICE_BODIES.es.hub,
+          SERVICES.es,
+          entity,
+        ),
+      )[0],
+    ).provider['@id'];
+
+  it('follows the entity of the moment, without cache leaks', () => {
+    expect(provider()).toBe(`${ORIGIN}/#organization`);
+    expect(provider(FLIPPED)).toBe(`${ORIGIN}/es#business`);
+    expect(provider()).toBe(`${ORIGIN}/#organization`);
+  });
+
+  it('passes the cross-page identity check with the flipped entity', () => {
+    const flipped = structuredData('es', FLIPPED);
+    const withService = (id: ServicePageId) => [
+      ...blocks(flipped),
+      ...blocks(
+        serviceStructuredData(
+          'es',
+          id,
+          SERVICE_BODIES.es.pages[id],
+          SERVICE_BODIES.es.hub,
+          SERVICES.es,
+          FLIPPED,
+        ),
+      ),
+    ];
+    expect(
+      identityProblems(
+        new Map([
+          ['/es/servicios/agentes-de-ia', withService('agents')],
+          ['/es/servicios/integraciones', withService('integrations')],
+        ]),
+      ),
+    ).toEqual([]);
+    expect(validateJsonLd(withService('agents'), ORIGIN)).toEqual([]);
+  });
 });
 
 describe('pricing structured data for the flipped Spanish entity', () => {
@@ -505,6 +740,8 @@ describe('route structured data per page', () => {
     expect(types('home')).toEqual(['FAQPage']);
     expect(types('pricing')).toEqual(['OfferCatalog', 'BreadcrumbList']);
     expect(types('about')).toEqual(['BreadcrumbList']);
+    expect(types('services')).toEqual(['BreadcrumbList']);
+    expect(types('agents')).toEqual(['Service', 'BreadcrumbList', 'FAQPage']);
     expect(types('privacy')).toEqual(['BreadcrumbList']);
   });
 });
@@ -557,6 +794,36 @@ describe('validateJsonLd on the new types', () => {
   function check(...blocksToCheck: unknown[]) {
     return validateJsonLd([GOOD, ...blocksToCheck], ORIGIN);
   }
+
+  const selfService = {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    '@id': `${ORIGIN}/services/x#service`,
+    name: 'x',
+    provider: { '@id': `${ORIGIN}/#organization` },
+    offers: [
+      {
+        '@type': 'Offer',
+        itemOffered: { '@id': `${ORIGIN}/services/x#service` },
+        priceSpecification: unit,
+      },
+    ],
+  };
+
+  it('resolves an offer that points back at its enclosing service', () => {
+    expect(check(selfService)).toEqual([]);
+  });
+
+  it('flags an offer that points at a service nobody defines', () => {
+    const [offer] = selfService.offers;
+    expect(
+      check({
+        ...selfService,
+        '@id': `${ORIGIN}/services/y#service`,
+        offers: [offer],
+      }),
+    ).toEqual([`reference to undefined ${ORIGIN}/services/x#service`]);
+  });
 
   it('accepts a good catalog, FAQ and breadcrumb', () => {
     expect(check(catalog, faq, crumbs([1, 2]))).toEqual([]);

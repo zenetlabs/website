@@ -1,8 +1,15 @@
 import type { LocationRewrite } from '@tanstack/react-router';
+import type { ServiceId } from '@/content/types';
 import { defaultLocale, type Locale, localePath, locales } from '@/lib/i18n';
 
 export const PAGE_IDS = [
   'home',
+  'services',
+  'automation',
+  'integrations',
+  'agents',
+  'software',
+  'training',
   'pricing',
   'about',
   'privacy',
@@ -10,16 +17,71 @@ export const PAGE_IDS = [
   'legalNotice',
 ] as const;
 export type PageId = (typeof PAGE_IDS)[number];
+export type ServicePageId = Extract<
+  PageId,
+  'automation' | 'integrations' | 'agents' | 'software' | 'training'
+>;
 
 type Slugs = Partial<Record<Locale, string>>;
 
-export type PageEntry = { lastmod: string } & (
+type BaseEntry = { lastmod: string; parent?: PageId } & (
   | { slugs: Slugs & { en: string }; route?: string }
   | { slugs: Slugs & { en?: undefined }; route: string }
 );
 
-export const PAGES: Record<PageId, PageEntry> = {
+export type PageEntry = BaseEntry & { service?: ServiceId };
+type StaticPageEntry = BaseEntry & { service?: never };
+type ServicePageEntry = BaseEntry & { parent: PageId; service: ServiceId };
+
+export const PAGES: Record<Exclude<PageId, ServicePageId>, StaticPageEntry> &
+  Record<ServicePageId, ServicePageEntry> = {
   home: { slugs: { en: '/', es: '/' }, lastmod: '2026-10-31' },
+  services: {
+    slugs: { en: '/services', es: '/servicios' },
+    lastmod: '2026-10-31',
+  },
+  automation: {
+    slugs: {
+      en: '/services/ai-automation',
+      es: '/servicios/automatizacion-de-procesos',
+    },
+    parent: 'services',
+    service: 'integration',
+    lastmod: '2026-10-31',
+  },
+  integrations: {
+    slugs: {
+      en: '/services/integrations',
+      es: '/servicios/integraciones',
+    },
+    parent: 'services',
+    service: 'integration',
+    lastmod: '2026-10-31',
+  },
+  agents: {
+    slugs: { en: '/services/ai-agents', es: '/servicios/agentes-de-ia' },
+    parent: 'services',
+    service: 'agent',
+    lastmod: '2026-10-31',
+  },
+  software: {
+    slugs: {
+      en: '/services/custom-software',
+      es: '/servicios/desarrollo-de-software-a-medida',
+    },
+    parent: 'services',
+    service: 'web',
+    lastmod: '2026-10-31',
+  },
+  training: {
+    slugs: {
+      en: '/services/ai-training',
+      es: '/servicios/formacion-ia-equipos',
+    },
+    parent: 'services',
+    service: 'training',
+    lastmod: '2026-10-31',
+  },
   pricing: {
     slugs: { en: '/pricing', es: '/precios' },
     lastmod: '2026-10-31',
@@ -45,6 +107,26 @@ export const PAGES: Record<PageId, PageEntry> = {
 
 function routeFor({ route, slugs }: PageEntry): string {
   return route ?? slugs.en ?? '/';
+}
+
+export function isServicePage(page: PageId): page is ServicePageId {
+  return PAGES[page].service !== undefined;
+}
+
+export const SERVICE_PAGE_IDS: readonly ServicePageId[] =
+  PAGE_IDS.filter(isServicePage);
+
+export function serviceOf(page: ServicePageId): ServiceId {
+  return PAGES[page].service;
+}
+
+export function pagesForService(id: ServiceId): ServicePageId[] {
+  return SERVICE_PAGE_IDS.filter((page) => serviceOf(page) === id);
+}
+
+export function breadcrumbTrail(page: PageId): PageId[] {
+  if (page === 'home') return ['home'];
+  return [...breadcrumbTrail(PAGES[page].parent ?? 'home'), page];
 }
 
 export function routeOf(page: PageId): string {
@@ -75,6 +157,13 @@ export function pagePath(locale: Locale, page: PageId): string {
     if (slug !== undefined) return localePath(candidate, slug);
   }
   return localePath(defaultLocale, routeOf(page));
+}
+
+export function serviceHref(locale: Locale, id: ServiceId): string {
+  const [first] = pagesForService(id);
+  return first
+    ? pagePath(locale, first)
+    : `${pagePath(locale, 'pricing')}#${id}`;
 }
 
 export function markdownPath(locale: Locale, page: PageId): string {

@@ -4,6 +4,7 @@ import type {
   Offer,
   OfferCatalog,
   PriceSpecification,
+  Service as ServiceSchema,
   UnitPriceSpecification,
   WithContext,
 } from 'schema-dts';
@@ -13,12 +14,25 @@ import type {
   Price,
   PublishedEntity,
   Service,
+  ServicePageContent,
   Services,
+  ServicesHubContent,
 } from '@/content/types';
 import { legalEntity } from '@/lib/content';
+import {
+  crumbName,
+  hubNames,
+  type Names,
+  servicePageNames,
+} from '@/lib/crumb-names';
 import { type Locale, messages } from '@/lib/i18n';
-import type { PageId } from '@/lib/page-registry';
-import { pageName } from '@/lib/pages';
+import {
+  breadcrumbTrail,
+  type PageId,
+  type ServicePageId,
+  serviceOf,
+} from '@/lib/page-registry';
+import { pageName, type StaticPageId } from '@/lib/pages';
 import { jsonLd, pageUrl, SITE_NAME } from '@/lib/seo';
 import { SITE } from '@/lib/site';
 
@@ -26,14 +40,15 @@ type Entries = ReturnType<typeof jsonLd>[];
 
 const COUNTRY: Record<Locale, Country> = { en: 'SG', es: 'ES' };
 
-function faqNode(
+function faqPageNode(
   locale: Locale,
+  page: PageId,
   faq: readonly FaqItem[],
 ): WithContext<FAQPage> {
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    '@id': `${pageUrl(locale, 'home')}#faq`,
+    '@id': `${pageUrl(locale, page)}#faq`,
     inLanguage: locale,
     mainEntity: faq.map(({ question, answer }) => ({
       '@type': 'Question',
@@ -46,25 +61,22 @@ function faqNode(
 function breadcrumbNode(
   locale: Locale,
   page: PageId,
+  names: Names,
 ): WithContext<BreadcrumbList> {
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: SITE_NAME,
-        item: pageUrl(locale, 'home'),
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: pageName(locale, page),
-        item: pageUrl(locale, page),
-      },
-    ],
+    itemListElement: breadcrumbTrail(page).map((step, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: crumbName(names, step),
+      item: pageUrl(locale, step),
+    })),
   };
+}
+
+function staticNames(locale: Locale, page: StaticPageId): Names {
+  return { home: SITE_NAME, [page]: pageName(locale, page) };
 }
 
 function priceSpecification(
@@ -134,14 +146,47 @@ function catalogNode(
   };
 }
 
+function serviceNode(
+  locale: Locale,
+  page: ServicePageId,
+  copy: ServicePageContent,
+  hub: ServicesHubContent,
+  services: Services,
+  entity: PublishedEntity,
+): WithContext<ServiceSchema> {
+  const url = pageUrl(locale, page);
+  const id = `${url}#service`;
+  const { name } = hub.cards[page];
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    '@id': id,
+    name,
+    description: copy.meta.description,
+    url,
+    provider: { '@id': `${SITE.url}${entity.jsonLd.idPath}` },
+    areaServed: COUNTRY[locale],
+    offers: services[serviceOf(page)].prices.map(
+      (price): Offer => ({
+        '@type': 'Offer',
+        name: price.label ? `${name}: ${price.label}` : name,
+        url,
+        itemOffered: { '@id': id },
+        priceSpecification: priceSpecification(price),
+      }),
+    ),
+  };
+}
+
 const byFaq = new WeakMap<object, Entries>();
 const byEntity = new WeakMap<object, WeakMap<object, Entries>>();
 const byPage = new Map<string, Entries>();
+const byHub = new WeakMap<object, Entries>();
 
 export function homeStructuredData(locale: Locale, faq: readonly FaqItem[]) {
   const found = byFaq.get(faq);
   if (found) return found;
-  const made = [jsonLd(faqNode(locale, faq))];
+  const made = [jsonLd(faqPageNode(locale, 'home', faq))];
   byFaq.set(faq, made);
   return made;
 }
@@ -157,17 +202,51 @@ export function pricingStructuredData(
   if (found) return found;
   const made = [
     jsonLd(catalogNode(locale, services, entity)),
-    jsonLd(breadcrumbNode(locale, 'pricing')),
+    jsonLd(breadcrumbNode(locale, 'pricing', staticNames(locale, 'pricing'))),
   ];
   forEntity.set(services, made);
   return made;
 }
 
-export function breadcrumbStructuredData(locale: Locale, page: PageId) {
+export function breadcrumbStructuredData(locale: Locale, page: StaticPageId) {
   const key = `${locale}:${page}`;
   const found = byPage.get(key);
   if (found) return found;
-  const made = [jsonLd(breadcrumbNode(locale, page))];
+  const made = [
+    jsonLd(breadcrumbNode(locale, page, staticNames(locale, page))),
+  ];
   byPage.set(key, made);
+  return made;
+}
+
+export function servicesHubStructuredData(
+  locale: Locale,
+  hub: ServicesHubContent,
+) {
+  const found = byHub.get(hub);
+  if (found) return found;
+  const made = [jsonLd(breadcrumbNode(locale, 'services', hubNames(hub)))];
+  byHub.set(hub, made);
+  return made;
+}
+
+export function serviceStructuredData(
+  locale: Locale,
+  page: ServicePageId,
+  copy: ServicePageContent,
+  hub: ServicesHubContent,
+  services: Services,
+  entity: PublishedEntity = legalEntity(locale),
+) {
+  const forEntity = byEntity.get(entity) ?? new WeakMap<object, Entries>();
+  byEntity.set(entity, forEntity);
+  const found = forEntity.get(copy);
+  if (found) return found;
+  const made = [
+    jsonLd(serviceNode(locale, page, copy, hub, services, entity)),
+    jsonLd(breadcrumbNode(locale, page, servicePageNames(hub, page))),
+    jsonLd(faqPageNode(locale, page, copy.faq.items)),
+  ];
+  forEntity.set(copy, made);
   return made;
 }

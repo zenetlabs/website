@@ -9,7 +9,11 @@
         "http://localhost:4174/pricing",
         "http://localhost:4174/es/precios",
         "http://localhost:4174/privacy",
-        "http://localhost:4174/es/privacidad"
+        "http://localhost:4174/es/privacidad",
+        "http://localhost:4174/services",
+        "http://localhost:4174/es/servicios",
+        "http://localhost:4174/services/ai-automation",
+        "http://localhost:4174/es/servicios/automatizacion-de-procesos"
       ],
       "numberOfRuns": 5
     },

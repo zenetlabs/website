@@ -19,13 +19,14 @@ Decisions go through AskUserQuestion (recommended option first).
 - Single-locale page: registry `{ slugs: { es }, route }` (`route` is required only when there is no `en` slug); the `{-$locale}` layout 404s any page missing the request locale from its `staticData.page`, so routes need no per-route guard. Legal identity always comes from `legalEntity(locale)`.
 - Locales: en (unprefixed) and es via `{-$locale}`. UI copy lives in `src/i18n/{en,es}.json` (`pnpm check:i18n`); legal prose lives per locale in `src/routes/{-$locale}/-legal/*.tsx`.
 - Colours only through `src/styles/tokens.css` utilities (`pnpm check:colors`). Dark mode = prefers-color-scheme.
+- Service pages: ids come from `PAGES[page].service` in `page-registry.ts`; a page prices from its ladder row via `serviceOf`. Prices are never stored on a page.
 - Slugs per locale and `lastmod` live in `src/lib/page-registry.ts` (router `rewrite`, internal path = `route`, defaulting to the English slug); never build public URLs from `location.pathname`.
 - Agent surface: `/llms.txt`·`/es/llms.txt` and `/llms-full.txt`·`/es/llms-full.txt` are server routes under `{-$locale}`, built from `src/content` by `src/lib/llms.ts` and sent with `X-Robots-Tag: noindex`. A page's `.md` (`/index.md`, `/es.md`, `/pricing.md`…) is served by `src/server.ts` through the same converter as `Accept: text/markdown`, with a canonical `Link`. None of them go in the registry or the sitemap.
 - Nav targets live in `src/lib/nav.ts`; `CTA_TARGET` is the single booking CTA.
 - Public per-env values: `site.config.ts` (build-time, by CLOUDFLARE_ENV). Secrets: Secrets Store bindings via `import { env } from 'cloudflare:workers'`, read per request.
 
 ## Gotchas
-- Page-body copy (`home`, `pricing`, `about`, `cases`, `companies`) is imported only from its route component or server-only code, never from chrome, `head()`, `scripts()`, `pages.ts` or `content.ts`. `e2e/js-budget.e2e.ts` enforces it.
+- Page-body copy (`home`, `pricing`, `about`, `cases`, `companies`, service pages and the services hub) is imported only from its route component or server-only code, never from chrome, `head()`, `scripts()`, `pages.ts` or `content.ts`. `e2e/js-budget.e2e.ts` enforces it. Service-page and hub copy loads only through `src/content/load.ts`: by dynamic import from route loaders and from `serviceBodies` in `src/lib/llms.ts`. The leak guard is the js-budget sentinels.
 - A new page-content module must be added to `buildLlmsFull` and `llms.test.ts`. The `.md` URL, the head link and the llms `Pages` line come from the registry.
 - Bump a page's `lastmod` when its main content, JSON-LD or links change.
 - JSON-LD and inline scripts go in route `scripts()`, never `head()` (React #418). Theme-color pair lives in RootDocument.

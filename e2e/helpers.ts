@@ -1,5 +1,40 @@
 import type { Page } from '@playwright/test';
+import type { ServiceId } from '../src/content/types';
 import { decodeEntities, tidy } from '../src/lib/markdown';
+import type { ServicePageId } from '../src/lib/page-registry';
+
+export const SERVICES_HUB = { en: '/services', es: '/es/servicios' } as const;
+
+export const SERVICE_PAIRS = {
+  automation: {
+    en: '/services/ai-automation',
+    es: '/es/servicios/automatizacion-de-procesos',
+    service: 'integration',
+  },
+  integrations: {
+    en: '/services/integrations',
+    es: '/es/servicios/integraciones',
+    service: 'integration',
+  },
+  agents: {
+    en: '/services/ai-agents',
+    es: '/es/servicios/agentes-de-ia',
+    service: 'agent',
+  },
+  software: {
+    en: '/services/custom-software',
+    es: '/es/servicios/desarrollo-de-software-a-medida',
+    service: 'web',
+  },
+  training: {
+    en: '/services/ai-training',
+    es: '/es/servicios/formacion-ia-equipos',
+    service: 'training',
+  },
+} as const satisfies Record<
+  ServicePageId,
+  { en: string; es: string; service: ServiceId }
+>;
 
 export const PAIRS = [
   { en: '/', es: '/es' },
@@ -7,6 +42,12 @@ export const PAIRS = [
   { en: '/about', es: '/es/sobre-nosotros' },
   { en: '/privacy', es: '/es/privacidad' },
   { en: '/cookies', es: '/es/cookies' },
+  SERVICES_HUB,
+  SERVICE_PAIRS.automation,
+  SERVICE_PAIRS.integrations,
+  SERVICE_PAIRS.agents,
+  SERVICE_PAIRS.software,
+  SERVICE_PAIRS.training,
 ] as const;
 
 export const LOCALES = ['en', 'es'] as const;
@@ -68,5 +109,20 @@ export async function settleAnimations(page: Page) {
     Promise.all(
       document.getAnimations().map((animation) => animation.finished),
     ),
+  );
+}
+
+export function navLinks(page: Page) {
+  return page
+    .getByRole('navigation', { name: /^(Main|Principal)$/ })
+    .first()
+    .getByRole('link');
+}
+
+export function typesOf(blocks: unknown[]): unknown[] {
+  return blocks.map((block) =>
+    typeof block === 'object' && block !== null && '@type' in block
+      ? block['@type']
+      : undefined,
   );
 }

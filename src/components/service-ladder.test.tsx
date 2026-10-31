@@ -7,9 +7,35 @@ import { formatPriceSummary } from '@/lib/money';
 import { SERVICES } from '../../test/page-content';
 
 describe.each([
-  ['en', enHome, '/pricing'],
-  ['es', esHome, '/es/precios'],
-] as const)('ServiceLadder (%s)', (locale, home, pricing) => {
+  [
+    'en',
+    enHome,
+    '/pricing',
+    [
+      '/pricing#diagnostic',
+      '/services/ai-automation',
+      '/services/ai-agents',
+      '/services/custom-software',
+      '/services/ai-training',
+      '/pricing#maintenance',
+      '/pricing#growth',
+    ],
+  ],
+  [
+    'es',
+    esHome,
+    '/es/precios',
+    [
+      '/es/precios#diagnostic',
+      '/es/servicios/automatizacion-de-procesos',
+      '/es/servicios/agentes-de-ia',
+      '/es/servicios/desarrollo-de-software-a-medida',
+      '/es/servicios/formacion-ia-equipos',
+      '/es/precios#maintenance',
+      '/es/precios#growth',
+    ],
+  ],
+] as const)('ServiceLadder (%s)', (locale, home, pricing, hrefs) => {
   const services = SERVICES[locale];
 
   function rows() {
@@ -23,10 +49,8 @@ describe.each([
     return within(screen.getByRole('list')).getAllByRole('link');
   }
 
-  it('renders 7 rows linking to the pricing cards', () => {
-    expect(rows().map((row) => row.getAttribute('href'))).toEqual(
-      Object.keys(services).map((id) => `${pricing}#${id}`),
-    );
+  it('renders 7 rows linking to the service pages or the pricing cards', () => {
+    expect(rows().map((row) => row.getAttribute('href'))).toEqual(hrefs);
   });
 
   it('shows the name, summary and formatted price of each service', () => {

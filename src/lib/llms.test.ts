@@ -16,21 +16,23 @@ import { CONTENT, legalEntity } from '@/lib/content';
 import { type Locale, locales, messages } from '@/lib/i18n';
 import { buildLlmsFull, buildLlmsTxt, llmsResponse } from '@/lib/llms';
 import { formatPrice, formatPriceSummary } from '@/lib/money';
-import { pagesIn } from '@/lib/page-registry';
+import { pagesIn, SERVICE_PAGE_IDS, serviceOf } from '@/lib/page-registry';
 import { PORTFOLIO } from '@/lib/portfolio';
-import { markdownUrl } from '@/lib/seo';
+import { markdownUrl, pageUrl } from '@/lib/seo';
+import { titleText } from '@/lib/title-text';
 import { FLIPPED } from '../../test/entities';
 import { FAQ } from '../../test/faq';
 import { SERVICES } from '../../test/page-content';
 import { PLACEHOLDER } from '../../test/placeholders';
+import { SERVICE_BODIES } from '../../test/service-bodies';
 
 const LLMS_TXT: Record<Locale, string> = {
-  en: buildLlmsTxt('en'),
-  es: buildLlmsTxt('es'),
+  en: await buildLlmsTxt('en'),
+  es: await buildLlmsTxt('es'),
 };
 const LLMS_FULL: Record<Locale, string> = {
-  en: buildLlmsFull('en'),
-  es: buildLlmsFull('es'),
+  en: await buildLlmsFull('en'),
+  es: await buildLlmsFull('es'),
 };
 const LINK = /^- \[[^\]]+\]\((https?:\/\/|mailto:)[^)]+\)(: .+)?$/;
 const LEFTOVER = /\{[a-zA-Z]+\}|undefined|null|\[object Object\]/;
@@ -117,15 +119,37 @@ describe.each(locales)('LLMS_TXT %s', (locale) => {
     }
   });
 
-  it('links every question to its anchor on the home page with its answer', () => {
+  it('links every question to its anchor on its page with its answer', () => {
     const items = section(text, headings.faq);
     const home = locale === 'en' ? '/' : '/es';
+    const entries = [
+      ...FAQ[locale].map((item) => ({
+        item,
+        page: `https://zenetlabs.com${home}`,
+      })),
+      ...SERVICE_PAGE_IDS.flatMap((page) =>
+        SERVICE_BODIES[locale].pages[page].faq.items.map((item) => ({
+          item,
+          page: pageUrl(locale, page),
+        })),
+      ),
+    ];
+    expect(items).toHaveLength(locale === 'en' ? 35 : 36);
     expect(hrefs(items)).toEqual(
-      FAQ[locale].map(({ id }) => `https://zenetlabs.com${home}#faq-${id}`),
+      entries.map(({ item, page }) => `${page}#faq-${item.id}`),
     );
-    for (const [index, item] of FAQ[locale].entries()) {
+    for (const [index, { item }] of entries.entries()) {
       expect(items[index]).toContain(item.answer);
     }
+  });
+
+  it('links the service pages first among the commercial pages', () => {
+    const pages = hrefs(section(text, headings.pages));
+    expect(pages).toHaveLength(locale === 'en' ? 11 : 12);
+    expect(pages.slice(1, 7)).toEqual([
+      markdownUrl(locale, 'services'),
+      ...SERVICE_PAGE_IDS.map((page) => markdownUrl(locale, page)),
+    ]);
   });
 
   it('lists the portfolio and the contact address', () => {
@@ -164,13 +188,13 @@ describe('LLMS_TXT operator', () => {
     );
   });
 
-  it('names the sole trader in Spanish once flipped and leaves English alone', () => {
-    const flipped = buildLlmsTxt('es', FLIPPED);
+  it('names the sole trader in Spanish once flipped and leaves English alone', async () => {
+    const flipped = await buildLlmsTxt('es', FLIPPED);
     expect(flipped).toContain(
       'Este sitio lo opera Albert Sabaté Martínez (NIF 47986151D), Calle Ejemplo 1, 08001 Barcelona.',
     );
-    expect(buildLlmsTxt('en')).toBe(LLMS_TXT.en);
-    expect(buildLlmsFull('es', FLIPPED)).toContain(
+    expect(await buildLlmsTxt('en')).toBe(LLMS_TXT.en);
+    expect(await buildLlmsFull('es', FLIPPED)).toContain(
       'Este sitio lo opera Albert Sabaté Martínez (NIF 47986151D)',
     );
   });
@@ -211,6 +235,37 @@ describe.each(locales)('LLMS_FULL %s', (locale) => {
   it('writes every question as a heading with its answer', () => {
     for (const { question, answer } of FAQ[locale]) {
       expect(text).toContain(`### ${question}\n\n${answer}\n`);
+    }
+  });
+
+  it('describes every service page with its price and FAQ', () => {
+    const body = section(text, headings.servicePages);
+    const { hub } = SERVICE_BODIES[locale];
+    const labels = messages[locale].servicePage;
+    expect(text).toContain(`${titleText(hub.title)}. ${hub.lead}`);
+    expect(body.filter((line) => line.startsWith('### ['))).toEqual(
+      SERVICE_PAGE_IDS.map(
+        (page) => `### [${hub.cards[page].name}](${pageUrl(locale, page)})`,
+      ),
+    );
+    expect(body.filter((line) => line.startsWith('#### '))).toHaveLength(20);
+    for (const page of SERVICE_PAGE_IDS) {
+      const copyOf = SERVICE_BODIES[locale].pages[page];
+      const prices = SERVICES[locale][serviceOf(page)].prices;
+      expect(text).toContain(copyOf.hero.lead);
+      expect(text).toContain(
+        `- ${labels.price}: ${formatPriceSummary(locale, prices)} (${labels.taxNote})`,
+      );
+      expect(text).toContain(`- ${labels.timeline}: ${copyOf.facts.timeline}`);
+      for (const item of copyOf.useCases.items) {
+        expect(text).toContain(`- ${item.title}: ${item.text}`);
+      }
+      for (const [index, step] of copyOf.how.steps.entries()) {
+        expect(text).toContain(`${index + 1}. ${step.label}: ${step.text}`);
+      }
+      for (const { question, answer } of copyOf.faq.items) {
+        expect(text).toContain(`#### ${question}\n\n${answer}\n`);
+      }
     }
   });
 
@@ -259,6 +314,7 @@ describe.each(locales)('LLMS_FULL %s', (locale) => {
   it('holds the copy headings in order', () => {
     const order = [
       headings.pricing,
+      headings.servicePages,
       headings.problems,
       headings.process,
       headings.cases,
@@ -298,16 +354,20 @@ describe('LLMS_FULL scope', () => {
 
 describe('llmsResponse', () => {
   it('serves the default locale without a param and es with es', async () => {
-    expect(await llmsResponse('llms', undefined).text()).toBe(LLMS_TXT.en);
-    expect(await llmsResponse('llms', 'es').text()).toBe(LLMS_TXT.es);
-    expect(await llmsResponse('llms-full', undefined).text()).toBe(
+    expect(await (await llmsResponse('llms', undefined)).text()).toBe(
+      LLMS_TXT.en,
+    );
+    expect(await (await llmsResponse('llms', 'es')).text()).toBe(LLMS_TXT.es);
+    expect(await (await llmsResponse('llms-full', undefined)).text()).toBe(
       LLMS_FULL.en,
     );
-    expect(await llmsResponse('llms-full', 'es').text()).toBe(LLMS_FULL.es);
+    expect(await (await llmsResponse('llms-full', 'es')).text()).toBe(
+      LLMS_FULL.es,
+    );
   });
 
   it.each(['fr', 'en'])('answers 404 for %s', async (param) => {
-    const response = llmsResponse('llms', param);
+    const response = await llmsResponse('llms', param);
     expect(response.status).toBe(404);
     expect(response.headers.get('X-Robots-Tag')).toBe('noindex');
     expect(response.headers.get('Content-Type')).toBe(
@@ -315,8 +375,8 @@ describe('llmsResponse', () => {
     );
   });
 
-  it('sends the plain text, cache and noindex headers', () => {
-    const { headers, status } = llmsResponse('llms', undefined);
+  it('sends the plain text, cache and noindex headers', async () => {
+    const { headers, status } = await llmsResponse('llms', undefined);
     expect(status).toBe(200);
     expect(headers.get('Content-Type')).toBe('text/plain; charset=utf-8');
     expect(headers.get('Cache-Control')).toBe('public, max-age=3600');
