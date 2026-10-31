@@ -1,15 +1,19 @@
 import type { ReactNode } from 'react';
+import { CtaLink } from '@/components/cta-link';
 import { Container } from '@/components/section';
 import { PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
 import type { Locale } from '@/lib/i18n';
 import { CTA_TARGET, navHref } from '@/lib/nav';
+import type { CtaId } from '@/lib/track';
 
 export function CtaSection({
+  cta,
   copy,
   locale,
   secondary,
   footer,
 }: {
+  cta: CtaId;
   copy: { title: string; text: string; button: string };
   locale: Locale;
   secondary?: { label: string; href: string };
@@ -23,9 +27,13 @@ export function CtaSection({
         </h2>
         <p className="mt-6 max-w-xl text-lg text-muted-fg">{copy.text}</p>
         <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
-          <a href={navHref(locale, CTA_TARGET)} className={PRIMARY_BUTTON}>
+          <CtaLink
+            cta={cta}
+            href={navHref(locale, CTA_TARGET)}
+            className={PRIMARY_BUTTON}
+          >
             {copy.button}
-          </a>
+          </CtaLink>
           {secondary ? (
             <a href={secondary.href} className={`font-medium ${TEXT_LINK}`}>
               {secondary.label} →

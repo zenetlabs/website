@@ -116,6 +116,7 @@ function Pricing() {
         </Container>
       </section>
       <CtaSection
+        cta="pricing"
         copy={page.cta}
         locale={locale}
         secondary={{

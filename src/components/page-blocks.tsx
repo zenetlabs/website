@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { CtaLink } from '@/components/cta-link';
 import { CtaSection } from '@/components/cta-section';
 import { Container, EmphasisTitle } from '@/components/section';
 import { CARD, EYEBROW, PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
@@ -150,9 +151,13 @@ export function FactsHero({
           ]}
         />
         <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
-          <a href={navHref(locale, CTA_TARGET)} className={PRIMARY_BUTTON}>
+          <CtaLink
+            cta="page_hero"
+            href={navHref(locale, CTA_TARGET)}
+            className={PRIMARY_BUTTON}
+          >
             {button}
-          </a>
+          </CtaLink>
           <a
             href={`${pagePath(locale, 'pricing')}#${serviceId}`}
             className={`font-medium ${TEXT_LINK}`}
@@ -176,6 +181,7 @@ export function GetStarted({
 }) {
   return (
     <CtaSection
+      cta="page_cta"
       copy={cta}
       locale={locale}
       footer={

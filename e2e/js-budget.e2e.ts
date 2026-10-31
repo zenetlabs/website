@@ -187,6 +187,29 @@ for (const path of URLS) {
   });
 }
 
+const LEGAL_PATHS = new Set(['/privacy', '/cookies']);
+
+test('the consent store, the analytics module and Google code stay out of the up-front scripts', async ({
+  request,
+}) => {
+  for (const path of ['/', '/es', '/pricing', '/privacy', '/cookies']) {
+    const html = await (await request.get(path)).text();
+    const scripts = await upFrontScripts(request, html);
+    for (const script of scripts) {
+      expect(script.source, path).not.toMatch(/consent-ui|analytics/);
+      const label = `${script.source} in ${path}`;
+      expect(script.text, label).not.toMatch(
+        /googletagmanager|cookie_expires|ga-disable-/,
+      );
+      if (!LEGAL_PATHS.has(path)) {
+        expect(script.text, label).not.toMatch(
+          /zenet-consent|zenet-first-touch/,
+        );
+      }
+    }
+  }
+});
+
 for (const { path, locale, kinds } of PAGES) {
   test(`${path} renders its own copy and loads no other page or locale up front`, async ({
     request,

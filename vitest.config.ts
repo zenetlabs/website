@@ -9,6 +9,7 @@ const shared = {
   resolve: { tsconfigPaths: true },
   define: {
     __SITE__: JSON.stringify(siteConfig('production')),
+    __GA4_ID__: JSON.stringify(siteConfig('production').ga4Id),
     __SERVER__: JSON.stringify(serverConfig('production')),
   },
 };

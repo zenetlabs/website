@@ -68,7 +68,7 @@ import {
   type ServicePageId,
   serviceOf,
 } from '@/lib/page-registry';
-import { contentMeta, pageCopy } from '@/lib/pages';
+import { contentMeta, legalMetaKey, pageCopy } from '@/lib/pages';
 import { PORTFOLIO } from '@/lib/portfolio';
 import { markdownUrl, pageUrl, SITE_NAME } from '@/lib/seo';
 import { PUBLIC_EMAIL, SITE } from '@/lib/site';
@@ -257,7 +257,7 @@ export function metaOf(
   if (page === 'pricing') return contentMeta(BODIES[locale].pricing.meta);
   if (page === 'about') return contentMeta(BODIES[locale].about.meta);
   if (page === 'privacy' || page === 'cookies') {
-    return contentMeta(LEGAL_META[locale][page]);
+    return contentMeta(LEGAL_META[locale][legalMetaKey(page)]);
   }
   return pageCopy(locale, page);
 }

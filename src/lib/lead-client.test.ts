@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ACCEPT_ALL, REJECT_ALL, saveConsent } from '@/lib/consent';
+import { captureFirstTouch } from '@/lib/first-touch';
 import { attribution, isLeadResult, submitLead } from '@/lib/lead-client';
-import type { LeadRequest } from '@/lib/lead-schema';
+import { type LeadRequest, leadRequestSchema } from '@/lib/lead-schema';
+import {
+  navigationEntry,
+  setLocation,
+  setReferrer,
+} from '../../test/navigation';
 
 const REQUEST: LeadRequest = {
   source: 'form',
@@ -14,66 +21,81 @@ const REQUEST: LeadRequest = {
   attribution: { landing: '/', referrer: '', page: '/' },
 };
 
-function navigationEntry(name: string | null) {
-  vi.spyOn(performance, 'getEntriesByType').mockReturnValue(
-    name === null
-      ? []
-      : [
-          {
-            name,
-            entryType: 'navigation',
-            startTime: 0,
-            duration: 0,
-            toJSON: () => ({}),
-          },
-        ],
-  );
-}
-
-function setLocation(path: string) {
-  window.history.replaceState(null, '', path);
-}
-
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  localStorage.clear();
 });
 
 describe('attribution', () => {
+  const NOW = Date.UTC(2026, 10, 1);
+
   beforeEach(() => {
-    setLocation('/services/ai-automation?x=1');
-    vi.spyOn(document, 'referrer', 'get').mockReturnValue(
-      'https://example.org/a',
-    );
+    vi.stubGlobal('__GA4_ID__', 'G-TEST1234');
+    setLocation('/pricing?utm_source=later');
+    setReferrer('https://example.com/');
+    navigationEntry('http://localhost:4173/pricing?utm_source=later');
   });
 
-  it('takes the landing page from the navigation entry, so UTMs survive client navigation', () => {
-    navigationEntry('http://localhost:4173/?utm_source=news&gclid=g1#top');
-    expect(attribution()).toEqual({
-      landing: '/?utm_source=news&gclid=g1',
-      referrer: 'https://example.org/a',
-      page: '/services/ai-automation',
+  it('describes the current page load without marketing consent', async () => {
+    saveConsent(REJECT_ALL, NOW);
+    expect(await attribution(NOW)).toEqual({
+      landing: '/pricing?utm_source=later',
+      referrer: 'https://example.com/',
+      page: '/pricing',
     });
   });
 
-  it('falls back to the current location without a navigation entry', () => {
-    navigationEntry(null);
-    expect(attribution().landing).toBe('/services/ai-automation?x=1');
+  it('keeps the first touch for later page loads once marketing is accepted', async () => {
+    saveConsent(ACCEPT_ALL, NOW);
+    captureFirstTouch(NOW, {
+      landing: '/?utm_source=first&gclid=g1',
+      referrer: 'https://news.example/',
+      page: '/',
+    });
+    expect(await attribution(NOW + 1000)).toEqual({
+      landing: '/?utm_source=first&gclid=g1',
+      referrer: 'https://news.example/',
+      page: '/pricing',
+    });
   });
 
-  it('falls back when the entry name is not a URL', () => {
-    navigationEntry('not a url');
-    expect(attribution().landing).toBe('/services/ai-automation?x=1');
+  it('ignores a stored first touch when marketing is not accepted', async () => {
+    saveConsent({ analytics: true, marketing: false }, NOW);
+    localStorage.setItem(
+      'zenet-first-touch',
+      JSON.stringify({ landing: '/old', referrer: '', at: NOW }),
+    );
+    expect((await attribution(NOW)).landing).toBe('/pricing?utm_source=later');
   });
 
-  it('clips long values so the server schema still accepts them', () => {
-    navigationEntry(`http://localhost:4173/?q=${'a'.repeat(3000)}`);
-    expect(attribution().landing).toHaveLength(2048);
+  it('falls back to the page load when the first touch is older than 90 days', async () => {
+    saveConsent(ACCEPT_ALL, NOW);
+    localStorage.setItem(
+      'zenet-first-touch',
+      JSON.stringify({ landing: '/old', referrer: '', at: NOW }),
+    );
+    expect((await attribution(NOW + 91 * 86_400_000)).landing).toBe(
+      '/pricing?utm_source=later',
+    );
   });
 
-  it('drops a protocol-relative landing path', () => {
-    navigationEntry('http://localhost:4173//evil.example/x');
-    expect(attribution().landing).toBe('');
+  it('ignores any stored record when analytics is not configured', async () => {
+    vi.stubGlobal('__GA4_ID__', null);
+    saveConsent(ACCEPT_ALL, NOW);
+    localStorage.setItem(
+      'zenet-first-touch',
+      JSON.stringify({ landing: '/old', referrer: '', at: NOW }),
+    );
+    expect((await attribution(NOW)).landing).toBe('/pricing?utm_source=later');
+  });
+
+  it('still satisfies the server schema for an oversized landing URL', async () => {
+    navigationEntry(`http://localhost:4173/?q=${'a'.repeat(5000)}`);
+    const parsed = leadRequestSchema.shape.attribution.safeParse(
+      await attribution(NOW),
+    );
+    expect(parsed.success).toBe(true);
   });
 });
 

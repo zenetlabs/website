@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { locales } from '@/lib/i18n';
-import { isRelativePath } from '@/lib/lead-result';
+import { ATTRIBUTION_LIMITS, isRelativePath } from '@/lib/lead-result';
 import { isSingleLine } from '@/lib/single-line';
 
 const singleLine = (max: number) =>
@@ -20,9 +20,9 @@ export const leadRequestSchema = z.object({
   turnstileToken: z.string().min(1).max(2048),
   website: z.string().max(200),
   attribution: z.object({
-    landing: relative(2048).or(z.literal('')),
-    referrer: z.string().max(2048).refine(isSingleLine),
-    page: relative(512),
+    landing: relative(ATTRIBUTION_LIMITS.landing).or(z.literal('')),
+    referrer: z.string().max(ATTRIBUTION_LIMITS.referrer).refine(isSingleLine),
+    page: relative(ATTRIBUTION_LIMITS.page),
   }),
 });
 

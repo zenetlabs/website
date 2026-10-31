@@ -5,6 +5,8 @@ import { ContactForm } from '@/components/contact-form';
 
 const state = vi.hoisted(() => ({ hydrated: true }));
 const submitLead = vi.hoisted(() => vi.fn());
+const track = vi.hoisted(() => vi.fn());
+const attribution = vi.hoisted(() => vi.fn());
 const ATTRIBUTION = {
   landing: '/?utm_source=news',
   referrer: 'https://example.org/',
@@ -23,8 +25,10 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
 
 vi.mock('@/lib/lead-client', () => ({
   submitLead,
-  attribution: () => ATTRIBUTION,
+  attribution,
 }));
+
+vi.mock('@/lib/track', () => ({ track }));
 
 vi.mock('@marsidev/react-turnstile', () => ({
   Turnstile: ({
@@ -58,6 +62,9 @@ async function fillIn(user: ReturnType<typeof userEvent.setup>) {
 beforeEach(() => {
   state.hydrated = true;
   submitLead.mockReset();
+  track.mockReset();
+  attribution.mockReset();
+  attribution.mockResolvedValue(ATTRIBUTION);
 });
 
 describe('ContactForm', () => {
@@ -138,6 +145,7 @@ describe('ContactForm', () => {
     });
     expect(screen.queryByRole('form')).not.toBeInTheDocument();
     expect(screen.getByText('Message sent')).toHaveFocus();
+    expect(track).toHaveBeenCalledWith('generate_lead', { method: 'form' });
   });
 
   it('shows the captcha alert with the mailto fallback when the widget errors', async () => {
@@ -174,6 +182,7 @@ describe('ContactForm', () => {
       const alert = await screen.findByRole('alert');
       expect(alert).toHaveTextContent(text);
       expect(alert).toHaveFocus();
+      expect(track).not.toHaveBeenCalled();
       expect(
         screen.getByRole('link', { name: 'hello@zenetlabs.com' }),
       ).toHaveAttribute('href', 'mailto:hello@zenetlabs.com');
@@ -182,4 +191,21 @@ describe('ContactForm', () => {
       ).toBeDisabled();
     },
   );
+});
+
+describe('ContactForm when attribution fails', () => {
+  it('never stays pending: it shows the send error with the mailto fallback', async () => {
+    attribution.mockRejectedValueOnce(new Error('boom'));
+    const user = userEvent.setup();
+    render(<ContactForm />);
+    await user.click(screen.getByLabelText('Name'));
+    await fillIn(user);
+    await user.click(screen.getByText('solve challenge'));
+    await user.click(screen.getByRole('button', { name: 'Send message' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'We could not send your message',
+    );
+    expect(submitLead).not.toHaveBeenCalled();
+  });
 });

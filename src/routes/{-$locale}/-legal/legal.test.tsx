@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { PublishedEntity } from '@/content/types';
 import { legalEntity } from '@/lib/content';
 import { locales } from '@/lib/i18n';
@@ -65,6 +65,40 @@ const STORAGE_EN = [
 ];
 const SINGAPORE_ONLY = ['Pte. Ltd.', 'ACRA', 'PDPA', 'PDPC', 'Singapur'];
 
+const CONFIGURED_EN = [
+  '_ga',
+  'zenet-consent',
+  'zenet-first-touch',
+  '13 months',
+  '90 days',
+  'Cookie settings',
+];
+const CONFIGURED_ES = [
+  '_ga',
+  'zenet-consent',
+  'zenet-first-touch',
+  '13 meses',
+  '90 días',
+  'Configuración de cookies',
+];
+const UNCONFIGURED_COOKIES = [
+  '_ga',
+  'zenet-consent',
+  'zenet-first-touch',
+  'Google Analytics',
+  'Cookie settings',
+  'Configuración de cookies',
+];
+const UNCONFIGURED_PRIVACY = [
+  'Google Analytics',
+  'Google Ireland',
+  'Data Privacy Framework',
+  'Marco de Privacidad de Datos',
+  'zenet-first-touch',
+  'Cookie settings',
+  'Configuración de cookies',
+];
+
 const STATES: ReadonlyArray<
   readonly [
     string,
@@ -86,14 +120,18 @@ const STATES: ReadonlyArray<
       'PDPC',
       ...STORAGE_ES,
     ],
-    [],
+    UNCONFIGURED_PRIVACY,
   ],
   [
     'CookiesEs with Singapore',
     CookiesEs,
     SINGAPORE,
-    [SINGAPORE_COMPANY, 'UEN 202202371M'],
-    [],
+    [
+      SINGAPORE_COMPANY,
+      'UEN 202202371M',
+      'No usamos cookies analíticas ni publicitarias',
+    ],
+    UNCONFIGURED_COOKIES,
   ],
   [
     'LegalNoticeEs with Singapore',
@@ -117,14 +155,17 @@ const STATES: ReadonlyArray<
       '160 Robinson Road #14-04, Singapore 068914',
       ...STORAGE_EN,
     ],
-    [],
+    UNCONFIGURED_PRIVACY,
   ],
   [
     'CookiesEn with Singapore',
     CookiesEn,
     SINGAPORE,
-    [`${SINGAPORE_COMPANY} (UEN 202202371M)`],
-    [],
+    [
+      `${SINGAPORE_COMPANY} (UEN 202202371M)`,
+      'We do not use analytics or advertising cookies',
+    ],
+    UNCONFIGURED_COOKIES,
   ],
   [
     'PrivacyEs with the flipped entity',
@@ -136,9 +177,109 @@ const STATES: ReadonlyArray<
       'autónomo',
       ...STORAGE_ES,
     ],
+    [...SINGAPORE_ONLY, ...UNCONFIGURED_PRIVACY],
+  ],
+  [
+    'CookiesEs with the flipped entity',
+    CookiesEs,
+    FLIPPED,
+    SOLE_TRADER,
+    UNCONFIGURED_COOKIES,
+  ],
+];
+
+function checkPages(states: typeof STATES, gaId: string | null) {
+  describe.each(states)('%s', (_name, Page, entity, expected, forbidden) => {
+    let body = '';
+
+    beforeAll(() => {
+      vi.stubGlobal('__GA4_ID__', gaId);
+      body = text(<Page title="t" entity={entity} />);
+    });
+
+    afterAll(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it.each(expected)('contains %s', (snippet) => {
+      expect(body).toContain(snippet);
+    });
+
+    it.each(forbidden)('does not contain %s', (snippet) => {
+      expect(body).not.toContain(snippet);
+    });
+
+    it('renders no placeholder', () => {
+      expect(body).not.toMatch(PLACEHOLDER);
+    });
+
+    it('links only to registry paths', () => {
+      for (const href of hrefs(<Page title="t" entity={entity} />)) {
+        expect(KNOWN_HREFS.has(href), href).toBe(true);
+      }
+    });
+  });
+}
+
+const CONFIGURED_STATES: typeof STATES = [
+  [
+    'CookiesEn with analytics configured',
+    CookiesEn,
+    SINGAPORE,
+    CONFIGURED_EN,
+    ['We do not use analytics or advertising cookies'],
+  ],
+  [
+    'CookiesEs with analytics configured',
+    CookiesEs,
+    SINGAPORE,
+    CONFIGURED_ES,
+    ['No usamos cookies analíticas ni publicitarias'],
+  ],
+  [
+    'CookiesEs with analytics configured and the flipped entity',
+    CookiesEs,
+    FLIPPED,
+    [...SOLE_TRADER, ...CONFIGURED_ES, 'art. 22.2 de la LSSI'],
     SINGAPORE_ONLY,
   ],
-  ['CookiesEs with the flipped entity', CookiesEs, FLIPPED, SOLE_TRADER, []],
+  [
+    'PrivacyEn with analytics configured',
+    PrivacyEn,
+    SINGAPORE,
+    [
+      ...STORAGE_EN.filter((snippet) => !snippet.startsWith('We do not store')),
+      'Google Analytics',
+      'Google Ireland Limited',
+      'Data Privacy Framework',
+      '14 months',
+      '90 days',
+      'Cookie settings',
+    ],
+    ['We do not store anything on your device', 'no tracking pixels'],
+  ],
+  [
+    'PrivacyEs with analytics configured',
+    PrivacyEs,
+    SINGAPORE,
+    [
+      ...STORAGE_ES.filter((snippet) => !snippet.startsWith('no guardamos')),
+      'Google Analytics',
+      'Google Ireland Limited',
+      'Marco de Privacidad de Datos',
+      '14 meses',
+      '90 días',
+      'Configuración de cookies',
+    ],
+    ['Para ello no guardamos nada en tu dispositivo', 'ni píxeles'],
+  ],
+  [
+    'PrivacyEs with analytics configured and the flipped entity',
+    PrivacyEs,
+    FLIPPED,
+    [...SOLE_TRADER, 'Google Ireland Limited', 'art. 22.2 de la LSSI'],
+    SINGAPORE_ONLY,
+  ],
   [
     'LegalNoticeEs with the flipped entity',
     LegalNoticeEs,
@@ -154,27 +295,8 @@ const STATES: ReadonlyArray<
   ],
 ];
 
-describe.each(STATES)('%s', (_name, Page, entity, expected, forbidden) => {
-  const body = text(<Page title="t" entity={entity} />);
-
-  it.each(expected)('contains %s', (snippet) => {
-    expect(body).toContain(snippet);
-  });
-
-  it.each(forbidden)('does not contain %s', (snippet) => {
-    expect(body).not.toContain(snippet);
-  });
-
-  it('renders no placeholder', () => {
-    expect(body).not.toMatch(PLACEHOLDER);
-  });
-
-  it('links only to registry paths', () => {
-    for (const href of hrefs(<Page title="t" entity={entity} />)) {
-      expect(KNOWN_HREFS.has(href), href).toBe(true);
-    }
-  });
-});
+checkPages(STATES, null);
+checkPages(CONFIGURED_STATES, 'G-TEST1234');
 
 describe('consent version', () => {
   it.each([

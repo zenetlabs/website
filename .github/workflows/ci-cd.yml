@@ -69,6 +69,12 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/pnpm-install-hosted
       - run: CLOUDFLARE_ENV=production pnpm build
+      - name: The production build ships no analytics code
+        run: |
+          if grep -rEl "zenet-consent|googletagmanager|consent','default'" dist/client; then
+            echo "::error::Analytics or consent code reached the production client bundle (ga4Id must be null)"
+            exit 1
+          fi
       - name: Route tree is committed
         run: git diff --exit-code src/routeTree.gen.ts
       - name: Validate the deploy config

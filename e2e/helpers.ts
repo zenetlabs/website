@@ -141,8 +141,12 @@ export async function waitForHydration(page: Page) {
   await page.waitForSelector('body[data-hydrated="true"]');
 }
 
-export async function gotoHydrated(page: Page, path: string) {
-  await page.goto(path);
+export async function gotoHydrated(
+  page: Page,
+  path: string,
+  options?: { referer: string },
+) {
+  await page.goto(path, options);
   await waitForHydration(page);
 }
 

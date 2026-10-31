@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { serverConfig, siteConfig } from '../site.config';
 
 const CLOUDFLARE_TEST_KEY = /^[123]x0+/;
+const GA4_ID = /^G-[A-Z0-9]{4,16}$/;
 
 describe('siteConfig', () => {
   it('uses a Turnstile test key locally', () => {
@@ -14,6 +15,15 @@ describe('siteConfig', () => {
     expect(production.turnstileSiteKey).not.toBe('');
     expect(production.turnstileSiteKey).not.toMatch(CLOUDFLARE_TEST_KEY);
     expect(production.cfBeaconToken).not.toBe('');
+  });
+
+  it('uses a format-valid dummy GA4 id locally', () => {
+    expect(siteConfig(undefined).ga4Id).toMatch(GA4_ID);
+  });
+
+  it('keeps analytics off in production until an id is set', () => {
+    const { ga4Id } = siteConfig('production');
+    if (ga4Id !== null) expect(ga4Id).toMatch(GA4_ID);
   });
 
   it('rejects unknown environments', () => {

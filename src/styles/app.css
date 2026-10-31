@@ -40,12 +40,28 @@
     line-height: 1.6;
     scroll-behavior: smooth;
     scroll-padding-top: 5rem;
+    --consent-reserve: 12.5rem;
+  }
+
+  @media (max-width: 359px) {
+    html {
+      --consent-reserve: 14.5rem;
+    }
   }
 
   @media (min-width: 768px) {
     html {
       font-size: 17px;
+      --consent-reserve: 9.5rem;
     }
+  }
+
+  html:has([data-consent-banner]) {
+    scroll-padding-bottom: var(--consent-reserve);
+  }
+
+  body:has([data-consent-banner]) {
+    padding-bottom: var(--consent-reserve);
   }
 
   h1,

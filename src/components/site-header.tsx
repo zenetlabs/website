@@ -1,4 +1,5 @@
 import type { MouseEvent } from 'react';
+import { CtaLink } from '@/components/cta-link';
 import { LanguageSwitch } from '@/components/language-switch';
 import { Logo } from '@/components/logo';
 import { Container } from '@/components/section';
@@ -51,9 +52,13 @@ export function SiteHeader({ locale }: { locale: Locale }) {
         </nav>
         <div className="flex items-center gap-2 sm:gap-3">
           <LanguageSwitch locale={locale} />
-          <a href={cta} className={`${PRIMARY_BUTTON} max-lg:hidden`}>
+          <CtaLink
+            cta="header"
+            href={cta}
+            className={`${PRIMARY_BUTTON} max-lg:hidden`}
+          >
             {nav.cta}
-          </a>
+          </CtaLink>
           <details className="group md:hidden">
             <summary className="flex min-h-10 cursor-pointer list-none items-center rounded-input border border-border px-2.5 text-sm font-medium [&::-webkit-details-marker]:hidden">
               {nav.menu}
@@ -73,13 +78,14 @@ export function SiteHeader({ locale }: { locale: Locale }) {
                   {link.label}
                 </a>
               ))}
-              <a
+              <CtaLink
+                cta="header_menu"
                 href={cta}
                 onClick={closeMenu}
                 className={`${PRIMARY_BUTTON} mt-2`}
               >
                 {nav.cta}
-              </a>
+              </CtaLink>
             </nav>
           </details>
         </div>

@@ -5,7 +5,7 @@ import { describeEntity } from '@/lib/content';
 import { legalClausesFor } from '@/lib/legal-clauses';
 import { PUBLIC_EMAIL } from '@/lib/site';
 
-// TODO(albert): legal review (R6 storage, attribution, retention)
+// TODO(albert): legal review (R6 storage, attribution, retention; R7 GA4, consent, first-touch)
 export function PrivacyEs({
   title,
   entity,
@@ -13,6 +13,7 @@ export function PrivacyEs({
   title: string;
   entity: PublishedEntity;
 }) {
+  const analytics = __GA4_ID__ !== null;
   const legalEs = legalClausesFor(entity);
 
   return (
@@ -43,7 +44,18 @@ export function PrivacyEs({
           nuestra web, la página desde la que lo envías, el sitio web que te
           enlazó (el referente) y las etiquetas de campaña del enlace que
           seguiste, como utm_source o gclid. Lo usamos para saber qué canales
-          nos traen consultas. Para ello no guardamos nada en tu dispositivo.
+          nos traen consultas.{' '}
+          {analytics ? (
+            <>
+              Salvo que aceptes las cookies de marketing, no guardamos nada en
+              tu dispositivo para ello. Si las aceptas, tu navegador conserva
+              durante un máximo de 90 días la primera página a la que llegaste,
+              el sitio que te enlazó y las etiquetas de campaña, que se envían
+              con tu consulta.
+            </>
+          ) : (
+            <>Para ello no guardamos nada en tu dispositivo.</>
+          )}
         </p>
         <p>
           También guardamos la versión de esta política a la que diste tu
@@ -54,11 +66,22 @@ export function PrivacyEs({
           solicitud para proteger el sitio, incluida la comprobación antibots de
           Turnstile, y en sus registros operativos.
         </p>
-        <p>
-          El sitio no usa cookies publicitarias ni analíticas ni píxeles de
-          seguimiento. Medimos el tráfico con Cloudflare Web Analytics, que no
-          usa cookies ni crea perfiles de los visitantes.
-        </p>
+        {analytics ? (
+          <p>
+            Si aceptas las cookies analíticas, usamos Google Analytics 4 para
+            medir las visitas y las acciones en el sitio, como los clics en
+            nuestros botones y las consultas enviadas, nunca lo que escribes en
+            ellas. Sin tu consentimiento, Google Analytics no se carga. El
+            tráfico general lo medimos siempre con Cloudflare Web Analytics, que
+            no usa cookies ni crea perfiles de los visitantes.
+          </p>
+        ) : (
+          <p>
+            El sitio no usa cookies publicitarias ni analíticas ni píxeles de
+            seguimiento. Medimos el tráfico con Cloudflare Web Analytics, que no
+            usa cookies ni crea perfiles de los visitantes.
+          </p>
+        )}
       </LegalSection>
       <LegalSection title="Dónde los guardamos">
         <p>
@@ -80,6 +103,13 @@ export function PrivacyEs({
             los datos de referente y de campaña (art. 6.1.f del RGPD). Se
             limitan a lo que el enlace y tu navegador ya envían.
           </li>
+          {analytics ? (
+            <li>
+              Tu consentimiento para las cookies analíticas y de marketing (art.
+              6.1.a del RGPD y art. 22.2 de la LSSI), que puedes retirar cuando
+              quieras desde «Configuración de cookies», al pie de cada página.
+            </li>
+          ) : null}
         </ul>
         <p>
           Puedes retirar tu consentimiento en cualquier momento escribiéndonos.
@@ -98,6 +128,12 @@ export function PrivacyEs({
             medir el tráfico con Web Analytics sin cookies.
           </li>
           <li>Google Workspace, que aloja el buzón que recibe tu mensaje.</li>
+          {analytics ? (
+            <li>
+              Google (Google Ireland Limited y Google LLC), para Google
+              Analytics, solo si aceptas las cookies analíticas.
+            </li>
+          ) : null}
         </ul>
       </LegalSection>
       <LegalSection title="Transferencias internacionales">
@@ -106,6 +142,9 @@ export function PrivacyEs({
           {legalEs.transferPlaces}. Cuando es necesario, las transferencias se
           apoyan en garantías adecuadas, como las cláusulas contractuales tipo
           de la Comisión Europea.
+          {analytics ? (
+            <> Google se apoya en el Marco de Privacidad de Datos UE-EE. UU.</>
+          ) : null}
         </p>
       </LegalSection>
       <LegalSection title="Cuánto tiempo los conservamos">
@@ -116,6 +155,12 @@ export function PrivacyEs({
           inicie una relación profesional; en ese caso, las conservamos mientras
           dure la relación y lo exijan nuestras obligaciones legales.
         </p>
+        {analytics ? (
+          <p>
+            {/* TODO(albert): match the GA4 retention setting */}
+            Google Analytics conserva los datos de eventos durante 14 meses.
+          </p>
+        ) : null}
       </LegalSection>
       <LegalSection title="Tus derechos">
         <p>
