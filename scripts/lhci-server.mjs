@@ -1,5 +1,8 @@
 // Emulates edge brotli compression so local and CI Lighthouse scores match what visitors get.
+// Hashed /assets/ files are compressed once up front, as the edge serves them from cache:
+// compressing them per request burns a core during every page load and delays first paint.
 import { spawn } from 'node:child_process';
+import fs from 'node:fs';
 import http from 'node:http';
 import net from 'node:net';
 import zlib from 'node:zlib';
@@ -7,6 +10,17 @@ import zlib from 'node:zlib';
 const PREVIEW_PORT = 4173;
 const PROXY_PORT = 4174;
 const COMPRESSIBLE = /text|javascript|json|svg|xml/;
+const ASSETS_DIR = new URL('../dist/client/assets/', import.meta.url);
+
+const precompressed = new Map(
+  fs
+    .readdirSync(ASSETS_DIR)
+    .filter((name) => /\.(js|css|svg)$/.test(name))
+    .map((name) => [
+      `/assets/${name}`,
+      zlib.brotliCompressSync(fs.readFileSync(new URL(name, ASSETS_DIR))),
+    ]),
+);
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -61,8 +75,19 @@ http
           response.pipe(res);
           return;
         }
-        delete headers['content-length'];
         headers['content-encoding'] = 'br';
+        const cached =
+          req.method === 'GET' &&
+          response.statusCode === 200 &&
+          precompressed.get(req.url ?? '');
+        if (cached) {
+          response.resume();
+          headers['content-length'] = String(cached.length);
+          res.writeHead(200, headers);
+          res.end(cached);
+          return;
+        }
+        delete headers['content-length'];
         res.writeHead(response.statusCode ?? 502, headers);
         response.pipe(zlib.createBrotliCompress()).pipe(res);
       },

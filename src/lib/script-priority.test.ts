@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { withLowScriptPriority } from '@/lib/script-priority';
+import { deferredEntryLoader, withDeferredEntry } from '@/lib/script-priority';
 
 interface FakeElement {
-  setAttribute(name: string, value: string): void;
+  getAttribute(name: string): string | null;
+  remove(): void;
+  replace(content: string, options: { html: boolean }): void;
 }
 interface FakeHandlers {
   element(el: FakeElement): void;
@@ -11,14 +13,12 @@ interface FakeHandlers {
 const instances: FakeRewriter[] = [];
 
 class FakeRewriter {
-  selector = '';
-  handlers: FakeHandlers | undefined;
+  handlers = new Map<string, FakeHandlers>();
   constructor() {
     instances.push(this);
   }
   on(selector: string, handlers: FakeHandlers) {
-    this.selector = selector;
-    this.handlers = handlers;
+    this.handlers.set(selector, handlers);
     return this;
   }
   transform(response: Response) {
@@ -26,7 +26,39 @@ class FakeRewriter {
   }
 }
 
-describe('withLowScriptPriority', () => {
+function fakeElement(attributes: Record<string, string>) {
+  return {
+    getAttribute: (name: string) => attributes[name] ?? null,
+    remove: vi.fn(),
+    replace: vi.fn(),
+  };
+}
+
+describe('deferredEntryLoader', () => {
+  it('imports the entry and re-adds the preloads after the first paint', () => {
+    const loader = deferredEntryLoader('/assets/index.js', [
+      '/assets/index.js',
+      '/assets/chunk.js',
+    ]);
+    expect(loader).toContain("getEntriesByName('first-contentful-paint')");
+    expect(loader.startsWith('{const u=')).toBe(true);
+    expect(loader.endsWith('}')).toBe(true);
+    expect(loader).not.toContain('=>{})()');
+    expect(loader).toContain('if(document.hidden||');
+    expect(loader).toContain('setTimeout(go,3000)');
+    expect(loader).toContain(
+      '{"entry":"/assets/index.js","preloads":["/assets/index.js","/assets/chunk.js"]}',
+    );
+    expect(loader).toContain("l.rel='modulepreload'");
+    expect(loader).toContain('import(u.entry)');
+  });
+
+  it('cannot close its script element', () => {
+    expect(deferredEntryLoader('/a.js</script><b>', [])).not.toContain('<');
+  });
+});
+
+describe('withDeferredEntry', () => {
   beforeEach(() => {
     instances.length = 0;
     vi.stubGlobal('HTMLRewriter', FakeRewriter);
@@ -35,19 +67,43 @@ describe('withLowScriptPriority', () => {
     vi.unstubAllGlobals();
   });
 
-  it('marks external module scripts and preloads low priority on HTML', () => {
+  it('swaps the preloads and entry script for the deferred loader', () => {
     const response = new Response('<html></html>', {
       headers: { 'content-type': 'text/html; charset=utf-8' },
     });
-    withLowScriptPriority(response);
+    withDeferredEntry(response);
     expect(instances).toHaveLength(1);
-    const [rewriter] = instances;
-    expect(rewriter?.selector).toBe(
-      'link[rel="modulepreload"], script[type="module"][src]',
+    const handlers = instances[0]?.handlers;
+    const preload = fakeElement({ href: '/assets/chunk.js' });
+    handlers?.get('link[rel="modulepreload"]')?.element(preload);
+    expect(preload.remove).toHaveBeenCalled();
+
+    const script = fakeElement({ src: '/assets/index.js' });
+    handlers?.get('script[type="module"][src]')?.element(script);
+    expect(script.replace).toHaveBeenCalledWith(
+      `<script>${deferredEntryLoader('/assets/index.js', ['/assets/chunk.js'])}</script>`,
+      { html: true },
     );
-    const setAttribute = vi.fn();
-    rewriter?.handlers?.element({ setAttribute });
-    expect(setAttribute).toHaveBeenCalledWith('fetchpriority', 'low');
+  });
+
+  it('leaves preloads that come after the entry script in place', () => {
+    const response = new Response('<html></html>', {
+      headers: { 'content-type': 'text/html; charset=utf-8' },
+    });
+    withDeferredEntry(response);
+    const handlers = instances[0]?.handlers;
+    const early = fakeElement({ href: '/assets/early.js' });
+    const script = fakeElement({ src: '/assets/index.js' });
+    const late = fakeElement({ href: '/assets/late.js' });
+    handlers?.get('link[rel="modulepreload"]')?.element(early);
+    handlers?.get('script[type="module"][src]')?.element(script);
+    handlers?.get('link[rel="modulepreload"]')?.element(late);
+    expect(early.remove).toHaveBeenCalled();
+    expect(late.remove).not.toHaveBeenCalled();
+    expect(script.replace).toHaveBeenCalledWith(
+      `<script>${deferredEntryLoader('/assets/index.js', ['/assets/early.js'])}</script>`,
+      { html: true },
+    );
   });
 
   it.each([
@@ -58,7 +114,7 @@ describe('withLowScriptPriority', () => {
     { name: 'no content type', headers: new Headers() },
   ])('passes $name responses through', ({ headers }) => {
     const response = new Response(null, { headers });
-    expect(withLowScriptPriority(response)).toBe(response);
+    expect(withDeferredEntry(response)).toBe(response);
     expect(instances).toHaveLength(0);
   });
 });

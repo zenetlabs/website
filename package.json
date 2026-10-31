@@ -19,7 +19,9 @@
     "check:i18n": "vitest run src/i18n/catalogues.test.ts",
     "check:colors": "vitest run src/styles/hardcoded-colors.test.ts",
     "e2e": "playwright test",
-    "lhci": "lhci autorun && lhci autorun --collect.settings.preset=desktop",
+    "lhci": "pnpm lhci:mobile; mobile=$?; pnpm lhci:desktop; desktop=$?; exit $((mobile | desktop))",
+    "lhci:mobile": "lhci collect && lhci upload --target=filesystem --outputDir=.lighthouseci/mobile && lhci assert",
+    "lhci:desktop": "lhci collect --settings.preset=desktop && lhci upload --target=filesystem --outputDir=.lighthouseci/desktop && lhci assert",
     "knip": "knip",
     "doctor": "react-doctor"
   },

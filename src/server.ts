@@ -6,7 +6,7 @@ import {
   toMarkdownResponse,
 } from '@/lib/markdown-response';
 import { isOwnedHost, redirectTarget } from '@/lib/redirects';
-import { withLowScriptPriority } from '@/lib/script-priority';
+import { withDeferredEntry } from '@/lib/script-priority';
 import { withSecurityHeaders } from '@/lib/security-headers';
 
 export default createServerEntry({
@@ -28,7 +28,7 @@ export default createServerEntry({
     const converted =
       html && markdown
         ? await toMarkdownResponse(response, markdown.upstream.url)
-        : withLowScriptPriority(response);
+        : withDeferredEntry(response);
     const page = withSecurityHeaders(
       request.method === 'HEAD' && markdown
         ? new Response(null, converted)

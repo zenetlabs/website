@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import {
+  deferredScripts,
   gotoHydrated,
   HOLDED_PAGES,
   PAGES,
@@ -91,25 +92,35 @@ test('the header Services link opens the hub on every page type', async ({
   }
 });
 
-test('JS is fetched at low priority', async ({ request }) => {
+test('hydration JS loads only after the first contentful paint', async ({
+  page,
+  request,
+}) => {
   for (const path of ['/', '/es']) {
     const html = await (await request.get(path)).text();
-    const preloads = (html.match(/<link[^>]*>/g) ?? []).filter((tag) =>
-      tag.includes('rel="modulepreload"'),
-    );
-    const scripts = (html.match(/<script[^>]*>/g) ?? []).filter(
-      (tag) => tag.includes('type="module"') && tag.includes(' src='),
-    );
-    expect(preloads.length).toBeGreaterThan(0);
-    expect(scripts.length).toBeGreaterThan(0);
-    for (const tag of [...preloads, ...scripts]) {
-      expect(tag).toContain('fetchpriority="low"');
-    }
+    expect(html).not.toMatch(/<link[^>]*rel="modulepreload"/);
+    expect(html).not.toMatch(/<script[^>]*type="module"[^>]*src=/);
+    const deferred = deferredScripts(html);
+    expect(deferred?.preloads.length).toBeGreaterThan(0);
+    const entry = deferred?.entry ?? '';
+    expect(deferred?.preloads).toContain(entry);
+
+    await gotoHydrated(page, path);
+    const timing = await page.evaluate((src) => {
+      const url = new URL(src, location.href).href;
+      return {
+        fcp: performance.getEntriesByName('first-contentful-paint')[0]
+          ?.startTime,
+        entry: performance.getEntriesByName(url)[0]?.startTime,
+      };
+    }, entry);
+    expect(timing.fcp).toBeDefined();
+    expect(timing.entry).toBeGreaterThan(timing.fcp ?? Infinity);
   }
 });
 
 test('non-HTML responses are untouched', async ({ request }) => {
   const response = await request.get('/robots.txt');
   expect(response.headers()['content-type']).toContain('text/plain');
-  expect(await response.text()).not.toContain('fetchpriority');
+  expect(await response.text()).not.toContain('requestAnimationFrame');
 });
