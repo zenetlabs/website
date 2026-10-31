@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as Char123LocaleChar125RouteImport } from './routes/{-$locale}'
@@ -17,14 +16,11 @@ import { Route as Char123LocaleChar125IndexRouteImport } from './routes/{-$local
 import { Route as Char123LocaleChar125AboutRouteImport } from './routes/{-$locale}/about'
 import { Route as Char123LocaleChar125CookiesRouteImport } from './routes/{-$locale}/cookies'
 import { Route as Char123LocaleChar125LegalNoticeRouteImport } from './routes/{-$locale}/legal-notice'
+import { Route as Char123LocaleChar125LlmsFullDottxtRouteImport } from './routes/{-$locale}/llms-full[.]txt'
+import { Route as Char123LocaleChar125LlmsDottxtRouteImport } from './routes/{-$locale}/llms[.]txt'
 import { Route as Char123LocaleChar125PricingRouteImport } from './routes/{-$locale}/pricing'
 import { Route as Char123LocaleChar125PrivacyRouteImport } from './routes/{-$locale}/privacy'
 
-const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
-  id: '/llms.txt',
-  path: '/llms.txt',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
   id: '/robots.txt',
   path: '/robots.txt',
@@ -64,6 +60,18 @@ const Char123LocaleChar125LegalNoticeRoute =
     path: '/legal-notice',
     getParentRoute: () => Char123LocaleChar125Route,
   } as any)
+const Char123LocaleChar125LlmsFullDottxtRoute =
+  Char123LocaleChar125LlmsFullDottxtRouteImport.update({
+    id: '/llms-full.txt',
+    path: '/llms-full.txt',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125LlmsDottxtRoute =
+  Char123LocaleChar125LlmsDottxtRouteImport.update({
+    id: '/llms.txt',
+    path: '/llms.txt',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
 const Char123LocaleChar125PricingRoute =
   Char123LocaleChar125PricingRouteImport.update({
     id: '/pricing',
@@ -78,37 +86,40 @@ const Char123LocaleChar125PrivacyRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/llms.txt': typeof LlmsDottxtRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/{-$locale}': typeof Char123LocaleChar125RouteWithChildren
   '/{-$locale}/about': typeof Char123LocaleChar125AboutRoute
   '/{-$locale}/cookies': typeof Char123LocaleChar125CookiesRoute
   '/{-$locale}/legal-notice': typeof Char123LocaleChar125LegalNoticeRoute
+  '/{-$locale}/llms-full.txt': typeof Char123LocaleChar125LlmsFullDottxtRoute
+  '/{-$locale}/llms.txt': typeof Char123LocaleChar125LlmsDottxtRoute
   '/{-$locale}/pricing': typeof Char123LocaleChar125PricingRoute
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
 }
 export interface FileRoutesByTo {
-  '/llms.txt': typeof LlmsDottxtRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/{-$locale}/about': typeof Char123LocaleChar125AboutRoute
   '/{-$locale}/cookies': typeof Char123LocaleChar125CookiesRoute
   '/{-$locale}/legal-notice': typeof Char123LocaleChar125LegalNoticeRoute
+  '/{-$locale}/llms-full.txt': typeof Char123LocaleChar125LlmsFullDottxtRoute
+  '/{-$locale}/llms.txt': typeof Char123LocaleChar125LlmsDottxtRoute
   '/{-$locale}/pricing': typeof Char123LocaleChar125PricingRoute
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}': typeof Char123LocaleChar125IndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/llms.txt': typeof LlmsDottxtRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/{-$locale}': typeof Char123LocaleChar125RouteWithChildren
   '/{-$locale}/about': typeof Char123LocaleChar125AboutRoute
   '/{-$locale}/cookies': typeof Char123LocaleChar125CookiesRoute
   '/{-$locale}/legal-notice': typeof Char123LocaleChar125LegalNoticeRoute
+  '/{-$locale}/llms-full.txt': typeof Char123LocaleChar125LlmsFullDottxtRoute
+  '/{-$locale}/llms.txt': typeof Char123LocaleChar125LlmsDottxtRoute
   '/{-$locale}/pricing': typeof Char123LocaleChar125PricingRoute
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
@@ -116,43 +127,45 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/llms.txt'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/{-$locale}'
     | '/{-$locale}/about'
     | '/{-$locale}/cookies'
     | '/{-$locale}/legal-notice'
+    | '/{-$locale}/llms-full.txt'
+    | '/{-$locale}/llms.txt'
     | '/{-$locale}/pricing'
     | '/{-$locale}/privacy'
     | '/{-$locale}/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/llms.txt'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/{-$locale}/about'
     | '/{-$locale}/cookies'
     | '/{-$locale}/legal-notice'
+    | '/{-$locale}/llms-full.txt'
+    | '/{-$locale}/llms.txt'
     | '/{-$locale}/pricing'
     | '/{-$locale}/privacy'
     | '/{-$locale}'
   id:
     | '__root__'
-    | '/llms.txt'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/{-$locale}'
     | '/{-$locale}/about'
     | '/{-$locale}/cookies'
     | '/{-$locale}/legal-notice'
+    | '/{-$locale}/llms-full.txt'
+    | '/{-$locale}/llms.txt'
     | '/{-$locale}/pricing'
     | '/{-$locale}/privacy'
     | '/{-$locale}/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  LlmsDottxtRoute: typeof LlmsDottxtRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   Char123LocaleChar125Route: typeof Char123LocaleChar125RouteWithChildren
@@ -160,13 +173,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/llms.txt': {
-      id: '/llms.txt'
-      path: '/llms.txt'
-      fullPath: '/llms.txt'
-      preLoaderRoute: typeof LlmsDottxtRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/robots.txt': {
       id: '/robots.txt'
       path: '/robots.txt'
@@ -216,6 +222,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char123LocaleChar125LegalNoticeRouteImport
       parentRoute: typeof Char123LocaleChar125Route
     }
+    '/{-$locale}/llms-full.txt': {
+      id: '/{-$locale}/llms-full.txt'
+      path: '/llms-full.txt'
+      fullPath: '/{-$locale}/llms-full.txt'
+      preLoaderRoute: typeof Char123LocaleChar125LlmsFullDottxtRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
+    '/{-$locale}/llms.txt': {
+      id: '/{-$locale}/llms.txt'
+      path: '/llms.txt'
+      fullPath: '/{-$locale}/llms.txt'
+      preLoaderRoute: typeof Char123LocaleChar125LlmsDottxtRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
     '/{-$locale}/pricing': {
       id: '/{-$locale}/pricing'
       path: '/pricing'
@@ -237,6 +257,8 @@ interface Char123LocaleChar125RouteChildren {
   Char123LocaleChar125AboutRoute: typeof Char123LocaleChar125AboutRoute
   Char123LocaleChar125CookiesRoute: typeof Char123LocaleChar125CookiesRoute
   Char123LocaleChar125LegalNoticeRoute: typeof Char123LocaleChar125LegalNoticeRoute
+  Char123LocaleChar125LlmsFullDottxtRoute: typeof Char123LocaleChar125LlmsFullDottxtRoute
+  Char123LocaleChar125LlmsDottxtRoute: typeof Char123LocaleChar125LlmsDottxtRoute
   Char123LocaleChar125PricingRoute: typeof Char123LocaleChar125PricingRoute
   Char123LocaleChar125PrivacyRoute: typeof Char123LocaleChar125PrivacyRoute
   Char123LocaleChar125IndexRoute: typeof Char123LocaleChar125IndexRoute
@@ -246,6 +268,9 @@ const Char123LocaleChar125RouteChildren: Char123LocaleChar125RouteChildren = {
   Char123LocaleChar125AboutRoute: Char123LocaleChar125AboutRoute,
   Char123LocaleChar125CookiesRoute: Char123LocaleChar125CookiesRoute,
   Char123LocaleChar125LegalNoticeRoute: Char123LocaleChar125LegalNoticeRoute,
+  Char123LocaleChar125LlmsFullDottxtRoute:
+    Char123LocaleChar125LlmsFullDottxtRoute,
+  Char123LocaleChar125LlmsDottxtRoute: Char123LocaleChar125LlmsDottxtRoute,
   Char123LocaleChar125PricingRoute: Char123LocaleChar125PricingRoute,
   Char123LocaleChar125PrivacyRoute: Char123LocaleChar125PrivacyRoute,
   Char123LocaleChar125IndexRoute: Char123LocaleChar125IndexRoute,
@@ -255,7 +280,6 @@ const Char123LocaleChar125RouteWithChildren =
   Char123LocaleChar125Route._addFileChildren(Char123LocaleChar125RouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  LlmsDottxtRoute: LlmsDottxtRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   Char123LocaleChar125Route: Char123LocaleChar125RouteWithChildren,

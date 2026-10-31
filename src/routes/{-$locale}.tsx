@@ -6,16 +6,13 @@ import {
 } from '@tanstack/react-router';
 import { NotFound } from '@/components/not-found';
 import { PageShell } from '@/components/page-shell';
-import { prefixedLocales } from '@/lib/i18n';
+import { localeFromParam } from '@/lib/i18n';
 import { hasLocale } from '@/lib/page-registry';
 import { STRUCTURED_DATA } from '@/lib/structured-data';
 
 export const Route = createFileRoute('/{-$locale}')({
   beforeLoad: ({ params, context, matches }) => {
-    if (
-      params.locale !== undefined &&
-      !prefixedLocales.some((locale) => locale === params.locale)
-    ) {
+    if (localeFromParam(params.locale) === undefined) {
       throw notFound({ routeId: rootRouteId });
     }
     const page = matches.findLast((match) => match.staticData.page)?.staticData

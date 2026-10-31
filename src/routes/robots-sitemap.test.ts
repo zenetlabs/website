@@ -95,6 +95,12 @@ describe('sitemapXml', () => {
     ]);
   });
 
+  it('lists no markdown or llms url', () => {
+    const locs = parseSitemap(xml).map((entry) => entry.loc);
+    expect(locs.filter((loc) => /\.(md|txt)$/.test(loc))).toEqual([]);
+    expect(xml).not.toMatch(/\.md|llms/);
+  });
+
   it('is well-formed xml', () => {
     const doc = new DOMParser().parseFromString(xml, 'application/xml');
     expect(doc.getElementsByTagName('parsererror')).toHaveLength(0);

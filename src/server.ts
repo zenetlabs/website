@@ -1,7 +1,10 @@
 import handler, { createServerEntry } from '@tanstack/react-start/server-entry';
 import { isHtml } from '@/lib/http';
-import { prefersMarkdown } from '@/lib/markdown';
-import { toMarkdownResponse, withHtmlAccept } from '@/lib/markdown-response';
+import {
+  isNegotiable,
+  markdownTarget,
+  toMarkdownResponse,
+} from '@/lib/markdown-response';
 import { isOwnedHost, redirectTarget } from '@/lib/redirects';
 import { withLowScriptPriority } from '@/lib/script-priority';
 import { withSecurityHeaders } from '@/lib/security-headers';
@@ -19,24 +22,20 @@ export default createServerEntry({
         headers: { Location: target, 'Cache-Control': 'max-age=3600' },
       });
     }
-    const negotiable = request.method === 'GET' || request.method === 'HEAD';
-    const markdown =
-      negotiable && prefersMarkdown(request.headers.get('Accept'));
-    const response = await handler.fetch(
-      markdown ? withHtmlAccept(request) : request,
-      opts,
-    );
+    const markdown = markdownTarget(url, request);
+    const response = await handler.fetch(markdown?.upstream ?? request, opts);
     const html = isHtml(response);
     const converted =
       html && markdown
-        ? await toMarkdownResponse(response, request.url)
+        ? await toMarkdownResponse(response, markdown.upstream.url)
         : withLowScriptPriority(response);
     const page = withSecurityHeaders(
       request.method === 'HEAD' && markdown
         ? new Response(null, converted)
         : converted,
     );
-    if (negotiable && (html || page.status === 406)) {
+    const varies = markdown ? markdown.vary : isNegotiable(request);
+    if (varies && (html || page.status === 406)) {
       page.headers.append('Vary', 'Accept');
     }
     if (page.status === 404) page.headers.set('X-Robots-Tag', 'noindex');

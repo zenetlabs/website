@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { PAGES } from './helpers';
+import { formatPrice, formatPriceSummary } from '../src/lib/money';
+import { faqPairs, jsonLdBlocks } from '../test/json-ld';
+import { SERVICES } from '../test/page-content';
+import { LOCALES, markdownPathOf, normalise, PAGES, PAIRS } from './helpers';
 
 const VARY_ACCEPT = /(^|,)\s*accept\s*(,|$)/i;
 
@@ -137,3 +140,110 @@ test('POST is never converted to markdown', async ({ request }) => {
     'text/markdown',
   );
 });
+
+for (const path of PAGES) {
+  const md = markdownPathOf(path);
+
+  test(`${md} is the markdown twin of ${path}`, async ({ request }) => {
+    const response = await request.get(md);
+    expect(response.status()).toBe(200);
+    const headers = response.headers();
+    expect(headers['content-type']).toBe('text/markdown; charset=utf-8');
+    expect(headers.vary ?? '').not.toMatch(VARY_ACCEPT);
+    expect(headers['x-robots-tag']).toBeUndefined();
+    expect(headers['x-content-type-options']).toBe('nosniff');
+    expect(canonicalPath(headers.link)).toBe(path);
+
+    const negotiated = await request.get(path, {
+      headers: { accept: 'text/markdown' },
+    });
+    expect(await response.text()).toBe(await negotiated.text());
+  });
+}
+
+test('Accept text/html on a .md url still returns markdown', async ({
+  request,
+}) => {
+  const response = await request.get('/pricing.md', {
+    headers: { accept: 'text/html' },
+  });
+  expect(response.headers()['content-type']).toBe(
+    'text/markdown; charset=utf-8',
+  );
+});
+
+test('HEAD on a .md url returns the headers and no body', async ({
+  request,
+}) => {
+  const response = await request.head('/pricing.md');
+  expect(response.status()).toBe(200);
+  expect(response.headers()['content-type']).toBe(
+    'text/markdown; charset=utf-8',
+  );
+  expect(canonicalPath(response.headers().link)).toBe('/pricing');
+  expect((await response.body()).length).toBe(0);
+});
+
+test('POST to a .md url is not converted', async ({ request }) => {
+  const response = await request.post('/pricing.md');
+  expect(response.headers()['content-type'] ?? '').not.toContain(
+    'text/markdown',
+  );
+});
+
+for (const path of [
+  '/nope.md',
+  '/precios.md',
+  '/es/pricing.md',
+  '/es/index.md',
+  '/aviso-legal.md',
+  '/index.html.md',
+]) {
+  test(`${path} answers 404 with noindex`, async ({ request }) => {
+    const response = await request.get(path);
+    expect(response.status()).toBe(404);
+    expect(response.headers()['x-robots-tag']).toBe('noindex');
+  });
+}
+
+const AGENT_PAGES = LOCALES.map((locale) => ({
+  locale,
+  home: PAIRS[0][locale],
+  pricing: PAIRS[1][locale],
+}));
+
+for (const { locale, home, pricing } of AGENT_PAGES) {
+  test(`${markdownPathOf(home)} holds the prices, the FAQ and the contact`, async ({
+    request,
+  }) => {
+    const html = await (await request.get(home)).text();
+    const body = normalise(
+      await (await request.get(markdownPathOf(home))).text(),
+    );
+    for (const service of Object.values(SERVICES[locale])) {
+      expect(body).toContain(
+        normalise(formatPriceSummary(locale, service.prices)),
+      );
+    }
+    const pairs = faqPairs(jsonLdBlocks(html));
+    expect(pairs.length).toBeGreaterThan(10);
+    for (const [question, answer] of pairs) {
+      expect(body).toContain(normalise(question));
+      expect(body).toContain(normalise(answer));
+    }
+    expect(body).toContain('[hello@zenetlabs.com](mailto:hello@zenetlabs.com)');
+  });
+
+  test(`${markdownPathOf(pricing)} holds every price row`, async ({
+    request,
+  }) => {
+    const body = normalise(
+      await (await request.get(markdownPathOf(pricing))).text(),
+    );
+    for (const service of Object.values(SERVICES[locale])) {
+      for (const price of service.prices) {
+        expect(body).toContain(normalise(formatPrice(locale, price)));
+      }
+    }
+  });
+}

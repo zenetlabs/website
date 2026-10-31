@@ -209,7 +209,7 @@ describe('redirectTarget on other hosts', () => {
   it.each(origins)('maps legacy paths on %s', (origin) => {
     expect(redirectTarget(new URL(`${origin}/blog/x`))).toBe(`${origin}/`);
     expect(redirectTarget(new URL(`${origin}/es/about-us`))).toBe(
-      `${origin}/es`,
+      `${origin}/es/sobre-nosotros`,
     );
     expect(redirectTarget(new URL(`${origin}/es/`))).toBe(`${origin}/es`);
     expect(redirectTarget(new URL(`${origin}/privacy-policy`))).toBe(

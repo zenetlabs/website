@@ -9,6 +9,7 @@ import {
   entity as enEntity,
 } from '@/content/en/entity';
 import { home as enHome } from '@/content/en/home';
+import { llms as enLlms } from '@/content/en/llms';
 import { pricingPage as enPricing } from '@/content/en/pricing';
 import { aboutPage as esAbout } from '@/content/es/about';
 import { cases as esCases } from '@/content/es/cases';
@@ -19,6 +20,7 @@ import {
 } from '@/content/es/entity';
 import { home as esHome } from '@/content/es/home';
 import { legalNotice } from '@/content/es/legal-notice';
+import { llms as esLlms } from '@/content/es/llms';
 import { pricingPage as esPricing } from '@/content/es/pricing';
 import { verifactuDates } from '@/content/es/verifactu';
 import en from '@/i18n/en.json';
@@ -33,7 +35,7 @@ import {
   taxIdLabel,
 } from '@/lib/content';
 import { type Locale, locales } from '@/lib/i18n';
-import { buildLlmsTxt } from '@/lib/llms';
+import { buildLlmsFull, buildLlmsTxt } from '@/lib/llms';
 import { formatPriceSummary } from '@/lib/money';
 import { PORTFOLIO } from '@/lib/portfolio';
 import { PUBLIC_EMAIL } from '@/lib/site';
@@ -177,7 +179,12 @@ describe('placeholders', () => {
       legalNotice,
       en,
       es,
-      buildLlmsTxt(),
+      locales.flatMap((locale) => [
+        buildLlmsTxt(locale),
+        buildLlmsFull(locale),
+      ]),
+      enLlms,
+      esLlms,
       CONTENT,
       enHome,
       esHome,

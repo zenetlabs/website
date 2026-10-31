@@ -16,7 +16,7 @@ export const ALIAS_HOSTS: ReadonlySet<string> = new Set([
 const LEGACY_PAGES: ReadonlyMap<string, PageId> = new Map([
   ['/privacy-policy', 'privacy'],
   ['/cookies-policy', 'cookies'],
-  ['/about-us', 'home'],
+  ['/about-us', 'about'],
 ]);
 
 function collapseLeadingSlashes(pathname: string): string {

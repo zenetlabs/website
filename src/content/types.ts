@@ -184,6 +184,26 @@ export type AboutPageContent = {
   cta: { title: string; text: string; button: string };
 };
 
+export type LlmsCopy = {
+  operator: string;
+  markdown: string;
+  fullNote: string;
+  headings: Record<
+    | 'services'
+    | 'pages'
+    | 'faq'
+    | 'portfolio'
+    | 'contact'
+    | 'pricing'
+    | 'problems'
+    | 'process'
+    | 'cases'
+    | 'about',
+    string
+  >;
+  labels: Record<'email' | 'form' | 'full' | 'index' | 'otherLanguage', string>;
+};
+
 export type SiteContent = {
   entity: LegalEntity;
   countryNames: Record<Country, string>;
