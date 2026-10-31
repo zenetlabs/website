@@ -1,10 +1,15 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContactForm } from '@/components/contact-form';
 
 const state = vi.hoisted(() => ({ hydrated: true }));
-const sendContact = vi.hoisted(() => vi.fn());
+const submitLead = vi.hoisted(() => vi.fn());
+const ATTRIBUTION = {
+  landing: '/?utm_source=news',
+  referrer: 'https://example.org/',
+  page: '/',
+};
 
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@tanstack/react-router')>()),
@@ -16,11 +21,10 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
   useHydrated: () => state.hydrated,
 }));
 
-vi.mock('@tanstack/react-start', () => ({
-  useServerFn: (fn: unknown) => fn,
+vi.mock('@/lib/lead-client', () => ({
+  submitLead,
+  attribution: () => ATTRIBUTION,
 }));
-
-vi.mock('@/server/contact.functions', () => ({ sendContact }));
 
 vi.mock('@marsidev/react-turnstile', () => ({
   Turnstile: ({
@@ -53,7 +57,7 @@ async function fillIn(user: ReturnType<typeof userEvent.setup>) {
 
 beforeEach(() => {
   state.hydrated = true;
-  sendContact.mockReset();
+  submitLead.mockReset();
 });
 
 describe('ContactForm', () => {
@@ -109,7 +113,7 @@ describe('ContactForm', () => {
   });
 
   it('submits the payload and shows the confirmation', async () => {
-    sendContact.mockResolvedValueOnce({ ok: true });
+    submitLead.mockResolvedValueOnce({ ok: true });
     const user = userEvent.setup();
     render(<ContactForm />);
     await user.click(screen.getByLabelText('Name'));
@@ -120,17 +124,17 @@ describe('ContactForm', () => {
     await waitFor(() =>
       expect(screen.getByText('Message sent')).toBeInTheDocument(),
     );
-    expect(sendContact).toHaveBeenCalledWith({
-      data: {
-        name: 'Ada Lovelace',
-        email: 'ada@example.com',
-        company: undefined,
-        message: 'Automate our inbox triage please.',
-        consent: true,
-        turnstileToken: 'tok_1',
-        website: '',
-        locale: 'en',
-      },
+    expect(submitLead).toHaveBeenCalledWith({
+      source: 'form',
+      locale: 'en',
+      name: 'Ada Lovelace',
+      email: 'ada@example.com',
+      company: undefined,
+      message: 'Automate our inbox triage please.',
+      consent: true,
+      turnstileToken: 'tok_1',
+      website: '',
+      attribution: ATTRIBUTION,
     });
     expect(screen.queryByRole('form')).not.toBeInTheDocument();
     expect(screen.getByText('Message sent')).toHaveFocus();
@@ -151,12 +155,15 @@ describe('ContactForm', () => {
   });
 
   it.each([
-    ['a send failure', { ok: false, error: 'send' }],
-    ['a captcha failure', { ok: false, error: 'captcha' }],
+    ['captcha', 'The security check failed'],
+    ['rate', 'Too many attempts'],
+    ['invalid', 'We could not send your message'],
+    ['unavailable', 'We could not send your message'],
+    ['origin', 'We could not send your message'],
   ])(
-    'shows the alert with the mailto fallback on %s',
-    async (_label, result) => {
-      sendContact.mockResolvedValueOnce(result);
+    'maps the %s error to its alert with the mailto fallback',
+    async (error, text) => {
+      submitLead.mockResolvedValueOnce({ ok: false, error });
       const user = userEvent.setup();
       render(<ContactForm />);
       await user.click(screen.getByLabelText('Name'));
@@ -165,7 +172,7 @@ describe('ContactForm', () => {
       await user.click(screen.getByRole('button', { name: 'Send message' }));
 
       const alert = await screen.findByRole('alert');
-      expect(alert).toHaveTextContent('Please try again');
+      expect(alert).toHaveTextContent(text);
       expect(alert).toHaveFocus();
       expect(
         screen.getByRole('link', { name: 'hello@zenetlabs.com' }),
@@ -175,15 +182,4 @@ describe('ContactForm', () => {
       ).toBeDisabled();
     },
   );
-
-  it('shows the alert when the server function throws', async () => {
-    sendContact.mockRejectedValueOnce(new Error('boom'));
-    const user = userEvent.setup();
-    render(<ContactForm />);
-    await user.click(screen.getByLabelText('Name'));
-    await fillIn(user);
-    fireEvent.click(screen.getByText('solve challenge'));
-    await user.click(screen.getByRole('button', { name: 'Send message' }));
-    expect(await screen.findByRole('alert')).toBeInTheDocument();
-  });
 });

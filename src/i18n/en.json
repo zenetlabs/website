@@ -35,6 +35,7 @@
       "successText": "Thank you. We will reply to the address you gave us.",
       "errorSend": "We could not send your message. Please try again, or write to",
       "errorCaptcha": "The security check failed. Please try again, or write to",
+      "errorRate": "Too many attempts from your connection. Wait a minute and try again, or write to",
       "honeypot": "Leave this field empty"
     }
   },

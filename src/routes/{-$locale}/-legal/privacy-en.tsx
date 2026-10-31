@@ -4,6 +4,7 @@ import type { PublishedEntity } from '@/content/types';
 import { formatAddress, taxIdLabel } from '@/lib/content';
 import { PUBLIC_EMAIL } from '@/lib/site';
 
+// TODO(albert): legal review (R6 storage, attribution, retention)
 export function PrivacyEn({
   title,
   entity,
@@ -12,7 +13,7 @@ export function PrivacyEn({
   entity: PublishedEntity;
 }) {
   return (
-    <LegalPage title={title} updated="Last updated: 30 October 2026">
+    <LegalPage title={title} updated="Last updated: 31 October 2026">
       <LegalSection title="Who is responsible for your data">
         <p>
           The controller of the personal data collected through zenetlabs.com is{' '}
@@ -33,7 +34,19 @@ export function PrivacyEn({
           From the contact form we collect what you type into it: your name,
           email address, company (optional) and message. We use it to read and
           reply to your enquiry, and to take steps at your request before a
-          possible agreement.
+          possible agreement. We also send you an acknowledgement email at the
+          address you gave.
+        </p>
+        <p>
+          With the form we also record the page where you arrived on our site,
+          the page you sent it from, the website that linked to it (the
+          referrer) and any campaign tags in the link you followed, such as
+          utm_source or gclid. We use this to understand which channels bring
+          enquiries. We do not store anything on your device to do this.
+        </p>
+        <p>
+          We also store which version of this policy you consented to, and when
+          you did.
         </p>
         <p>
           Cloudflare also processes your IP address and request metadata to
@@ -46,6 +59,13 @@ export function PrivacyEn({
           not use cookies and does not build profiles of visitors.
         </p>
       </LegalSection>
+      <LegalSection title="Where we store it">
+        <p>
+          We store each enquiry, and a record of the emails we send about it, in
+          a database run by Cloudflare in the European Union. Only Zenet Labs
+          can open it, through a login protected by Cloudflare Access.
+        </p>
+      </LegalSection>
       <LegalSection title="Legal basis">
         <ul>
           <li>
@@ -56,16 +76,25 @@ export function PrivacyEn({
             Steps taken at your request before entering into an agreement (GDPR
             Art. 6(1)(b)).
           </li>
+          <li>
+            Our legitimate interest in knowing which channels bring enquiries,
+            for the referrer and campaign data (GDPR Art. 6(1)(f)). It is
+            limited to what the link and your browser already send.
+          </li>
         </ul>
         <p>You can withdraw your consent at any time by writing to us.</p>
       </LegalSection>
       <LegalSection title="Who receives your data">
         <p>We do not sell your data. We use these processors:</p>
         <ul>
-          <li>Resend, to deliver the contact form message by email.</li>
           <li>
-            Cloudflare, to host the site, protect the form with Turnstile and
-            measure traffic with cookieless Web Analytics.
+            Resend, to deliver the contact form message to us and your
+            acknowledgement email.
+          </li>
+          <li>
+            Cloudflare, to host the site, store enquiries in a database in the
+            European Union, protect the form with Turnstile and measure traffic
+            with cookieless Web Analytics.
           </li>
           <li>
             Google Workspace, which hosts the mailbox that receives your
@@ -83,9 +112,11 @@ export function PrivacyEn({
       </LegalSection>
       <LegalSection title="How long we keep it">
         <p>
-          We keep your message for 24 months after our last contact, unless a
-          professional relationship follows. In that case we keep it for as long
-          as the relationship and our legal obligations require.
+          We delete enquiries from the site database automatically 24 months
+          after we receive them. Copies in our mailbox are kept for 24 months
+          after our last contact, unless a professional relationship follows; in
+          that case we keep them for as long as the relationship and our legal
+          obligations require.
         </p>
       </LegalSection>
       <LegalSection title="Your rights">

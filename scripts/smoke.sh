@@ -27,6 +27,20 @@ status_is() {
   [ "$got" = "$expected" ]
 }
 
+status_is_not() {
+  local unexpected="$1" url="$2" got
+  got=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$url") || return 1
+  [ "$got" != "$unexpected" ]
+}
+
+post_status_is() {
+  local expected="$1" url="$2" got
+  got=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -X POST \
+    -H 'Origin: https://zenetlabs.com' -H 'Content-Type: application/json' \
+    --data '{}' "$url") || return 1
+  [ "$got" = "$expected" ]
+}
+
 redirects_to() {
   local url="$1" expected="$2" out code location
   out=$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' --max-time 20 "$url") || return 1
@@ -129,6 +143,11 @@ attempt "Verifactu page shows when the dates were checked" body_contains "${SITE
 attempt "es service page states the tax" body_contains "${SITE}/es/servicios/agentes-de-ia" 'IVA no incluido'
 attempt "es pricing states the tax" body_contains "${SITE}/es/precios" 'no incluyen el IVA'
 attempt "robots disallows server functions" body_contains "${SITE}/robots.txt" 'Disallow: /_serverFn/'
+attempt "robots disallows internal" body_contains "${SITE}/robots.txt" 'Disallow: /internal/'
+attempt "405 GET /api/lead" status_is 405 "${SITE}/api/lead"
+attempt "400 POST /api/lead {}" post_status_is 400 "${SITE}/api/lead"
+attempt "internal leads not public" status_is_not 200 "${SITE}/internal/leads"
+attempt "internal leads csv not public" status_is_not 200 "${SITE}/internal/leads.csv"
 attempt "canonical link ${SITE}/es" header_matches 'text/markdown' "${SITE}/es" '^link: <https://zenetlabs\.com/es>; rel="canonical"$'
 
 attempt "200 https://albert.sabatemartinez.com/" status_is 200 "https://albert.sabatemartinez.com/"
