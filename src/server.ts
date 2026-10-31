@@ -1,4 +1,5 @@
 import handler, { createServerEntry } from '@tanstack/react-start/server-entry';
+import { withDeferredEntry } from '@/lib/deferred-entry';
 import { isHtml } from '@/lib/http';
 import {
   isNegotiable,
@@ -6,7 +7,6 @@ import {
   toMarkdownResponse,
 } from '@/lib/markdown-response';
 import { isOwnedHost, redirectTarget } from '@/lib/redirects';
-import { withLowScriptPriority } from '@/lib/script-priority';
 import { withSecurityHeaders } from '@/lib/security-headers';
 
 export default createServerEntry({
@@ -28,7 +28,7 @@ export default createServerEntry({
     const converted =
       html && markdown
         ? await toMarkdownResponse(response, markdown.upstream.url)
-        : withLowScriptPriority(response);
+        : withDeferredEntry(response);
     const page = withSecurityHeaders(
       request.method === 'HEAD' && markdown
         ? new Response(null, converted)

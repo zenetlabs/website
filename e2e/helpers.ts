@@ -109,6 +109,30 @@ export function tagsOf(html: string): Tag[] {
   });
 }
 
+interface DeferredScripts {
+  entry: string;
+  preloads: string[];
+}
+
+const LOADER = /const u=(\{.*?\});let done=/;
+
+function isDeferredScripts(value: unknown): value is DeferredScripts {
+  if (typeof value !== 'object' || value === null) return false;
+  if (!('entry' in value) || !('preloads' in value)) return false;
+  return (
+    typeof value.entry === 'string' &&
+    Array.isArray(value.preloads) &&
+    value.preloads.every((href) => typeof href === 'string')
+  );
+}
+
+export function deferredScripts(html: string): DeferredScripts | undefined {
+  const json = LOADER.exec(html)?.[1];
+  if (!json) return undefined;
+  const value: unknown = JSON.parse(json);
+  return isDeferredScripts(value) ? value : undefined;
+}
+
 export function htmlLang(html: string): string {
   return /<html[^>]*\blang="([^"]+)"/.exec(html)?.[1] ?? '';
 }

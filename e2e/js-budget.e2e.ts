@@ -9,6 +9,7 @@ import { home as esHome } from '../src/content/es/home';
 import { pricingPage as esPricing } from '../src/content/es/pricing';
 import {
   CASE_PAIR,
+  deferredScripts,
   ES_ONLY_PAGES,
   gotoHydrated,
   HOLDED_PAGES,
@@ -157,18 +158,14 @@ const KINDS: readonly Kind[] = [
 const LOCALES: readonly Locale[] = ['en', 'es'];
 
 async function upFrontScripts(request: APIRequestContext, html: string) {
-  const sources = new Set<string>();
-  for (const tag of html.match(/<(?:link|script)\b[^>]*>/g) ?? []) {
-    const [attributes] = tagsOf(tag);
-    if (!attributes) continue;
-    const source =
-      attributes.rel === 'modulepreload'
-        ? attributes.href
-        : attributes.type === 'module'
-          ? attributes.src
-          : undefined;
-    if (source) sources.add(source);
-  }
+  const deferred = deferredScripts(html);
+  const preloaded = tagsOf(html).flatMap((tag) =>
+    tag.rel === 'modulepreload' && tag.href ? [tag.href] : [],
+  );
+  const sources = new Set([
+    ...(deferred ? [deferred.entry, ...deferred.preloads] : []),
+    ...preloaded,
+  ]);
   return Promise.all(
     [...sources].map(async (source) => {
       const body = await (await request.get(source)).body();
