@@ -5,6 +5,7 @@ import { describeEntity } from '@/lib/content';
 import { legalClausesFor } from '@/lib/legal-clauses';
 import { PUBLIC_EMAIL } from '@/lib/site';
 
+// TODO(albert): legal review (R6 storage, attribution, retention)
 export function PrivacyEs({
   title,
   entity,
@@ -17,7 +18,7 @@ export function PrivacyEs({
   return (
     <LegalPage
       title={title}
-      updated="Última actualización: 30 de octubre de 2026"
+      updated="Última actualización: 31 de octubre de 2026"
     >
       <LegalSection title="Quién es el responsable de tus datos">
         <p>{describeEntity(legalEs.controller, entity, 'es')}</p>
@@ -34,7 +35,19 @@ export function PrivacyEs({
           Del formulario de contacto recogemos lo que escribes en él: tu nombre,
           tu correo electrónico, tu empresa (opcional) y tu mensaje. Los usamos
           para leer y responder a tu consulta, y para atender tu petición antes
-          de un posible acuerdo.
+          de un posible acuerdo. También te enviamos un correo de acuse de
+          recibo a la dirección que nos indicas.
+        </p>
+        <p>
+          Con el formulario registramos también la página por la que llegaste a
+          nuestra web, la página desde la que lo envías, el sitio web que te
+          enlazó (el referente) y las etiquetas de campaña del enlace que
+          seguiste, como utm_source o gclid. Lo usamos para saber qué canales
+          nos traen consultas. Para ello no guardamos nada en tu dispositivo.
+        </p>
+        <p>
+          También guardamos la versión de esta política a la que diste tu
+          consentimiento y cuándo lo diste.
         </p>
         <p>
           Cloudflare también trata tu dirección IP y los metadatos de la
@@ -47,12 +60,25 @@ export function PrivacyEs({
           usa cookies ni crea perfiles de los visitantes.
         </p>
       </LegalSection>
+      <LegalSection title="Dónde los guardamos">
+        <p>
+          Guardamos cada consulta, y el registro de los correos que enviamos
+          sobre ella, en una base de datos de Cloudflare ubicada en la Unión
+          Europea. Solo Zenet Labs puede abrirla, con un acceso protegido por
+          Cloudflare Access.
+        </p>
+      </LegalSection>
       <LegalSection title="Base jurídica">
         <ul>
           <li>{legalEs.consentBasis}</li>
           <li>
             La aplicación de medidas precontractuales a petición tuya (art.
             6.1.b del RGPD).
+          </li>
+          <li>
+            El interés legítimo en saber qué canales nos traen consultas, para
+            los datos de referente y de campaña (art. 6.1.f del RGPD). Se
+            limitan a lo que el enlace y tu navegador ya envían.
           </li>
         </ul>
         <p>
@@ -62,10 +88,14 @@ export function PrivacyEs({
       <LegalSection title="Quién recibe tus datos">
         <p>No vendemos tus datos. Usamos estos encargados del tratamiento:</p>
         <ul>
-          <li>Resend, para entregar por correo el mensaje del formulario.</li>
           <li>
-            Cloudflare, para alojar el sitio, proteger el formulario con
-            Turnstile y medir el tráfico con Web Analytics sin cookies.
+            Resend, para entregarnos por correo el mensaje del formulario y
+            enviarte el acuse de recibo.
+          </li>
+          <li>
+            Cloudflare, para alojar el sitio, guardar las consultas en una base
+            de datos en la Unión Europea, proteger el formulario con Turnstile y
+            medir el tráfico con Web Analytics sin cookies.
           </li>
           <li>Google Workspace, que aloja el buzón que recibe tu mensaje.</li>
         </ul>
@@ -80,10 +110,11 @@ export function PrivacyEs({
       </LegalSection>
       <LegalSection title="Cuánto tiempo los conservamos">
         <p>
-          Conservamos tu mensaje durante 24 meses desde nuestro último contacto,
-          salvo que se inicie una relación profesional. En ese caso, lo
-          conservamos mientras dure la relación y lo exijan nuestras
-          obligaciones legales.
+          Borramos automáticamente las consultas de la base de datos del sitio
+          24 meses después de recibirlas. Las copias en nuestro buzón se
+          conservan durante 24 meses desde nuestro último contacto, salvo que se
+          inicie una relación profesional; en ese caso, las conservamos mientras
+          dure la relación y lo exijan nuestras obligaciones legales.
         </p>
       </LegalSection>
       <LegalSection title="Tus derechos">

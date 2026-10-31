@@ -2,6 +2,7 @@ import { splitLocale } from '@/lib/i18n';
 import { type PageId, pageForSlug, pagePath } from '@/lib/page-registry';
 
 export const SITE_HOST = 'zenetlabs.com';
+const PREVIEW_SUFFIX = '.zenetlabs.workers.dev';
 
 export const ALIAS_HOSTS: ReadonlySet<string> = new Set([
   'www.zenetlabs.com',
@@ -49,13 +50,21 @@ export function mapLegacyPath(pathname: string): string {
   return page ? pagePath(locale, page) : path;
 }
 
+export function isLiveHost(hostname: string): boolean {
+  return hostname === SITE_HOST;
+}
+
+export function isPreviewHost(hostname: string): boolean {
+  return hostname.endsWith(PREVIEW_SUFFIX);
+}
+
 export function isOwnedHost(hostname: string): boolean {
   return (
-    hostname === SITE_HOST ||
+    isLiveHost(hostname) ||
     ALIAS_HOSTS.has(hostname) ||
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
-    hostname.endsWith('.zenetlabs.workers.dev')
+    isPreviewHost(hostname)
   );
 }
 

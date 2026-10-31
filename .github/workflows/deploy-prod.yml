@@ -71,6 +71,10 @@ jobs:
       - uses: ./.github/actions/pnpm-install-hosted
       - name: Build
         run: CLOUDFLARE_ENV=production pnpm build
+      - name: Apply D1 migrations (expand-only)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: pnpm exec wrangler d1 migrations apply DB --remote --env production
       - name: Deploy
         uses: ./.github/actions/wrangler-deploy-retry
         with:
@@ -94,4 +98,6 @@ jobs:
             echo '```'
             echo 'pnpm exec wrangler rollback --name prod-zenet-web'
             echo '```'
+            echo
+            echo 'If the D1 migrations step failed with an authentication error, the deploy token lacks Account · D1 · Edit. Nothing was deployed.'
           } >> "$GITHUB_STEP_SUMMARY"

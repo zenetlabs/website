@@ -15,10 +15,18 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
-    : {
-        command: 'pnpm preview',
-        url: baseURL,
-        reuseExistingServer: !process.env.CI,
-        timeout: 120_000,
-      },
+    : [
+        {
+          command: 'node scripts/fake-services.mjs',
+          url: 'http://127.0.0.1:4175/__health',
+          reuseExistingServer: !process.env.CI,
+          timeout: 30_000,
+        },
+        {
+          command: 'pnpm db:migrate:local && pnpm preview',
+          url: baseURL,
+          reuseExistingServer: !process.env.CI,
+          timeout: 120_000,
+        },
+      ],
 });
