@@ -64,7 +64,7 @@ export const faq = [
     id: 'privacy',
     question: '¿Dónde se guardan nuestros datos y cómo tratáis la privacidad?',
     answer:
-      'Antes de construir acordamos dónde estarán los datos y te decimos qué proveedores van a tocarlos. Cumplimos el RGPD y firmamos un contrato de encargado del tratamiento. Usamos proveedores de IA que no entrenan con tus datos y te avisamos desde el principio si un caso de uso está regulado por el Reglamento Europeo de IA, como filtrar candidatos en un proceso de selección.',
+      'Antes de construir acordamos dónde estarán los datos y te decimos qué proveedores van a tocarlos. Cumplimos el RGPD y firmamos un contrato de encargado del tratamiento. Usamos proveedores de IA que no entrenan con tus datos y te avisamos desde el principio si un caso de uso está regulado por el Reglamento Europeo de IA, como filtrar candidatos en un proceso de selección. Las consultas que nos envías desde esta web se guardan en una base de datos de Cloudflare en la Unión Europea.',
   },
   {
     id: 'mistakes',

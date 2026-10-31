@@ -58,7 +58,7 @@ export const faq = [
     id: 'privacy',
     question: 'Where is our data kept, and how do you handle privacy?',
     answer:
-      "We agree where data lives before we build, and we list every provider that will touch it. We work under Singapore's PDPA and, for clients in Europe, the GDPR, with a data processing agreement. We use AI providers that don't train on your data, and we tell you early if a use case is regulated under the EU AI Act, such as screening job candidates.",
+      "We agree where data lives before we build, and we list every provider that will touch it. We work under Singapore's PDPA and, for clients in Europe, the GDPR, with a data processing agreement. We use AI providers that don't train on your data, and we tell you early if a use case is regulated under the EU AI Act, such as screening job candidates. Enquiries you send through this site are stored in a Cloudflare database in the European Union.",
   },
   {
     id: 'mistakes',

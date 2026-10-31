@@ -2,7 +2,7 @@
 
 Commit with /commit. Plan with plan-well. One PR per plan.
 
-Every PR gets exactly one review pass, owned by the /commit gate: one `reviewer` run over the whole diff vs main, plus `/code-review high` only when the diff is `high`. Always pass the level explicitly. Levels: `low` = docs/copy/config, no logic; `medium` = routine UI with no form/server/external-API surface; `high` = anything touching the server entry, redirects, the contact server function, Turnstile or Resend. Never re-review after a fix round.
+Every PR gets exactly one review pass, owned by the /commit gate: one `reviewer` run over the whole diff vs main, plus `/code-review high` only when the diff is `high`. Always pass the level explicitly. Levels: `low` = docs/copy/config, no logic; `medium` = routine UI with no form/server/external-API surface; `high` = anything touching the server entry, redirects, the lead endpoint, D1, the cron outbox, Access, Turnstile or Resend. Never re-review after a fix round.
 
 Decisions go through AskUserQuestion (recommended option first).
 
@@ -24,9 +24,11 @@ Decisions go through AskUserQuestion (recommended option first).
 - Slugs per locale and `lastmod` live in `src/lib/page-registry.ts` (router `rewrite`, internal path = `route`, defaulting to the English slug); never build public URLs from `location.pathname`.
 - Agent surface: `/llms.txt`·`/es/llms.txt` and `/llms-full.txt`·`/es/llms-full.txt` are server routes under `{-$locale}`, built from `src/content` by `src/lib/llms.ts` and sent with `X-Robots-Tag: noindex`. A page's `.md` (`/index.md`, `/es.md`, `/pricing.md`…) is served by `src/server.ts` through the same converter as `Accept: text/markdown`, with a canonical `Link`. None of them go in the registry or the sitemap.
 - Nav targets live in `src/lib/nav.ts`; `CTA_TARGET` is the single booking CTA.
+- Leads: D1 `DB` (EU) with `migrations/` (expand-only; `pnpm db:migrate:local` before preview; deploy-prod applies remote migrations before deploying). Cron `*/10` runs the email outbox; retention runs on the first tick of 03:00 UTC. Rate-limit namespaces 7301–7309 are reserved (7301 = leads). Server-only config is `__SERVER__` (read only from `src/server.ts` and `src/server/outbox.ts`); never reference it from client code. `/internal/*` is gated once by prefix in `src/server.ts` (Access JWT; 404 without config). `*.worker.test.ts` run in workerd and are typechecked by `tsconfig.workers.json` (excluded from the root config). The `@cloudflare/vitest-plugin` version must match wrangler and miniflare (`pnpm why workerd` shows one version).
 - Public per-env values: `site.config.ts` (build-time, by CLOUDFLARE_ENV). Secrets: Secrets Store bindings via `import { env } from 'cloudflare:workers'`, read per request.
 
 ## Gotchas
+- Bump `CONSENT_VERSION` (`src/server/lead.ts`) when the consent sentence or a privacy page changes. e2e needs `scripts/fake-services.mjs` on :4175 (Playwright starts it).
 - A route file `x.tsx` next to a folder `x/` is that folder's layout; pages that render on their own go in `x/index.tsx` plus siblings (see `services/integrations/`).
 - Verifactu dates live only in `src/content/es/verifactu.ts`. Re-check the BOE and the AEAT before each deploy; when anything changes, update the module, `checkedOn` and the `verifactu` lastmod. Never write "certificado" or "VERI*FACTU" in copy.
 - Page-body copy (`home`, `pricing`, `about`, `cases`, `companies`, service pages, the services hub, the landing pages and the Viatsy case page) is imported only from its route component or server-only code, never from chrome, `head()`, `scripts()`, `pages.ts` or `content.ts`. `e2e/js-budget.e2e.ts` enforces it. Service-page and hub copy loads only through `src/content/load.ts`: by dynamic import from route loaders and from `serviceBodies` in `src/lib/llms.ts`. The leak guard is the js-budget sentinels.

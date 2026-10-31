@@ -14,7 +14,7 @@ const CRAWLERS = [
   '*',
 ];
 const ROBOTS_BLOCKED = 'User-agent: *\nDisallow: /\n';
-const ROBOTS_ALLOWED = `${CRAWLERS.map((agent) => `User-agent: ${agent}`).join('\n')}\nAllow: /\nDisallow: /api/\nDisallow: /_serverFn/\n\nSitemap: ${SITE.url}/sitemap.xml\n`;
+const ROBOTS_ALLOWED = `${CRAWLERS.map((agent) => `User-agent: ${agent}`).join('\n')}\nAllow: /\nDisallow: /api/\nDisallow: /internal/\nDisallow: /_serverFn/\n\nSitemap: ${SITE.url}/sitemap.xml\n`;
 
 export function robotsTxt(requestHost: string): string {
   return requestHost === SITE_HOST ? ROBOTS_ALLOWED : ROBOTS_BLOCKED;

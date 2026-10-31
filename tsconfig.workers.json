@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/env.d.ts",
+    "src/**/*.worker.test.ts",
+    "test/apply-migrations.ts",
+    "test/workers-env.d.ts"
+  ],
+  "exclude": ["node_modules", "dist", ".output", ".tanstack", ".wrangler"]
+}

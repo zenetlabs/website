@@ -35,6 +35,7 @@
       "successText": "Gracias. Te responderemos a la dirección que nos has indicado.",
       "errorSend": "No hemos podido enviar tu mensaje. Inténtalo de nuevo o escribe a",
       "errorCaptcha": "La comprobación de seguridad ha fallado. Inténtalo de nuevo o escribe a",
+      "errorRate": "Demasiados intentos desde tu conexión. Espera un minuto y vuelve a intentarlo, o escribe a",
       "honeypot": "Deja este campo vacío"
     }
   },

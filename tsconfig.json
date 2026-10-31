@@ -1,6 +1,15 @@
 {
   "include": ["**/*.ts", "**/*.tsx", "**/*.d.ts"],
-  "exclude": ["node_modules", "dist", ".output", ".tanstack", ".wrangler"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".output",
+    ".tanstack",
+    ".wrangler",
+    "src/**/*.worker.test.ts",
+    "test/apply-migrations.ts",
+    "test/workers-env.d.ts"
+  ],
   "compilerOptions": {
     "strict": true,
     "esModuleInterop": true,
