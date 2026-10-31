@@ -1,4 +1,5 @@
 import handler, { createServerEntry } from '@tanstack/react-start/server-entry';
+import { withDeferredEntry } from '@/lib/deferred-entry';
 import { isHtml } from '@/lib/http';
 import {
   isNegotiable,
@@ -6,7 +7,6 @@ import {
   toMarkdownResponse,
 } from '@/lib/markdown-response';
 import { isOwnedHost, redirectTarget } from '@/lib/redirects';
-import { withDeferredEntry } from '@/lib/script-priority';
 import { withSecurityHeaders } from '@/lib/security-headers';
 
 export default createServerEntry({

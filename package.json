@@ -20,8 +20,8 @@
     "check:colors": "vitest run src/styles/hardcoded-colors.test.ts",
     "e2e": "playwright test",
     "lhci": "pnpm lhci:mobile; mobile=$?; pnpm lhci:desktop; desktop=$?; exit $((mobile | desktop))",
-    "lhci:mobile": "lhci collect && lhci upload --target=filesystem --outputDir=.lighthouseci/mobile && lhci assert",
-    "lhci:desktop": "lhci collect --settings.preset=desktop && lhci upload --target=filesystem --outputDir=.lighthouseci/desktop && lhci assert",
+    "lhci:mobile": "lhci healthcheck --fatal && lhci collect && lhci upload --target=filesystem --outputDir=lhci-reports/mobile && lhci assert",
+    "lhci:desktop": "lhci healthcheck --fatal && lhci collect --settings.preset=desktop && lhci upload --target=filesystem --outputDir=lhci-reports/desktop && lhci assert",
     "knip": "knip",
     "doctor": "react-doctor"
   },

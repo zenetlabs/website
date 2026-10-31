@@ -2,11 +2,18 @@ import { isHtml } from '@/lib/http';
 
 const FALLBACK_MS = 3000;
 
-// Hydration JS starts loading only once the first contentful paint is on
-// screen, so it never competes with the hero paint for bandwidth or CPU.
-// Hidden tabs and browsers without paint timing load it straight away; the
-// timeout covers a paint that never gets reported. Preloads after the entry
-// script stay in place, since the loader is already written by then.
+function escapeAttribute(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('<', '&lt;');
+}
+
+function preloadTag(href: string): string {
+  return `<link rel="modulepreload" href="${escapeAttribute(href)}" fetchpriority="low">`;
+}
+
+// Loads hydration JS after first contentful paint so it never competes with it.
 export function deferredEntryLoader(
   entry: string,
   preloads: readonly string[],
@@ -22,7 +29,10 @@ export function withDeferredEntry(response: Response): Response {
   return new HTMLRewriter()
     .on('link[rel="modulepreload"]', {
       element(el) {
-        if (entrySeen) return;
+        if (entrySeen) {
+          el.setAttribute('fetchpriority', 'low');
+          return;
+        }
         const href = el.getAttribute('href');
         if (href) preloads.push(href);
         el.remove();
@@ -31,11 +41,18 @@ export function withDeferredEntry(response: Response): Response {
     .on('script[type="module"][src]', {
       element(el) {
         const src = el.getAttribute('src');
-        if (!src) return;
+        if (entrySeen || !src) return;
         entrySeen = true;
-        el.replace(`<script>${deferredEntryLoader(src, preloads)}</script>`, {
-          html: true,
-        });
+        el.replace(
+          `<script>${deferredEntryLoader(src, [...preloads])}</script>`,
+          { html: true },
+        );
+      },
+    })
+    .onDocument({
+      end(end) {
+        if (entrySeen || preloads.length === 0) return;
+        end.append(preloads.map(preloadTag).join(''), { html: true });
       },
     })
     .transform(response);

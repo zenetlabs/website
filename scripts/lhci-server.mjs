@@ -1,6 +1,4 @@
 // Emulates edge brotli compression so local and CI Lighthouse scores match what visitors get.
-// Hashed /assets/ files are compressed once up front, as the edge serves them from cache:
-// compressing them per request burns a core during every page load and delays first paint.
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
@@ -11,6 +9,15 @@ const PREVIEW_PORT = 4173;
 const PROXY_PORT = 4174;
 const COMPRESSIBLE = /text|javascript|json|svg|xml/;
 const ASSETS_DIR = new URL('../dist/client/assets/', import.meta.url);
+
+if (!fs.existsSync(ASSETS_DIR)) {
+  console.error(
+    'lhci-server: dist/client/assets is missing, run pnpm build first',
+  );
+  process.exit(1);
+}
+
+// Hashed assets are compressed once, as the edge serves them from cache.
 
 const precompressed = new Map(
   fs

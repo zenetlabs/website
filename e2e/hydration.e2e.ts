@@ -122,5 +122,5 @@ test('hydration JS loads only after the first contentful paint', async ({
 test('non-HTML responses are untouched', async ({ request }) => {
   const response = await request.get('/robots.txt');
   expect(response.headers()['content-type']).toContain('text/plain');
-  expect(await response.text()).not.toContain('requestAnimationFrame');
+  expect(await response.text()).not.toContain('first-contentful-paint');
 });
