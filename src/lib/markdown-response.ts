@@ -1,14 +1,49 @@
+import { locales } from '@/lib/i18n';
 import {
   type CapturedPage,
   decodeEntities,
   pageToMarkdown,
+  prefersMarkdown,
   tidy,
 } from '@/lib/markdown';
+import { markdownPath, pagePath, pagesIn } from '@/lib/page-registry';
 
-export function withHtmlAccept(request: Request): Request {
+const pageByMarkdownPath = new Map<string, string>();
+for (const locale of locales) {
+  for (const page of pagesIn(locale)) {
+    pageByMarkdownPath.set(markdownPath(locale, page), pagePath(locale, page));
+  }
+}
+
+export function pagePathForMarkdown(pathname: string): string | undefined {
+  return pageByMarkdownPath.get(pathname);
+}
+
+export function isNegotiable(request: Request): boolean {
+  return request.method === 'GET' || request.method === 'HEAD';
+}
+
+function withHtmlAccept(request: Request, url: URL): Request {
   const headers = new Headers(request.headers);
   headers.set('Accept', 'text/html');
-  return new Request(request, { headers, method: 'GET' });
+  return new Request(url, new Request(request, { headers, method: 'GET' }));
+}
+
+export function markdownTarget(
+  url: URL,
+  request: Request,
+): { upstream: Request; vary: boolean } | undefined {
+  if (!isNegotiable(request)) return undefined;
+  const source = pagePathForMarkdown(url.pathname);
+  if (source !== undefined) {
+    return {
+      upstream: withHtmlAccept(request, new URL(source, url)),
+      vary: false,
+    };
+  }
+  return prefersMarkdown(request.headers.get('Accept'))
+    ? { upstream: withHtmlAccept(request, url), vary: true }
+    : undefined;
 }
 
 async function capture(html: Response, url: string): Promise<CapturedPage> {

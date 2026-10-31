@@ -6,6 +6,7 @@ import {
   CLUSTERS,
   gotoHydrated,
   htmlLang,
+  markdownPathOf,
   PAGES,
   type Tag,
   tagsOf,
@@ -49,6 +50,16 @@ for (const cluster of CLUSTERS) {
       );
     });
 
+    test(`${url} links its markdown twin`, async ({ page }) => {
+      await gotoHydrated(page, url);
+      const twin = page.locator('link[rel="alternate"][type="text/markdown"]');
+      await expect(twin).toHaveCount(1);
+      await expect(twin).not.toHaveAttribute('hreflang', /.*/);
+      expect(new URL((await twin.getAttribute('href')) ?? '').pathname).toBe(
+        markdownPathOf(url),
+      );
+    });
+
     test(`${url} has the same head in the SSR html and after hydration`, async ({
       page,
       request,
@@ -60,6 +71,7 @@ for (const cluster of CLUSTERS) {
       const relevant = (tag: Tag) =>
         tag.rel === 'canonical' ||
         (tag.rel === 'alternate' && 'hreflang' in tag) ||
+        tag.type === 'text/markdown' ||
         tag.name === 'description' ||
         tag.name === 'robots' ||
         tag.name?.startsWith('twitter:') ||
@@ -172,13 +184,6 @@ test('robots and sitemap are served', async ({ request }) => {
   const robots = await request.get('/robots.txt');
   expect(robots.status()).toBe(200);
   expect(await robots.text()).toContain('Disallow: /_serverFn/');
-});
-
-test('llms.txt is served as plain text', async ({ request }) => {
-  const response = await request.get('/llms.txt');
-  expect(response.status()).toBe(200);
-  expect(response.headers()['content-type']).toContain('text/plain');
-  expect(await response.text()).toMatch(/^# Zenet Labs\n\n> /);
 });
 
 test('page HTML preloads only the hero serif fonts', async ({ request }) => {

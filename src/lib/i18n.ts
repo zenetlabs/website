@@ -10,6 +10,16 @@ export const prefixedLocales = locales.filter(
   (locale) => locale !== defaultLocale,
 );
 
+export function localeFromParam(param: string | undefined): Locale | undefined {
+  return param === undefined
+    ? defaultLocale
+    : prefixedLocales.find((locale) => locale === param);
+}
+
+export function otherLocale(locale: Locale): Locale {
+  return locales.find((candidate) => candidate !== locale) ?? locale;
+}
+
 export function splitLocale(pathname: string): {
   locale: Locale;
   rest: string;

@@ -3,6 +3,7 @@ import { locales } from '@/lib/i18n';
 import {
   createRewrite,
   hasLocale,
+  markdownPath,
   PAGE_IDS,
   PAGES,
   type PageEntry,
@@ -244,5 +245,18 @@ describe('createRewrite with an English slug that differs from the route', () =>
 
   it.each(['/privacy-policy', '/es/privacidad'])('round-trips %s', (path) => {
     expect(swap('output', swap('input', path))).toBe(path);
+  });
+});
+
+describe('markdownPath', () => {
+  it.each([
+    ['en', 'home', '/index.md'],
+    ['es', 'home', '/es.md'],
+    ['en', 'pricing', '/pricing.md'],
+    ['es', 'pricing', '/es/precios.md'],
+    ['es', 'about', '/es/sobre-nosotros.md'],
+    ['es', 'legalNotice', '/es/aviso-legal.md'],
+  ] as const)('%s %s is %s', (locale, page, expected) => {
+    expect(markdownPath(locale, page)).toBe(expected);
   });
 });

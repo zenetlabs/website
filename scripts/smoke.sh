@@ -50,7 +50,7 @@ header_matches() {
   curl -s -D - -o /dev/null -H "Accept: ${accept}" --max-time 20 "$url" | tr -d '\r' | grep -qiE "$pattern"
 }
 
-for path in / /es /pricing /es/precios /about /es/sobre-nosotros /privacy /es/privacidad /es/cookies /es/aviso-legal /robots.txt /sitemap.xml /llms.txt; do
+for path in / /es /pricing /es/precios /about /es/sobre-nosotros /privacy /es/privacidad /es/cookies /es/aviso-legal /robots.txt /sitemap.xml /llms.txt /es/llms.txt /llms-full.txt /es/llms-full.txt; do
   attempt "200 ${SITE}${path}" status_is 200 "${SITE}${path}"
 done
 
@@ -76,7 +76,9 @@ for rule in \
   "/legal-notice|/es/aviso-legal" \
   "/es/|/es" \
   "/blog/x|/" \
-  "/es/about-us|/es"; do
+  "/es/about-us|/es/sobre-nosotros" \
+  "/about-us|/about" \
+  "/en/pricing.md|/pricing.md"; do
   attempt "301 ${SITE}${rule%%|*}" redirects_to "${SITE}${rule%%|*}" "${SITE}${rule#*|}"
 done
 
@@ -88,6 +90,14 @@ done
 for path in / /es /pricing /es/precios /about /es/sobre-nosotros /privacy /es/privacidad /cookies /es/cookies /es/aviso-legal; do
   attempt "markdown ${SITE}${path}" content_type_is 'text/markdown; charset=utf-8' 'text/markdown' "${SITE}${path}"
 done
+for path in /index.md /es.md /pricing.md /es/precios.md /about.md /es/sobre-nosotros.md /privacy.md /es/privacidad.md /cookies.md /es/cookies.md /es/aviso-legal.md; do
+  attempt "markdown ${SITE}${path}" content_type_is 'text/markdown; charset=utf-8' '*/*' "${SITE}${path}"
+done
+attempt "canonical link ${SITE}/es/precios.md" header_matches '*/*' "${SITE}/es/precios.md" '^link: <https://zenetlabs\.com/es/precios>; rel="canonical"$'
+for path in /llms.txt /es/llms.txt /llms-full.txt /es/llms-full.txt; do
+  attempt "noindex ${SITE}${path}" header_matches '*/*' "${SITE}${path}" '^x-robots-tag: noindex$'
+done
+attempt "es llms.txt has the FAQ" body_contains "${SITE}/es/llms.txt" '## Preguntas frecuentes'
 attempt "html for */* ${SITE}/" content_type_is 'text/html; charset=utf-8' '*/*' "${SITE}/"
 attempt "vary accept ${SITE}/" header_matches '*/*' "${SITE}/" '^vary:(.*[ ,])?accept([ ,]|$)'
 attempt "footer names the entity" body_contains "${SITE}/es" 'Zenet Technology Pte. Ltd.'

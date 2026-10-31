@@ -3,6 +3,7 @@ import { defaultLocale, type Locale } from '@/lib/i18n';
 import { ogImagePath } from '@/lib/og-image';
 import {
   hasLocale,
+  markdownPath,
   type PageId,
   pageLocales,
   pagePath,
@@ -14,13 +15,17 @@ type Meta =
   | { name: string; content: string }
   | { property: string; content: string };
 
-type Link = { rel: string; href: string; hrefLang?: string };
+type Link = { rel: string; href: string; hrefLang?: string; type?: string };
 
 const OG_LOCALES: Record<Locale, string> = { en: 'en_SG', es: 'es_ES' };
 export const SITE_NAME = 'Zenet Labs';
 
 export function pageUrl(locale: Locale, page: PageId): string {
   return `${SITE.url}${pagePath(locale, page)}`;
+}
+
+export function markdownUrl(locale: Locale, page: PageId): string {
+  return `${SITE.url}${markdownPath(locale, page)}`;
 }
 
 export function alternateUrls(
@@ -79,6 +84,11 @@ export function pageHead({
       hrefLang: hreflang,
       href,
     })),
+    {
+      rel: 'alternate',
+      type: 'text/markdown',
+      href: markdownUrl(locale, page),
+    },
   ];
 
   return { meta, links };

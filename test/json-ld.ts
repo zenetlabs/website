@@ -206,7 +206,7 @@ function normalise(text: string): string {
   return decodeEntities(text).replace(/\s+/g, ' ').trim();
 }
 
-function faqPairs(blocks: readonly unknown[]): [string, string][] {
+export function faqPairs(blocks: readonly unknown[]): [string, string][] {
   return blocks.flatMap((block) => {
     if (!isRecord(block) || block['@type'] !== 'FAQPage') return [];
     const entities = block.mainEntity;

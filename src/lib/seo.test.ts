@@ -3,7 +3,7 @@ import { locales } from '@/lib/i18n';
 import { ogImagePath } from '@/lib/og-image';
 import { hasLocale, pageLocales, pagesIn } from '@/lib/page-registry';
 import { pageHeadFor } from '@/lib/pages';
-import { jsonLd, type pageHead, pageUrl } from '@/lib/seo';
+import { jsonLd, markdownUrl, type pageHead, pageUrl } from '@/lib/seo';
 
 const SITE = 'https://zenetlabs.com';
 const OG_LOCALE = { en: 'en_SG', es: 'es_ES' } as const;
@@ -43,12 +43,26 @@ describe.each(cases)('pageHeadFor(%s, %s)', (locale, page) => {
 
   it('has hreflang for the locales present, and x-default only with en', () => {
     const alternates = head.links
-      .filter((link) => link.rel === 'alternate')
+      .filter((link) => link.rel === 'alternate' && link.hrefLang)
       .map((link) => [link.hrefLang, link.href]);
     expect(alternates).toEqual([
       ...pageLocales(page).map((l) => [l, pageUrl(l, page)]),
       ...(hasLocale(page, 'en') ? [['x-default', pageUrl('en', page)]] : []),
     ]);
+  });
+
+  it('links its markdown twin after the hreflang alternates', () => {
+    const alternates = head.links.filter((link) => link.rel === 'alternate');
+    const markdown = alternates.filter((link) => link.type === 'text/markdown');
+    expect(markdown).toEqual([
+      {
+        rel: 'alternate',
+        type: 'text/markdown',
+        href: markdownUrl(locale, page),
+      },
+    ]);
+    expect(markdown[0]?.href.startsWith(`${SITE}/`)).toBe(true);
+    expect(alternates.at(-1)).toBe(markdown[0]);
   });
 
   it('has matching open graph locale, url and image', () => {
@@ -92,7 +106,9 @@ describe('single-locale pages', () => {
   const head = pageHeadFor('es', 'legalNotice');
 
   it('has only its own hreflang and no x-default or alternate og locale', () => {
-    const alternates = head.links.filter((link) => link.rel === 'alternate');
+    const alternates = head.links.filter(
+      (link) => link.rel === 'alternate' && link.hrefLang,
+    );
     expect(alternates.map((link) => link.hrefLang)).toEqual(['es']);
     expect(contents(head.meta, 'property', 'og:locale:alternate')).toEqual([]);
   });

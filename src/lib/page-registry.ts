@@ -77,6 +77,11 @@ export function pagePath(locale: Locale, page: PageId): string {
   return localePath(defaultLocale, routeOf(page));
 }
 
+export function markdownPath(locale: Locale, page: PageId): string {
+  const path = pagePath(locale, page);
+  return `${path === '/' ? '/index' : path}.md`;
+}
+
 export function switchHref(
   target: Locale,
   page: PageId | undefined,

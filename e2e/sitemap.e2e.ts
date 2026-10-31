@@ -7,7 +7,7 @@ import {
 } from '../test/json-ld';
 import { PLACEHOLDER } from '../test/placeholders';
 import { parseSitemap } from '../test/sitemap';
-import { htmlLang, PAGES, tagsOf } from './helpers';
+import { htmlLang, LLMS_PATHS, markdownPathOf, PAGES, tagsOf } from './helpers';
 
 const LASTMOD = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -47,6 +47,19 @@ test('every sitemap url is a self-canonical, indexable, reciprocal page', async 
       expect(hreflangs.has('x-default')).toBe(hreflangs.has('en'));
       expect(hreflangs.get('x-default')).toBe(hreflangs.get('en'));
 
+      const twin = tags.filter(
+        (tag) => tag.rel === 'alternate' && tag.type === 'text/markdown',
+      );
+      expect(twin.map((tag) => tag.href)).toEqual([
+        new URL(markdownPathOf(path), entry.loc).href,
+      ]);
+      const markdown = await request.get(markdownPathOf(path), {
+        maxRedirects: 0,
+      });
+      expect(markdown.status()).toBe(200);
+      expect(markdown.headers()['content-type']).toContain('text/markdown');
+      expect(markdown.headers().link).toBe(`<${entry.loc}>; rel="canonical"`);
+
       expect(html).not.toMatch(PLACEHOLDER);
       const blocks = jsonLdBlocks(html);
       expect(blocks.length).toBeGreaterThan(0);
@@ -82,8 +95,32 @@ test('every sitemap url is a self-canonical, indexable, reciprocal page', async 
   });
 });
 
-test('error pages and llms.txt carry no placeholder', async ({ request }) => {
-  for (const path of ['/nope', '/es/nope', '/llms.txt']) {
+test('agent files link only to live urls', async ({ request, baseURL }) => {
+  const host = new URL(baseURL ?? '').host;
+  const targets = new Set<string>();
+  for (const file of LLMS_PATHS) {
+    const body = await (await request.get(file)).text();
+    const links = [...body.matchAll(/\]\((https?:\/\/[^)\s]+)\)/g)].flatMap(
+      ([, href]) => href ?? [],
+    );
+    expect(links.length, file).toBeGreaterThan(10);
+    for (const link of links) {
+      const url = new URL(link);
+      if (url.host === host) targets.add(url.pathname);
+    }
+  }
+  expect(targets.size).toBeGreaterThan(10);
+  for (const path of targets) {
+    const response = await request.get(path, { maxRedirects: 0 });
+    expect(response.status(), path).toBe(200);
+    if (path.endsWith('.md')) {
+      expect(response.headers()['content-type']).toContain('text/markdown');
+    }
+  }
+});
+
+test('error pages and llms files carry no placeholder', async ({ request }) => {
+  for (const path of ['/nope', '/es/nope', ...LLMS_PATHS]) {
     const body = await (await request.get(path)).text();
     expect(body, path).not.toMatch(PLACEHOLDER);
   }

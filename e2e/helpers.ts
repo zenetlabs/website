@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { decodeEntities } from '../src/lib/markdown';
+import { decodeEntities, tidy } from '../src/lib/markdown';
 
 export const PAIRS = [
   { en: '/', es: '/es' },
@@ -7,6 +7,15 @@ export const PAIRS = [
   { en: '/about', es: '/es/sobre-nosotros' },
   { en: '/privacy', es: '/es/privacidad' },
   { en: '/cookies', es: '/es/cookies' },
+] as const;
+
+export const LOCALES = ['en', 'es'] as const;
+
+export const LLMS_PATHS = [
+  '/llms.txt',
+  '/es/llms.txt',
+  '/llms-full.txt',
+  '/es/llms-full.txt',
 ] as const;
 
 export const CLUSTERS: ReadonlyArray<{ en?: string; es?: string }> = [
@@ -17,6 +26,14 @@ export const CLUSTERS: ReadonlyArray<{ en?: string; es?: string }> = [
 export const PAGES = CLUSTERS.flatMap((cluster) =>
   [cluster.en, cluster.es].flatMap((url) => url ?? []),
 );
+
+export function markdownPathOf(path: string): string {
+  return path === '/' ? '/index.md' : `${path}.md`;
+}
+
+export function normalise(text: string): string {
+  return tidy(text.replace(/\\([\\`*_[\]<>])/g, '$1'));
+}
 
 const TAG = /<(?:link|meta)\b[^>]*>/g;
 const ATTRIBUTE = /([\w:-]+)="([^"]*)"/g;
