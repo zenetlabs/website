@@ -1,3 +1,4 @@
+import type { ServicePageId } from '@/lib/page-registry';
 import type { PortfolioKey } from '@/lib/portfolio';
 
 export type Currency = 'SGD' | 'EUR';
@@ -161,7 +162,7 @@ export type PricingPageContent = {
   title: TitleParts;
   lead: string;
   taxNote: string;
-  labels: { price: string; includes: string; timeline: string };
+  labels: { price: string; includes: string; timeline: string; more: string };
   details: Record<
     ServiceId,
     { includes: readonly string[]; timeline?: string }
@@ -184,6 +185,36 @@ export type AboutPageContent = {
   cta: { title: string; text: string; button: string };
 };
 
+export type ProcessStep = { id: string; label: string; text: string };
+export type ProcessCopy = SectionCopy & { steps: readonly ProcessStep[] };
+
+export type ServicePageContent = {
+  meta: Pick<PageMeta, 'metaTitle' | 'description'>;
+  hero: { eyebrow: string; title: TitleParts; lead: string };
+  facts: { who: string; timeline: string; start: string };
+  cta: { title: string; text: string; button: string };
+  useCases: SectionCopy & {
+    items: readonly { id: string; title: string; text: string }[];
+  };
+  how: ProcessCopy & {
+    steps: readonly [ProcessStep, ProcessStep, ProcessStep, ProcessStep];
+  };
+  case: SectionCopy & { text: string; points: readonly string[] };
+  faq: SectionCopy & { items: readonly FaqItem[] };
+  related: readonly [ServicePageId, ServicePageId];
+};
+
+export type ServicesHubContent = {
+  meta: PageMeta;
+  eyebrow: string;
+  title: TitleParts;
+  lead: string;
+  cards: Record<ServicePageId, { name: string; summary: string }>;
+  also: { title: string; lead: string };
+  start: { title: string; text: string; button: string };
+  pricing: string;
+};
+
 export type LlmsCopy = {
   operator: string;
   markdown: string;
@@ -198,7 +229,8 @@ export type LlmsCopy = {
     | 'problems'
     | 'process'
     | 'cases'
-    | 'about',
+    | 'about'
+    | 'servicePages',
     string
   >;
   labels: Record<'email' | 'form' | 'full' | 'index' | 'otherLanguage', string>;

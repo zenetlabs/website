@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import type { ServiceId } from '@/content/types';
 import { locales } from '@/lib/i18n';
 import {
+  breadcrumbTrail,
   createRewrite,
   hasLocale,
+  isServicePage,
   markdownPath,
   PAGE_IDS,
   PAGES,
@@ -11,9 +14,13 @@ import {
   pageForSlug,
   pageLocales,
   pagePath,
+  pagesForService,
   pagesIn,
   localizedRewrite as rewrite,
   routeOf,
+  SERVICE_PAGE_IDS,
+  serviceHref,
+  serviceOf,
   slugForms,
   switchHref,
 } from '@/lib/page-registry';
@@ -71,6 +78,10 @@ describe('PAGES', () => {
     expect(pageForSlug('/precios')).toBe('pricing');
     expect(pageForSlug('/about')).toBe('about');
     expect(pageForSlug('/sobre-nosotros')).toBe('about');
+    expect(pageForSlug('/services')).toBe('services');
+    expect(pageForSlug('/servicios')).toBe('services');
+    expect(pageForSlug('/services/ai-agents')).toBe('agents');
+    expect(pageForSlug('/servicios/agentes-de-ia')).toBe('agents');
     expect(pageForSlug('/legal-notice')).toBe('legalNotice');
     expect(pageForSlug('/aviso-legal')).toBe('legalNotice');
     expect(pageForSlug('/nope')).toBeUndefined();
@@ -88,6 +99,12 @@ describe('PAGES', () => {
 describe('pageLocales and hasLocale', () => {
   it.each([
     ['home', ['en', 'es']],
+    ['services', ['en', 'es']],
+    ['automation', ['en', 'es']],
+    ['integrations', ['en', 'es']],
+    ['agents', ['en', 'es']],
+    ['software', ['en', 'es']],
+    ['training', ['en', 'es']],
     ['pricing', ['en', 'es']],
     ['about', ['en', 'es']],
     ['privacy', ['en', 'es']],
@@ -105,6 +122,8 @@ describe('pagesIn and slugForms', () => {
   it('lists the pages present in each locale', () => {
     expect(pagesIn('en')).toEqual([
       'home',
+      'services',
+      ...SERVICE_PAGE_IDS,
       'pricing',
       'about',
       'privacy',
@@ -112,6 +131,8 @@ describe('pagesIn and slugForms', () => {
     ]);
     expect(pagesIn('es')).toEqual([
       'home',
+      'services',
+      ...SERVICE_PAGE_IDS,
       'pricing',
       'about',
       'privacy',
@@ -133,12 +154,24 @@ describe('pagesIn and slugForms', () => {
 describe('pagePath', () => {
   it.each([
     ['en', 'home', '/'],
+    ['en', 'services', '/services'],
+    ['en', 'automation', '/services/ai-automation'],
+    ['en', 'integrations', '/services/integrations'],
+    ['en', 'agents', '/services/ai-agents'],
+    ['en', 'software', '/services/custom-software'],
+    ['en', 'training', '/services/ai-training'],
     ['en', 'pricing', '/pricing'],
     ['en', 'about', '/about'],
     ['en', 'privacy', '/privacy'],
     ['en', 'cookies', '/cookies'],
     ['en', 'legalNotice', '/es/aviso-legal'],
     ['es', 'home', '/es'],
+    ['es', 'services', '/es/servicios'],
+    ['es', 'automation', '/es/servicios/automatizacion-de-procesos'],
+    ['es', 'integrations', '/es/servicios/integraciones'],
+    ['es', 'agents', '/es/servicios/agentes-de-ia'],
+    ['es', 'software', '/es/servicios/desarrollo-de-software-a-medida'],
+    ['es', 'training', '/es/servicios/formacion-ia-equipos'],
     ['es', 'pricing', '/es/precios'],
     ['es', 'about', '/es/sobre-nosotros'],
     ['es', 'privacy', '/es/privacidad'],
@@ -189,6 +222,14 @@ describe('localizedRewrite', () => {
     expect(run('output', '/es/pricing')).toBe('/es/precios');
     expect(run('input', '/es/sobre-nosotros')).toBe('/es/about');
     expect(run('output', '/es/about')).toBe('/es/sobre-nosotros');
+    expect(run('input', '/es/servicios')).toBe('/es/services');
+    expect(run('output', '/es/services')).toBe('/es/servicios');
+    expect(run('input', '/es/servicios/agentes-de-ia')).toBe(
+      '/es/services/ai-agents',
+    );
+    expect(run('output', '/es/services/ai-agents')).toBe(
+      '/es/servicios/agentes-de-ia',
+    );
     expect(run('input', '/es/aviso-legal')).toBe('/es/legal-notice');
     expect(run('output', '/es/legal-notice')).toBe('/es/aviso-legal');
   });
@@ -204,6 +245,9 @@ describe('localizedRewrite', () => {
     '/about',
     '/privacy',
     '/cookies',
+    '/services',
+    '/services/ai-agents',
+    '/servicios',
     '/es',
     '/es/cookies',
     '/precios',
@@ -254,9 +298,91 @@ describe('markdownPath', () => {
     ['es', 'home', '/es.md'],
     ['en', 'pricing', '/pricing.md'],
     ['es', 'pricing', '/es/precios.md'],
+    ['en', 'automation', '/services/ai-automation.md'],
+    ['es', 'services', '/es/servicios.md'],
     ['es', 'about', '/es/sobre-nosotros.md'],
     ['es', 'legalNotice', '/es/aviso-legal.md'],
   ] as const)('%s %s is %s', (locale, page, expected) => {
     expect(markdownPath(locale, page)).toBe(expected);
+  });
+});
+
+describe('service pages', () => {
+  const SERVICE_PAGES = [
+    'automation',
+    'integrations',
+    'agents',
+    'software',
+    'training',
+  ] as const;
+
+  it('derives the service pages from the entries that name a service', () => {
+    expect(SERVICE_PAGE_IDS).toEqual(SERVICE_PAGES);
+    expect(PAGE_IDS.filter(isServicePage)).toEqual(SERVICE_PAGES);
+    for (const page of PAGE_IDS) {
+      expect(isServicePage(page), page).toBe(
+        SERVICE_PAGES.some((id) => id === page),
+      );
+    }
+  });
+
+  it('lists the ladder row each service page prices from', () => {
+    expect(SERVICE_PAGE_IDS.map(serviceOf)).toEqual([
+      'integration',
+      'integration',
+      'agent',
+      'web',
+      'training',
+    ]);
+    for (const page of SERVICE_PAGES) {
+      expect(PAGES[page].parent).toBe('services');
+    }
+  });
+
+  it.each([
+    ['integration', ['automation', 'integrations']],
+    ['agent', ['agents']],
+    ['web', ['software']],
+    ['training', ['training']],
+    ['diagnostic', []],
+    ['maintenance', []],
+    ['growth', []],
+  ] as const)('lists the pages of %s', (id, expected) => {
+    expect(pagesForService(id)).toEqual(expected);
+  });
+
+  it.each([
+    ['diagnostic', '/pricing#diagnostic', '/es/precios#diagnostic'],
+    [
+      'integration',
+      '/services/ai-automation',
+      '/es/servicios/automatizacion-de-procesos',
+    ],
+    ['agent', '/services/ai-agents', '/es/servicios/agentes-de-ia'],
+    [
+      'web',
+      '/services/custom-software',
+      '/es/servicios/desarrollo-de-software-a-medida',
+    ],
+    ['training', '/services/ai-training', '/es/servicios/formacion-ia-equipos'],
+    ['maintenance', '/pricing#maintenance', '/es/precios#maintenance'],
+    ['growth', '/pricing#growth', '/es/precios#growth'],
+  ] as const satisfies readonly (readonly [ServiceId, string, string])[])(
+    'links %s to its first page or its pricing card',
+    (id, en, es) => {
+      expect(serviceHref('en', id)).toBe(en);
+      expect(serviceHref('es', id)).toBe(es);
+    },
+  );
+});
+
+describe('breadcrumbTrail', () => {
+  it('walks the parents up to the home page', () => {
+    expect(breadcrumbTrail('home')).toEqual(['home']);
+    expect(breadcrumbTrail('pricing')).toEqual(['home', 'pricing']);
+    expect(breadcrumbTrail('services')).toEqual(['home', 'services']);
+    for (const page of SERVICE_PAGE_IDS) {
+      expect(breadcrumbTrail(page)).toEqual(['home', 'services', page]);
+    }
   });
 });

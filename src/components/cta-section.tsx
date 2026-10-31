@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Container } from '@/components/section';
 import { PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
 import type { Locale } from '@/lib/i18n';
@@ -7,10 +8,12 @@ export function CtaSection({
   copy,
   locale,
   secondary,
+  footer,
 }: {
   copy: { title: string; text: string; button: string };
   locale: Locale;
   secondary?: { label: string; href: string };
+  footer?: ReactNode;
 }) {
   return (
     <section aria-labelledby="cta-title" className="border-t border-hairline">
@@ -29,6 +32,7 @@ export function CtaSection({
             </a>
           ) : null}
         </div>
+        {footer}
       </Container>
     </section>
   );

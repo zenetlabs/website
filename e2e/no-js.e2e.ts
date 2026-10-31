@@ -2,7 +2,13 @@ import { expect, test } from '@playwright/test';
 import { formatPrice, formatPriceSummary } from '../src/lib/money';
 import { faqPairs, jsonLdBlocks } from '../test/json-ld';
 import { SERVICES } from '../test/page-content';
-import { LOCALES, normalise, PAIRS } from './helpers';
+import {
+  LOCALES,
+  normalise,
+  PAIRS,
+  SERVICE_PAIRS,
+  SERVICES_HUB,
+} from './helpers';
 
 test.use({ javaScriptEnabled: false });
 
@@ -11,7 +17,13 @@ const PRICING = LOCALES.map((locale) => ({ locale, path: PAIRS[1][locale] }));
 
 const TAX_NOTE = { en: 'exclude GST', es: 'no incluyen el IVA' } as const;
 
-for (const { path } of [...HOMES, ...PRICING]) {
+const SERVICE_PAGES = LOCALES.map((locale) => ({
+  locale,
+  path: SERVICE_PAIRS.automation[locale],
+  service: SERVICE_PAIRS.automation.service,
+}));
+
+for (const { path } of [...HOMES, ...PRICING, ...SERVICE_PAGES]) {
   test(`${path} renders without JavaScript`, async ({ page }) => {
     await page.goto(path);
     await expect(page.locator('body[data-hydrated]')).toHaveCount(0);
@@ -58,6 +70,43 @@ for (const { path, locale } of HOMES) {
     ).toBeVisible();
     await expect(contact.locator('input[name="name"]')).toBeVisible();
     await expect(contact.locator('input[name="email"]')).toBeVisible();
+  });
+}
+
+for (const { path, locale, service } of SERVICE_PAGES) {
+  test(`${path} shows its price, opens a question and lists the email without JavaScript`, async ({
+    page,
+  }) => {
+    await page.goto(path);
+    const prices = SERVICES[locale][service].prices;
+    const facts = normalise(await page.locator('dl').first().innerText());
+    expect(facts).toContain(normalise(formatPriceSummary(locale, prices)));
+
+    const item = page.locator('#faq details').first();
+    await item.locator('summary').click();
+    await expect(item).toHaveAttribute('open', '');
+    await expect(item.locator('p')).toBeVisible();
+
+    await expect(
+      page.locator('main a[href="mailto:hello@zenetlabs.com"]'),
+    ).toBeVisible();
+  });
+}
+
+for (const { locale, path } of LOCALES.map((locale) => ({
+  locale,
+  path: SERVICES_HUB[locale],
+}))) {
+  test(`${path} shows the price of every service without JavaScript`, async ({
+    page,
+  }) => {
+    await page.goto(path);
+    const text = normalise(await page.locator('main').innerText());
+    for (const service of Object.values(SERVICES[locale])) {
+      expect(text).toContain(
+        normalise(formatPriceSummary(locale, service.prices)),
+      );
+    }
   });
 }
 

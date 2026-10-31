@@ -53,10 +53,14 @@ for (const [from, label, to, lang] of SWITCHES) {
   });
 }
 
-test('the header anchors keep the locale home', async ({ page }) => {
-  for (const [path, home] of [
-    ['/privacy', '/'],
-    ['/es/privacidad', '/es'],
+test('the header Services link opens the hub on every page type', async ({
+  page,
+}) => {
+  for (const [path, services] of [
+    ['/privacy', '/services'],
+    ['/es/privacidad', '/es/servicios'],
+    ['/services/ai-agents', '/services'],
+    ['/es/servicios/agentes-de-ia', '/es/servicios'],
   ] as const) {
     await gotoHydrated(page, path);
     const hrefs = await page
@@ -64,7 +68,7 @@ test('the header anchors keep the locale home', async ({ page }) => {
       .first()
       .getByRole('link')
       .evaluateAll((links) => links.map((a) => a.getAttribute('href')));
-    expect(hrefs).toContain(`${home}#services`);
+    expect(hrefs).toContain(services);
   }
 });
 

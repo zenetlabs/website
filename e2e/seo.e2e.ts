@@ -8,6 +8,7 @@ import {
   htmlLang,
   markdownPathOf,
   PAGES,
+  PAIRS,
   type Tag,
   tagsOf,
 } from './helpers';
@@ -114,7 +115,14 @@ test('the home and its Spanish twin load one stylesheet', async ({
 });
 
 test('unknown paths answer 404', async ({ request }) => {
-  for (const path of ['/nope', '/fr', '/fr/privacy', '/es/nope']) {
+  for (const path of [
+    '/nope',
+    '/fr',
+    '/fr/privacy',
+    '/es/nope',
+    '/services/nope',
+    '/es/servicios/nope',
+  ]) {
     const response = await request.get(path);
     expect(response.status(), path).toBe(404);
   }
@@ -124,6 +132,8 @@ const NOT_FOUND: ReadonlyArray<readonly [string, string]> = [
   ['/nope', 'Page not found | Zenet Labs'],
   ['/es/nope', 'Página no encontrada | Zenet Labs'],
   ['/fr/privacy', 'Page not found | Zenet Labs'],
+  ['/services/nope', 'Page not found | Zenet Labs'],
+  ['/es/servicios/nope', 'Página no encontrada | Zenet Labs'],
 ];
 
 for (const [path, title] of NOT_FOUND) {
@@ -195,4 +205,21 @@ test('page HTML preloads only the hero serif fonts', async ({ request }) => {
   expect(preloads.filter((tag) => !tag.includes('instrument-serif'))).toEqual(
     [],
   );
+});
+
+test('every page renders a distinct title', async ({ request }) => {
+  const titles = new Map<string, string>();
+  for (const path of PAIRS.flatMap(({ en, es }) => [en, es])) {
+    const html = await (await request.get(path)).text();
+    const title = decodeEntities(
+      html.match(/<title>([^<]*)<\/title>/)?.[1] ?? '',
+    );
+    expect(title, path).not.toBe('');
+    expect(
+      titles.get(title),
+      `${path} repeats the title of ${titles.get(title)}`,
+    ).toBeUndefined();
+    titles.set(title, path);
+  }
+  expect(titles.size).toBe(PAIRS.length * 2);
 });

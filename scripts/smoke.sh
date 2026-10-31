@@ -50,7 +50,15 @@ header_matches() {
   curl -s -D - -o /dev/null -H "Accept: ${accept}" --max-time 20 "$url" | tr -d '\r' | grep -qiE "$pattern"
 }
 
-for path in / /es /pricing /es/precios /about /es/sobre-nosotros /privacy /es/privacidad /es/cookies /es/aviso-legal /robots.txt /sitemap.xml /llms.txt /es/llms.txt /llms-full.txt /es/llms-full.txt; do
+for path in / /es /pricing /es/precios /about /es/sobre-nosotros /privacy /es/privacidad /es/cookies /es/aviso-legal \
+  /services /es/servicios \
+  /services/ai-automation /es/servicios/automatizacion-de-procesos \
+  /services/integrations /es/servicios/integraciones \
+  /services/ai-agents /es/servicios/agentes-de-ia \
+  /services/custom-software /es/servicios/desarrollo-de-software-a-medida \
+  /services/ai-training /es/servicios/formacion-ia-equipos \
+  /services.md /services/ai-automation.md /es/servicios.md /es/servicios/automatizacion-de-procesos.md \
+  /robots.txt /sitemap.xml /llms.txt /es/llms.txt /llms-full.txt /es/llms-full.txt; do
   attempt "200 ${SITE}${path}" status_is 200 "${SITE}${path}"
 done
 
@@ -78,7 +86,11 @@ for rule in \
   "/blog/x|/" \
   "/es/about-us|/es/sobre-nosotros" \
   "/about-us|/about" \
-  "/en/pricing.md|/pricing.md"; do
+  "/en/pricing.md|/pricing.md" \
+  "/es/services|/es/servicios" \
+  "/servicios|/services" \
+  "/es/services/ai-agents|/es/servicios/agentes-de-ia" \
+  "/services/ai-agents/|/services/ai-agents"; do
   attempt "301 ${SITE}${rule%%|*}" redirects_to "${SITE}${rule%%|*}" "${SITE}${rule#*|}"
 done
 
@@ -102,6 +114,9 @@ attempt "html for */* ${SITE}/" content_type_is 'text/html; charset=utf-8' '*/*'
 attempt "vary accept ${SITE}/" header_matches '*/*' "${SITE}/" '^vary:(.*[ ,])?accept([ ,]|$)'
 attempt "footer names the entity" body_contains "${SITE}/es" 'Zenet Technology Pte. Ltd.'
 attempt "home carries the FAQ JSON-LD" body_contains "${SITE}/" '"@type":"FAQPage"'
+attempt "service page carries the Service JSON-LD" body_contains "${SITE}/services/ai-automation" '"@type":"Service"'
+attempt "service page carries the FAQ JSON-LD" body_contains "${SITE}/services/ai-automation" '"@type":"FAQPage"'
+attempt "es service page states the tax" body_contains "${SITE}/es/servicios/agentes-de-ia" 'IVA no incluido'
 attempt "es pricing states the tax" body_contains "${SITE}/es/precios" 'no incluyen el IVA'
 attempt "robots disallows server functions" body_contains "${SITE}/robots.txt" 'Disallow: /_serverFn/'
 attempt "canonical link ${SITE}/es" header_matches 'text/markdown' "${SITE}/es" '^link: <https://zenetlabs\.com/es>; rel="canonical"$'

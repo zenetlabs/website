@@ -1,10 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { CtaSection } from '@/components/cta-section';
 import { Container, EmphasisTitle } from '@/components/section';
-import { BULLET_ITEM, CARD, EYEBROW } from '@/components/ui';
+import { BULLET_ITEM, CARD, EYEBROW, TEXT_LINK } from '@/components/ui';
 import { loadPricingContent } from '@/content/load';
 import { formatPrice } from '@/lib/money';
 import { navHref } from '@/lib/nav';
+import { pagePath, pagesForService } from '@/lib/page-registry';
 import { pricingStructuredData } from '@/lib/page-structured-data';
 import { pageHeadFor } from '@/lib/pages';
 
@@ -21,7 +22,7 @@ export const Route = createFileRoute('/{-$locale}/pricing')({
 
 function Pricing() {
   const { locale } = Route.useRouteContext();
-  const { page, services } = Route.useLoaderData();
+  const { page, services, hub } = Route.useLoaderData();
 
   return (
     <>
@@ -36,6 +37,7 @@ function Pricing() {
       <Container className="grid gap-6 pb-20 md:pb-28">
         {Object.values(services).map((service) => {
           const detail = page.details[service.id];
+          const pages = pagesForService(service.id);
           return (
             <article
               key={service.id}
@@ -78,6 +80,22 @@ function Pricing() {
                   <p className="mt-6">
                     <span className={EYEBROW}>{page.labels.timeline}</span>{' '}
                     {detail.timeline}
+                  </p>
+                ) : null}
+                {pages.length > 0 ? (
+                  <p className="mt-6">
+                    <span className={EYEBROW}>{page.labels.more}</span>{' '}
+                    {pages.map((target, index) => (
+                      <span key={target}>
+                        {index > 0 ? ' · ' : ''}
+                        <a
+                          href={pagePath(locale, target)}
+                          className={TEXT_LINK}
+                        >
+                          {hub.cards[target].name}
+                        </a>
+                      </span>
+                    ))}
                   </p>
                 ) : null}
               </div>

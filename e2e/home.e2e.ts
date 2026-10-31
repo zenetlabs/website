@@ -1,7 +1,7 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { formatPriceSummary } from '../src/lib/money';
 import { SERVICES } from '../test/page-content';
-import { gotoHydrated } from './helpers';
+import { gotoHydrated, navLinks, waitForHydration } from './helpers';
 
 const COMMON = [
   'companies',
@@ -19,30 +19,41 @@ const HOMES = [
     locale: 'en',
     path: '/',
     sections: COMMON,
-    nav: ['/#services', '/pricing', '/#cases', '/about'],
+    nav: ['/services', '/pricing', '/#cases', '/about'],
     faq: 15,
     pricing: '/pricing',
     cta: '/#contact',
     about: '/about',
+    ladder: [
+      '/pricing#diagnostic',
+      '/services/ai-automation',
+      '/services/ai-agents',
+      '/services/custom-software',
+      '/services/ai-training',
+      '/pricing#maintenance',
+      '/pricing#growth',
+    ],
   },
   {
     locale: 'es',
     path: '/es',
     sections: ['companies', 'problems', 'verifactu', ...COMMON.slice(2)],
-    nav: ['/es#services', '/es/precios', '/es#cases', '/es/sobre-nosotros'],
+    nav: ['/es/servicios', '/es/precios', '/es#cases', '/es/sobre-nosotros'],
     faq: 16,
     pricing: '/es/precios',
     cta: '/es#contact',
     about: '/es/sobre-nosotros',
+    ladder: [
+      '/es/precios#diagnostic',
+      '/es/servicios/automatizacion-de-procesos',
+      '/es/servicios/agentes-de-ia',
+      '/es/servicios/desarrollo-de-software-a-medida',
+      '/es/servicios/formacion-ia-equipos',
+      '/es/precios#maintenance',
+      '/es/precios#growth',
+    ],
   },
 ] as const;
-
-function navLinks(page: Page) {
-  return page
-    .getByRole('navigation', { name: /^(Main|Principal)$/ })
-    .first()
-    .getByRole('link');
-}
 
 for (const home of HOMES) {
   test.describe(`home ${home.path}`, () => {
@@ -89,6 +100,16 @@ for (const home of HOMES) {
       const links = hero.getByRole('link');
       await expect(links.first()).toHaveAttribute('href', home.cta);
       await expect(links.nth(1)).toHaveAttribute('href', home.pricing);
+    });
+
+    test('links the ladder rows to the service pages and the pricing cards', async ({
+      page,
+    }) => {
+      await gotoHydrated(page, home.path);
+      const hrefs = await page
+        .locator('#services ul a')
+        .evaluateAll((links) => links.map((a) => a.getAttribute('href')));
+      expect(hrefs).toEqual(home.ladder);
     });
 
     test('shows every price summary in the ladder', async ({ page }) => {
@@ -182,7 +203,11 @@ test.describe('mobile menu', () => {
       menu.getByRole('link', { name: 'Book a diagnostic' }),
     ).toHaveAttribute('href', '/#contact');
     await menu.getByRole('link', { name: 'Services' }).click();
-    await expect(page).toHaveURL(/#services$/);
-    await expect(menu).not.toHaveAttribute('open', '');
+    await expect(page).toHaveURL(/\/services$/);
+    await waitForHydration(page);
+    await expect(page.locator('header details')).not.toHaveAttribute(
+      'open',
+      '',
+    );
   });
 });

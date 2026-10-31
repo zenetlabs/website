@@ -43,7 +43,15 @@ test.describe('reduced motion', () => {
   }
 });
 
-for (const url of PAIRS.slice(0, 3).flatMap(({ en, es }) => [en, es])) {
+const OVERFLOW_URLS = [
+  ...PAIRS.slice(0, 3).flatMap(({ en, es }) => [en, es]),
+  '/services',
+  '/es/servicios',
+  '/services/ai-automation',
+  '/es/servicios/desarrollo-de-software-a-medida',
+];
+
+for (const url of OVERFLOW_URLS) {
   test(`${url} has no horizontal scroll on mobile`, async ({ page }) => {
     await page.setViewportSize({ width: 412, height: 915 });
     await gotoHydrated(page, url);

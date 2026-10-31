@@ -5,7 +5,12 @@ export const pricingPage = {
   title: { before: 'Clear prices, ', emphasis: 'before', after: ' we start' },
   lead: 'Every project starts with a fixed-price diagnostic, so the next quote comes from your real processes, not a guess.',
   taxNote: 'All prices are in Singapore dollars (S$) and exclude GST.',
-  labels: { price: 'Price', includes: 'Includes', timeline: 'Timeline' },
+  labels: {
+    price: 'Price',
+    includes: 'Includes',
+    timeline: 'Timeline',
+    more: 'More about',
+  },
   // TODO(albert): confirm every list
   details: {
     diagnostic: {

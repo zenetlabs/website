@@ -5,7 +5,12 @@ export const pricingPage = {
   title: { before: 'Precios claros ', emphasis: 'antes', after: ' de empezar' },
   lead: 'Todo proyecto empieza con un diagnóstico a precio cerrado, para que el siguiente presupuesto salga de tus procesos reales y no de una estimación a ciegas.',
   taxNote: 'Todos los precios están en euros y no incluyen el IVA.',
-  labels: { price: 'Precio', includes: 'Incluye', timeline: 'Plazo' },
+  labels: {
+    price: 'Precio',
+    includes: 'Incluye',
+    timeline: 'Plazo',
+    more: 'Más sobre',
+  },
   // TODO(albert): confirm every list
   details: {
     diagnostic: {

@@ -10,6 +10,7 @@ import { home as esHome } from '@/content/es/home';
 import { llms as esLlms } from '@/content/es/llms';
 import { pricingPage as esPricing } from '@/content/es/pricing';
 import { services as esServices } from '@/content/es/services';
+import { loadServicePageContent, loadServicesHubContent } from '@/content/load';
 import type {
   AboutPageContent,
   FaqItem,
@@ -19,8 +20,9 @@ import type {
   PricingPageContent,
   PublishedEntity,
   Rich,
+  ServicePageContent,
   Services,
-  TitleParts,
+  ServicesHubContent,
 } from '@/content/types';
 import {
   CONTENT,
@@ -36,11 +38,19 @@ import {
   otherLocale,
 } from '@/lib/i18n';
 import { formatNumber, formatPrice, formatPriceSummary } from '@/lib/money';
-import { pagesIn } from '@/lib/page-registry';
-import { pageCopy } from '@/lib/pages';
+import {
+  isServicePage,
+  type PageId,
+  pagesIn,
+  SERVICE_PAGE_IDS,
+  type ServicePageId,
+  serviceOf,
+} from '@/lib/page-registry';
+import { contentMeta, pageCopy } from '@/lib/pages';
 import { PORTFOLIO } from '@/lib/portfolio';
 import { markdownUrl, pageUrl, SITE_NAME } from '@/lib/seo';
 import { PUBLIC_EMAIL, SITE } from '@/lib/site';
+import { titleText } from '@/lib/title-text';
 
 type Bodies = {
   home: HomeContent;
@@ -70,14 +80,37 @@ const BODIES: Record<Locale, Bodies> = {
   },
 };
 
+export type ServiceBodies = {
+  hub: ServicesHubContent;
+  pages: Record<ServicePageId, ServicePageContent>;
+};
+
+export async function serviceBodies(locale: Locale): Promise<ServiceBodies> {
+  const [{ hub }, automation, integrations, agents, software, training] =
+    await Promise.all([
+      loadServicesHubContent(locale),
+      loadServicePageContent(locale, 'automation'),
+      loadServicePageContent(locale, 'integrations'),
+      loadServicePageContent(locale, 'agents'),
+      loadServicePageContent(locale, 'software'),
+      loadServicePageContent(locale, 'training'),
+    ]);
+  return {
+    hub,
+    pages: {
+      automation: automation.copy,
+      integrations: integrations.copy,
+      agents: agents.copy,
+      software: software.copy,
+      training: training.copy,
+    },
+  };
+}
+
 type MeasuredMetric = Metric & { value: number };
 
 function isMeasured(metric: Metric): metric is MeasuredMetric {
   return metric.value !== null;
-}
-
-function titleText({ before, emphasis, after }: TitleParts): string {
-  return `${before}${emphasis}${after}`;
 }
 
 function richText(rich: Rich): string {
@@ -141,19 +174,37 @@ function optional(locale: Locale, self: LlmsFile): string {
   ]);
 }
 
-function pagesLines(locale: Locale): string[] {
+function pagesLines(locale: Locale, { hub, pages }: ServiceBodies): string[] {
   return pagesIn(locale).map((page) => {
-    const { title, description } = pageCopy(locale, page);
+    const { title, description } = metaOf(locale, page, { hub, pages });
     return `- [${title}](${markdownUrl(locale, page)}): ${description}`;
   });
 }
 
-function faqLines(locale: Locale): string[] {
+export function metaOf(
+  locale: Locale,
+  page: PageId,
+  { hub, pages }: ServiceBodies,
+): { title: string; description: string } {
+  if (page === 'services') return contentMeta(hub.meta);
+  if (isServicePage(page)) return contentMeta(pages[page].meta);
+  return pageCopy(locale, page);
+}
+
+function faqLines(locale: Locale, { pages }: ServiceBodies): string[] {
   const home = pageUrl(locale, 'home');
-  return BODIES[locale].faq.map(
-    ({ id, question, answer }) =>
-      `- [${question}](${home}#faq-${id}): ${answer}`,
-  );
+  return [
+    ...BODIES[locale].faq.map(
+      ({ id, question, answer }) =>
+        `- [${question}](${home}#faq-${id}): ${answer}`,
+    ),
+    ...SERVICE_PAGE_IDS.flatMap((page) =>
+      pages[page].faq.items.map(
+        ({ id, question, answer }) =>
+          `- [${question}](${pageUrl(locale, page)}#faq-${id}): ${answer}`,
+      ),
+    ),
+  ];
 }
 
 function portfolioLines(locale: Locale): string[] {
@@ -172,11 +223,12 @@ function contactLines(locale: Locale): string[] {
   ];
 }
 
-export function buildLlmsTxt(
+export async function buildLlmsTxt(
   locale: Locale,
   entity: PublishedEntity = legalEntity(locale),
-): string {
+): Promise<string> {
   const { services, copy } = BODIES[locale];
+  const bodies = await serviceBodies(locale);
   const pricing = pageUrl(locale, 'pricing');
   return doc([
     ...preamble(locale, entity),
@@ -187,8 +239,8 @@ export function buildLlmsTxt(
           `- [${service.name}](${pricing}#${service.id}): ${formatPriceSummary(locale, service.prices)}. ${service.summary}`,
       ),
     ),
-    section(copy.headings.pages, pagesLines(locale)),
-    section(copy.headings.faq, faqLines(locale)),
+    section(copy.headings.pages, pagesLines(locale, bodies)),
+    section(copy.headings.faq, faqLines(locale, bodies)),
     section(copy.headings.portfolio, portfolioLines(locale)),
     section(copy.headings.contact, contactLines(locale)),
     optional(locale, 'llms'),
@@ -222,6 +274,58 @@ function pricingSection(locale: Locale): string {
       }),
       `### ${pricing.how.title}`,
       pricing.how.items.map((item) => `- ${item}`).join('\n'),
+    ],
+    '\n\n',
+  );
+}
+
+function servicePagesSection(
+  locale: Locale,
+  { hub, pages }: ServiceBodies,
+): string {
+  const { services, copy } = BODIES[locale];
+  const labels = messages[locale].servicePage;
+  return section(
+    copy.headings.servicePages,
+    [
+      `${titleText(hub.title)}. ${hub.lead}`,
+      ...SERVICE_PAGE_IDS.flatMap((page) => {
+        const body = pages[page];
+        const price = formatPriceSummary(
+          locale,
+          services[serviceOf(page)].prices,
+        );
+        return [
+          `### [${hub.cards[page].name}](${pageUrl(locale, page)})`,
+          body.hero.lead,
+          [
+            `- ${labels.who}: ${body.facts.who}`,
+            `- ${labels.price}: ${price} (${labels.taxNote})`,
+            `- ${labels.timeline}: ${body.facts.timeline}`,
+            `- ${labels.start}: ${body.facts.start}`,
+          ].join('\n'),
+          [
+            `${titleText(body.useCases.title)}:`,
+            ...body.useCases.items.map(
+              (item) => `- ${item.title}: ${item.text}`,
+            ),
+          ].join('\n'),
+          [
+            `${titleText(body.how.title)}:`,
+            ...body.how.steps.map(
+              (step, index) => `${index + 1}. ${step.label}: ${step.text}`,
+            ),
+          ].join('\n'),
+          [
+            `${titleText(body.case.title)}: ${body.case.text}`,
+            ...body.case.points.map((point) => `- ${point}`),
+          ].join('\n'),
+          ...body.faq.items.flatMap(({ question, answer }) => [
+            `#### ${question}`,
+            answer,
+          ]),
+        ];
+      }),
     ],
     '\n\n',
   );
@@ -269,11 +373,12 @@ function aboutSection(locale: Locale): string {
   );
 }
 
-export function buildLlmsFull(
+export async function buildLlmsFull(
   locale: Locale,
   entity: PublishedEntity = legalEntity(locale),
-): string {
+): Promise<string> {
   const { home, copy, faq } = BODIES[locale];
+  const bodies = await serviceBodies(locale);
   const { verifactu } = home;
   return doc([
     ...preamble(
@@ -287,6 +392,7 @@ export function buildLlmsFull(
       '\n\n',
     ),
     pricingSection(locale),
+    servicePagesSection(locale, bodies),
     section(
       copy.headings.problems,
       home.problems.items.flatMap((item) => [
@@ -319,7 +425,7 @@ export function buildLlmsFull(
       '\n\n',
     ),
     section(copy.headings.contact, contactLines(locale)),
-    section(copy.headings.pages, pagesLines(locale)),
+    section(copy.headings.pages, pagesLines(locale, bodies)),
     optional(locale, 'llms-full'),
   ]);
 }
@@ -329,14 +435,19 @@ const TEXT_HEADERS = {
   'X-Robots-Tag': 'noindex',
 };
 
-const built = new Map<string, string>();
+const built = new Map<string, Promise<string>>();
 
-function llmsBody(file: LlmsFile, locale: Locale): string {
+function llmsBody(file: LlmsFile, locale: Locale): Promise<string> {
   const key = `${file}:${locale}`;
   let body = built.get(key);
   if (body === undefined) {
-    body = file === 'llms' ? buildLlmsTxt(locale) : buildLlmsFull(locale);
-    built.set(key, body);
+    const pending =
+      file === 'llms' ? buildLlmsTxt(locale) : buildLlmsFull(locale);
+    built.set(key, pending);
+    pending.catch(() => {
+      if (built.get(key) === pending) built.delete(key);
+    });
+    body = pending;
   }
   return body;
 }
@@ -345,13 +456,13 @@ export function llmsNotFound(): Response {
   return new Response('Not found', { status: 404, headers: TEXT_HEADERS });
 }
 
-export function llmsResponse(
+export async function llmsResponse(
   file: LlmsFile,
   param: string | undefined,
-): Response {
+): Promise<Response> {
   const locale = localeFromParam(param);
   if (locale === undefined) return llmsNotFound();
-  return new Response(llmsBody(file, locale), {
+  return new Response(await llmsBody(file, locale), {
     headers: { ...TEXT_HEADERS, 'Cache-Control': 'public, max-age=3600' },
   });
 }

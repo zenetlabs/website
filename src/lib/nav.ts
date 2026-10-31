@@ -5,7 +5,7 @@ type NavTarget = { page: PageId; section?: string };
 type NavLabel = keyof (typeof messages)['en']['nav'];
 
 export const NAV = [
-  { id: 'services', target: { page: 'home', section: 'services' } },
+  { id: 'services', target: { page: 'services' } },
   { id: 'pricing', target: { page: 'pricing' } },
   { id: 'cases', target: { page: 'home', section: 'cases' } },
   { id: 'about', target: { page: 'about' } },
