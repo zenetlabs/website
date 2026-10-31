@@ -201,7 +201,9 @@ test('robots and sitemap are served', async ({ request }) => {
   expect(sitemap.status()).toBe(200);
   const robots = await request.get('/robots.txt');
   expect(robots.status()).toBe(200);
-  expect(await robots.text()).toContain('Disallow: /_serverFn/');
+  const text = await robots.text();
+  expect(text).toContain('Disallow: /_serverFn/');
+  expect(text).toContain('Disallow: /internal/');
 });
 
 test('page HTML preloads only the hero serif fonts', async ({ request }) => {

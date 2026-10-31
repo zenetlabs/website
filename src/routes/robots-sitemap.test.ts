@@ -28,6 +28,7 @@ describe('robotsTxt', () => {
         'User-agent: *',
         'Allow: /',
         'Disallow: /api/',
+        'Disallow: /internal/',
         'Disallow: /_serverFn/',
         '',
         'Sitemap: https://zenetlabs.com/sitemap.xml',

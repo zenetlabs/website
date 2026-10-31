@@ -1,20 +1,25 @@
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 import { useHydrated } from '@tanstack/react-router';
-import { useServerFn } from '@tanstack/react-start';
 import { type FormEvent, type ReactNode, useId, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
-import type { ContactInput } from '@/lib/contact-schema';
 import { legalEntity } from '@/lib/content';
 import { useLocale, useMessages } from '@/lib/i18n';
+import { attribution, submitLead } from '@/lib/lead-client';
+import type { LeadError } from '@/lib/lead-result';
 import { pagePath } from '@/lib/page-registry';
 import { PUBLIC_EMAIL, SITE } from '@/lib/site';
-import { sendContact } from '@/server/contact.functions';
 
 const CONTROL =
   'w-full rounded-input border border-border bg-bg px-3.5 py-3 text-base';
 
-type Status = 'idle' | 'pending' | 'sent' | 'errorSend' | 'errorCaptcha';
+type FailStatus = 'errorSend' | 'errorCaptcha' | 'errorRate';
+type Status = 'idle' | 'pending' | 'sent' | FailStatus;
+
+function failureFor(error: LeadError): FailStatus {
+  if (error === 'captcha') return 'errorCaptcha';
+  return error === 'rate' ? 'errorRate' : 'errorSend';
+}
 
 function Field({
   label,
@@ -44,7 +49,6 @@ export function ContactForm() {
   const { form: copy } = contact;
   const locale = useLocale();
   const hydrated = useHydrated();
-  const send = useServerFn(sendContact);
   const turnstile = useRef<TurnstileInstance>(undefined);
   const [engaged, setEngaged] = useState(false);
   const [token, setToken] = useState('');
@@ -56,7 +60,7 @@ export function ContactForm() {
     .replace('{legalName}', legalEntity(locale).legalName)
     .split('{privacyLink}');
 
-  function fail(next: 'errorSend' | 'errorCaptcha') {
+  function fail(next: FailStatus) {
     flushSync(() => {
       setStatus(next);
       setToken('');
@@ -73,7 +77,10 @@ export function ContactForm() {
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const input: ContactInput = {
+    setStatus('pending');
+    const result = await submitLead({
+      source: 'form',
+      locale,
       name: text(data, 'name'),
       email: text(data, 'email'),
       company: text(data, 'company') || undefined,
@@ -81,16 +88,10 @@ export function ContactForm() {
       consent: true,
       turnstileToken: token,
       website: text(data, 'website'),
-      locale,
-    };
-    setStatus('pending');
-    try {
-      const result = await send({ data: input });
-      if (result.ok) succeed();
-      else fail(result.error === 'captcha' ? 'errorCaptcha' : 'errorSend');
-    } catch {
-      fail('errorSend');
-    }
+      attribution: attribution(),
+    });
+    if (result.ok) succeed();
+    else fail(failureFor(result.error));
   }
 
   return (
@@ -196,7 +197,7 @@ export function ContactForm() {
                 ref={turnstile}
                 siteKey={SITE.turnstileSiteKey}
                 options={{
-                  action: 'contact',
+                  action: 'lead',
                   theme: 'auto',
                   language: locale,
                   size: 'flexible',
@@ -217,7 +218,9 @@ export function ContactForm() {
             >
               {pending ? copy.sending : copy.submit}
             </button>
-            {status === 'errorSend' || status === 'errorCaptcha' ? (
+            {status === 'errorSend' ||
+            status === 'errorCaptcha' ||
+            status === 'errorRate' ? (
               <p
                 ref={alert}
                 role="alert"

@@ -1,11 +1,12 @@
 import { expect, type Page, test } from '@playwright/test';
+import { attemptsFor, sentFor, uniqueEmail } from './fakes';
 import { gotoHydrated } from './helpers';
 
 const TURNSTILE_SCRIPT = 'script[src*="challenges.cloudflare.com"]';
 
-async function fillForm(page: Page) {
+async function fillForm(page: Page, email = 'ada@example.com') {
   await page.getByLabel('Name').fill('Ada Lovelace');
-  await page.getByLabel('Email').fill('ada@example.com');
+  await page.getByLabel('Email').fill(email);
   await page
     .getByLabel('What should we look at?')
     .fill('We would like to automate our inbox triage.');
@@ -28,7 +29,7 @@ test('required fields and consent block the submit', async ({ page }) => {
 
   let submitted = false;
   page.on('request', (request) => {
-    if (request.method() === 'POST' && request.url().includes('/_serverFn')) {
+    if (request.method() === 'POST' && request.url().includes('/api/lead')) {
       submitted = true;
     }
   });
@@ -65,10 +66,13 @@ test('Turnstile mounts only after the first focus in the form', async ({
   await waitForToken(page);
 });
 
-test('a filled honeypot gets a silent success', async ({ page }) => {
+test('a filled honeypot gets a silent success and sends nothing', async ({
+  page,
+}) => {
+  const email = uniqueEmail('honeypot');
   await gotoHydrated(page, '/');
   await page.getByLabel('Name').focus();
-  await fillForm(page);
+  await fillForm(page, email);
   await page
     .locator('input[name="website"]')
     .evaluate((el: HTMLInputElement) => {
@@ -77,9 +81,35 @@ test('a filled honeypot gets a silent success', async ({ page }) => {
   await waitForToken(page);
   await page.getByRole('button', { name: 'Send message' }).click();
   await expect(page.getByText('Message sent')).toBeVisible();
+  await page.waitForTimeout(1000);
+  expect(await attemptsFor(email)).toEqual([]);
 });
 
-test('a real submit with test keys shows the send error', async ({ page }) => {
+test('a real submit with test keys is accepted and emailed', async ({
+  page,
+}) => {
+  const email = uniqueEmail('contact');
+  await gotoHydrated(page, '/');
+  await page.getByLabel('Name').focus();
+  await fillForm(page, email);
+  await waitForToken(page);
+  await page.getByRole('button', { name: 'Send message' }).click();
+
+  await expect(page.getByText('Message sent')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText('Message sent')).toBeFocused();
+  await expect.poll(async () => (await sentFor(email)).length).toBe(2);
+});
+
+test('a rejected submit shows the alert with the mailto fallback', async ({
+  page,
+}) => {
+  await page.route('**/api/lead', (route) =>
+    route.fulfill({
+      status: 429,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: false, error: 'rate' }),
+    }),
+  );
   await gotoHydrated(page, '/');
   await page.getByLabel('Name').focus();
   await fillForm(page);
@@ -88,9 +118,8 @@ test('a real submit with test keys shows the send error', async ({ page }) => {
 
   const alert = page.getByRole('alert');
   await expect(alert).toBeVisible({ timeout: 30_000 });
-  await expect(alert).toContainText(
-    'We could not send your message. Please try again, or write to',
-  );
+  await expect(alert).toContainText('Too many attempts from your connection');
+  await expect(alert).toBeFocused();
   await expect(
     alert.getByRole('link', { name: 'hello@zenetlabs.com' }),
   ).toHaveAttribute('href', 'mailto:hello@zenetlabs.com');
