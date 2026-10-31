@@ -19,9 +19,20 @@ describe.each([
     }
   });
 
-  it('links nowhere from the cards', () => {
+  it('links only the Viatsy card, to its case page by name', () => {
     const { container } = render(<Cases copy={home.cases} locale={locale} />);
-    expect(container.querySelectorAll('a')).toHaveLength(0);
+    const links = [...container.querySelectorAll('a')];
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveAttribute(
+      'href',
+      locale === 'en' ? '/case-studies/viatsy' : '/es/casos/viatsy',
+    );
+    expect(links[0]?.textContent).toBe(
+      `${locale === 'en' ? 'Viatsy case study' : 'Caso de Viatsy'} →`,
+    );
+    expect(links[0]?.closest('li')?.querySelector('h3')?.textContent).toBe(
+      'Viatsy',
+    );
   });
 
   it('shows a metric once it has a value', () => {

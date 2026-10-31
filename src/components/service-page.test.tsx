@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { ServicePage } from '@/components/service-page';
-import { type Locale, locales, messages } from '@/lib/i18n';
+import { type Locale, locales } from '@/lib/i18n';
 import { formatPriceSummary } from '@/lib/money';
 import { CTA_TARGET, navHref } from '@/lib/nav';
 import { pagePath, type ServicePageId, serviceOf } from '@/lib/page-registry';
@@ -17,7 +17,7 @@ const CASES = locales.flatMap((locale) =>
 function view(locale: Locale, page: ServicePageId) {
   const { hub, pages } = SERVICE_BODIES[locale];
   const copy = pages[page];
-  const labels = messages[locale].servicePage;
+  const labels = SERVICE_BODIES[locale].hub.labels;
   const services = SERVICES[locale];
   const { container } = render(
     <ServicePage
@@ -132,5 +132,47 @@ describe('ServicePage links', () => {
       'href',
       '/es/precios#integration',
     );
+  });
+});
+
+describe('ServicePage links into R5 pages', () => {
+  it('links the three Spanish pair headings and leaves the rest as text', () => {
+    const { container } = view('es', 'integrations');
+    const headings = [...container.querySelectorAll('#use-cases h3')];
+    expect(headings).toHaveLength(4);
+    expect(
+      headings.map((heading) =>
+        heading.querySelector('a')?.getAttribute('href'),
+      ),
+    ).toEqual([
+      '/es/servicios/integraciones/holded-prestashop',
+      '/es/servicios/integraciones/holded-woocommerce',
+      '/es/servicios/integraciones/holded-hubspot',
+      undefined,
+    ]);
+    expect(headings[0]?.textContent).toBe('Holded y PrestaShop');
+  });
+
+  it('links no use case from the English integrations page', () => {
+    const { container } = view('en', 'integrations');
+    expect(container.querySelectorAll('#use-cases a')).toHaveLength(0);
+  });
+
+  it.each([
+    ['en', 'automation', '/case-studies/viatsy', 'Viatsy case study →'],
+    ['en', 'agents', '/case-studies/viatsy', 'Viatsy case study →'],
+    ['es', 'automation', '/es/casos/viatsy', 'Caso de Viatsy →'],
+    ['es', 'agents', '/es/casos/viatsy', 'Caso de Viatsy →'],
+  ] as const)('links the case page from %s %s', (locale, page, href, text) => {
+    view(locale, page);
+    expect(screen.getByRole('link', { name: text })).toHaveAttribute(
+      'href',
+      href,
+    );
+  });
+
+  it('links no case page from a page without one', () => {
+    const { container } = view('en', 'training');
+    expect(container.querySelectorAll('#case a')).toHaveLength(0);
   });
 });

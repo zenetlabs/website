@@ -98,6 +98,7 @@ export const agents = {
   },
   // TODO(albert): confirm the case
   case: {
+    page: 'viatsyCase',
     eyebrow: 'Caso',
     title: { before: 'Primeras respuestas en ', emphasis: 'Viatsy', after: '' },
     text: 'Viatsy recibe consultas de viaje por varios canales, y cada una necesita una respuesta a medida. Un agente redacta la primera respuesta y la propuesta, y el equipo las revisa antes de enviar nada.',

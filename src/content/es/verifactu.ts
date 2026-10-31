@@ -4,5 +4,6 @@ export const verifactuDates = {
   others: '1 de julio de 2027',
   announcedOn: '5 de octubre de 2026',
   announcedTo: 'octubre de 2028',
+  producersFrom: '29 de julio de 2025',
   checkedOn: '31 de octubre de 2026',
 } as const;

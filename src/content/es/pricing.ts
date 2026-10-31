@@ -1,6 +1,13 @@
 import type { PricingPageContent } from '@/content/types';
 
 export const pricingPage = {
+  meta: {
+    title: 'Precios',
+    metaTitle: 'Precios de automatización y agentes de IA | Zenet Labs',
+    description:
+      'Precios publicados en euros, IVA no incluido: diagnóstico, integraciones, agentes de IA en producción, web a medida, formación, mantenimiento y SEO.',
+  },
+  catalog: 'Servicios y precios de Zenet Labs',
   eyebrow: 'Precios',
   title: { before: 'Precios claros ', emphasis: 'antes', after: ' de empezar' },
   lead: 'Todo proyecto empieza con un diagnóstico a precio cerrado, para que el siguiente presupuesto salga de tus procesos reales y no de una estimación a ciegas.',

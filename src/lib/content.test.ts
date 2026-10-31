@@ -35,6 +35,7 @@ import {
   taxIdLabel,
 } from '@/lib/content';
 import { type Locale, locales } from '@/lib/i18n';
+import { legalClausesFor } from '@/lib/legal-clauses';
 import { buildLlmsFull, buildLlmsTxt } from '@/lib/llms';
 import { formatPriceSummary } from '@/lib/money';
 import { PORTFOLIO } from '@/lib/portfolio';
@@ -120,9 +121,17 @@ describe('describeEntity', () => {
     ['es', esEntity],
   ] as const)('leaves no template slot in the %s Spanish clauses', (_n, e) => {
     const withAddress = e.address ? e : { ...e, address: BARCELONA };
-    for (const clause of Object.values(e.legalEs)) {
+    for (const clause of Object.values(legalClausesFor(e))) {
       expect(describeEntity(clause, withAddress, 'es')).not.toMatch(/[{}]/);
     }
+  });
+});
+
+describe('legalClausesFor', () => {
+  it('picks the clauses of the entity of the moment', () => {
+    expect(legalClausesFor(enEntity).holder).toContain('sociedad constituida');
+    expect(legalClausesFor(esEntity).holder).toContain('profesional autónomo');
+    expect(legalClausesFor(FLIPPED)).toBe(legalClausesFor(esEntity));
   });
 });
 
@@ -408,6 +417,11 @@ describe('typed prices', () => {
         'src/content/es/service-pages/training.ts',
         'src/content/en/services-hub.ts',
         'src/content/es/services-hub.ts',
+        'src/content/es/holded-pairs/holded-hubspot.ts',
+        'src/content/es/verifactu-page.ts',
+        'src/content/es/travel-agencies.ts',
+        'src/content/en/case-pages/viatsy.ts',
+        'src/content/es/case-pages/viatsy.ts',
       ]),
     );
     expect(scanned).not.toContain('src/content/en/services.ts');

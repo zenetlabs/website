@@ -98,6 +98,81 @@ export const PATH_CASES: ReadonlyArray<readonly [string, string]> = [
   ['/en/servicios/formacion-ia-equipos', '/services/ai-training'],
   ['/es/services/ai-training', '/es/servicios/formacion-ia-equipos'],
   ['/es/servicios/formacion-ia-equipos/', '/es/servicios/formacion-ia-equipos'],
+  [
+    '/servicios/integraciones/holded-prestashop',
+    '/es/servicios/integraciones/holded-prestashop',
+  ],
+  [
+    '/en/servicios/integraciones/holded-prestashop',
+    '/es/servicios/integraciones/holded-prestashop',
+  ],
+  [
+    '/services/integrations/holded-prestashop',
+    '/es/servicios/integraciones/holded-prestashop',
+  ],
+  [
+    '/es/services/integrations/holded-prestashop',
+    '/es/servicios/integraciones/holded-prestashop',
+  ],
+  [
+    '/es/servicios/integraciones/holded-prestashop/',
+    '/es/servicios/integraciones/holded-prestashop',
+  ],
+  [
+    '/servicios/integraciones/holded-woocommerce',
+    '/es/servicios/integraciones/holded-woocommerce',
+  ],
+  [
+    '/en/servicios/integraciones/holded-woocommerce',
+    '/es/servicios/integraciones/holded-woocommerce',
+  ],
+  [
+    '/services/integrations/holded-woocommerce',
+    '/es/servicios/integraciones/holded-woocommerce',
+  ],
+  [
+    '/es/services/integrations/holded-woocommerce',
+    '/es/servicios/integraciones/holded-woocommerce',
+  ],
+  [
+    '/es/servicios/integraciones/holded-woocommerce/',
+    '/es/servicios/integraciones/holded-woocommerce',
+  ],
+  [
+    '/servicios/integraciones/holded-hubspot',
+    '/es/servicios/integraciones/holded-hubspot',
+  ],
+  [
+    '/en/servicios/integraciones/holded-hubspot',
+    '/es/servicios/integraciones/holded-hubspot',
+  ],
+  [
+    '/services/integrations/holded-hubspot',
+    '/es/servicios/integraciones/holded-hubspot',
+  ],
+  [
+    '/es/services/integrations/holded-hubspot',
+    '/es/servicios/integraciones/holded-hubspot',
+  ],
+  [
+    '/es/servicios/integraciones/holded-hubspot/',
+    '/es/servicios/integraciones/holded-hubspot',
+  ],
+  ['/verifactu-integracion', '/es/verifactu-integracion'],
+  ['/en/verifactu-integracion', '/es/verifactu-integracion'],
+  ['/verifactu', '/es/verifactu-integracion'],
+  ['/es/verifactu', '/es/verifactu-integracion'],
+  ['/es/verifactu-integracion/', '/es/verifactu-integracion'],
+  ['/sectores/agencias-de-viaje', '/es/sectores/agencias-de-viaje'],
+  ['/industries/travel-agencies', '/es/sectores/agencias-de-viaje'],
+  ['/es/industries/travel-agencies', '/es/sectores/agencias-de-viaje'],
+  ['/es/sectores/agencias-de-viaje/', '/es/sectores/agencias-de-viaje'],
+  ['/case-studies/viatsy/', '/case-studies/viatsy'],
+  ['/en/case-studies/viatsy', '/case-studies/viatsy'],
+  ['/casos/viatsy', '/case-studies/viatsy'],
+  ['/en/casos/viatsy', '/case-studies/viatsy'],
+  ['/es/case-studies/viatsy', '/es/casos/viatsy'],
+  ['/es/casos/viatsy/', '/es/casos/viatsy'],
   ['/en/pricing.md', '/pricing.md'],
   ['/es/precios.md/', '/es/precios.md'],
   ['/en/llms.txt', '/llms.txt'],

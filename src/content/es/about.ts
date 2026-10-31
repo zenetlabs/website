@@ -1,6 +1,12 @@
 import type { AboutPageContent } from '@/content/types';
 
 export const aboutPage = {
+  meta: {
+    title: 'Sobre nosotros',
+    metaTitle: 'Sobre Zenet Labs y su fundador, Albert Sabaté',
+    description:
+      'Zenet Labs la dirige Albert Sabaté, con más de 15 años creando equipos de ingeniería, que automatiza sus propias empresas antes que las de sus clientes.',
+  },
   eyebrow: 'Sobre nosotros',
   title: {
     before: 'Automatización hecha por gente que ',

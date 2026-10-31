@@ -4,8 +4,11 @@ import { locales } from '@/lib/i18n';
 import {
   breadcrumbTrail,
   createRewrite,
+  HOLDED_PAGE_IDS,
   hasLocale,
+  isLandingPage,
   isServicePage,
+  LANDING_PAGE_IDS,
   markdownPath,
   PAGE_IDS,
   PAGES,
@@ -84,6 +87,18 @@ describe('PAGES', () => {
     expect(pageForSlug('/servicios/agentes-de-ia')).toBe('agents');
     expect(pageForSlug('/legal-notice')).toBe('legalNotice');
     expect(pageForSlug('/aviso-legal')).toBe('legalNotice');
+    expect(pageForSlug('/verifactu')).toBe('verifactu');
+    expect(pageForSlug('/verifactu-integracion')).toBe('verifactu');
+    expect(pageForSlug('/sectores/agencias-de-viaje')).toBe('travelAgencies');
+    expect(pageForSlug('/industries/travel-agencies')).toBe('travelAgencies');
+    expect(pageForSlug('/casos/viatsy')).toBe('viatsyCase');
+    expect(pageForSlug('/case-studies/viatsy')).toBe('viatsyCase');
+    expect(pageForSlug('/servicios/integraciones/holded-hubspot')).toBe(
+      'holdedHubspot',
+    );
+    expect(pageForSlug('/services/integrations/holded-hubspot')).toBe(
+      'holdedHubspot',
+    );
     expect(pageForSlug('/nope')).toBeUndefined();
   });
 
@@ -105,6 +120,12 @@ describe('pageLocales and hasLocale', () => {
     ['agents', ['en', 'es']],
     ['software', ['en', 'es']],
     ['training', ['en', 'es']],
+    ['holdedPrestashop', ['es']],
+    ['holdedWoocommerce', ['es']],
+    ['holdedHubspot', ['es']],
+    ['verifactu', ['es']],
+    ['travelAgencies', ['es']],
+    ['viatsyCase', ['en', 'es']],
     ['pricing', ['en', 'es']],
     ['about', ['en', 'es']],
     ['privacy', ['en', 'es']],
@@ -120,10 +141,13 @@ describe('pageLocales and hasLocale', () => {
 
 describe('pagesIn and slugForms', () => {
   it('lists the pages present in each locale', () => {
+    expect(pagesIn('en')).toHaveLength(12);
+    expect(pagesIn('es')).toHaveLength(18);
     expect(pagesIn('en')).toEqual([
       'home',
       'services',
       ...SERVICE_PAGE_IDS,
+      'viatsyCase',
       'pricing',
       'about',
       'privacy',
@@ -133,6 +157,8 @@ describe('pagesIn and slugForms', () => {
       'home',
       'services',
       ...SERVICE_PAGE_IDS,
+      ...LANDING_PAGE_IDS,
+      'viatsyCase',
       'pricing',
       'about',
       'privacy',
@@ -160,6 +186,9 @@ describe('pagePath', () => {
     ['en', 'agents', '/services/ai-agents'],
     ['en', 'software', '/services/custom-software'],
     ['en', 'training', '/services/ai-training'],
+    ['en', 'holdedHubspot', '/es/servicios/integraciones/holded-hubspot'],
+    ['en', 'verifactu', '/es/verifactu-integracion'],
+    ['en', 'viatsyCase', '/case-studies/viatsy'],
     ['en', 'pricing', '/pricing'],
     ['en', 'about', '/about'],
     ['en', 'privacy', '/privacy'],
@@ -172,6 +201,16 @@ describe('pagePath', () => {
     ['es', 'agents', '/es/servicios/agentes-de-ia'],
     ['es', 'software', '/es/servicios/desarrollo-de-software-a-medida'],
     ['es', 'training', '/es/servicios/formacion-ia-equipos'],
+    ['es', 'holdedPrestashop', '/es/servicios/integraciones/holded-prestashop'],
+    [
+      'es',
+      'holdedWoocommerce',
+      '/es/servicios/integraciones/holded-woocommerce',
+    ],
+    ['es', 'holdedHubspot', '/es/servicios/integraciones/holded-hubspot'],
+    ['es', 'verifactu', '/es/verifactu-integracion'],
+    ['es', 'travelAgencies', '/es/sectores/agencias-de-viaje'],
+    ['es', 'viatsyCase', '/es/casos/viatsy'],
     ['es', 'pricing', '/es/precios'],
     ['es', 'about', '/es/sobre-nosotros'],
     ['es', 'privacy', '/es/privacidad'],
@@ -190,8 +229,44 @@ describe('switchHref', () => {
     ['es', 'legalNotice', '?x=1', '/es/aviso-legal?x=1'],
     ['en', undefined, '?x=1', '/'],
     ['es', undefined, '?x=1', '/es'],
+    ['en', 'holdedPrestashop', '?a=1', '/services/integrations'],
+    ['en', 'holdedWoocommerce', '', '/services/integrations'],
+    ['en', 'holdedHubspot', '', '/services/integrations'],
+    [
+      'es',
+      'holdedHubspot',
+      '?a=1',
+      '/es/servicios/integraciones/holded-hubspot?a=1',
+    ],
+    ['en', 'verifactu', '', '/'],
+    ['en', 'travelAgencies', '', '/'],
+    ['en', 'viatsyCase', '?a=1', '/case-studies/viatsy?a=1'],
+    ['es', 'viatsyCase', '?a=1', '/es/casos/viatsy?a=1'],
   ] as const)('to %s from %s%s is %s', (target, page, search, expected) => {
     expect(switchHref(target, page, search)).toBe(expected);
+  });
+});
+
+describe('switchHref to a locale without the page', () => {
+  it('goes to the parent when the parent exists there, else home', () => {
+    for (const page of PAGE_IDS) {
+      if (hasLocale(page, 'en')) continue;
+      const { parent } = PAGES[page];
+      const expected =
+        parent && hasLocale(parent, 'en')
+          ? pagePath('en', parent)
+          : pagePath('en', 'home');
+      expect(switchHref('en', page, '?x=1'), page).toBe(expected);
+    }
+  });
+
+  it('only the Holded pairs have a parent that exists in English', () => {
+    expect(
+      PAGE_IDS.filter((page) => {
+        const { parent } = PAGES[page];
+        return !hasLocale(page, 'en') && parent && hasLocale(parent, 'en');
+      }),
+    ).toEqual([...HOLDED_PAGE_IDS]);
   });
 });
 
@@ -200,6 +275,12 @@ describe('routeOf', () => {
     expect(routeOf('privacy')).toBe('/privacy');
     expect(routeOf('home')).toBe('/');
     expect(routeOf('legalNotice')).toBe('/legal-notice');
+    expect(routeOf('verifactu')).toBe('/verifactu');
+    expect(routeOf('travelAgencies')).toBe('/industries/travel-agencies');
+    expect(routeOf('holdedHubspot')).toBe(
+      '/services/integrations/holded-hubspot',
+    );
+    expect(routeOf('viatsyCase')).toBe('/case-studies/viatsy');
   });
 });
 
@@ -232,6 +313,20 @@ describe('localizedRewrite', () => {
     );
     expect(run('input', '/es/aviso-legal')).toBe('/es/legal-notice');
     expect(run('output', '/es/legal-notice')).toBe('/es/aviso-legal');
+    expect(run('input', '/es/servicios/integraciones/holded-hubspot')).toBe(
+      '/es/services/integrations/holded-hubspot',
+    );
+    expect(run('output', '/es/services/integrations/holded-hubspot')).toBe(
+      '/es/servicios/integraciones/holded-hubspot',
+    );
+    expect(run('input', '/es/verifactu-integracion')).toBe('/es/verifactu');
+    expect(run('output', '/es/verifactu')).toBe('/es/verifactu-integracion');
+    expect(run('input', '/es/sectores/agencias-de-viaje')).toBe(
+      '/es/industries/travel-agencies',
+    );
+    expect(run('input', '/es/casos/viatsy')).toBe('/es/case-studies/viatsy');
+    expect(run('output', '/es/case-studies/viatsy')).toBe('/es/casos/viatsy');
+    expect(run('input', '/case-studies/viatsy')).toBe('/case-studies/viatsy');
   });
 
   it('keeps the query', () => {
@@ -376,6 +471,34 @@ describe('service pages', () => {
   );
 });
 
+describe('landing pages', () => {
+  it('prices every landing page from the integration ladder row', () => {
+    expect(LANDING_PAGE_IDS).toEqual([
+      ...HOLDED_PAGE_IDS,
+      'verifactu',
+      'travelAgencies',
+    ]);
+    for (const page of LANDING_PAGE_IDS) {
+      expect(isServicePage(page), page).toBe(false);
+      expect(serviceOf(page), page).toBe('integration');
+      expect(isLandingPage(page)).toBe(true);
+    }
+    expect(PAGE_IDS.filter(isLandingPage)).toEqual([...LANDING_PAGE_IDS]);
+  });
+
+  it('keeps landing pages off the service ladder', () => {
+    expect(SERVICE_PAGE_IDS).not.toContain('verifactu');
+    expect(pagesForService('integration')).toEqual([
+      'automation',
+      'integrations',
+    ]);
+    for (const page of PAGE_IDS) {
+      if (isServicePage(page)) expect(PAGES[page].kind).toBe('service');
+      else expect(PAGES[page].kind).toBeUndefined();
+    }
+  });
+});
+
 describe('breadcrumbTrail', () => {
   it('walks the parents up to the home page', () => {
     expect(breadcrumbTrail('home')).toEqual(['home']);
@@ -384,5 +507,22 @@ describe('breadcrumbTrail', () => {
     for (const page of SERVICE_PAGE_IDS) {
       expect(breadcrumbTrail(page)).toEqual(['home', 'services', page]);
     }
+  });
+
+  it('puts the Holded pairs under integrations and the rest under home', () => {
+    for (const page of HOLDED_PAGE_IDS) {
+      expect(breadcrumbTrail(page)).toEqual([
+        'home',
+        'services',
+        'integrations',
+        page,
+      ]);
+    }
+    expect(breadcrumbTrail('verifactu')).toEqual(['home', 'verifactu']);
+    expect(breadcrumbTrail('travelAgencies')).toEqual([
+      'home',
+      'travelAgencies',
+    ]);
+    expect(breadcrumbTrail('viatsyCase')).toEqual(['home', 'viatsyCase']);
   });
 });

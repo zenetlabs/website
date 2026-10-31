@@ -1,28 +1,44 @@
 import { aboutPage as enAbout } from '@/content/en/about';
 import { faq as enFaq } from '@/content/en/faq';
 import { home as enHome } from '@/content/en/home';
+import { legalMeta as enLegalMeta } from '@/content/en/legal-meta';
 import { llms as enLlms } from '@/content/en/llms';
 import { pricingPage as enPricing } from '@/content/en/pricing';
 import { services as enServices } from '@/content/en/services';
 import { aboutPage as esAbout } from '@/content/es/about';
 import { faq as esFaq } from '@/content/es/faq';
 import { home as esHome } from '@/content/es/home';
+import { legalMeta as esLegalMeta } from '@/content/es/legal-meta';
 import { llms as esLlms } from '@/content/es/llms';
 import { pricingPage as esPricing } from '@/content/es/pricing';
 import { services as esServices } from '@/content/es/services';
-import { loadServicePageContent, loadServicesHubContent } from '@/content/load';
+import {
+  loadCaseContent,
+  loadHoldedPairContent,
+  loadSectorContent,
+  loadServicePageContent,
+  loadServicesHubContent,
+  loadVerifactuContent,
+} from '@/content/load';
 import type {
   AboutPageContent,
+  Card,
+  CasePageContent,
   FaqItem,
   HomeContent,
+  LandingContentMap,
   LlmsCopy,
   Metric,
+  PageFacts,
   PricingPageContent,
   PublishedEntity,
   Rich,
+  ServiceId,
   ServicePageContent,
+  ServicePageLabels,
   Services,
   ServicesHubContent,
+  TitleParts,
 } from '@/content/types';
 import {
   CONTENT,
@@ -30,6 +46,7 @@ import {
   foundedLine,
   legalEntity,
 } from '@/lib/content';
+import { crumbName, hubNames } from '@/lib/crumb-names';
 import {
   type Locale,
   localeFromParam,
@@ -37,9 +54,14 @@ import {
   messages,
   otherLocale,
 } from '@/lib/i18n';
+import { isMeasured } from '@/lib/metrics';
 import { formatNumber, formatPrice, formatPriceSummary } from '@/lib/money';
 import {
+  HOLDED_PAGE_IDS,
+  hasLocale,
+  isLandingPage,
   isServicePage,
+  LANDING_PAGE_IDS,
   type PageId,
   pagesIn,
   SERVICE_PAGE_IDS,
@@ -61,6 +83,8 @@ type Bodies = {
   copy: LlmsCopy;
 };
 
+const LEGAL_META = { en: enLegalMeta, es: esLegalMeta };
+
 const BODIES: Record<Locale, Bodies> = {
   en: {
     home: enHome,
@@ -80,23 +104,66 @@ const BODIES: Record<Locale, Bodies> = {
   },
 };
 
+export type LandingBodies = {
+  viatsy: CasePageContent;
+  spanish?: LandingContentMap;
+};
+
 export type ServiceBodies = {
   hub: ServicesHubContent;
   pages: Record<ServicePageId, ServicePageContent>;
+  landing: LandingBodies;
 };
 
+async function landingBodies(locale: Locale): Promise<LandingBodies> {
+  const { copy: viatsy } = await loadCaseContent(locale);
+  if (!hasLocale('verifactu', locale)) return { viatsy };
+  const [
+    holdedPrestashop,
+    holdedWoocommerce,
+    holdedHubspot,
+    verifactu,
+    travelAgencies,
+  ] = await Promise.all([
+    loadHoldedPairContent('holdedPrestashop'),
+    loadHoldedPairContent('holdedWoocommerce'),
+    loadHoldedPairContent('holdedHubspot'),
+    loadVerifactuContent(),
+    loadSectorContent(),
+  ]);
+  return {
+    viatsy,
+    spanish: {
+      holdedPrestashop: holdedPrestashop.copy,
+      holdedWoocommerce: holdedWoocommerce.copy,
+      holdedHubspot: holdedHubspot.copy,
+      verifactu: verifactu.copy,
+      travelAgencies: travelAgencies.copy,
+    },
+  };
+}
+
 export async function serviceBodies(locale: Locale): Promise<ServiceBodies> {
-  const [{ hub }, automation, integrations, agents, software, training] =
-    await Promise.all([
-      loadServicesHubContent(locale),
-      loadServicePageContent(locale, 'automation'),
-      loadServicePageContent(locale, 'integrations'),
-      loadServicePageContent(locale, 'agents'),
-      loadServicePageContent(locale, 'software'),
-      loadServicePageContent(locale, 'training'),
-    ]);
+  const [
+    { hub },
+    automation,
+    integrations,
+    agents,
+    software,
+    training,
+    landing,
+  ] = await Promise.all([
+    loadServicesHubContent(locale),
+    loadServicePageContent(locale, 'automation'),
+    loadServicePageContent(locale, 'integrations'),
+    loadServicePageContent(locale, 'agents'),
+    loadServicePageContent(locale, 'software'),
+    loadServicePageContent(locale, 'training'),
+    landingBodies(locale),
+  ]);
   return {
     hub,
+    landing,
     pages: {
       automation: automation.copy,
       integrations: integrations.copy,
@@ -105,12 +172,6 @@ export async function serviceBodies(locale: Locale): Promise<ServiceBodies> {
       training: training.copy,
     },
   };
-}
-
-type MeasuredMetric = Metric & { value: number };
-
-function isMeasured(metric: Metric): metric is MeasuredMetric {
-  return metric.value !== null;
 }
 
 function richText(rich: Rich): string {
@@ -174,9 +235,9 @@ function optional(locale: Locale, self: LlmsFile): string {
   ]);
 }
 
-function pagesLines(locale: Locale, { hub, pages }: ServiceBodies): string[] {
+function pagesLines(locale: Locale, bodies: ServiceBodies): string[] {
   return pagesIn(locale).map((page) => {
-    const { title, description } = metaOf(locale, page, { hub, pages });
+    const { title, description } = metaOf(locale, page, bodies);
     return `- [${title}](${markdownUrl(locale, page)}): ${description}`;
   });
 }
@@ -184,14 +245,24 @@ function pagesLines(locale: Locale, { hub, pages }: ServiceBodies): string[] {
 export function metaOf(
   locale: Locale,
   page: PageId,
-  { hub, pages }: ServiceBodies,
+  { hub, pages, landing }: ServiceBodies,
 ): { title: string; description: string } {
   if (page === 'services') return contentMeta(hub.meta);
   if (isServicePage(page)) return contentMeta(pages[page].meta);
+  if (page === 'viatsyCase') return contentMeta(landing.viatsy.meta);
+  if (isLandingPage(page)) {
+    if (!landing.spanish) throw new Error(`No content loaded for ${page}`);
+    return contentMeta(landing.spanish[page].meta);
+  }
+  if (page === 'pricing') return contentMeta(BODIES[locale].pricing.meta);
+  if (page === 'about') return contentMeta(BODIES[locale].about.meta);
+  if (page === 'privacy' || page === 'cookies') {
+    return contentMeta(LEGAL_META[locale][page]);
+  }
   return pageCopy(locale, page);
 }
 
-function faqLines(locale: Locale, { pages }: ServiceBodies): string[] {
+function faqLines(locale: Locale, { pages, landing }: ServiceBodies): string[] {
   const home = pageUrl(locale, 'home');
   return [
     ...BODIES[locale].faq.map(
@@ -204,6 +275,15 @@ function faqLines(locale: Locale, { pages }: ServiceBodies): string[] {
           `- [${question}](${pageUrl(locale, page)}#faq-${id}): ${answer}`,
       ),
     ),
+    ...(landing.spanish
+      ? LANDING_PAGE_IDS.flatMap(
+          (page) =>
+            landing.spanish?.[page].faq.items.map(
+              ({ id, question, answer }) =>
+                `- [${question}](${pageUrl(locale, page)}#faq-${id}): ${answer}`,
+            ) ?? [],
+        )
+      : []),
   ];
 }
 
@@ -279,37 +359,48 @@ function pricingSection(locale: Locale): string {
   );
 }
 
+function factsBlock(
+  locale: Locale,
+  id: ServiceId,
+  facts: PageFacts,
+  labels: ServicePageLabels,
+): string {
+  const price = formatPriceSummary(locale, BODIES[locale].services[id].prices);
+  return [
+    `- ${labels.who}: ${facts.who}`,
+    `- ${labels.price}: ${price} (${labels.taxNote})`,
+    `- ${labels.timeline}: ${facts.timeline}`,
+    `- ${labels.start}: ${facts.start}`,
+  ].join('\n');
+}
+
+function bullets(title: TitleParts, items: readonly Card[]): string {
+  return [
+    `${titleText(title)}:`,
+    ...items.map((item) => `- ${item.title}: ${item.text}`),
+  ].join('\n');
+}
+
+function faqBlocks(items: readonly FaqItem[]): string[] {
+  return items.flatMap(({ question, answer }) => [`#### ${question}`, answer]);
+}
+
 function servicePagesSection(
   locale: Locale,
   { hub, pages }: ServiceBodies,
 ): string {
-  const { services, copy } = BODIES[locale];
-  const labels = messages[locale].servicePage;
+  const { copy } = BODIES[locale];
   return section(
     copy.headings.servicePages,
     [
       `${titleText(hub.title)}. ${hub.lead}`,
       ...SERVICE_PAGE_IDS.flatMap((page) => {
         const body = pages[page];
-        const price = formatPriceSummary(
-          locale,
-          services[serviceOf(page)].prices,
-        );
         return [
           `### [${hub.cards[page].name}](${pageUrl(locale, page)})`,
           body.hero.lead,
-          [
-            `- ${labels.who}: ${body.facts.who}`,
-            `- ${labels.price}: ${price} (${labels.taxNote})`,
-            `- ${labels.timeline}: ${body.facts.timeline}`,
-            `- ${labels.start}: ${body.facts.start}`,
-          ].join('\n'),
-          [
-            `${titleText(body.useCases.title)}:`,
-            ...body.useCases.items.map(
-              (item) => `- ${item.title}: ${item.text}`,
-            ),
-          ].join('\n'),
+          factsBlock(locale, serviceOf(page), body.facts, hub.labels),
+          bullets(body.useCases.title, body.useCases.items),
           [
             `${titleText(body.how.title)}:`,
             ...body.how.steps.map(
@@ -320,10 +411,7 @@ function servicePagesSection(
             `${titleText(body.case.title)}: ${body.case.text}`,
             ...body.case.points.map((point) => `- ${point}`),
           ].join('\n'),
-          ...body.faq.items.flatMap(({ question, answer }) => [
-            `#### ${question}`,
-            answer,
-          ]),
+          ...faqBlocks(body.faq.items),
         ];
       }),
     ],
@@ -331,7 +419,113 @@ function servicePagesSection(
   );
 }
 
-function casesSection(locale: Locale): string {
+function holdedSection(
+  locale: Locale,
+  { hub, landing }: ServiceBodies,
+): string[] {
+  const { spanish } = landing;
+  if (!spanish) return [];
+  return [
+    section(
+      BODIES[locale].copy.headings.holded,
+      HOLDED_PAGE_IDS.flatMap((page) => {
+        const body = spanish[page];
+        return [
+          `### [${crumbName(hubNames(hub), page)}](${pageUrl(locale, page)})`,
+          body.hero.lead,
+          factsBlock(locale, 'integration', body.facts, hub.labels),
+          [
+            `${titleText(body.sync.title)}:`,
+            ...body.sync.rows.map(
+              (row) => `- ${row.data}: ${row.direction}. ${row.when}`,
+            ),
+          ].join('\n'),
+          body.sync.note,
+          bullets(body.edgeCases.title, body.edgeCases.items),
+          ...faqBlocks(body.faq.items),
+        ];
+      }),
+      '\n\n',
+    ),
+  ];
+}
+
+function verifactuBlocks(
+  locale: Locale,
+  { hub, landing }: ServiceBodies,
+): string[] {
+  const body = landing.spanish?.verifactu;
+  if (!body) return [];
+  const { deadlines, requirements, work } = body;
+  return [
+    `### [${crumbName(hubNames(hub), 'verifactu')}](${pageUrl(locale, 'verifactu')})`,
+    body.hero.lead,
+    deadlines.rows.map((row) => `- ${row.who}: ${row.date}`).join('\n'),
+    `${deadlines.announced} ${deadlines.producers}`,
+    [
+      deadlines.exclusionsTitle,
+      ...deadlines.exclusions.map((item) => `- ${item}`),
+    ].join('\n'),
+    deadlines.checked,
+    bullets(requirements.title, requirements.items),
+    bullets(work.title, work.items),
+    `${work.limits} ${body.disclaimer}`,
+    ...faqBlocks(body.faq.items),
+  ];
+}
+
+function sectorSection(
+  locale: Locale,
+  { hub, landing }: ServiceBodies,
+): string[] {
+  const body = landing.spanish?.travelAgencies;
+  if (!body) return [];
+  return [
+    section(
+      `[${crumbName(hubNames(hub), 'travelAgencies')}](${pageUrl(locale, 'travelAgencies')})`,
+      [
+        body.hero.lead,
+        body.work.items
+          .map((item) => `- ${item.title}: ${item.today} → ${item.automated}`)
+          .join('\n'),
+        body.platform.text,
+        ...faqBlocks(body.faq.items),
+      ],
+      '\n\n',
+    ),
+  ];
+}
+
+function caseBlocks(
+  locale: Locale,
+  { hub, landing }: ServiceBodies,
+  metrics: readonly Metric[],
+): string[] {
+  const body = landing.viatsy;
+  return [
+    `[${crumbName(hubNames(hub), 'viatsyCase')}](${pageUrl(locale, 'viatsyCase')})`,
+    `#### ${titleText(body.problem.title)}`,
+    ...body.problem.paragraphs,
+    `#### ${titleText(body.built.title)}`,
+    body.built.items.map((item) => `- ${item.title}: ${item.text}`).join('\n'),
+    `#### ${titleText(body.operations.title)}`,
+    body.operations.steps
+      .map((step, index) => `${index + 1}. ${step.label}: ${step.text}`)
+      .join('\n'),
+    `#### ${titleText(body.results.title)}`,
+    [
+      ...body.results.points.map((point) => `- ${point}`),
+      ...metrics
+        .filter(isMeasured)
+        .map(
+          (metric) =>
+            `- ${metric.label}: ${formatNumber(locale, metric.value)}${metric.unit}`,
+        ),
+    ].join('\n'),
+  ];
+}
+
+function casesSection(locale: Locale, bodies: ServiceBodies): string {
   const { home, copy } = BODIES[locale];
   return section(
     copy.headings.cases,
@@ -348,6 +542,9 @@ function casesSection(locale: Locale): string {
               `- ${metric.label}: ${formatNumber(locale, metric.value)}${metric.unit}`,
           ),
       ].join('\n'),
+      ...(item.link?.page === 'viatsyCase'
+        ? caseBlocks(locale, bodies, item.metrics)
+        : []),
     ]),
     '\n\n',
   );
@@ -393,6 +590,7 @@ export async function buildLlmsFull(
     ),
     pricingSection(locale),
     servicePagesSection(locale, bodies),
+    ...holdedSection(locale, bodies),
     section(
       copy.headings.problems,
       home.problems.items.flatMap((item) => [
@@ -406,7 +604,11 @@ export async function buildLlmsFull(
       ? [
           section(
             titleText(verifactu.title),
-            [...verifactu.paragraphs, verifactu.checked],
+            [
+              ...verifactu.paragraphs,
+              verifactu.checked,
+              ...verifactuBlocks(locale, bodies),
+            ],
             '\n\n',
           ),
         ]
@@ -416,7 +618,8 @@ export async function buildLlmsFull(
       home.process.steps.flatMap((step) => [`### ${step.label}`, step.text]),
       '\n\n',
     ),
-    casesSection(locale),
+    casesSection(locale, bodies),
+    ...sectorSection(locale, bodies),
     aboutSection(locale),
     section(copy.headings.portfolio, portfolioLines(locale)),
     section(

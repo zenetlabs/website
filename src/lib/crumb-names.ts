@@ -1,5 +1,5 @@
 import type { ServicesHubContent } from '@/content/types';
-import type { PageId, ServicePageId } from '@/lib/page-registry';
+import { type PageId, SERVICE_PAGE_IDS } from '@/lib/page-registry';
 import { SITE_NAME } from '@/lib/seo';
 
 export type Names = Partial<Record<PageId, string>>;
@@ -11,12 +11,11 @@ export function crumbName(names: Names, page: PageId): string {
 }
 
 export function hubNames(hub: ServicesHubContent): Names {
-  return { home: SITE_NAME, services: hub.meta.title };
-}
-
-export function servicePageNames(
-  hub: ServicesHubContent,
-  page: ServicePageId,
-): Names {
-  return { ...hubNames(hub), [page]: hub.cards[page].name };
+  const names: Names = {
+    home: SITE_NAME,
+    services: hub.meta.title,
+    ...hub.landing,
+  };
+  for (const page of SERVICE_PAGE_IDS) names[page] = hub.cards[page].name;
+  return names;
 }

@@ -1,5 +1,13 @@
 import { expect, test } from '@playwright/test';
-import { gotoHydrated, PAGES, PAIRS, waitForHydration } from './helpers';
+import {
+  gotoHydrated,
+  HOLDED_PAGES,
+  PAGES,
+  PAIRS,
+  SECTOR_PAGE,
+  VERIFACTU_PAGE,
+  waitForHydration,
+} from './helpers';
 
 for (const url of PAGES) {
   test(`${url} hydrates without errors`, async ({ page }) => {
@@ -32,8 +40,19 @@ const SWITCHES: ReadonlyArray<Switch> = [
     [pair.es, 'EN', pair.en, 'en'],
   ]),
   ['/privacy?x=1', 'ES', '/es/privacidad?x=1', 'es'],
+  ...HOLDED_PAGES.map(
+    (path): Switch => [path, 'EN', '/services/integrations', 'en'],
+  ),
+  [VERIFACTU_PAGE, 'EN', '/', 'en'],
+  [SECTOR_PAGE, 'EN', '/', 'en'],
   ['/es/aviso-legal', 'EN', '/', 'en'],
   ['/es/aviso-legal?x=1', 'EN', '/', 'en'],
+  [
+    '/es/servicios/integraciones/holded-hubspot?x=1',
+    'EN',
+    '/services/integrations',
+    'en',
+  ],
   ['/nope', 'ES', '/es', 'es'],
   ['/es/nope', 'EN', '/', 'en'],
 ];

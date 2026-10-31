@@ -117,14 +117,43 @@ describe('inner page descriptions', () => {
 });
 
 describe('single-locale pages', () => {
-  const head = pageHeadFor('es', 'legalNotice');
+  const singles = pagesIn('es').filter((page) => !hasLocale(page, 'en'));
 
-  it('has only its own hreflang and no x-default or alternate og locale', () => {
-    const alternates = head.links.filter(
-      (link) => link.rel === 'alternate' && link.hrefLang,
-    );
-    expect(alternates.map((link) => link.hrefLang)).toEqual(['es']);
-    expect(contents(head.meta, 'property', 'og:locale:alternate')).toEqual([]);
+  it('covers the legal notice and the five landing pages', () => {
+    expect(singles).toEqual([
+      'holdedPrestashop',
+      'holdedWoocommerce',
+      'holdedHubspot',
+      'verifactu',
+      'travelAgencies',
+      'legalNotice',
+    ]);
+  });
+
+  it.each(singles)(
+    '%s has only its own hreflang and no x-default or alternate og locale',
+    (page) => {
+      const head = pageHeadFor('es', page);
+      const alternates = head.links.filter(
+        (link) => link.rel === 'alternate' && link.hrefLang,
+      );
+      expect(alternates.map((link) => link.hrefLang)).toEqual(['es']);
+      expect(contents(head.meta, 'property', 'og:locale:alternate')).toEqual(
+        [],
+      );
+    },
+  );
+
+  it('gives the case page both languages and an x-default', () => {
+    const head = pageHeadFor('en', 'viatsyCase');
+    const alternates = head.links
+      .filter((link) => link.rel === 'alternate' && link.hrefLang)
+      .map((link) => [link.hrefLang, link.href]);
+    expect(alternates).toEqual([
+      ['en', `${SITE}/case-studies/viatsy`],
+      ['es', `${SITE}/es/casos/viatsy`],
+      ['x-default', `${SITE}/case-studies/viatsy`],
+    ]);
   });
 });
 

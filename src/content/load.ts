@@ -1,15 +1,18 @@
 import type {
   AboutPageContent,
+  CasePageContent,
   CompanyCopy,
   FaqItem,
+  HoldedPairContent,
   HomeContent,
+  Metric,
   PricingPageContent,
   ServicePageContent,
   Services,
   ServicesHubContent,
 } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
-import type { ServicePageId } from '@/lib/page-registry';
+import type { HoldedPageId, ServicePageId } from '@/lib/page-registry';
 
 const HOME = {
   en: () =>
@@ -54,6 +57,11 @@ const ABOUT = {
     ]),
 };
 
+const LEGAL_META = {
+  en: () => import('@/content/en/legal-meta').then((m) => m.legalMeta),
+  es: () => import('@/content/es/legal-meta').then((m) => m.legalMeta),
+};
+
 const SERVICE_PAGES: Record<
   ServicePageId,
   Record<Locale, () => Promise<ServicePageContent>>
@@ -90,6 +98,40 @@ const SERVICE_PAGES: Record<
     es: () =>
       import('@/content/es/service-pages/training').then((m) => m.training),
   },
+};
+
+const HOLDED_PAIRS: Record<HoldedPageId, () => Promise<HoldedPairContent>> = {
+  holdedPrestashop: () =>
+    import('@/content/es/holded-pairs/holded-prestashop').then(
+      (m) => m.holdedPrestashop,
+    ),
+  holdedWoocommerce: () =>
+    import('@/content/es/holded-pairs/holded-woocommerce').then(
+      (m) => m.holdedWoocommerce,
+    ),
+  holdedHubspot: () =>
+    import('@/content/es/holded-pairs/holded-hubspot').then(
+      (m) => m.holdedHubspot,
+    ),
+};
+
+const VERIFACTU = () =>
+  import('@/content/es/verifactu-page').then((m) => m.verifactuPage);
+
+const TRAVEL_AGENCIES = () =>
+  import('@/content/es/travel-agencies').then((m) => m.travelAgencies);
+
+const VIATSY_CASE = {
+  en: () =>
+    Promise.all([
+      import('@/content/en/case-pages/viatsy'),
+      import('@/content/en/cases'),
+    ]),
+  es: () =>
+    Promise.all([
+      import('@/content/es/case-pages/viatsy'),
+      import('@/content/es/cases'),
+    ]),
 };
 
 const SERVICES_HUB = {
@@ -153,4 +195,44 @@ export async function loadServicesHubContent(locale: Locale): Promise<{
 }> {
   const [{ servicesHub }, { services }] = await SERVICES_HUB[locale]();
   return { hub: servicesHub, services };
+}
+
+async function loadSpanishLanding<T>(copy: () => Promise<T>): Promise<{
+  copy: T;
+  hub: ServicesHubContent;
+  services: Services;
+}> {
+  const [loaded, [{ servicesHub }, { services }]] = await Promise.all([
+    copy(),
+    SERVICES_HUB.es(),
+  ]);
+  return { copy: loaded, hub: servicesHub, services };
+}
+
+export function loadHoldedPairContent(page: HoldedPageId) {
+  return loadSpanishLanding(HOLDED_PAIRS[page]);
+}
+
+export function loadVerifactuContent() {
+  return loadSpanishLanding(VERIFACTU);
+}
+
+export function loadSectorContent() {
+  return loadSpanishLanding(TRAVEL_AGENCIES);
+}
+
+export async function loadCaseContent(locale: Locale): Promise<{
+  copy: CasePageContent;
+  hub: ServicesHubContent;
+  metrics: readonly Metric[];
+}> {
+  const [[{ viatsyCase }, { viatsy }], [{ servicesHub }]] = await Promise.all([
+    VIATSY_CASE[locale](),
+    SERVICES_HUB[locale](),
+  ]);
+  return { copy: viatsyCase, hub: servicesHub, metrics: viatsy.metrics };
+}
+
+export function loadLegalMeta(locale: Locale) {
+  return LEGAL_META[locale]();
 }

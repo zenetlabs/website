@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type Locale, locales, messages } from '@/lib/i18n';
+import { type Locale, locales } from '@/lib/i18n';
 import { metaOf } from '@/lib/llms';
 import { formatPrice, formatPriceSummary } from '@/lib/money';
 import {
@@ -68,7 +68,9 @@ describe('service page content parity', () => {
 
   it.each(locales)('gives %s labels and a four-step process', (locale) => {
     expect(
-      Object.values(messages[locale].servicePage).every((text) => text !== ''),
+      Object.values(SERVICES_HUB_CONTENT[locale].labels).every(
+        (text) => text !== '',
+      ),
     ).toBe(true);
     for (const page of SERVICE_PAGE_IDS) {
       expect(SERVICE_PAGE_CONTENT[locale][page].how.steps).toHaveLength(4);

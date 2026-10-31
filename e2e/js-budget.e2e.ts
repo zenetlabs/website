@@ -7,7 +7,16 @@ import { pricingPage as enPricing } from '../src/content/en/pricing';
 import { aboutPage as esAbout } from '../src/content/es/about';
 import { home as esHome } from '../src/content/es/home';
 import { pricingPage as esPricing } from '../src/content/es/pricing';
-import { gotoHydrated, PAIRS, tagsOf } from './helpers';
+import {
+  CASE_PAIR,
+  ES_ONLY_PAGES,
+  gotoHydrated,
+  HOLDED_PAGES,
+  PAIRS,
+  SECTOR_PAGE,
+  tagsOf,
+  VERIFACTU_PAGE,
+} from './helpers';
 
 Object.assign(globalThis, { __SITE__: siteConfig(undefined) });
 const { FAQ } = await import('../test/faq');
@@ -15,7 +24,7 @@ const { FAQ } = await import('../test/faq');
 const R1_ENTRY_JS_GZIP = 128_361;
 const BUDGET = R1_ENTRY_JS_GZIP + 10_240;
 
-const URLS = PAIRS.flatMap(({ en, es }) => [en, es]);
+const URLS = [...PAIRS.flatMap(({ en, es }) => [en, es]), ...ES_ONLY_PAGES];
 
 type Kind =
   | 'home'
@@ -27,10 +36,16 @@ type Kind =
   | 'integrations'
   | 'agents'
   | 'software'
-  | 'training';
+  | 'training'
+  | 'prestashop'
+  | 'woocommerce'
+  | 'hubspot'
+  | 'verifactu'
+  | 'sector'
+  | 'case';
 type Locale = 'en' | 'es';
 
-const NEEDLES: Record<Kind, Record<Locale, string>> = {
+const NEEDLES: Record<Kind, Partial<Record<Locale, string>>> = {
   home: {
     en: enHome.problems.items[0]?.title ?? '',
     es: esHome.problems.items[0]?.title ?? '',
@@ -65,6 +80,12 @@ const NEEDLES: Record<Kind, Record<Locale, string>> = {
     en: 'Who should attend',
     es: 'Cualquiera que escriba, analice o responda',
   },
+  prestashop: { es: 'Productos sin referencia' },
+  woocommerce: { es: 'Picos de pedidos' },
+  hubspot: { es: 'Oportunidades sin datos fiscales' },
+  verifactu: { es: 'Registros encadenados' },
+  sector: { es: 'Reservas y confirmaciones de proveedores' },
+  case: { en: 'a lot of copying', es: 'mucho copiar y pegar' },
 };
 
 const PAGES: ReadonlyArray<{
@@ -106,6 +127,13 @@ const PAGES: ReadonlyArray<{
     locale: 'es',
     kinds: ['training'],
   },
+  { path: HOLDED_PAGES[0], locale: 'es', kinds: ['prestashop'] },
+  { path: HOLDED_PAGES[1], locale: 'es', kinds: ['woocommerce'] },
+  { path: HOLDED_PAGES[2], locale: 'es', kinds: ['hubspot'] },
+  { path: VERIFACTU_PAGE, locale: 'es', kinds: ['verifactu'] },
+  { path: SECTOR_PAGE, locale: 'es', kinds: ['sector'] },
+  { path: CASE_PAIR.en, locale: 'en', kinds: ['case'] },
+  { path: CASE_PAIR.es, locale: 'es', kinds: ['case'] },
 ];
 
 const KINDS: readonly Kind[] = [
@@ -119,6 +147,12 @@ const KINDS: readonly Kind[] = [
   'agents',
   'software',
   'training',
+  'prestashop',
+  'woocommerce',
+  'hubspot',
+  'verifactu',
+  'sector',
+  'case',
 ];
 const LOCALES: readonly Locale[] = ['en', 'es'];
 
@@ -162,7 +196,7 @@ for (const { path, locale, kinds } of PAGES) {
   }) => {
     const html = await (await request.get(path)).text();
     for (const kind of kinds) {
-      const needle = NEEDLES[kind][locale];
+      const needle = NEEDLES[kind][locale] ?? '';
       expect(needle.length, `${kind} needle`).toBeGreaterThan(8);
       expect(html, `${kind} in ${path}`).toContain(needle);
     }
@@ -171,6 +205,7 @@ for (const { path, locale, kinds } of PAGES) {
       for (const other of LOCALES) {
         if (kinds.includes(kind) && other === locale) continue;
         const needle = NEEDLES[kind][other];
+        if (needle === undefined) continue;
         expect(
           scripts.filter((script) => script.text.includes(needle)),
           `${kind}/${other} in ${path}`,
@@ -196,9 +231,8 @@ for (const { path, locale, kinds } of PAGES.filter((entry) =>
     const scripts = await Promise.all(pending);
     expect(scripts.length).toBeGreaterThan(0);
     for (const kind of kinds) {
-      expect(
-        scripts.filter((text) => text.includes(NEEDLES[kind][other])),
-      ).toEqual([]);
+      const needle = NEEDLES[kind][other] ?? '';
+      expect(scripts.filter((text) => text.includes(needle))).toEqual([]);
     }
   });
 }
