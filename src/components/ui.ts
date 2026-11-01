@@ -1,6 +1,12 @@
 export const PRIMARY_BUTTON =
   'inline-flex min-h-11 items-center justify-center rounded-input bg-accent px-5 py-2.5 text-sm font-semibold text-accent-fg motion-safe:transition-colors motion-safe:duration-200 hover:bg-accent/85 disabled:cursor-not-allowed disabled:opacity-50';
 
+export const SECONDARY_BUTTON =
+  'inline-flex min-h-11 items-center justify-center rounded-input border border-border px-5 py-2.5 text-sm font-semibold motion-safe:transition-colors motion-safe:duration-200 hover:bg-surface';
+
+export const SECONDARY_BUTTON_SM =
+  'inline-flex min-h-11 items-center justify-center rounded-input border border-border px-4 py-2 text-sm font-medium motion-safe:transition-colors motion-safe:duration-200 hover:bg-surface';
+
 export const EYEBROW =
   'font-mono text-xs uppercase tracking-[0.08em] text-muted-fg';
 

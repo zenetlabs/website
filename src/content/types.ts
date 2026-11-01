@@ -7,6 +7,7 @@ import type {
 } from '@/lib/calculator-answers';
 import type { LandingPageId, PageId, ServicePageId } from '@/lib/page-registry';
 import type { PortfolioKey } from '@/lib/portfolio';
+import type { WebMcpToolName } from '@/lib/webmcp/names';
 
 export type Currency = 'SGD' | 'EUR';
 export type Country = 'SG' | 'ES';
@@ -620,5 +621,31 @@ export type ChatCopy = {
     error: string;
     rate: string;
     captcha: string;
+  };
+};
+
+export type WebMcpCopy = {
+  titles: Record<WebMcpToolName, string>;
+  notes: Partial<Record<WebMcpToolName, string>>;
+  dialog: {
+    title: string;
+    intro: string;
+    when: string;
+    confirm: string;
+    confirming: string;
+    cancel: string;
+    close: string;
+    success: {
+      title: string;
+      text: string;
+      meet: string;
+      meetLater: string;
+    };
+    errors: {
+      captcha: string;
+      rate: string;
+      taken: string;
+      error: string;
+    };
   };
 };

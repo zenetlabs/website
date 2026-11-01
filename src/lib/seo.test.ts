@@ -8,7 +8,13 @@ import {
   pageLocales,
   pagesIn,
 } from '@/lib/page-registry';
-import { jsonLd, markdownUrl, pageHead, pageUrl } from '@/lib/seo';
+import {
+  jsonLd,
+  markdownUrl,
+  originTrialMeta,
+  pageHead,
+  pageUrl,
+} from '@/lib/seo';
 import { SERVICE_BODIES } from '../../test/service-bodies';
 
 const SITE = 'https://zenetlabs.com';
@@ -215,5 +221,17 @@ describe('jsonLd', () => {
     expect(entry.type).toBe('application/ld+json');
     expect(entry.children).not.toContain('<');
     expect(JSON.parse(entry.children)).toEqual(data);
+  });
+});
+
+describe('originTrialMeta', () => {
+  it('emits nothing without a token', () => {
+    expect(originTrialMeta(null)).toEqual([]);
+  });
+
+  it('emits one origin-trial meta for a token', () => {
+    expect(originTrialMeta('<token>')).toEqual([
+      { httpEquiv: 'origin-trial', content: '<token>' },
+    ]);
   });
 });

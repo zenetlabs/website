@@ -14,6 +14,9 @@ export default defineConfig({
     __ASSISTANT__: JSON.stringify(
       siteConfig(process.env.CLOUDFLARE_ENV).assistant.published,
     ),
+    __WEBMCP__: JSON.stringify(
+      siteConfig(process.env.CLOUDFLARE_ENV).webmcp.published,
+    ),
     __CHAT_FAKE__: JSON.stringify(
       serverConfig(process.env.CLOUDFLARE_ENV).assistant.model === 'fake',
     ),

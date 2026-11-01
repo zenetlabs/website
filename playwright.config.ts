@@ -14,7 +14,21 @@ export default defineConfig({
     trace: process.env.CI ? 'retain-on-failure' : 'on-first-retry',
     screenshot: process.env.CI ? 'only-on-failure' : 'off',
   },
-  projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
+  projects: [
+    {
+      name: 'chromium',
+      testIgnore: '**/webmcp-real.e2e.ts',
+      use: { browserName: 'chromium' },
+    },
+    {
+      name: 'chromium-webmcp',
+      testMatch: '**/webmcp-real.e2e.ts',
+      use: {
+        browserName: 'chromium',
+        launchOptions: { args: ['--enable-blink-features=WebMCP'] },
+      },
+    },
+  ],
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : [

@@ -106,6 +106,7 @@ describe('submitBooking', () => {
     await expect(submitBooking(REQUEST)).resolves.toEqual({
       kind: 'rejected',
       reason: 'limit',
+      envelope: { ok: true, result: { status: 'rejected', reason: 'limit' } },
     });
     const [url, init] = send.mock.calls[0] ?? [];
     expect(url).toBe('/api/tools/book_meeting');
@@ -121,11 +122,12 @@ describe('submitBooking', () => {
     await expect(submitBooking(REQUEST)).resolves.toEqual({
       kind: 'failed',
       error: 'rate',
+      envelope: { ok: false, error: 'rate' },
     });
     vi.stubGlobal('fetch', async () => {
       throw new TypeError('offline');
     });
-    await expect(submitBooking(REQUEST)).resolves.toEqual({
+    await expect(submitBooking(REQUEST)).resolves.toMatchObject({
       kind: 'failed',
       error: 'unavailable',
     });

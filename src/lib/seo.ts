@@ -20,6 +20,13 @@ type Link = { rel: string; href: string; hrefLang?: string; type?: string };
 const OG_LOCALES: Record<Locale, string> = { en: 'en_SG', es: 'es_ES' };
 export const SITE_NAME = 'Zenet Labs';
 
+// The WebMCP origin trial reads its token from a meta tag; no token, no tag.
+export function originTrialMeta(
+  token: string | null,
+): { httpEquiv: string; content: string }[] {
+  return token === null ? [] : [{ httpEquiv: 'origin-trial', content: token }];
+}
+
 export function pageUrl(locale: Locale, page: PageId): string {
   return `${SITE.url}${pagePath(locale, page)}`;
 }

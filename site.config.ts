@@ -6,6 +6,7 @@ export type SiteConfig = {
   calculator: { published: boolean };
   booking: { published: boolean };
   assistant: { published: boolean };
+  webmcp: { published: boolean; originTrialToken: string | null };
 };
 
 const local: SiteConfig = {
@@ -16,6 +17,7 @@ const local: SiteConfig = {
   calculator: { published: true },
   booking: { published: true },
   assistant: { published: true },
+  webmcp: { published: true, originTrialToken: null },
 };
 
 const production: SiteConfig = {
@@ -30,6 +32,12 @@ const production: SiteConfig = {
   booking: { published: false },
   // TODO(albert): set true after the model bake-off passes (docs/ai-assistant.md "Activation")
   assistant: { published: false },
+  // Read-only tools plus a Turnstile-gated, visitor-confirmed booking, and nothing loads where the browser lacks WebMCP.
+  webmcp: {
+    published: true,
+    // TODO(albert): optional WebMCP origin-trial token for https://zenetlabs.com (docs/ai-assistant.md "WebMCP")
+    originTrialToken: null,
+  },
 };
 
 export function siteConfig(env: string | undefined): SiteConfig {

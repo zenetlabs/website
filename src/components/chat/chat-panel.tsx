@@ -11,7 +11,11 @@ import {
 } from 'react';
 import { BookingCard } from '@/components/chat/booking-card';
 import { CONTROL, LazyTurnstile } from '@/components/form-parts';
-import { PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
+import {
+  PRIMARY_BUTTON,
+  SECONDARY_BUTTON_SM,
+  TEXT_LINK,
+} from '@/components/ui';
 import type { ChatCopy } from '@/content/types';
 import { CHAT_LIMITS } from '@/lib/chat-events';
 import {
@@ -39,9 +43,6 @@ const FALLBACK: ReadonlySet<string> = new Set([
   'origin',
   'unsupported',
 ]);
-
-const SECONDARY_BUTTON =
-  'inline-flex min-h-11 items-center justify-center rounded-input border border-border px-4 py-2 text-sm font-medium motion-safe:transition-colors motion-safe:duration-200 hover:bg-surface';
 
 function Speaker({ children }: { children: ReactNode }) {
   return <span className="sr-only">{children}: </span>;
@@ -260,7 +261,7 @@ export function ChatPanel({
                     <a
                       href={item.href}
                       onClick={open(item)}
-                      className={`${SECONDARY_BUTTON} ${TEXT_LINK}`}
+                      className={`${SECONDARY_BUTTON_SM} ${TEXT_LINK}`}
                     >
                       {copy.open.replace('{label}', labelFor(item, copy))}
                     </a>
@@ -303,7 +304,7 @@ export function ChatPanel({
                     type="button"
                     disabled={!canSend}
                     onClick={() => submit(suggestion)}
-                    className={SECONDARY_BUTTON}
+                    className={SECONDARY_BUTTON_SM}
                   >
                     {suggestion}
                   </button>

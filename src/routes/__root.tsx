@@ -13,7 +13,7 @@ import { consentDefaultsScripts } from '@/lib/consent-defaults';
 import { hasNotFound } from '@/lib/current-page';
 import { fontPreload } from '@/lib/font-preload';
 import { localeFromPath, messages, useLocale, useMessages } from '@/lib/i18n';
-import { SITE_NAME } from '@/lib/seo';
+import { originTrialMeta, SITE_NAME } from '@/lib/seo';
 import { SITE } from '@/lib/site';
 import { THEME_COLOR_DARK, THEME_COLOR_LIGHT } from '@/lib/theme-colors';
 import appCss from '@/styles/app.css?url';
@@ -38,6 +38,7 @@ export const Route = createRootRoute({
           content: missing ? notFound.description : meta.description,
         },
         ...(missing ? [{ name: 'robots', content: 'noindex' }] : []),
+        ...originTrialMeta(SITE.webmcp.originTrialToken),
       ],
       links: [
         { rel: 'manifest', href: '/manifest.webmanifest' },

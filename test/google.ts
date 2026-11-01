@@ -50,6 +50,7 @@ export const TEST_SITE: SiteConfig = {
   calculator: { published: false },
   booking: { published: true },
   assistant: { published: true },
+  webmcp: { published: true, originTrialToken: null },
 };
 
 type Interval = { start: number; end: number };

@@ -2,9 +2,9 @@ import { useHydrated } from '@tanstack/react-router';
 import { type FormEvent, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import {
-  CONTROL,
+  BookingDetailsFields,
+  BookingSuccess,
   ConsentCheckbox,
-  Field,
   FormAlert,
   Honeypot,
   LazyTurnstile,
@@ -121,30 +121,18 @@ export function BookingForm({
   if (confirmed) {
     return (
       <div className="grid gap-4 rounded-card border border-border bg-surface p-6 md:p-8">
-        <h2
-          ref={successHeading}
-          tabIndex={-1}
-          className="text-3xl outline-hidden"
-        >
-          {copy.success.title}
-        </h2>
-        <p>
-          {copy.success.when
+        <BookingSuccess
+          headingRef={successHeading}
+          headingClass="text-3xl"
+          title={copy.success.title}
+          when={copy.success.when
             .replace('{time}', confirmed.when)
             .replace('{zone}', confirmed.zone)}
-        </p>
-        <p className="text-muted-fg">
-          {copy.success.text.replace('{email}', confirmed.email)}
-        </p>
-        {confirmed.meetUrl ? (
-          <p>
-            <a href={confirmed.meetUrl} className={TEXT_LINK}>
-              {copy.success.meet}
-            </a>
-          </p>
-        ) : (
-          <p className="text-muted-fg">{copy.success.meetLater}</p>
-        )}
+          text={copy.success.text.replace('{email}', confirmed.email)}
+          meetUrl={confirmed.meetUrl}
+          meet={copy.success.meet}
+          meetLater={copy.success.meetLater}
+        />
       </div>
     );
   }
@@ -170,55 +158,15 @@ export function BookingForm({
           copy={copy.picker}
         />
         <p className="text-sm font-medium">{form.details}</p>
-        <Field label={form.name}>
-          {(id) => (
-            <input
-              id={id}
-              name="name"
-              required
-              maxLength={100}
-              autoComplete="name"
-              className={CONTROL}
-            />
-          )}
-        </Field>
-        <Field label={form.email}>
-          {(id) => (
-            <input
-              id={id}
-              name="email"
-              type="email"
-              required
-              maxLength={254}
-              autoComplete="email"
-              className={CONTROL}
-            />
-          )}
-        </Field>
-        <Field label={form.company}>
-          {(id) => (
-            <input
-              id={id}
-              name="company"
-              maxLength={100}
-              autoComplete="organization"
-              className={CONTROL}
-            />
-          )}
-        </Field>
-        <Field label={form.topic}>
-          {(id) => (
-            <textarea
-              id={id}
-              name="topic"
-              required
-              minLength={10}
-              maxLength={1000}
-              rows={4}
-              className={`${CONTROL} resize-y`}
-            />
-          )}
-        </Field>
+        <BookingDetailsFields
+          labels={{
+            name: form.name,
+            email: form.email,
+            company: form.company,
+            topic: form.topic,
+          }}
+          topicRows={4}
+        />
         <Honeypot label={form.honeypot} />
         <ConsentCheckbox
           locale={locale}

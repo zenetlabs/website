@@ -21,3 +21,14 @@ function bootAnalytics() {
 }
 
 bootAnalytics();
+
+// Only where the browser exposes WebMCP; a dark build folds this away.
+function bootWebMcp() {
+  if (!__WEBMCP__) return;
+  if (!('modelContext' in document || 'modelContext' in navigator)) return;
+  import('@/lib/webmcp/boot')
+    .then((m) => m.scheduleWebMcp())
+    .catch(() => undefined);
+}
+
+bootWebMcp();
