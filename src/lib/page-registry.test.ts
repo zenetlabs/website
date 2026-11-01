@@ -7,6 +7,7 @@ import {
   HOLDED_PAGE_IDS,
   hasLocale,
   isLandingPage,
+  isPublished,
   isServicePage,
   LANDING_PAGE_IDS,
   markdownPath,
@@ -136,6 +137,56 @@ describe('pageLocales and hasLocale', () => {
     for (const locale of locales) {
       expect(hasLocale(page, locale)).toBe(expected.some((l) => l === locale));
     }
+  });
+});
+
+describe('the calculator page', () => {
+  const published = { calculator: { published: true } };
+  const unpublished = { calculator: { published: false } };
+
+  it('sits under pricing with a public slug per locale', () => {
+    expect(breadcrumbTrail('calculator')).toEqual([
+      'home',
+      'pricing',
+      'calculator',
+    ]);
+    expect(pagePath('en', 'calculator')).toBe('/pricing/calculator');
+    expect(pagePath('es', 'calculator')).toBe('/es/precios/calculadora');
+    expect(routeOf('calculator')).toBe('/pricing/calculator');
+    expect(pageForSlug('/precios/calculadora')).toBe('calculator');
+    expect(run('input', '/es/precios/calculadora')).toBe(
+      '/es/pricing/calculator',
+    );
+    expect(run('output', '/es/pricing/calculator')).toBe(
+      '/es/precios/calculadora',
+    );
+  });
+
+  it('is published by the flag and every other page always is', () => {
+    expect(isPublished('calculator', published)).toBe(true);
+    expect(isPublished('calculator', unpublished)).toBe(false);
+    for (const page of PAGE_IDS.filter((id) => id !== 'calculator')) {
+      expect(isPublished(page, unpublished)).toBe(true);
+    }
+  });
+
+  it('is listed only while the flag is on, right after pricing', () => {
+    for (const locale of locales) {
+      expect(pagesIn(locale, unpublished)).not.toContain('calculator');
+      const listed = pagesIn(locale, published);
+      expect(listed).toContain('calculator');
+      expect(listed.indexOf('calculator')).toBe(listed.indexOf('pricing') + 1);
+    }
+  });
+
+  it('is the only page behind a flag', () => {
+    expect(PAGE_IDS.filter((id) => PAGES[id].flag !== undefined)).toEqual([
+      'calculator',
+    ]);
+  });
+
+  it('is off in the production build the tests run against', () => {
+    expect(isPublished('calculator')).toBe(false);
   });
 });
 

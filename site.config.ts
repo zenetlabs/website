@@ -3,6 +3,7 @@ export type SiteConfig = {
   turnstileSiteKey: string;
   cfBeaconToken: string;
   ga4Id: string | null;
+  calculator: { published: boolean };
 };
 
 const local: SiteConfig = {
@@ -10,6 +11,7 @@ const local: SiteConfig = {
   turnstileSiteKey: '1x00000000000000000000AA',
   cfBeaconToken: '',
   ga4Id: 'G-LOCALTEST00',
+  calculator: { published: true },
 };
 
 const production: SiteConfig = {
@@ -18,6 +20,8 @@ const production: SiteConfig = {
   cfBeaconToken: '7a7e520c91144021814e8063da778c05',
   // TODO(albert): GA4 web-stream measurement ID (G-XXXXXXXXXX); follow docs/analytics.md "Activation"
   ga4Id: null,
+  // TODO(albert): set true after reviewing src/content/pricing-rules.ts
+  calculator: { published: false },
 };
 
 export function siteConfig(env: string | undefined): SiteConfig {

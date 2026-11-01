@@ -13,6 +13,7 @@ import { llms as esLlms } from '@/content/es/llms';
 import { pricingPage as esPricing } from '@/content/es/pricing';
 import { services as esServices } from '@/content/es/services';
 import {
+  loadCalculatorContent,
   loadCaseContent,
   loadHoldedPairContent,
   loadSectorContent,
@@ -22,6 +23,7 @@ import {
 } from '@/content/load';
 import type {
   AboutPageContent,
+  CalculatorPageContent,
   Card,
   CasePageContent,
   FaqItem,
@@ -60,12 +62,14 @@ import {
   HOLDED_PAGE_IDS,
   hasLocale,
   isLandingPage,
+  isPublished,
   isServicePage,
   LANDING_PAGE_IDS,
   type PageId,
   pagesIn,
   SERVICE_PAGE_IDS,
   type ServicePageId,
+  type SiteFlags,
   serviceOf,
 } from '@/lib/page-registry';
 import { contentMeta, legalMetaKey, pageCopy } from '@/lib/pages';
@@ -110,6 +114,7 @@ export type LandingBodies = {
 };
 
 export type ServiceBodies = {
+  calculator: CalculatorPageContent;
   hub: ServicesHubContent;
   pages: Record<ServicePageId, ServicePageContent>;
   landing: LandingBodies;
@@ -152,6 +157,7 @@ export async function serviceBodies(locale: Locale): Promise<ServiceBodies> {
     software,
     training,
     landing,
+    { copy: calculator },
   ] = await Promise.all([
     loadServicesHubContent(locale),
     loadServicePageContent(locale, 'automation'),
@@ -160,8 +166,10 @@ export async function serviceBodies(locale: Locale): Promise<ServiceBodies> {
     loadServicePageContent(locale, 'software'),
     loadServicePageContent(locale, 'training'),
     landingBodies(locale),
+    loadCalculatorContent(locale),
   ]);
   return {
+    calculator,
     hub,
     landing,
     pages: {
@@ -235,8 +243,12 @@ function optional(locale: Locale, self: LlmsFile): string {
   ]);
 }
 
-function pagesLines(locale: Locale, bodies: ServiceBodies): string[] {
-  return pagesIn(locale).map((page) => {
+function pagesLines(
+  locale: Locale,
+  bodies: ServiceBodies,
+  site: SiteFlags,
+): string[] {
+  return pagesIn(locale, site).map((page) => {
     const { title, description } = metaOf(locale, page, bodies);
     return `- [${title}](${markdownUrl(locale, page)}): ${description}`;
   });
@@ -245,7 +257,7 @@ function pagesLines(locale: Locale, bodies: ServiceBodies): string[] {
 export function metaOf(
   locale: Locale,
   page: PageId,
-  { hub, pages, landing }: ServiceBodies,
+  { calculator, hub, pages, landing }: ServiceBodies,
 ): { title: string; description: string } {
   if (page === 'services') return contentMeta(hub.meta);
   if (isServicePage(page)) return contentMeta(pages[page].meta);
@@ -256,6 +268,7 @@ export function metaOf(
   }
   if (page === 'pricing') return contentMeta(BODIES[locale].pricing.meta);
   if (page === 'about') return contentMeta(BODIES[locale].about.meta);
+  if (page === 'calculator') return contentMeta(calculator.meta);
   if (page === 'privacy' || page === 'cookies') {
     return contentMeta(LEGAL_META[locale][legalMetaKey(page)]);
   }
@@ -306,6 +319,7 @@ function contactLines(locale: Locale): string[] {
 export async function buildLlmsTxt(
   locale: Locale,
   entity: PublishedEntity = legalEntity(locale),
+  site: SiteFlags = SITE,
 ): Promise<string> {
   const { services, copy } = BODIES[locale];
   const bodies = await serviceBodies(locale);
@@ -319,7 +333,7 @@ export async function buildLlmsTxt(
           `- [${service.name}](${pricing}#${service.id}): ${formatPriceSummary(locale, service.prices)}. ${service.summary}`,
       ),
     ),
-    section(copy.headings.pages, pagesLines(locale, bodies)),
+    section(copy.headings.pages, pagesLines(locale, bodies, site)),
     section(copy.headings.faq, faqLines(locale, bodies)),
     section(copy.headings.portfolio, portfolioLines(locale)),
     section(copy.headings.contact, contactLines(locale)),
@@ -357,6 +371,38 @@ function pricingSection(locale: Locale): string {
     ],
     '\n\n',
   );
+}
+
+function calculatorSection(
+  locale: Locale,
+  { calculator }: ServiceBodies,
+  site: SiteFlags,
+): string[] {
+  if (!isPublished('calculator', site)) return [];
+  const { questions } = calculator;
+  const options = (labels: Record<string, { label: string }>) =>
+    Object.values(labels)
+      .map(({ label }) => `- ${label}`)
+      .join('\n');
+  return [
+    section(
+      `[${calculator.meta.title}](${pageUrl(locale, 'calculator')})`,
+      [
+        calculator.lead,
+        `${calculator.disclaimer.title}. ${calculator.disclaimer.text}`,
+        calculator.taxNote,
+        ...[
+          questions.type,
+          questions.tools,
+          questions.volume,
+          questions.extras,
+          questions.urgency,
+          questions.maintenance,
+        ].map((question) => `${question.legend}\n${options(question.options)}`),
+      ],
+      '\n\n',
+    ),
+  ];
 }
 
 function factsBlock(
@@ -573,6 +619,7 @@ function aboutSection(locale: Locale): string {
 export async function buildLlmsFull(
   locale: Locale,
   entity: PublishedEntity = legalEntity(locale),
+  site: SiteFlags = SITE,
 ): Promise<string> {
   const { home, copy, faq } = BODIES[locale];
   const bodies = await serviceBodies(locale);
@@ -589,6 +636,7 @@ export async function buildLlmsFull(
       '\n\n',
     ),
     pricingSection(locale),
+    ...calculatorSection(locale, bodies, site),
     servicePagesSection(locale, bodies),
     ...holdedSection(locale, bodies),
     section(
@@ -628,7 +676,7 @@ export async function buildLlmsFull(
       '\n\n',
     ),
     section(copy.headings.contact, contactLines(locale)),
-    section(copy.headings.pages, pagesLines(locale, bodies)),
+    section(copy.headings.pages, pagesLines(locale, bodies, site)),
     optional(locale, 'llms-full'),
   ]);
 }

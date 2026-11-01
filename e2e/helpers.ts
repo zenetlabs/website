@@ -1,7 +1,10 @@
 import type { Page } from '@playwright/test';
+import { siteConfig } from '../site.config';
 import type { ServiceId } from '../src/content/types';
+import { answersQuery } from '../src/lib/calculator-answers';
 import { decodeEntities, tidy } from '../src/lib/markdown';
 import type { ServicePageId } from '../src/lib/page-registry';
+import { G5 } from '../test/calculator-fixtures';
 
 export const SERVICES_HUB = { en: '/services', es: '/es/servicios' } as const;
 
@@ -53,6 +56,21 @@ export const ES_ONLY_PAGES = [
   '/es/aviso-legal',
 ] as const;
 
+export const CALCULATOR_PAIR = {
+  en: '/pricing/calculator',
+  es: '/es/precios/calculadora',
+} as const;
+
+export const CALCULATOR_PUBLISHED = siteConfig(
+  process.env.PLAYWRIGHT_BASE_URL ? 'production' : undefined,
+).calculator.published;
+
+const RESULT = answersQuery(G5);
+
+export const CALCULATOR_RESULTS: readonly string[] = CALCULATOR_PUBLISHED
+  ? [CALCULATOR_PAIR.en, CALCULATOR_PAIR.es].map((path) => `${path}?${RESULT}`)
+  : [];
+
 export const PAIRS = [
   { en: '/', es: '/es' },
   { en: '/pricing', es: '/es/precios' },
@@ -66,6 +84,7 @@ export const PAIRS = [
   SERVICE_PAIRS.software,
   SERVICE_PAIRS.training,
   CASE_PAIR,
+  ...(CALCULATOR_PUBLISHED ? [CALCULATOR_PAIR] : []),
 ] as const;
 
 export const LOCALES = ['en', 'es'] as const;

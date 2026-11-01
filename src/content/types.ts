@@ -1,3 +1,9 @@
+import type {
+  ProjectType,
+  ToolId,
+  Urgency,
+  Volume,
+} from '@/lib/calculator-answers';
 import type { LandingPageId, PageId, ServicePageId } from '@/lib/page-registry';
 import type { PortfolioKey } from '@/lib/portfolio';
 
@@ -142,7 +148,7 @@ export type HomeContent = {
     cta: string;
     checked: string;
   };
-  services: SectionCopy & { more: string };
+  services: SectionCopy & { more: string; calculator: string };
   process: SectionCopy & {
     steps: readonly {
       id: 'diagnose' | 'pilot' | 'scale' | 'maintain';
@@ -172,6 +178,7 @@ export type PricingPageContent = {
     { includes: readonly string[]; timeline?: string }
   >;
   how: { title: string; items: readonly string[] };
+  calculator: { title: string; text: string; link: string };
   cta: { title: string; text: string; button: string; faq: string };
 };
 
@@ -388,5 +395,111 @@ export type ConsentCopy = {
     marketingText: string;
     save: string;
     close: string;
+  };
+};
+
+export type Range = readonly [low: number, high: number];
+export type ProjectComponent = Extract<
+  ServiceId,
+  'integration' | 'agent' | 'web'
+>;
+
+export type PricingRules = {
+  version: string;
+  shared: {
+    volumePercent: Record<Volume, number>;
+    urgency: Record<Urgency, { pricePercent: number; weeksPercent: number }>;
+    addOnWeeksPercent: number;
+    components: Record<
+      ProjectComponent,
+      {
+        includedTools: number;
+        weeks: Range;
+        weeksPerTool: Range;
+        weeksPerCustom: Range;
+      }
+    >;
+    maintenance: { standardFromTools: number; standardFromVolume: Volume };
+  };
+  markets: Record<
+    Currency,
+    {
+      step: number;
+      components: Record<
+        ProjectComponent,
+        { spread: number; perTool: Range; perCustom: Range; cap?: number }
+      >;
+    }
+  >;
+};
+
+export type CalculatorOption = { label: string; hint?: string };
+
+export type CalculatorPageContent = {
+  meta: PageMeta;
+  breadcrumb: { label: string; pricing: string };
+  eyebrow: string;
+  title: TitleParts;
+  lead: string;
+  disclaimer: { title: string; text: string };
+  taxNote: string;
+  privacy: string;
+  pricingLink: string;
+  submit: string;
+  questions: {
+    type: { legend: string; options: Record<ProjectType, CalculatorOption> };
+    tools: {
+      legend: string;
+      hint: string;
+      options: Record<ToolId, CalculatorOption>;
+    };
+    volume: { legend: string; options: Record<Volume, CalculatorOption> };
+    extras: {
+      legend: string;
+      hint: string;
+      options: Record<'agent' | 'web', CalculatorOption>;
+    };
+    urgency: { legend: string; options: Record<Urgency, CalculatorOption> };
+    maintenance: {
+      legend: string;
+      options: Record<'yes' | 'no', CalculatorOption>;
+    };
+  };
+  result: {
+    title: string;
+    empty: string;
+    short: string;
+    labels: {
+      total: string;
+      timeline: string;
+      maintenance: string;
+      diagnostic: string;
+      answers: string;
+    };
+    weeks: string;
+    weeksSingle: string;
+    breakdown: string;
+    tools: { none: string; one: string; many: string };
+    custom: string;
+    addOn: string;
+    capped: string;
+    volume: string;
+    urgency: string;
+    noChange: string;
+    percent: string;
+    rounding: string;
+    cappedNote: string;
+    maintenanceWanted: string;
+    maintenanceNotWanted: string;
+    diagnosticText: string;
+    share: string;
+    change: string;
+  };
+  contact: {
+    title: TitleParts;
+    lead: string;
+    intro: string;
+    page: string;
+    mail: string;
   };
 };

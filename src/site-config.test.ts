@@ -26,6 +26,11 @@ describe('siteConfig', () => {
     if (ga4Id !== null) expect(ga4Id).toMatch(GA4_ID);
   });
 
+  it('publishes the calculator locally but not in production', () => {
+    expect(siteConfig(undefined).calculator.published).toBe(true);
+    expect(siteConfig('production').calculator.published).toBe(false);
+  });
+
   it('rejects unknown environments', () => {
     expect(() => siteConfig('staging')).toThrow('Unknown CLOUDFLARE_ENV');
   });

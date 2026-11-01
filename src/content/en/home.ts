@@ -73,6 +73,7 @@ export const home = {
     },
     lead: 'Every project starts with a fixed-price diagnostic. Prices are in Singapore dollars and exclude GST.',
     more: 'See full pricing',
+    calculator: 'Estimate your project',
   },
   process: {
     eyebrow: '03 — How we work',

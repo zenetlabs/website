@@ -19,6 +19,7 @@ const SITE: SiteConfig = {
   turnstileSiteKey: 'k',
   cfBeaconToken: '',
   ga4Id: null,
+  calculator: { published: false },
 };
 
 const fetchMock = vi.fn<typeof fetch>();

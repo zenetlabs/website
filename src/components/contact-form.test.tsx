@@ -148,6 +148,36 @@ describe('ContactForm', () => {
     expect(track).toHaveBeenCalledWith('generate_lead', { method: 'form' });
   });
 
+  it('starts from a prefilled message and counts the lead for its method', async () => {
+    submitLead.mockResolvedValueOnce({ ok: true });
+    const user = userEvent.setup();
+    const message = 'Calculator estimate\n- Project: S$8,500–13,500\n\n';
+    render(<ContactForm prefill={{ message, method: 'calculator' }} />);
+    const field = screen.getByLabelText('What should we look at?');
+    expect(field).toHaveValue(message);
+
+    await user.click(screen.getByLabelText('Name'));
+    await user.type(screen.getByLabelText('Name'), 'Ada Lovelace');
+    await user.type(screen.getByLabelText('Email'), 'ada@example.com');
+    await user.type(field, 'We ship on Fridays.');
+    await user.click(screen.getByRole('checkbox'));
+    await user.click(screen.getByText('solve challenge'));
+    await user.click(screen.getByRole('button', { name: 'Send message' }));
+
+    await waitFor(() =>
+      expect(screen.getByText('Message sent')).toBeInTheDocument(),
+    );
+    expect(submitLead).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'form',
+        message: expect.stringContaining('Project: S$8,500–13,500'),
+      }),
+    );
+    expect(track).toHaveBeenCalledWith('generate_lead', {
+      method: 'calculator',
+    });
+  });
+
   it('shows the captcha alert with the mailto fallback when the widget errors', async () => {
     const user = userEvent.setup();
     render(<ContactForm />);

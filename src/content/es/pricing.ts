@@ -84,6 +84,11 @@ export const pricingPage = {
       'El código, las cuentas y los datos que montamos para ti son tuyos.',
     ],
   },
+  calculator: {
+    title: '¿No sabes qué línea encaja?',
+    text: 'Responde seis preguntas y verás un rango orientativo para tu proyecto, sin dejar tu correo.',
+    link: 'Abrir la calculadora de precio',
+  },
   cta: {
     title: 'Empieza por el diagnóstico',
     text: 'Cuéntanos qué hace tu equipo a mano y te responderemos personalmente.',

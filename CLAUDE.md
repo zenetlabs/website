@@ -29,6 +29,7 @@ Decisions go through AskUserQuestion (recommended option first).
 - Public per-env values: `site.config.ts` (build-time, by CLOUDFLARE_ENV). Secrets: Secrets Store bindings via `import { env } from 'cloudflare:workers'`, read per request.
 
 ## Gotchas
+- Calculator: `calculator.published` in `site.config.ts` gates the route (404), sitemap, llms, `.md` and in-site links; production stays `false` until the owner reviews `src/content/pricing-rules.ts`. Bump its `version` on every edit; `src/lib/estimate.test.ts` must stay green. The no-JS GET form must round-trip TanStack's search serializer or SSR answers 307 (`calculator-answers.test.ts`). Its lead goes through the contact form (source `form`), not a separate lead contract. The flip PR must also add the privacy sentence (the answers travel in the page URL and reach GA `page_location` after consent), bump `CONSENT_VERSION` and bump the privacy `lastmod`.
 - e2e seeds a rejected consent via `storageState` (`e2e/consent-seed.ts`); `e2e/consent.e2e.ts` clears it. Bump `COOKIE_CONSENT_REVISION` when cookies or vendors change. Activation checklist: `docs/analytics.md`.
 - Bump `CONSENT_VERSION` (`src/server/lead.ts`) when the consent sentence or a privacy page changes. e2e needs `scripts/fake-services.mjs` on :4175 (Playwright starts it).
 - A route file `x.tsx` next to a folder `x/` is that folder's layout; pages that render on their own go in `x/index.tsx` plus siblings (see `services/integrations/`).

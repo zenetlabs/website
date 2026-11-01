@@ -3,7 +3,13 @@ import { TEXT_LINK } from '@/components/ui';
 import type { HomeContent, Services } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { formatPriceSummary } from '@/lib/money';
-import { pagePath, serviceHref } from '@/lib/page-registry';
+import {
+  isPublished,
+  pagePath,
+  type SiteFlags,
+  serviceHref,
+} from '@/lib/page-registry';
+import { SITE } from '@/lib/site';
 
 export function ServiceRow({
   href,
@@ -38,10 +44,12 @@ export function ServiceLadder({
   copy,
   services,
   locale,
+  site = SITE,
 }: {
   copy: HomeContent['services'];
   services: Services;
   locale: Locale;
+  site?: SiteFlags;
 }) {
   const pricing = pagePath(locale, 'pricing');
 
@@ -63,10 +71,18 @@ export function ServiceLadder({
           />
         ))}
       </ul>
-      <p className="mt-10">
+      <p className="mt-10 flex flex-wrap gap-x-8 gap-y-3">
         <a href={pricing} className={`font-medium ${TEXT_LINK}`}>
           {copy.more} →
         </a>
+        {isPublished('calculator', site) ? (
+          <a
+            href={pagePath(locale, 'calculator')}
+            className={`font-medium ${TEXT_LINK}`}
+          >
+            {copy.calculator} →
+          </a>
+        ) : null}
       </p>
     </Section>
   );
