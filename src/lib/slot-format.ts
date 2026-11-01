@@ -1,5 +1,5 @@
 import type { Locale } from '@/lib/i18n';
-import { type ZonedParts, zonedParts } from '@/lib/slots';
+import { dateKey, type ZonedParts, zonedParts } from '@/lib/slots';
 
 const WEEKDAYS: Record<Locale, readonly string[]> = {
   en: [
@@ -100,4 +100,9 @@ export function formatSlotLabel(
 ): string {
   const parts = zonedParts(instant, zone);
   return `${formatDayParts(locale, parts)}, ${formatTimeParts(locale, parts)}`;
+}
+
+// The calendar day of an instant in a zone, as `YYYY-MM-DD`.
+export function zonedDay(instant: number, zone: string): string {
+  return dateKey(zonedParts(instant, zone));
 }

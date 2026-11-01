@@ -34,6 +34,7 @@ const SITE: SiteConfig = {
   calculator: { published: false },
   booking: { published: false },
   assistant: { published: false },
+  webmcp: { published: false, originTrialToken: null },
 };
 
 const fetchMock = vi.fn<typeof fetch>();

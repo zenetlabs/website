@@ -1,6 +1,6 @@
 # AI assistant: tools API, bookings and chat
 
-This file holds the shared tool layer and the booking flow (R9) and the site chat assistant (R10, from "Chat assistant" on). WebMCP (R11) and the voice agent (R12) extend it.
+This file holds the shared tool layer and the booking flow (R9) and the site chat assistant (R10, from "Chat assistant" on). WebMCP (R11, from "WebMCP" on) and the voice agent (R12) extend it.
 
 ## Tools API
 
@@ -214,3 +214,56 @@ Kill switches: `assistant.published: false` plus a deploy, `dailyNeuronBudget: 0
 
 `pnpm test` covers the guard tables, usage, schema, knowledge, prompt goldens, the D1 store and the handler (every contract step, injection, leak, price guard, caps, disconnect, PII-free logs) against a scripted `MockLanguageModelV4`. `e2e/chat.e2e.ts` and `e2e/api-chat.e2e.ts` drive the real widget and endpoint against the scripted model, with axe in both locales and colour schemes. Workers AI is never called in CI.
 
+
+## WebMCP (R11)
+
+The site registers its tools with the browser's WebMCP API, so an agent running in the visitor's browser can search the FAQ, read prices, estimate a project, check availability, propose a booking and open pages. Nothing is registered, fetched or downloaded where the browser has no WebMCP.
+
+### Spec and browser status
+
+Checked 2026-11-01:
+
+- **Spec:** W3C Web Machine Learning Community Group, "WebMCP", Draft Community Group Report of 27 October 2026 (`index.bs` last changed 2026-10-27, commit `6838130ef`). Not on the W3C Standards Track. The entry point is `partial interface Document { readonly attribute ModelContext modelContext; }`, with `registerTool(tool, { signal })` (async, rejects a duplicate name with `InvalidStateError`), `getTools()` and `executeTool()`. `ToolExecuteCallbackOptions` is only `{ signal }`: there is no user-interaction API, so the booking gate is always the in-page dialog. A tool's result is serialised as JSON; a rejection reaches the agent as an opaque error, so `execute` never throws.
+- **Chrome:** developer flag `chrome://flags/#enable-webmcp-testing` (146+), origin trial M149 to M156 with an extension to desktop M162 filed on 2026-09-28. `navigator.modelContext` is deprecated (M150) and absent in Chrome 156 (probe): the code prefers `document.modelContext` and falls back to `navigator.modelContext` for the 146 to 148 developer trial and polyfills. The imperative-API page was last updated 2026-10-16.
+- **Local probe:** Playwright's Chrome for Testing 156 exposes `document.modelContext` only behind `--enable-blink-features=WebMCP`. It does not validate input against the schema, and `executeTool` takes the registered tool object (from `getTools()`), not its name.
+- Re-check the spec and Chrome page when the trial ends.
+
+### How it loads
+
+`src/client.tsx` holds one guarded line: when `__WEBMCP__` is on and `'modelContext' in document` or `'modelContext' in navigator`, it imports `src/lib/webmcp/boot.ts`. No match: nothing loads, there is no chunk and no request (about 165 B gzip of entry code). `scheduleWebMcp()` then waits for the `load` event and `requestIdleCallback` (10 s timeout; `setTimeout` 2 s where it is missing), and imports `src/lib/webmcp/register.ts` (about 4.3 KB gzip), which fetches `GET /api/tools`, checks it with `isToolManifest` and registers the tools the page allows. It does not depend on the `data-hydrated` marker. The dialog is a second chunk (`src/components/webmcp-booking-dialog.tsx` through `src/lib/webmcp/mount.ts`), loaded only when `book_meeting` has a valid proposal. It mounts in its own React root on a node appended to `body`, so it needs no router context, and it uses `messages[locale]` and `WEBMCP_COPY[locale]`.
+
+The flag is `webmcp.published` in `site.config.ts` (build-time `__WEBMCP__`). It is `true` locally and in production: the tools are read-only, booking is Turnstile-gated and visitor-confirmed, and unsupported browsers pay nothing. With it `false` the build ships no WebMCP chunk: the `client.tsx` line folds away with the dynamic import. The manifest already omits `check_availability` and `book_meeting` while `booking.published` is false, so a dark booking is never registered.
+
+### Tools
+
+| Tool | Title | Annotations | Runs |
+|---|---|---|---|
+| `get_faq`, `get_pricing`, `estimate_project`, `check_availability` | localised | `readOnlyHint` | `POST /api/tools/:name` |
+| `book_meeting` | Book a 30-minute call | `consequentialHint` | pre-check, then the dialog |
+| `navigate` | Go to a page | none | `src/lib/navigate-client.ts` |
+
+Titles, the notes added to the `book_meeting` and `navigate` descriptions and the dialog copy live in `src/content/{en,es}/webmcp.ts` (typed `WebMcpCopy`), loaded per locale by the lazy `register` chunk like the consent copy. On `book_meeting` the note replaces the server's last sentence ("Only call it after the visitor has confirmed the time, name and email"): the visitor types their own details in the dialog, so the agent passes only the slot and the topic. Descriptions and input schemas come from the manifest; only the six known names are registered, so a tool added to the server is never exposed by accident. The schema is the manifest's with two changes: `locale` is removed (each call uses the page's locale, because the locale picks the market: en is SGD and the Singapore entity, es is EUR and the Spanish entity) and `name`, `email` and `company` are no longer required on `book_meeting` (the visitor supplies them). Every call returns the HTTP envelope: `{ ok: true, result }` or `{ ok: false, error, issues? }`, with the client-only errors `invalid`, `busy`, `unknown_target`, `unavailable` and `network`.
+
+### `book_meeting` confirmation
+
+1. The proposal (`slot` as an ISO date-time with `Z` or an offset, like the server schema, `topic`, optional `name`, `email`, `company`, `timeZone`) is validated against `src/lib/booking-limits.ts`, the one place the field limits live for the server schema, the form fields and this check. `consent`, `turnstileToken`, `website` and `attribution` from the agent are ignored.
+2. `check_availability` runs for that day in that zone. A time not in the answer returns `{ status: 'rejected', reason: 'invalid_slot' }` and opens nothing; an unavailable calendar is passed through.
+3. A confirmation opens in a modal `<dialog>` (`src/lib/webmcp/confirmation.ts` holds the request, one at a time): the time, editable details, the unticked consent box, the honeypot and Turnstile (`book`). Only the visitor's own Confirm posts, through the same `submitBooking` and the same endpoint as `/book`: Origin check, `BOOK_LIMITER`, Turnstile and the D1 caps all apply. One unanswered dialog at a time (`busy` for a second); once a dialog is answered, the next proposal closes it and opens a new one, so a retry after a rejection works. While a booking is being sent the dialog cannot be closed (a second Escape is not cancelable, so it is put back) and the agent always gets the real outcome; an abort during the send is remembered and applied afterwards: a booking is still reported as booked, anything else answers `cancelled` and closes. A submit without the consent box ticked is ignored. If the dialog cannot be mounted the call answers `unavailable` and nothing stays open.
+4. The agent gets `declined` (Cancel, Escape, Close), `cancelled` (the agent aborted before the visitor submitted) or the booking result. A failed security check is retried by the visitor without answering the agent.
+5. GA events (`book_meeting`, `generate_lead` with method `webmcp`) go through `track()`, so consent applies. The agent is answered with the server's own envelope (`submitBooking` returns it next to the outcome).
+
+Bookings made this way are stored as channel `web`, like `/book`: setting `webmcp` would need a change to the Turnstile-verifying handler. An agent that clicks through the dialog itself is indistinguishable from a person (as on `/book`); Turnstile, the caps and the owner email bound that.
+
+### `navigate`
+
+`parseNavigateInput` accepts only a `PAGE_IDS` entry and, for the home page, a `NAVIGATE_SECTIONS` entry; a URL, path or anything else is `invalid`. `resolveNavigation` (the same function the chat uses) maps it to the page's own locale and returns `unknown_target` for a page that is missing in that locale or unpublished. The move is `location.assign`, scheduled one animation frame plus 250 ms (`QUARTER_SECOND_MS`) after the result is returned: a navigation started on the next task can unload the page before the agent has received the result. It stays a full-page navigation, because the site uses plain anchors; the current page is not reloaded.
+
+### Origin-trial token (owner, optional)
+
+Stable Chrome 149 to 156 exposes the API only to origins with a token, or behind the flag. To enable it for everyone: register the "WebMCP" trial for `https://zenetlabs.com` (the `www` host redirects, so no subdomain matching) at the Chrome Origin Trials console, put the token in `webmcp.originTrialToken` in `site.config.ts` production, run the gate at `low`, deploy, and check that `<meta http-equiv="origin-trial">` is in the production HTML. The token is public by design, expires with the trial (Chrome ignores an expired token) and never goes in the vault.
+
+### Tests
+
+`navigate-client`, `webmcp/{boot,tools,register,confirmation}` and the dialog component test run in the unit project. `e2e/webmcp.e2e.ts` injects a stub `modelContext` (`e2e/webmcp-stub.ts`): absence costs nothing, registration, the read tools in both markets, `navigate`, the confirmation gate (no POST before the visitor, Cancel, Escape, abort, busy, a booking on the test calendar) and axe on the open dialog. `e2e/webmcp-real.e2e.ts` runs in the `chromium-webmcp` project against Chrome's real API (`--enable-blink-features=WebMCP`) and is the drift alarm. The default project must stay without `modelContext`.
+
+Manually: Chrome 156 with `chrome://flags/#enable-webmcp-testing` (or `--enable-blink-features=WebMCP`), then in DevTools `await document.modelContext.getTools()` and `executeTool(<tool from getTools>, input)`, or the Model Context Tool Inspector extension.

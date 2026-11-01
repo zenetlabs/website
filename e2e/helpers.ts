@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 import { siteConfig } from '../site.config';
 import type { ServiceId } from '../src/content/types';
 import { answersQuery } from '../src/lib/calculator-answers';
+import { isRecord } from '../src/lib/is-record';
 import { decodeEntities, tidy } from '../src/lib/markdown';
 import type { ServicePageId } from '../src/lib/page-registry';
 import { G5 } from '../test/calculator-fixtures';
@@ -74,6 +75,8 @@ export const CALCULATOR_RESULTS: readonly string[] = CALCULATOR_PUBLISHED
   : [];
 
 export const ASSISTANT_PUBLISHED = SITE_FLAGS.assistant.published;
+
+export const WEBMCP_PUBLISHED = SITE_FLAGS.webmcp.published;
 
 export const BOOK_PAIR = { en: '/book', es: '/es/reservar' } as const;
 
@@ -203,4 +206,26 @@ export function typesOf(blocks: unknown[]): unknown[] {
       ? block['@type']
       : undefined,
   );
+}
+
+// The last offered slot of the first late day with any, so a booking test never
+// shares a slot with booking.e2e.ts. `call` runs a tool and returns its envelope.
+export async function lateSlot(
+  call: (name: string, input: unknown) => Promise<unknown>,
+): Promise<string> {
+  for (const offset of [12, 13, 11, 10, 9]) {
+    const day = new Date(Date.now() + offset * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+    const answer = await call('check_availability', {
+      from: day,
+      to: day,
+      timeZone: 'Europe/Madrid',
+    });
+    const slots =
+      isRecord(answer) && isRecord(answer.result) ? answer.result.slots : null;
+    const last = Array.isArray(slots) ? slots.at(-1) : undefined;
+    if (isRecord(last) && typeof last.start === 'string') return last.start;
+  }
+  throw new Error('no offered slot in the late window');
 }

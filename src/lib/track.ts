@@ -1,6 +1,12 @@
 import type { ProjectType } from '@/lib/calculator-answers';
 
-export type LeadMethod = 'form' | 'chat' | 'voice' | 'calculator' | 'booking';
+export type LeadMethod =
+  | 'form'
+  | 'chat'
+  | 'voice'
+  | 'calculator'
+  | 'booking'
+  | 'webmcp';
 
 export type CtaId =
   | 'header'

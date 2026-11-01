@@ -12,6 +12,7 @@ const shared = {
     __GA4_ID__: JSON.stringify(siteConfig('production').ga4Id),
     __SERVER__: JSON.stringify(serverConfig('production')),
     __ASSISTANT__: JSON.stringify(siteConfig('production').assistant.published),
+    __WEBMCP__: JSON.stringify(siteConfig('production').webmcp.published),
     __CHAT_FAKE__: JSON.stringify(false),
   },
 };

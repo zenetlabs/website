@@ -1,15 +1,15 @@
 import { type FormEvent, useId, useState } from 'react';
 import { flushSync } from 'react-dom';
 import {
-  CONTROL,
+  BookingDetailsFields,
   ConsentCheckbox,
-  Field,
   LazyTurnstile,
 } from '@/components/form-parts';
-import { PRIMARY_BUTTON } from '@/components/ui';
+import { PRIMARY_BUTTON, SECONDARY_BUTTON } from '@/components/ui';
 import { useChallenge } from '@/components/use-challenge';
 import type { ChatCopy } from '@/content/types';
-import { type BookingOutcome, submitBooking } from '@/lib/booking-client';
+import { submitBooking } from '@/lib/booking-client';
+import { type BookingFailureKind, failureOf } from '@/lib/booking-failure';
 import type { Proposal } from '@/lib/chat-events';
 import { text } from '@/lib/form-data';
 import { type Locale, useMessages } from '@/lib/i18n';
@@ -17,21 +17,7 @@ import { attribution } from '@/lib/lead-client';
 import { formatSlotLabel } from '@/lib/slot-format';
 import { track } from '@/lib/track';
 
-type Failure = 'taken' | 'error' | 'rate' | 'captcha';
-type Status = 'idle' | 'pending' | Failure;
-
-const SECONDARY_BUTTON =
-  'inline-flex min-h-11 items-center justify-center rounded-input border border-border px-5 py-2.5 text-sm font-semibold motion-safe:transition-colors motion-safe:duration-200 hover:bg-surface';
-
-function failureFor(
-  outcome: Exclude<BookingOutcome, { kind: 'booked' }>,
-): Failure {
-  if (outcome.kind === 'rejected') {
-    return outcome.reason === 'limit' ? 'error' : 'taken';
-  }
-  if (outcome.error === 'captcha') return 'captcha';
-  return outcome.error === 'rate' ? 'rate' : 'error';
-}
+type Status = 'idle' | 'pending' | BookingFailureKind;
 
 export function BookingCard({
   proposal,
@@ -81,7 +67,7 @@ export function BookingCard({
       onDone(formatSlotLabel(locale, outcome.start, zone));
       return;
     }
-    flushSync(() => setStatus(failureFor(outcome)));
+    flushSync(() => setStatus(failureOf(outcome)));
     challenge.retry();
   }
 
@@ -105,56 +91,16 @@ export function BookingCard({
         {when} · {copy.format}
       </p>
       <fieldset disabled={pending} className="grid gap-3">
-        <Field label={copy.name}>
-          {(id) => (
-            <input
-              id={id}
-              name="name"
-              required
-              maxLength={100}
-              autoComplete="name"
-              className={CONTROL}
-            />
-          )}
-        </Field>
-        <Field label={copy.email}>
-          {(id) => (
-            <input
-              id={id}
-              name="email"
-              type="email"
-              required
-              maxLength={254}
-              autoComplete="email"
-              className={CONTROL}
-            />
-          )}
-        </Field>
-        <Field label={copy.company}>
-          {(id) => (
-            <input
-              id={id}
-              name="company"
-              maxLength={100}
-              autoComplete="organization"
-              className={CONTROL}
-            />
-          )}
-        </Field>
-        <Field label={copy.topic}>
-          {(id) => (
-            <textarea
-              id={id}
-              name="topic"
-              required
-              minLength={10}
-              maxLength={1000}
-              rows={3}
-              defaultValue={proposal.topic}
-              className={`${CONTROL} resize-y`}
-            />
-          )}
-        </Field>
+        <BookingDetailsFields
+          labels={{
+            name: copy.name,
+            email: copy.email,
+            company: copy.company,
+            topic: copy.topic,
+          }}
+          defaults={{ topic: proposal.topic }}
+          topicRows={3}
+        />
         <ConsentCheckbox
           locale={locale}
           template={contact.form.consent}

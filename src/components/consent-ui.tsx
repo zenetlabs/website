@@ -1,6 +1,6 @@
 import { type SyntheticEvent, useId, useRef } from 'react';
 import { Container } from '@/components/section';
-import { PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
+import { PRIMARY_BUTTON, SECONDARY_BUTTON, TEXT_LINK } from '@/components/ui';
 import type { ConsentCopy } from '@/content/types';
 import { applyConsent } from '@/lib/analytics';
 import {
@@ -15,8 +15,6 @@ import { COOKIE_SETTINGS_ID, openCookieSettings } from '@/lib/cookie-settings';
 import type { Locale } from '@/lib/i18n';
 import { pagePath } from '@/lib/page-registry';
 
-const SECONDARY_BUTTON =
-  'inline-flex min-h-11 items-center justify-center rounded-input border border-border px-5 py-2.5 text-sm font-semibold motion-safe:transition-colors motion-safe:duration-200 hover:bg-surface';
 const CHECKBOX = 'mt-1 size-6 shrink-0 accent-accent';
 
 function choose(gaId: string, choice: ConsentChoice): void {

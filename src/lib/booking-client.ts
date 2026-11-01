@@ -69,7 +69,12 @@ export function bookingOutcome(body: unknown): BookingOutcome {
   return reason === null ? UNAVAILABLE : { kind: 'rejected', reason };
 }
 
-async function post(path: string, body: unknown): Promise<unknown> {
+// The raw answer: the tool envelope, `{ ok: false, error: 'rate' }` for a 429, or undefined for a body that is not JSON.
+export async function post(
+  path: string,
+  body: unknown,
+  signal?: AbortSignal,
+): Promise<unknown> {
   const response = await fetch(path, {
     method: 'POST',
     headers: {
@@ -77,18 +82,23 @@ async function post(path: string, body: unknown): Promise<unknown> {
       Accept: 'application/json',
     },
     body: JSON.stringify(body),
+    ...(signal ? { signal } : {}),
   });
   if (response.status === 429) return { ok: false, error: 'rate' };
   return response.json().catch(() => undefined);
 }
 
+// The outcome plus the envelope it came from, for a caller that relays it as it is.
+export type BookingResult = BookingOutcome & { envelope: unknown };
+
 export async function submitBooking(
   request: BookingRequest,
-): Promise<BookingOutcome> {
+): Promise<BookingResult> {
   try {
-    return bookingOutcome(await post('/api/tools/book_meeting', request));
+    const envelope = await post('/api/tools/book_meeting', request);
+    return { ...bookingOutcome(envelope), envelope };
   } catch {
-    return UNAVAILABLE;
+    return { ...UNAVAILABLE, envelope: undefined };
   }
 }
 

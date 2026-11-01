@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { BOOKING_LIMITS } from '@/lib/booking-limits';
 import { locales } from '@/lib/i18n';
 import { attributionSchema, singleLine } from '@/lib/lead-schema';
 import { isTimeZone } from '@/lib/slots';
@@ -8,10 +9,18 @@ export type Channel = (typeof CHANNELS)[number];
 
 export const bookingInputSchema = z.object({
   slot: z.iso.datetime({ offset: true }),
-  name: singleLine(100).min(1),
-  email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
-  company: singleLine(100).optional(),
-  topic: z.string().trim().min(10).max(1000),
+  name: singleLine(BOOKING_LIMITS.name).min(1),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .pipe(z.email().max(BOOKING_LIMITS.email)),
+  company: singleLine(BOOKING_LIMITS.company).optional(),
+  topic: z
+    .string()
+    .trim()
+    .min(BOOKING_LIMITS.topicMin)
+    .max(BOOKING_LIMITS.topicMax),
   timeZone: z.string().max(64).refine(isTimeZone).optional(),
   locale: z.enum(locales).default('en'),
 });

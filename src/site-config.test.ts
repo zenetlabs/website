@@ -41,6 +41,14 @@ describe('siteConfig', () => {
     expect(siteConfig('production').assistant.published).toBe(false);
   });
 
+  it('ships WebMCP on everywhere, with no origin-trial token yet', () => {
+    for (const env of [undefined, 'production']) {
+      const { webmcp } = siteConfig(env);
+      expect(webmcp.published).toBe(true);
+      expect(webmcp.originTrialToken).toBeNull();
+    }
+  });
+
   it('rejects unknown environments', () => {
     expect(() => siteConfig('staging')).toThrow('Unknown CLOUDFLARE_ENV');
   });
