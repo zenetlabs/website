@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: { tsconfigPaths: true },
   define: {
     __SITE__: JSON.stringify(siteConfig(process.env.CLOUDFLARE_ENV)),
+    __GA4_ID__: JSON.stringify(siteConfig(process.env.CLOUDFLARE_ENV).ga4Id),
     __SERVER__: JSON.stringify(serverConfig(process.env.CLOUDFLARE_ENV)),
   },
   build: { modulePreload: false },

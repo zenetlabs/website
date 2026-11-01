@@ -9,7 +9,9 @@ import {
 import type { ReactNode } from 'react';
 import { NotFound } from '@/components/not-found';
 import { PageShell } from '@/components/page-shell';
+import { consentDefaultsScripts } from '@/lib/consent-defaults';
 import { hasNotFound } from '@/lib/current-page';
+import { fontPreload } from '@/lib/font-preload';
 import { localeFromPath, messages, useLocale, useMessages } from '@/lib/i18n';
 import { SITE_NAME } from '@/lib/seo';
 import { SITE } from '@/lib/site';
@@ -54,16 +56,11 @@ export const Route = createRootRoute({
         },
         { rel: 'apple-touch-icon', href: '/icons/apple-touch-icon.png' },
         { rel: 'stylesheet', href: appCss },
-        ...FONT_PRELOADS.map((href) => ({
-          rel: 'preload',
-          as: 'font',
-          type: 'font/woff2',
-          href,
-          crossOrigin: 'anonymous' as const,
-        })),
+        ...FONT_PRELOADS.map(fontPreload),
       ],
     };
   },
+  scripts: () => (__GA4_ID__ === null ? [] : consentDefaultsScripts()),
   shellComponent: RootDocument,
   notFoundComponent: RootNotFound,
 });

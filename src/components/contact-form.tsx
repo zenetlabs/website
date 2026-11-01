@@ -9,6 +9,7 @@ import { attribution, submitLead } from '@/lib/lead-client';
 import type { LeadError } from '@/lib/lead-result';
 import { pagePath } from '@/lib/page-registry';
 import { PUBLIC_EMAIL, SITE } from '@/lib/site';
+import { track } from '@/lib/track';
 
 const CONTROL =
   'w-full rounded-input border border-border bg-bg px-3.5 py-3 text-base';
@@ -78,20 +79,26 @@ export function ContactForm() {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     setStatus('pending');
-    const result = await submitLead({
-      source: 'form',
-      locale,
-      name: text(data, 'name'),
-      email: text(data, 'email'),
-      company: text(data, 'company') || undefined,
-      message: text(data, 'message'),
-      consent: true,
-      turnstileToken: token,
-      website: text(data, 'website'),
-      attribution: attribution(),
-    });
-    if (result.ok) succeed();
-    else fail(failureFor(result.error));
+    try {
+      const result = await submitLead({
+        source: 'form',
+        locale,
+        name: text(data, 'name'),
+        email: text(data, 'email'),
+        company: text(data, 'company') || undefined,
+        message: text(data, 'message'),
+        consent: true,
+        turnstileToken: token,
+        website: text(data, 'website'),
+        attribution: await attribution(),
+      });
+      if (result.ok) {
+        track('generate_lead', { method: 'form' });
+        succeed();
+      } else fail(failureFor(result.error));
+    } catch {
+      fail('errorSend');
+    }
   }
 
   return (

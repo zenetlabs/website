@@ -3,7 +3,7 @@ import { loadLegalMeta } from '@/content/load';
 import { legalEntity } from '@/lib/content';
 import { useLocale } from '@/lib/i18n';
 import { breadcrumbStructuredData } from '@/lib/page-structured-data';
-import { contentHead } from '@/lib/pages';
+import { legalHead } from '@/lib/pages';
 import { PrivacyEn } from './-legal/privacy-en';
 import { PrivacyEs } from './-legal/privacy-es';
 
@@ -12,7 +12,7 @@ export const Route = createFileRoute('/{-$locale}/privacy')({
   loader: ({ context }) => loadLegalMeta(context.locale),
   head: ({ match, loaderData }) =>
     loaderData
-      ? contentHead(match.context.locale, 'privacy', loaderData.privacy)
+      ? legalHead(match.context.locale, 'privacy', loaderData.privacy)
       : {},
   scripts: ({ match, loaderData }) =>
     loaderData

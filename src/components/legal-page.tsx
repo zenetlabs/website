@@ -23,14 +23,16 @@ export function LegalPage({
 }
 
 export function LegalSection({
+  id,
   title,
   children,
 }: {
+  id?: string;
   title: string;
   children: ReactNode;
 }) {
   return (
-    <section>
+    <section id={id}>
       <h2 className="text-2xl md:text-3xl">{title}</h2>
       {children}
     </section>

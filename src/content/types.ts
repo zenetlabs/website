@@ -368,3 +368,25 @@ export type SiteContent = {
   countryNames: Record<Country, string>;
   founder: Founder;
 };
+
+export type ConsentCopy = {
+  title: string;
+  text: string;
+  policy: string;
+  reject: string;
+  accept: string;
+  settings: string;
+  dialog: {
+    title: string;
+    intro: string;
+    necessary: string;
+    necessaryText: string;
+    alwaysOn: string;
+    analytics: string;
+    analyticsText: string;
+    marketing: string;
+    marketingText: string;
+    save: string;
+    close: string;
+  };
+};

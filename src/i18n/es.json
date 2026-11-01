@@ -43,7 +43,8 @@
     "founded": "Fundada en {year} por {founder}",
     "legalNotice": "Aviso legal",
     "privacy": "Política de privacidad",
-    "cookies": "Política de cookies"
+    "cookies": "Política de cookies",
+    "cookieSettings": "Configuración de cookies"
   },
   "notFound": {
     "title": "Página no encontrada",

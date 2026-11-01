@@ -4,7 +4,7 @@ import type { PublishedEntity } from '@/content/types';
 import { formatAddress, taxIdLabel } from '@/lib/content';
 import { PUBLIC_EMAIL } from '@/lib/site';
 
-// TODO(albert): legal review (R6 storage, attribution, retention)
+// TODO(albert): legal review (R6 storage, attribution, retention; R7 GA4, consent, first-touch)
 export function PrivacyEn({
   title,
   entity,
@@ -12,6 +12,8 @@ export function PrivacyEn({
   title: string;
   entity: PublishedEntity;
 }) {
+  const analytics = __GA4_ID__ !== null;
+
   return (
     <LegalPage title={title} updated="Last updated: 31 October 2026">
       <LegalSection title="Who is responsible for your data">
@@ -42,7 +44,17 @@ export function PrivacyEn({
           the page you sent it from, the website that linked to it (the
           referrer) and any campaign tags in the link you followed, such as
           utm_source or gclid. We use this to understand which channels bring
-          enquiries. We do not store anything on your device to do this.
+          enquiries.{' '}
+          {analytics ? (
+            <>
+              Unless you accept marketing cookies, we store nothing on your
+              device for this. If you accept them, your browser keeps the first
+              page you arrived on, the referring site and the campaign tags for
+              up to 90 days, and they are sent with your enquiry.
+            </>
+          ) : (
+            <>We do not store anything on your device to do this.</>
+          )}
         </p>
         <p>
           We also store which version of this policy you consented to, and when
@@ -53,11 +65,22 @@ export function PrivacyEn({
           secure the site, including the Turnstile bot check, and in its
           operational logs.
         </p>
-        <p>
-          The site uses no advertising or analytics cookies and no tracking
-          pixels. We measure traffic with Cloudflare Web Analytics, which does
-          not use cookies and does not build profiles of visitors.
-        </p>
+        {analytics ? (
+          <p>
+            If you accept analytics cookies, we use Google Analytics 4 to
+            measure visits and actions on the site, such as clicks on our
+            buttons and sent enquiries, never what you write in them. Without
+            your consent Google Analytics does not load. We always measure
+            overall traffic with Cloudflare Web Analytics, which does not use
+            cookies and does not build profiles of visitors.
+          </p>
+        ) : (
+          <p>
+            The site uses no advertising or analytics cookies and no tracking
+            pixels. We measure traffic with Cloudflare Web Analytics, which does
+            not use cookies and does not build profiles of visitors.
+          </p>
+        )}
       </LegalSection>
       <LegalSection title="Where we store it">
         <p>
@@ -81,6 +104,13 @@ export function PrivacyEn({
             for the referrer and campaign data (GDPR Art. 6(1)(f)). It is
             limited to what the link and your browser already send.
           </li>
+          {analytics ? (
+            <li>
+              Your consent for analytics and marketing cookies (GDPR Art.
+              6(1)(a), the ePrivacy rules and the PDPA), which you can withdraw
+              at any time with "Cookie settings" at the bottom of every page.
+            </li>
+          ) : null}
         </ul>
         <p>You can withdraw your consent at any time by writing to us.</p>
       </LegalSection>
@@ -100,6 +130,12 @@ export function PrivacyEn({
             Google Workspace, which hosts the mailbox that receives your
             message.
           </li>
+          {analytics ? (
+            <li>
+              Google (Google Ireland Limited and Google LLC), for Google
+              Analytics, only if you accept analytics cookies.
+            </li>
+          ) : null}
         </ul>
       </LegalSection>
       <LegalSection title="International transfers">
@@ -108,6 +144,9 @@ export function PrivacyEn({
           the United States and Singapore. Where required, transfers rely on
           appropriate safeguards such as the European Commission's standard
           contractual clauses.
+          {analytics ? (
+            <> Google relies on the EU–US Data Privacy Framework.</>
+          ) : null}
         </p>
       </LegalSection>
       <LegalSection title="How long we keep it">
@@ -118,6 +157,12 @@ export function PrivacyEn({
           that case we keep them for as long as the relationship and our legal
           obligations require.
         </p>
+        {analytics ? (
+          <p>
+            {/* TODO(albert): match the GA4 retention setting */}
+            Google Analytics keeps event data for 14 months.
+          </p>
+        ) : null}
       </LegalSection>
       <LegalSection title="Your rights">
         <p>

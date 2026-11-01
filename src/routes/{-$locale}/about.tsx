@@ -119,7 +119,7 @@ function About() {
           </p>
         </Container>
       </section>
-      <CtaSection copy={page.cta} locale={locale} />
+      <CtaSection cta="about" copy={page.cta} locale={locale} />
     </>
   );
 }

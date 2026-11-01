@@ -1,10 +1,10 @@
 import {
-  isRelativePath,
   LEAD_ERRORS,
   type LeadError,
   type LeadResult,
 } from '@/lib/lead-result';
 import type { LeadRequest } from '@/lib/lead-schema';
+import { currentVisit } from '@/lib/visit';
 
 const UNAVAILABLE: LeadResult = { ok: false, error: 'unavailable' };
 const RATE_LIMITED: LeadResult = { ok: false, error: 'rate' };
@@ -21,26 +21,25 @@ export function isLeadResult(value: unknown): value is LeadResult {
   return value.ok === false && 'error' in value && isLeadError(value.error);
 }
 
-function relative(path: string, max: number): string {
-  return isRelativePath(path) ? path.slice(0, max) : '';
-}
-
-export function attribution(): LeadRequest['attribution'] {
-  let landing = location.pathname + location.search;
-  const [navigation] = performance.getEntriesByType('navigation');
-  if (navigation) {
-    try {
-      const url = new URL(navigation.name);
-      landing = url.pathname + url.search;
-    } catch {
-      // Keep the current location.
-    }
+export async function attribution(
+  now = Date.now(),
+): Promise<LeadRequest['attribution']> {
+  const visit = currentVisit();
+  if (__GA4_ID__ === null) return visit;
+  try {
+    const [{ readConsent }, { readFirstTouch }] = await Promise.all([
+      import('@/lib/consent'),
+      import('@/lib/first-touch'),
+    ]);
+    if (!readConsent()?.marketing) return visit;
+    const touch = readFirstTouch(now);
+    return touch
+      ? { ...visit, landing: touch.landing, referrer: touch.referrer }
+      : visit;
+  } catch {
+    // A chunk that fails to load must never cost us the lead.
+    return visit;
   }
-  return {
-    landing: relative(landing, 2048),
-    referrer: document.referrer.slice(0, 2048),
-    page: relative(location.pathname, 512) || '/',
-  };
 }
 
 export async function submitLead(input: LeadRequest): Promise<LeadResult> {

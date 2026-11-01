@@ -43,7 +43,8 @@
     "founded": "Founded in {year} by {founder}",
     "legalNotice": "Legal notice",
     "privacy": "Privacy policy",
-    "cookies": "Cookies policy"
+    "cookies": "Cookies policy",
+    "cookieSettings": "Cookie settings"
   },
   "notFound": {
     "title": "Page not found",

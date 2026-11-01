@@ -56,12 +56,23 @@ content_type_is() {
 }
 
 body_contains() {
-  curl -s --max-time 20 "$1" | grep -qF "$2"
+  local body
+  body=$(curl -s --max-time 20 "$1") || return 1
+  grep -qF "$2" <<<"$body"
+}
+
+body_lacks_html() {
+  local body
+  body=$(curl -fs --compressed -H 'Accept: text/html' --max-time 20 "$1") || return 1
+  grep -q '</html>' <<<"$body" || return 1
+  ! grep -qE "$2" <<<"$body"
 }
 
 header_matches() {
   local accept="$1" url="$2" pattern="$3"
-  curl -s -D - -o /dev/null -H "Accept: ${accept}" --max-time 20 "$url" | tr -d '\r' | grep -qiE "$pattern"
+  local headers
+  headers=$(curl -s -D - -o /dev/null -H "Accept: ${accept}" --max-time 20 "$url") || return 1
+  tr -d '\r' <<<"$headers" | grep -qiE "$pattern"
 }
 
 for path in / /es /pricing /es/precios /about /es/sobre-nosotros /privacy /es/privacidad /es/cookies /es/aviso-legal \
@@ -149,6 +160,12 @@ attempt "400 POST /api/lead {}" post_status_is 400 "${SITE}/api/lead"
 attempt "internal leads not public" status_is_not 200 "${SITE}/internal/leads"
 attempt "internal leads csv not public" status_is_not 200 "${SITE}/internal/leads.csv"
 attempt "canonical link ${SITE}/es" header_matches 'text/markdown' "${SITE}/es" '^link: <https://zenetlabs\.com/es>; rel="canonical"$'
+
+for path in / /es; do
+  attempt "no Google tag in ${SITE}${path}" body_lacks_html "${SITE}${path}" 'gtag/js|googletagmanager|zaraz'
+  # Remove the consent-default check in the activation PR that sets production ga4Id.
+  attempt "no consent defaults in ${SITE}${path}" body_lacks_html "${SITE}${path}" "'consent','default'"
+done
 
 attempt "200 https://albert.sabatemartinez.com/" status_is 200 "https://albert.sabatemartinez.com/"
 

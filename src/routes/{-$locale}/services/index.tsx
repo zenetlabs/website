@@ -87,6 +87,7 @@ function ServicesHub() {
         </Container>
       </section>
       <CtaSection
+        cta="services"
         copy={hub.start}
         locale={locale}
         secondary={{ label: hub.pricing, href: pricing }}

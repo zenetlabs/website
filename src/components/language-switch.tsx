@@ -2,6 +2,7 @@ import { useLocation } from '@tanstack/react-router';
 import { useCurrentPage } from '@/lib/current-page';
 import { type Locale, locales, useMessages } from '@/lib/i18n';
 import { switchHref } from '@/lib/page-registry';
+import { track } from '@/lib/track';
 
 const LABELS: Record<Locale, string> = { en: 'EN', es: 'ES' };
 
@@ -28,6 +29,9 @@ export function LanguageSwitch({
           hrefLang={target}
           lang={target}
           aria-current={target === locale ? 'page' : undefined}
+          onClick={
+            target === locale ? undefined : () => track('language_switch')
+          }
           className="rounded-full px-2.5 py-2 sm:px-3 aria-[current=page]:bg-accent aria-[current=page]:text-accent-fg"
         >
           {LABELS[target]}

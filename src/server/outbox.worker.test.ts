@@ -18,6 +18,7 @@ const SITE: SiteConfig = {
   url: 'https://zenetlabs.com',
   turnstileSiteKey: 'k',
   cfBeaconToken: '',
+  ga4Id: null,
 };
 
 const fetchMock = vi.fn<typeof fetch>();

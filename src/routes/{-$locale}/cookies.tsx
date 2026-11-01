@@ -3,7 +3,7 @@ import { loadLegalMeta } from '@/content/load';
 import { legalEntity } from '@/lib/content';
 import { useLocale } from '@/lib/i18n';
 import { breadcrumbStructuredData } from '@/lib/page-structured-data';
-import { contentHead } from '@/lib/pages';
+import { legalHead, legalMetaKey } from '@/lib/pages';
 import { CookiesEn } from './-legal/cookies-en';
 import { CookiesEs } from './-legal/cookies-es';
 
@@ -12,7 +12,11 @@ export const Route = createFileRoute('/{-$locale}/cookies')({
   loader: ({ context }) => loadLegalMeta(context.locale),
   head: ({ match, loaderData }) =>
     loaderData
-      ? contentHead(match.context.locale, 'cookies', loaderData.cookies)
+      ? legalHead(
+          match.context.locale,
+          'cookies',
+          loaderData[legalMetaKey('cookies')],
+        )
       : {},
   scripts: ({ match, loaderData }) =>
     loaderData

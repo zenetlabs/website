@@ -8,6 +8,7 @@ import {
   legalEntity,
   taxIdLabel,
 } from '@/lib/content';
+import { openCookieSettings } from '@/lib/cookie-settings';
 import { type Locale, useMessages } from '@/lib/i18n';
 import { hasLocale, type PageId, pagePath } from '@/lib/page-registry';
 
@@ -55,6 +56,17 @@ export function SiteFooter({ locale }: { locale: Locale }) {
                   {footer[page]}
                 </a>
               ),
+            )}
+            {__GA4_ID__ === null ? null : (
+              <a
+                href={`${pagePath(locale, 'cookies')}#manage`}
+                onClick={(event) => {
+                  if (openCookieSettings()) event.preventDefault();
+                }}
+                className={TEXT_LINK}
+              >
+                {footer.cookieSettings}
+              </a>
             )}
           </nav>
           <LanguageSwitch locale={locale} footer />

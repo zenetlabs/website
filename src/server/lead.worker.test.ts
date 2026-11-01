@@ -18,6 +18,7 @@ const SITE: SiteConfig = {
   url: ORIGIN,
   turnstileSiteKey: 'k',
   cfBeaconToken: '',
+  ga4Id: null,
 };
 
 const BODY: LeadRequest = {

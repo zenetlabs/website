@@ -1,3 +1,4 @@
+import { CtaLink } from '@/components/cta-link';
 import { RunLog } from '@/components/run-log';
 import { Container, EmphasisTitle } from '@/components/section';
 import { EYEBROW, PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
@@ -29,15 +30,20 @@ export function Hero({
           </h1>
           <p className="mt-8 max-w-xl text-lg text-muted-fg">{copy.lead}</p>
           <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
-            <a href={navHref(locale, CTA_TARGET)} className={PRIMARY_BUTTON}>
+            <CtaLink
+              cta="hero"
+              href={navHref(locale, CTA_TARGET)}
+              className={PRIMARY_BUTTON}
+            >
               {copy.primary}
-            </a>
-            <a
+            </CtaLink>
+            <CtaLink
+              cta="hero_pricing"
               href={pagePath(locale, 'pricing')}
               className={`font-medium ${TEXT_LINK}`}
             >
               {copy.secondary} →
-            </a>
+            </CtaLink>
           </div>
           <p className={`mt-6 ${EYEBROW}`}>{copy.audience}</p>
         </div>

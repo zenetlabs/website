@@ -1,4 +1,5 @@
 import { defineConfig } from '@playwright/test';
+import { rejectedConsent } from './e2e/consent-seed';
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:4173';
 
@@ -9,6 +10,7 @@ export default defineConfig({
   retries: 0,
   use: {
     baseURL,
+    storageState: rejectedConsent(baseURL),
     trace: process.env.CI ? 'retain-on-failure' : 'on-first-retry',
     screenshot: process.env.CI ? 'only-on-failure' : 'off',
   },
