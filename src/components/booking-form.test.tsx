@@ -92,6 +92,7 @@ beforeEach(() => {
   track.mockReset();
   attribution.mockReset();
   fetchAvailability.mockReset();
+  fetchAvailability.mockResolvedValue({ status: 'unavailable' });
   attribution.mockResolvedValue(ATTRIBUTION);
 });
 

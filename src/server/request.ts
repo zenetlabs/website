@@ -98,12 +98,7 @@ export async function guardBrowserPost<T extends Guarded>({
   if (!isJsonRequest(request)) return rejected('unsupported');
   const ip = request.headers.get('cf-connecting-ip');
   if (await isLimited(limiter, ip ?? 'unknown', label)) return rejected('rate');
-  const secret = new Promise<string>((resolve) =>
-    resolve(turnstileSecret()),
-  ).then(
-    (value) => ({ value }),
-    () => null,
-  );
+  const secret = readSecret(turnstileSecret);
   const text = await readCapped(request, maxBytes);
   if (text === null) return rejected('too-large');
   const parsed = schema.safeParse(parseJson(text));
@@ -124,4 +119,14 @@ export async function guardBrowserPost<T extends Guarded>({
     fetch: send,
   });
   return human ? { status: 'ok', input: parsed.data, ip } : rejected('captcha');
+}
+
+async function readSecret(
+  read: () => Promise<string>,
+): Promise<{ value: string } | null> {
+  try {
+    return { value: await read() };
+  } catch {
+    return null;
+  }
 }
