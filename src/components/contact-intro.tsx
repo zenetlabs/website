@@ -1,7 +1,10 @@
+import { CtaLink } from '@/components/cta-link';
 import { Container, EmphasisTitle } from '@/components/section';
 import { EYEBROW, TEXT_LINK } from '@/components/ui';
 import type { TitleParts } from '@/content/types';
-import { PUBLIC_EMAIL } from '@/lib/site';
+import { useLocale } from '@/lib/i18n';
+import { ctaTarget, navHref } from '@/lib/nav';
+import { PUBLIC_EMAIL, SITE } from '@/lib/site';
 
 export type ContactCopy = {
   eyebrow?: string;
@@ -9,12 +12,15 @@ export type ContactCopy = {
   lead?: string;
   mail: string;
   human?: string;
+  book?: string;
 };
 
 export const CONTACT_FRAME =
   'grid gap-12 py-20 md:py-28 lg:grid-cols-12 lg:gap-16';
 
 export function ContactIntro({ copy, id }: { copy: ContactCopy; id?: string }) {
+  const locale = useLocale();
+  const cta = ctaTarget(SITE);
   return (
     <div className="lg:col-span-5">
       {copy.eyebrow ? <p className={EYEBROW}>{copy.eyebrow}</p> : null}
@@ -33,6 +39,17 @@ export function ContactIntro({ copy, id }: { copy: ContactCopy; id?: string }) {
           {PUBLIC_EMAIL}
         </a>
       </p>
+      {copy.book && cta.page === 'book' ? (
+        <p className="mt-4">
+          <CtaLink
+            cta="contact_book"
+            href={navHref(locale, cta)}
+            className={TEXT_LINK}
+          >
+            {copy.book}
+          </CtaLink>
+        </p>
+      ) : null}
       {copy.human ? <p className={`mt-4 ${EYEBROW}`}>{copy.human}</p> : null}
     </div>
   );

@@ -14,7 +14,8 @@
         "http://localhost:4174/es/servicios",
         "http://localhost:4174/services/ai-automation",
         "http://localhost:4174/es/servicios/automatizacion-de-procesos",
-        "http://localhost:4174/es/precios/calculadora?type=automation&erp=true&shop=true&volume=medium&urgency=standard&maintenance=true"
+        "http://localhost:4174/es/precios/calculadora?type=automation&erp=true&shop=true&volume=medium&urgency=standard&maintenance=true",
+        "http://localhost:4174/es/reservar"
       ],
       "numberOfRuns": 5
     },

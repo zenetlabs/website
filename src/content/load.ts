@@ -1,5 +1,6 @@
 import type {
   AboutPageContent,
+  BookPageContent,
   CalculatorPageContent,
   CasePageContent,
   CompanyCopy,
@@ -56,6 +57,13 @@ const CALCULATOR = {
       import('@/content/es/calculator'),
       import('@/content/es/services'),
     ]),
+};
+
+const BOOK = {
+  en: () =>
+    Promise.all([import('@/content/en/book'), import('@/content/en/services')]),
+  es: () =>
+    Promise.all([import('@/content/es/book'), import('@/content/es/services')]),
 };
 
 const ABOUT = {
@@ -186,6 +194,14 @@ export async function loadCalculatorContent(locale: Locale): Promise<{
 }> {
   const [{ calculatorPage }, { services }] = await CALCULATOR[locale]();
   return { copy: calculatorPage, services };
+}
+
+export async function loadBookContent(locale: Locale): Promise<{
+  copy: BookPageContent;
+  services: Services;
+}> {
+  const [{ bookPage }, { services }] = await BOOK[locale]();
+  return { copy: bookPage, services };
 }
 
 export async function loadAboutContent(locale: Locale): Promise<{

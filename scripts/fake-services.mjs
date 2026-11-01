@@ -1,4 +1,4 @@
-// Local stand-ins for Resend and Cloudflare Access, used by e2e and manual tests.
+// Local stand-ins for Resend, Cloudflare Access and Google (token + Calendar), used by e2e and manual tests.
 // Never used by CI deploys or production builds. Listens on :4175.
 import http from 'node:http';
 import { exportJWK, generateKeyPair, SignJWT } from 'jose';
@@ -105,8 +105,235 @@ async function mintToken(request, response) {
   send(response, 200, { token });
 }
 
+const GOOGLE = '/__google';
+const CALENDAR = `${GOOGLE}/calendar/v3`;
+const SCOPES = [
+  'https://www.googleapis.com/auth/calendar.events.owned',
+  'https://www.googleapis.com/auth/calendar.freebusy',
+];
+
+const googleEvents = new Map();
+const googleBusy = new Map();
+const googleFailures = [];
+const google = { tokens: 0, meets: 0, conference: 'success' };
+
+function takeGoogleFailure(op) {
+  const rule = googleFailures.find(
+    (candidate) => candidate.op === op && candidate.remaining > 0,
+  );
+  if (!rule) return null;
+  rule.remaining -= 1;
+  return rule;
+}
+
+function googleError(response, status, reason, message = 'fake failure') {
+  return send(response, status, {
+    error: { code: status, message, errors: [{ reason }] },
+  });
+}
+
+function decodePart(part) {
+  try {
+    return JSON.parse(Buffer.from(part, 'base64url').toString('utf8'));
+  } catch {
+    return undefined;
+  }
+}
+
+async function googleToken(request, response) {
+  const failure = takeGoogleFailure('token');
+  if (failure) {
+    return send(response, failure.status, {
+      error: failure.error ?? 'unauthorized_client',
+    });
+  }
+  const form = new URLSearchParams(await readBody(request));
+  const parts = (form.get('assertion') ?? '').split('.');
+  const header = parts.length === 3 ? decodePart(parts[0]) : undefined;
+  const claims = parts.length === 3 ? decodePart(parts[1]) : undefined;
+  const valid =
+    form.get('grant_type') === 'urn:ietf:params:oauth:grant-type:jwt-bearer' &&
+    header?.alg === 'RS256' &&
+    typeof claims?.iss === 'string' &&
+    typeof claims?.sub === 'string' &&
+    claims?.scope === SCOPES.join(' ') &&
+    claims?.aud === `${ORIGIN}${GOOGLE}/token` &&
+    claims?.exp - claims?.iat <= 3600;
+  if (!valid) return send(response, 400, { error: 'invalid_grant' });
+  google.tokens += 1;
+  return send(response, 200, {
+    access_token: `fake-${google.tokens}`,
+    expires_in: 3600,
+  });
+}
+
+function isAuthorised(request) {
+  return /^Bearer fake-\d+$/.test(request.headers.authorization ?? '');
+}
+
+function eventInterval(event) {
+  return {
+    start: new Date(event.start.dateTime).toISOString(),
+    end: new Date(event.end.dateTime).toISOString(),
+  };
+}
+
+function busyFor(calendarId) {
+  const own = [...(googleEvents.get(calendarId)?.values() ?? [])].map(
+    eventInterval,
+  );
+  return [...(googleBusy.get(calendarId) ?? []), ...own];
+}
+
+async function googleFreeBusy(request, response) {
+  if (!isAuthorised(request)) return googleError(response, 401, 'authError');
+  const failure = takeGoogleFailure('freebusy');
+  if (failure) return googleError(response, failure.status, 'backendError');
+  const body = parse(await readBody(request)) ?? {};
+  const calendars = {};
+  for (const item of body.items ?? []) {
+    calendars[item.id] = { busy: busyFor(item.id) };
+  }
+  return send(response, 200, { calendars });
+}
+
+function eventResponse(event) {
+  return {
+    id: event.id,
+    htmlLink: `https://calendar.google.com/calendar/event?eid=${event.id}`,
+    hangoutLink: event.hangoutLink,
+    conferenceData: {
+      createRequest: { status: { statusCode: event.conferenceStatus } },
+      entryPoints: event.hangoutLink
+        ? [{ entryPointType: 'video', uri: event.hangoutLink }]
+        : [],
+    },
+  };
+}
+
+async function googleInsert(request, response, calendarId, url) {
+  if (!isAuthorised(request)) return googleError(response, 401, 'authError');
+  const body = parse(await readBody(request)) ?? {};
+  const failure = takeGoogleFailure('insert');
+  if (failure) {
+    if (failure.lost) storeEvent(calendarId, body);
+    return googleError(response, failure.status, 'backendError');
+  }
+  const attendees = body.attendees ?? [];
+  if (
+    url.searchParams.get('conferenceDataVersion') !== '1' ||
+    url.searchParams.get('sendUpdates') !== 'all' ||
+    attendees.length !== 1 ||
+    typeof attendees[0]?.email !== 'string'
+  ) {
+    return googleError(response, 400, 'invalid');
+  }
+  if (googleEvents.get(calendarId)?.has(body.id)) {
+    return googleError(response, 409, 'duplicate');
+  }
+  return send(response, 200, eventResponse(storeEvent(calendarId, body)));
+}
+
+function storeEvent(calendarId, body) {
+  const calendar = googleEvents.get(calendarId) ?? new Map();
+  googleEvents.set(calendarId, calendar);
+  const pending = google.conference === 'pending';
+  if (!pending) google.meets += 1;
+  const event = {
+    ...body,
+    calendarId,
+    hangoutLink: pending
+      ? undefined
+      : `https://meet.google.com/fak-e${google.meets}`,
+    conferenceStatus: pending ? 'pending' : 'success',
+    reads: 0,
+  };
+  calendar.set(body.id, event);
+  return event;
+}
+
+function googleGet(request, response, calendarId, eventId) {
+  if (!isAuthorised(request)) return googleError(response, 401, 'authError');
+  const event = googleEvents.get(calendarId)?.get(eventId);
+  if (!event) return googleError(response, 404, 'notFound');
+  event.reads += 1;
+  if (event.conferenceStatus === 'pending' && event.reads >= 1) {
+    google.meets += 1;
+    event.hangoutLink = `https://meet.google.com/fak-e${google.meets}`;
+    event.conferenceStatus = 'success';
+  }
+  return send(response, 200, eventResponse(event));
+}
+
+async function handleGoogle(request, response, url) {
+  const { pathname } = url;
+  const route = `${request.method} ${pathname}`;
+  if (route === `POST ${GOOGLE}/token`) return googleToken(request, response);
+  if (route === `POST ${CALENDAR}/freeBusy`) {
+    return googleFreeBusy(request, response);
+  }
+  const insert = pathname.match(
+    /^\/__google\/calendar\/v3\/calendars\/([^/]+)\/events$/,
+  );
+  if (insert && request.method === 'POST') {
+    return googleInsert(request, response, decodeURIComponent(insert[1]), url);
+  }
+  const one = pathname.match(
+    /^\/__google\/calendar\/v3\/calendars\/([^/]+)\/events\/([^/]+)$/,
+  );
+  if (one && request.method === 'GET') {
+    return googleGet(
+      request,
+      response,
+      decodeURIComponent(one[1]),
+      decodeURIComponent(one[2]),
+    );
+  }
+  if (route === `GET ${GOOGLE}/__events`) {
+    return send(
+      response,
+      200,
+      [...googleEvents.values()].flatMap((calendar) => [...calendar.values()]),
+    );
+  }
+  if (route === `POST ${GOOGLE}/__busy`) {
+    const options = parse(await readBody(request)) ?? {};
+    googleBusy.set(options.calendarId, options.intervals ?? []);
+    return send(response, 200, { ok: true });
+  }
+  if (route === `POST ${GOOGLE}/__fail`) {
+    const options = parse(await readBody(request)) ?? {};
+    googleFailures.push({
+      op: options.op,
+      status: Number(options.status) || 500,
+      remaining: Number(options.count) || 0,
+      error: options.error,
+      lost: options.lost === true,
+    });
+    return send(response, 200, { rules: googleFailures.length });
+  }
+  if (route === `POST ${GOOGLE}/__mode`) {
+    const options = parse(await readBody(request)) ?? {};
+    google.conference =
+      options.conference === 'pending' ? 'pending' : 'success';
+    return send(response, 200, { ok: true });
+  }
+  if (route === `DELETE ${GOOGLE}/__state`) {
+    googleEvents.clear();
+    googleBusy.clear();
+    googleFailures.length = 0;
+    google.conference = 'success';
+    return send(response, 200, { ok: true });
+  }
+  return send(response, 404, { error: 'not found' });
+}
+
 const server = http.createServer(async (request, response) => {
-  const { pathname } = new URL(request.url ?? '/', ORIGIN);
+  const url = new URL(request.url ?? '/', ORIGIN);
+  const { pathname } = url;
+  if (pathname.startsWith(`${GOOGLE}/`)) {
+    return handleGoogle(request, response, url);
+  }
   const route = `${request.method} ${pathname}`;
   if (route === 'GET /__health') return send(response, 200, { ok: true });
   if (route === 'POST /emails') return handleEmail(request, response);

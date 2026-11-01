@@ -16,7 +16,7 @@ GA4 events (`src/lib/track.ts`, typed, no free-text params):
 
 | Event | Params | Fired from |
 |---|---|---|
-| `cta_click` | `cta_id`: `header`, `header_menu`, `hero`, `hero_pricing`, `page_hero`, `page_cta`, `pricing`, `about`, `services` | `CtaLink` |
+| `cta_click` | `cta_id`: `header`, `header_menu`, `hero`, `hero_pricing`, `page_hero`, `page_cta`, `pricing`, `about`, `services`, `contact_book` | `CtaLink` |
 | `language_switch` | none | the non-current link of the language switch |
 | `pricing_view` | none | once per pricing page load, when GA starts |
 | `generate_lead` | `method`: `form`, `chat`, `voice`, `calculator`, `booking` | the contact form after a successful submit (`form`; `calculator` when it was sent from the price calculator page) |

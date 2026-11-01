@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { failureCodeOf } from '@/server/fetch-error';
 
 const TIMEOUT_MS = 10_000;
 const ERROR_CODE = /^[a-z_]{1,64}$/;
@@ -46,13 +47,6 @@ async function sentId(response: Response): Promise<string | null> {
   }
 }
 
-function isTimeout(error: unknown): boolean {
-  return (
-    error instanceof Error &&
-    (error.name === 'TimeoutError' || error.name === 'AbortError')
-  );
-}
-
 export async function sendEmail({
   apiKey,
   baseUrl,
@@ -81,7 +75,7 @@ export async function sendEmail({
   } catch (error) {
     return {
       ok: false,
-      error: isTimeout(error) ? 'timeout' : 'network',
+      error: failureCodeOf(error),
       throttled: false,
     };
   }

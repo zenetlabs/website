@@ -7,6 +7,7 @@ import zlib from 'node:zlib';
 
 const PREVIEW_PORT = 4173;
 const PROXY_PORT = 4174;
+const FAKES_PORT = 4175;
 const COMPRESSIBLE = /text|javascript|json|svg|xml/;
 const ASSETS_DIR = new URL('../dist/client/assets/', import.meta.url);
 
@@ -48,14 +49,21 @@ async function waitForFreePorts(ports, timeoutMs) {
   }
 }
 
-await waitForFreePorts([PREVIEW_PORT, PROXY_PORT], 15_000);
+await waitForFreePorts([PREVIEW_PORT, PROXY_PORT, FAKES_PORT], 15_000);
 
+const fakes = spawn('node', ['scripts/fake-services.mjs'], {
+  stdio: 'inherit',
+});
 const preview = spawn('pnpm', ['preview'], { stdio: 'inherit' });
 let stopping = false;
-preview.on('exit', (code) => process.exit(stopping ? 0 : (code ?? 1)));
+preview.on('exit', (code) => {
+  fakes.kill('SIGTERM');
+  process.exit(stopping ? 0 : (code ?? 1));
+});
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.on(signal, () => {
     stopping = true;
+    fakes.kill(signal);
     preview.kill(signal);
     setTimeout(() => process.exit(0), 5_000).unref();
   });

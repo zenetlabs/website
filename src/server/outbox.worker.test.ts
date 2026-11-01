@@ -13,6 +13,12 @@ const SERVER: ServerConfig = {
   leads: { notifyTo: 'owner@example.com' },
   resendBaseUrl: 'https://resend.test',
   access: null,
+  booking: {
+    tokenUrl: 'https://google.test/token',
+    calendarUrl: 'https://google.test/calendar/v3',
+    busyCacheMs: 0,
+    failureCacheMs: 0,
+  },
 };
 const SITE: SiteConfig = {
   url: 'https://zenetlabs.com',
@@ -20,6 +26,7 @@ const SITE: SiteConfig = {
   cfBeaconToken: '',
   ga4Id: null,
   calculator: { published: false },
+  booking: { published: false },
 };
 
 const fetchMock = vi.fn<typeof fetch>();

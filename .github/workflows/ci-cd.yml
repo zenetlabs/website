@@ -126,6 +126,7 @@ jobs:
       - uses: ./.github/actions/pnpm-install-hosted
       - run: pnpm build
       - uses: ./.github/actions/local-secrets
+      - run: pnpm db:migrate:local
       - run: pnpm lhci
       - name: Upload reports
         if: failure()

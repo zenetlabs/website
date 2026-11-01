@@ -31,12 +31,33 @@ describe('siteConfig', () => {
     expect(siteConfig('production').calculator.published).toBe(false);
   });
 
+  it('publishes booking locally but not in production until the calendar exists', () => {
+    expect(siteConfig(undefined).booking.published).toBe(true);
+    expect(siteConfig('production').booking.published).toBe(false);
+  });
+
   it('rejects unknown environments', () => {
     expect(() => siteConfig('staging')).toThrow('Unknown CLOUDFLARE_ENV');
   });
 });
 
 describe('serverConfig', () => {
+  it('points the Google token and Calendar URLs at the fake locally, uncached', () => {
+    const { booking } = serverConfig(undefined);
+    expect(booking.tokenUrl).toBe('http://127.0.0.1:4175/__google/token');
+    expect(booking.calendarUrl).toBe(
+      'http://127.0.0.1:4175/__google/calendar/v3',
+    );
+    expect(booking.busyCacheMs).toBe(0);
+  });
+
+  it('calls the real Google endpoints in production, with a 60 second busy cache', () => {
+    const { booking } = serverConfig('production');
+    expect(booking.tokenUrl).toBe('https://oauth2.googleapis.com/token');
+    expect(booking.calendarUrl).toBe('https://www.googleapis.com/calendar/v3');
+    expect(booking.busyCacheMs).toBe(60_000);
+  });
+
   it('points Resend and Access at the local fake services', () => {
     const local = serverConfig(undefined);
     expect(local.resendBaseUrl).toBe('http://127.0.0.1:4175');

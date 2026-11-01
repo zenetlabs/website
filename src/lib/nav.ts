@@ -1,5 +1,11 @@
 import type { Locale, messages } from '@/lib/i18n';
-import { type PageId, pagePath } from '@/lib/page-registry';
+import {
+  isPublished,
+  type PageId,
+  pagePath,
+  type SiteFlags,
+} from '@/lib/page-registry';
+import { SITE } from '@/lib/site';
 
 type NavTarget = { page: PageId; section?: string };
 type NavLabel = keyof (typeof messages)['en']['nav'];
@@ -11,10 +17,13 @@ export const NAV = [
   { id: 'about', target: { page: 'about' } },
 ] as const satisfies readonly { id: NavLabel; target: NavTarget }[];
 
-export const CTA_TARGET = {
-  page: 'home',
-  section: 'contact',
-} as const satisfies NavTarget;
+export function ctaTarget(site: SiteFlags): NavTarget {
+  return isPublished('book', site)
+    ? { page: 'book' }
+    : { page: 'home', section: 'contact' };
+}
+
+export const CTA_TARGET: NavTarget = ctaTarget(SITE);
 
 export function navHref(locale: Locale, target: NavTarget): string {
   const path = pagePath(locale, target.page);

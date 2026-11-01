@@ -61,15 +61,25 @@ export const CALCULATOR_PAIR = {
   es: '/es/precios/calculadora',
 } as const;
 
-export const CALCULATOR_PUBLISHED = siteConfig(
+const SITE_FLAGS = siteConfig(
   process.env.PLAYWRIGHT_BASE_URL ? 'production' : undefined,
-).calculator.published;
+);
+
+export const CALCULATOR_PUBLISHED = SITE_FLAGS.calculator.published;
 
 const RESULT = answersQuery(G5);
 
 export const CALCULATOR_RESULTS: readonly string[] = CALCULATOR_PUBLISHED
   ? [CALCULATOR_PAIR.en, CALCULATOR_PAIR.es].map((path) => `${path}?${RESULT}`)
   : [];
+
+export const BOOK_PAIR = { en: '/book', es: '/es/reservar' } as const;
+
+export const BOOKING_PUBLISHED = SITE_FLAGS.booking.published;
+
+export const CTA = BOOKING_PUBLISHED
+  ? BOOK_PAIR
+  : { en: '/#contact', es: '/es#contact' };
 
 export const PAIRS = [
   { en: '/', es: '/es' },
@@ -85,6 +95,7 @@ export const PAIRS = [
   SERVICE_PAIRS.training,
   CASE_PAIR,
   ...(CALCULATOR_PUBLISHED ? [CALCULATOR_PAIR] : []),
+  ...(BOOKING_PUBLISHED ? [BOOK_PAIR] : []),
 ] as const;
 
 export const LOCALES = ['en', 'es'] as const;

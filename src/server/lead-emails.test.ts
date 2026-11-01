@@ -184,3 +184,160 @@ describe('confirmationEmail', () => {
     expect(b).toBe(a);
   });
 });
+
+describe('booking emails', () => {
+  const START = Date.UTC(2026, 10, 3, 9, 0);
+  const context = (overrides: object = {}) =>
+    JSON.stringify({
+      booking: {
+        id: 'b1',
+        start: START,
+        end: START + 1_800_000,
+        timeZone: 'Asia/Singapore',
+        channel: 'web',
+        status: 'confirmed',
+        meetUrl: 'https://meet.google.com/abc-defg-hij',
+        eventLink: 'https://calendar.google.com/event?eid=1',
+        calendar: 'main',
+        ...overrides,
+      },
+    });
+  const booked = (overrides: object = {}, lead: object = {}) => ({
+    ...LEAD,
+    source: 'booking' as const,
+    context: context(overrides),
+    ...lead,
+  });
+
+  it('names a confirmed booking in the owner email, in both zones', () => {
+    const email = ownerEmail(booked(), OWNER);
+    expect(email.subject).toBe(
+      '[Lead EN] Ada Lovelace — Analytical Engines — booking',
+    );
+    expect(email.text).toContain('Booking: confirmed');
+    expect(email.text).toContain(
+      'When (Europe/Madrid): Tuesday 3 November, 10:00 am',
+    );
+    expect(email.text).toContain(
+      'When (visitor): Tuesday 3 November, 5:00 pm (Asia/Singapore)',
+    );
+    expect(email.text).toContain('Channel: web');
+    expect(email.text).toContain('Meet: https://meet.google.com/abc-defg-hij');
+    expect(email.text).toContain(
+      'Calendar: main · https://calendar.google.com/event?eid=1',
+    );
+  });
+
+  it('marks a failed booking loudly', () => {
+    const email = ownerEmail(
+      booked({ status: 'failed', meetUrl: null, eventLink: null }),
+      OWNER,
+    );
+    expect(email.subject).toBe(
+      '[Lead EN] Ada Lovelace — Analytical Engines — booking FAILED',
+    );
+    expect(email.text).toContain(
+      'Booking: FAILED. Nothing was created in the calendar, follow up by email.',
+    );
+    expect(email.text).toContain('Meet: -');
+  });
+
+  it('keeps the TEST marker next to FAILED', () => {
+    expect(ownerSubject(booked({ status: 'failed' }, { is_test: 1 }))).toBe(
+      '[TEST] [Lead EN] Ada Lovelace — Analytical Engines — booking FAILED',
+    );
+  });
+
+  it('matches the English confirmation golden and echoes no visitor text', () => {
+    const email = confirmationEmail(booked(), CONFIRMATION);
+    expect(email.to).toBe('ada@example.com');
+    expect(email.replyTo).toBe('hello@zenetlabs.com');
+    expect(email.subject).toBe(
+      'Booked: 30-minute call with Zenet Labs, Tuesday 3 November, 5:00 pm',
+    );
+    expect(email.text).toBe(
+      [
+        'Hello,',
+        '',
+        'Your 30-minute call with Zenet Labs is booked.',
+        '',
+        'When: Tuesday 3 November, 5:00 pm (Asia/Singapore)',
+        'Where: Google Meet, https://meet.google.com/abc-defg-hij',
+        '',
+        'You will also receive a Google Calendar invitation. To change the time or cancel, reply to this email.',
+        '',
+        'Before the call, think of the two or three tasks your team repeats most and the tools involved.',
+        '',
+        `Zenet Labs · ${legalEntity('en').legalName}`,
+        'https://zenetlabs.com',
+        '',
+        'You are receiving this email because this address was used to book a call on zenetlabs.com. If that was not you, reply and we will cancel it.',
+      ].join('\n'),
+    );
+    for (const text of [
+      'Ada Lovelace',
+      'Analytical Engines',
+      'automate our inbox',
+    ]) {
+      expect(email.text).not.toContain(text);
+    }
+  });
+
+  it('writes the Spanish confirmation natively', () => {
+    const email = confirmationEmail(booked({}, { locale: 'es' }), CONFIRMATION);
+    expect(email.subject).toBe(
+      'Reservada: llamada de 30 minutos con Zenet Labs, martes 3 de noviembre, 17:00',
+    );
+    expect(email.text).toContain(
+      'Tu llamada de 30 minutos con Zenet Labs está reservada.',
+    );
+    expect(email.text).toContain(
+      'Cuándo: martes 3 de noviembre, 17:00 (Asia/Singapore)',
+    );
+    expect(email.text).toContain(
+      'Para cambiar la hora o cancelarla, responde a este correo.',
+    );
+    expect(email.text).toContain('https://zenetlabs.com/es');
+  });
+
+  it('says the link comes with the invitation when there is none, and tells the owner', () => {
+    const lead = booked({ meetUrl: null });
+    expect(confirmationEmail(lead, CONFIRMATION).text).toContain(
+      'Where: Google Meet, the link comes with the calendar invitation; if you do not see it, we will email it before the call',
+    );
+    const owner = ownerEmail(lead, OWNER).text;
+    expect(owner).toContain('Meet link: MISSING');
+    expect(owner).toContain('add a Google Meet link to the event by hand');
+  });
+
+  it('never says nothing was created when the outcome is unknown', () => {
+    const lead = booked({ status: 'unknown', meetUrl: null, eventLink: null });
+    expect(ownerSubject(lead)).toBe(
+      '[Lead EN] Ada Lovelace — Analytical Engines — booking CHECK CALENDAR',
+    );
+    const owner = ownerEmail(lead, OWNER).text;
+    expect(owner).toContain('may have been created, check the calendar');
+    expect(owner).not.toContain('Nothing was created');
+    expect(owner).not.toContain('Meet link: MISSING');
+    expect(confirmationEmail(lead, CONFIRMATION).subject).toBe(
+      'We have your message | Zenet Labs',
+    );
+  });
+
+  it('falls back to the generic emails when the context does not parse', () => {
+    for (const context of [null, 'not json', '{"booking":{"id":1}}', '{}']) {
+      const lead = { ...LEAD, source: 'booking' as const, context };
+      expect(confirmationEmail(lead, CONFIRMATION).subject).toBe(
+        'We have your message | Zenet Labs',
+      );
+      expect(ownerSubject(lead)).toBe(
+        '[Lead EN] Ada Lovelace — Analytical Engines — booking',
+      );
+    }
+  });
+
+  it('never sends the booking confirmation for a failed booking', () => {
+    const email = confirmationEmail(booked({ status: 'failed' }), CONFIRMATION);
+    expect(email.subject).toBe('We have your message | Zenet Labs');
+  });
+});

@@ -141,8 +141,14 @@ describe('pageLocales and hasLocale', () => {
 });
 
 describe('the calculator page', () => {
-  const published = { calculator: { published: true } };
-  const unpublished = { calculator: { published: false } };
+  const published = {
+    calculator: { published: true },
+    booking: { published: false },
+  };
+  const unpublished = {
+    calculator: { published: false },
+    booking: { published: false },
+  };
 
   it('sits under pricing with a public slug per locale', () => {
     expect(breadcrumbTrail('calculator')).toEqual([
@@ -165,7 +171,9 @@ describe('the calculator page', () => {
   it('is published by the flag and every other page always is', () => {
     expect(isPublished('calculator', published)).toBe(true);
     expect(isPublished('calculator', unpublished)).toBe(false);
-    for (const page of PAGE_IDS.filter((id) => id !== 'calculator')) {
+    for (const page of PAGE_IDS.filter(
+      (id) => id !== 'calculator' && id !== 'book',
+    )) {
       expect(isPublished(page, unpublished)).toBe(true);
     }
   });
@@ -179,9 +187,10 @@ describe('the calculator page', () => {
     }
   });
 
-  it('is the only page behind a flag', () => {
+  it('is one of two pages behind a flag', () => {
     expect(PAGE_IDS.filter((id) => PAGES[id].flag !== undefined)).toEqual([
       'calculator',
+      'book',
     ]);
   });
 
@@ -578,5 +587,34 @@ describe('breadcrumbTrail', () => {
       'travelAgencies',
     ]);
     expect(breadcrumbTrail('viatsyCase')).toEqual(['home', 'viatsyCase']);
+  });
+});
+
+describe('the booking page', () => {
+  const on = { calculator: { published: false }, booking: { published: true } };
+  const off = {
+    calculator: { published: false },
+    booking: { published: false },
+  };
+
+  it('has translated slugs and a one-hop alias for the internal route', () => {
+    expect(pagePath('en', 'book')).toBe('/book');
+    expect(pagePath('es', 'book')).toBe('/es/reservar');
+    expect(routeOf('book')).toBe('/book');
+    expect(pageForSlug('/reservar')).toBe('book');
+    expect(breadcrumbTrail('book')).toEqual(['home', 'book']);
+  });
+
+  it('is listed in both locales only while the booking flag is on', () => {
+    for (const locale of locales) {
+      expect(pagesIn(locale, on)).toContain('book');
+      expect(pagesIn(locale, off)).not.toContain('book');
+    }
+    expect(isPublished('book', on)).toBe(true);
+    expect(isPublished('book', off)).toBe(false);
+  });
+
+  it('is off in the production build the tests run against', () => {
+    expect(isPublished('book')).toBe(false);
   });
 });

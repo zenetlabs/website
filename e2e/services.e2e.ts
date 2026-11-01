@@ -3,6 +3,7 @@ import { formatPriceSummary } from '../src/lib/money';
 import { jsonLdBlocks } from '../test/json-ld';
 import { SERVICES } from '../test/page-content';
 import {
+  CTA,
   gotoHydrated,
   LOCALES,
   navLinks,
@@ -12,7 +13,6 @@ import {
 } from './helpers';
 
 const HOME = { en: '/', es: '/es' } as const;
-const CTA = { en: '/#contact', es: '/es#contact' } as const;
 const PRICING = { en: '/pricing', es: '/es/precios' } as const;
 
 for (const pair of Object.values(SERVICE_PAIRS)) {

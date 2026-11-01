@@ -1,18 +1,21 @@
-import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 import { useHydrated } from '@tanstack/react-router';
-import { type FormEvent, type ReactNode, useId, useRef, useState } from 'react';
+import { type FormEvent, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
-import { legalEntity } from '@/lib/content';
+import {
+  CONTROL,
+  ConsentCheckbox,
+  Field,
+  FormAlert,
+  Honeypot,
+  LazyTurnstile,
+} from '@/components/form-parts';
+import { PRIMARY_BUTTON } from '@/components/ui';
+import { useChallenge } from '@/components/use-challenge';
+import { text } from '@/lib/form-data';
 import { useLocale, useMessages } from '@/lib/i18n';
 import { attribution, submitLead } from '@/lib/lead-client';
 import type { LeadError } from '@/lib/lead-result';
-import { pagePath } from '@/lib/page-registry';
-import { PUBLIC_EMAIL, SITE } from '@/lib/site';
 import { type LeadMethod, track } from '@/lib/track';
-
-const CONTROL =
-  'w-full rounded-input border border-border bg-bg px-3.5 py-3 text-base';
 
 type FailStatus = 'errorSend' | 'errorCaptcha' | 'errorRate';
 type Status = 'idle' | 'pending' | 'sent' | FailStatus;
@@ -22,29 +25,6 @@ function failureFor(error: LeadError): FailStatus {
   return error === 'rate' ? 'errorRate' : 'errorSend';
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: (id: string) => ReactNode;
-}) {
-  const id = useId();
-  return (
-    <div className="grid gap-2">
-      <label htmlFor={id} className="text-sm font-medium">
-        {label}
-      </label>
-      {children(id)}
-    </div>
-  );
-}
-
-function text(data: FormData, name: string): string {
-  const value = data.get(name);
-  return typeof value === 'string' ? value : '';
-}
-
 export type ContactPrefill = { message: string; method: LeadMethod };
 
 export function ContactForm({ prefill }: { prefill?: ContactPrefill }) {
@@ -52,23 +32,16 @@ export function ContactForm({ prefill }: { prefill?: ContactPrefill }) {
   const { form: copy } = contact;
   const locale = useLocale();
   const hydrated = useHydrated();
-  const turnstile = useRef<TurnstileInstance>(undefined);
-  const [engaged, setEngaged] = useState(false);
-  const [token, setToken] = useState('');
+  const challenge = useChallenge();
+  const { token } = challenge;
   const [status, setStatus] = useState<Status>('idle');
   const successHeading = useRef<HTMLParagraphElement>(null);
   const alert = useRef<HTMLParagraphElement>(null);
   const pending = status === 'pending';
-  const [consentBefore, consentAfter] = copy.consent
-    .replace('{legalName}', legalEntity(locale).legalName)
-    .split('{privacyLink}');
 
   function fail(next: FailStatus) {
-    flushSync(() => {
-      setStatus(next);
-      setToken('');
-    });
-    turnstile.current?.reset();
+    flushSync(() => setStatus(next));
+    challenge.retry();
     alert.current?.focus();
   }
 
@@ -123,7 +96,7 @@ export function ContactForm({ prefill }: { prefill?: ContactPrefill }) {
         <form
           aria-label={copy.label}
           onSubmit={onSubmit}
-          onFocus={() => setEngaged(true)}
+          onFocus={challenge.engage}
         >
           <fieldset disabled={!hydrated || pending} className="grid gap-5">
             <Field label={copy.name}>
@@ -176,51 +149,23 @@ export function ContactForm({ prefill }: { prefill?: ContactPrefill }) {
                 />
               )}
             </Field>
-            <div aria-hidden="true" className="sr-only">
-              <label>
-                {copy.honeypot}
-                <input
-                  name="website"
-                  tabIndex={-1}
-                  autoComplete="off"
-                  maxLength={200}
-                />
-              </label>
-            </div>
-            <label className="flex items-start gap-3 text-sm text-muted-fg">
-              <input
-                type="checkbox"
-                name="consent"
-                required
-                className="mt-1 size-4 shrink-0 accent-accent"
-              />
-              <span>
-                {consentBefore}
-                <a href={pagePath(locale, 'privacy')} className={TEXT_LINK}>
-                  {copy.consentLink}
-                </a>
-                {consentAfter}
-              </span>
-            </label>
-            {engaged ? (
-              <Turnstile
-                ref={turnstile}
-                siteKey={SITE.turnstileSiteKey}
-                options={{
-                  action: 'lead',
-                  theme: 'auto',
-                  language: locale,
-                  size: 'flexible',
-                  refreshExpired: 'auto',
-                }}
-                onSuccess={setToken}
-                onExpire={() => setToken('')}
-                onError={() => {
-                  setToken('');
-                  setStatus('errorCaptcha');
-                }}
-              />
-            ) : null}
+            <Honeypot label={copy.honeypot} />
+            <ConsentCheckbox
+              locale={locale}
+              template={copy.consent}
+              linkText={copy.consentLink}
+            />
+            <LazyTurnstile
+              engaged={challenge.engaged}
+              action="lead"
+              locale={locale}
+              instance={challenge.instance}
+              onToken={challenge.setToken}
+              onError={() => {
+                challenge.setToken('');
+                setStatus('errorCaptcha');
+              }}
+            />
             <button
               type="submit"
               disabled={token === ''}
@@ -231,18 +176,7 @@ export function ContactForm({ prefill }: { prefill?: ContactPrefill }) {
             {status === 'errorSend' ||
             status === 'errorCaptcha' ||
             status === 'errorRate' ? (
-              <p
-                ref={alert}
-                role="alert"
-                tabIndex={-1}
-                className="text-sm outline-hidden"
-              >
-                {copy[status]}{' '}
-                <a href={`mailto:${PUBLIC_EMAIL}`} className={TEXT_LINK}>
-                  {PUBLIC_EMAIL}
-                </a>
-                .
-              </p>
+              <FormAlert alertRef={alert}>{copy[status]}</FormAlert>
             ) : null}
           </fieldset>
         </form>

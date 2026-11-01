@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Locale } from '@/lib/i18n';
-import { CTA_TARGET, isCurrent, NAV, navHref } from '@/lib/nav';
+import { CTA_TARGET, ctaTarget, isCurrent, NAV, navHref } from '@/lib/nav';
 
 describe('navHref', () => {
   it.each([
@@ -19,6 +19,31 @@ describe('navHref', () => {
       expect(navHref(locale, CTA_TARGET)).toBe(expected);
     },
   );
+});
+
+describe('ctaTarget', () => {
+  const flags = (published: boolean) => ({
+    calculator: { published: false },
+    booking: { published },
+  });
+
+  it.each([
+    ['en', '/book'],
+    ['es', '/es/reservar'],
+  ] as const satisfies readonly (readonly [Locale, string])[])(
+    'sends the CTA in %s to the booking page once it is published',
+    (locale, expected) => {
+      expect(navHref(locale, ctaTarget(flags(true)))).toBe(expected);
+    },
+  );
+
+  it('falls back to the contact section while booking is off', () => {
+    expect(ctaTarget(flags(false))).toEqual({
+      page: 'home',
+      section: 'contact',
+    });
+    expect(CTA_TARGET).toEqual(ctaTarget(flags(false)));
+  });
 });
 
 describe('isCurrent', () => {

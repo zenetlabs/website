@@ -36,6 +36,13 @@ describe('{-$locale} layout', () => {
     },
   );
 
+  it.each(['/book', '/es/reservar'])(
+    'answers 404 for %s while booking is unpublished',
+    async (path) => {
+      expect(hasNotFound(await load(path))).toBe(true);
+    },
+  );
+
   it.each(['/legal-notice', '/fr/privacy'])(
     'answers 404 for %s',
     async (path) => {

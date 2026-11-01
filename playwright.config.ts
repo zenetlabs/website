@@ -25,7 +25,8 @@ export default defineConfig({
           timeout: 30_000,
         },
         {
-          command: 'pnpm db:migrate:local && pnpm preview',
+          command:
+            'pnpm db:migrate:local && pnpm db:clear-bookings:local && pnpm preview',
           url: baseURL,
           reuseExistingServer: !process.env.CI,
           timeout: 120_000,

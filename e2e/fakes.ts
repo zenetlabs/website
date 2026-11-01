@@ -46,3 +46,48 @@ export async function accessToken(
   });
   return z.object({ token: z.string() }).parse(await response.json()).token;
 }
+
+const googleEventSchema = z.object({
+  id: z.string(),
+  summary: z.string(),
+  calendarId: z.string(),
+  attendees: z.array(z.object({ email: z.string() })),
+  hangoutLink: z.string().optional(),
+  start: z.object({ dateTime: z.string() }),
+});
+
+export type GoogleEvent = z.infer<typeof googleEventSchema>;
+
+export async function googleReset(): Promise<void> {
+  await fetch(`${FAKES}/__google/__state`, { method: 'DELETE' });
+}
+
+export async function googleEvents(): Promise<GoogleEvent[]> {
+  const response = await fetch(`${FAKES}/__google/__events`);
+  return z.array(googleEventSchema).parse(await response.json());
+}
+
+export async function googleBusy(
+  calendarId: string,
+  intervals: ReadonlyArray<{ start: string; end: string }>,
+): Promise<void> {
+  await fetch(`${FAKES}/__google/__busy`, {
+    method: 'POST',
+    body: JSON.stringify({ calendarId, intervals }),
+  });
+}
+
+export async function googleFail(
+  op: 'token' | 'freebusy' | 'insert',
+  count: number,
+  status = 500,
+): Promise<void> {
+  await fetch(`${FAKES}/__google/__fail`, {
+    method: 'POST',
+    body: JSON.stringify({ op, count, status }),
+  });
+}
+
+export const TOOL_SECRET = 'local-tool-secret';
+
+export const TEST_CALENDAR = 'local-test';

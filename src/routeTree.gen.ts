@@ -12,11 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as Char123LocaleChar125RouteImport } from './routes/{-$locale}'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiLeadRouteImport } from './routes/api/lead'
 import { Route as InternalLeadsRouteImport } from './routes/internal/leads'
 import { Route as InternalLeadsDotcsvRouteImport } from './routes/internal/leads[.]csv'
 import { Route as Char123LocaleChar125IndexRouteImport } from './routes/{-$locale}/index'
 import { Route as Char123LocaleChar125AboutRouteImport } from './routes/{-$locale}/about'
+import { Route as Char123LocaleChar125BookRouteImport } from './routes/{-$locale}/book'
 import { Route as Char123LocaleChar125CookiesRouteImport } from './routes/{-$locale}/cookies'
 import { Route as Char123LocaleChar125LegalNoticeRouteImport } from './routes/{-$locale}/legal-notice'
 import { Route as Char123LocaleChar125LlmsFullDottxtRouteImport } from './routes/{-$locale}/llms-full[.]txt'
@@ -24,6 +26,9 @@ import { Route as Char123LocaleChar125LlmsDottxtRouteImport } from './routes/{-$
 import { Route as Char123LocaleChar125PricingRouteImport } from './routes/{-$locale}/pricing'
 import { Route as Char123LocaleChar125PrivacyRouteImport } from './routes/{-$locale}/privacy'
 import { Route as Char123LocaleChar125VerifactuRouteImport } from './routes/{-$locale}/verifactu'
+import { Route as ApiBookSlotsRouteImport } from './routes/api/book.slots'
+import { Route as ApiToolsIndexRouteImport } from './routes/api/tools/index'
+import { Route as ApiToolsNameRouteImport } from './routes/api/tools/$name'
 import { Route as InternalLeadsIdRouteImport } from './routes/internal/leads.$id'
 import { Route as Char123LocaleChar125CaseStudiesViatsyRouteImport } from './routes/{-$locale}/case-studies/viatsy'
 import { Route as Char123LocaleChar125IndustriesTravelAgenciesRouteImport } from './routes/{-$locale}/industries/travel-agencies'
@@ -53,6 +58,11 @@ const Char123LocaleChar125Route = Char123LocaleChar125RouteImport.update({
   path: '/{-$locale}',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiLeadRoute = ApiLeadRouteImport.update({
   id: '/api/lead',
   path: '/api/lead',
@@ -78,6 +88,12 @@ const Char123LocaleChar125AboutRoute =
   Char123LocaleChar125AboutRouteImport.update({
     id: '/about',
     path: '/about',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125BookRoute =
+  Char123LocaleChar125BookRouteImport.update({
+    id: '/book',
+    path: '/book',
     getParentRoute: () => Char123LocaleChar125Route,
   } as any)
 const Char123LocaleChar125CookiesRoute =
@@ -122,6 +138,21 @@ const Char123LocaleChar125VerifactuRoute =
     path: '/verifactu',
     getParentRoute: () => Char123LocaleChar125Route,
   } as any)
+const ApiBookSlotsRoute = ApiBookSlotsRouteImport.update({
+  id: '/api/book/slots',
+  path: '/api/book/slots',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiToolsIndexRoute = ApiToolsIndexRouteImport.update({
+  id: '/api/tools/',
+  path: '/api/tools/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiToolsNameRoute = ApiToolsNameRouteImport.update({
+  id: '/api/tools/$name',
+  path: '/api/tools/$name',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InternalLeadsIdRoute = InternalLeadsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -204,10 +235,12 @@ export interface FileRoutesByFullPath {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/{-$locale}': typeof Char123LocaleChar125RouteWithChildren
+  '/api/health': typeof ApiHealthRoute
   '/api/lead': typeof ApiLeadRoute
   '/internal/leads': typeof InternalLeadsRouteWithChildren
   '/internal/leads.csv': typeof InternalLeadsDotcsvRoute
   '/{-$locale}/about': typeof Char123LocaleChar125AboutRoute
+  '/{-$locale}/book': typeof Char123LocaleChar125BookRoute
   '/{-$locale}/cookies': typeof Char123LocaleChar125CookiesRoute
   '/{-$locale}/legal-notice': typeof Char123LocaleChar125LegalNoticeRoute
   '/{-$locale}/llms-full.txt': typeof Char123LocaleChar125LlmsFullDottxtRoute
@@ -216,6 +249,8 @@ export interface FileRoutesByFullPath {
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}/verifactu': typeof Char123LocaleChar125VerifactuRoute
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
+  '/api/book/slots': typeof ApiBookSlotsRoute
+  '/api/tools/$name': typeof ApiToolsNameRoute
   '/internal/leads/$id': typeof InternalLeadsIdRoute
   '/{-$locale}/case-studies/viatsy': typeof Char123LocaleChar125CaseStudiesViatsyRoute
   '/{-$locale}/industries/travel-agencies': typeof Char123LocaleChar125IndustriesTravelAgenciesRoute
@@ -224,6 +259,7 @@ export interface FileRoutesByFullPath {
   '/{-$locale}/services/ai-automation': typeof Char123LocaleChar125ServicesAiAutomationRoute
   '/{-$locale}/services/ai-training': typeof Char123LocaleChar125ServicesAiTrainingRoute
   '/{-$locale}/services/custom-software': typeof Char123LocaleChar125ServicesCustomSoftwareRoute
+  '/api/tools/': typeof ApiToolsIndexRoute
   '/{-$locale}/services/': typeof Char123LocaleChar125ServicesIndexRoute
   '/{-$locale}/services/integrations/holded-hubspot': typeof Char123LocaleChar125ServicesIntegrationsHoldedHubspotRoute
   '/{-$locale}/services/integrations/holded-prestashop': typeof Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRoute
@@ -233,10 +269,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/lead': typeof ApiLeadRoute
   '/internal/leads': typeof InternalLeadsRouteWithChildren
   '/internal/leads.csv': typeof InternalLeadsDotcsvRoute
   '/{-$locale}/about': typeof Char123LocaleChar125AboutRoute
+  '/{-$locale}/book': typeof Char123LocaleChar125BookRoute
   '/{-$locale}/cookies': typeof Char123LocaleChar125CookiesRoute
   '/{-$locale}/legal-notice': typeof Char123LocaleChar125LegalNoticeRoute
   '/{-$locale}/llms-full.txt': typeof Char123LocaleChar125LlmsFullDottxtRoute
@@ -245,6 +283,8 @@ export interface FileRoutesByTo {
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}/verifactu': typeof Char123LocaleChar125VerifactuRoute
   '/{-$locale}': typeof Char123LocaleChar125IndexRoute
+  '/api/book/slots': typeof ApiBookSlotsRoute
+  '/api/tools/$name': typeof ApiToolsNameRoute
   '/internal/leads/$id': typeof InternalLeadsIdRoute
   '/{-$locale}/case-studies/viatsy': typeof Char123LocaleChar125CaseStudiesViatsyRoute
   '/{-$locale}/industries/travel-agencies': typeof Char123LocaleChar125IndustriesTravelAgenciesRoute
@@ -253,6 +293,7 @@ export interface FileRoutesByTo {
   '/{-$locale}/services/ai-automation': typeof Char123LocaleChar125ServicesAiAutomationRoute
   '/{-$locale}/services/ai-training': typeof Char123LocaleChar125ServicesAiTrainingRoute
   '/{-$locale}/services/custom-software': typeof Char123LocaleChar125ServicesCustomSoftwareRoute
+  '/api/tools': typeof ApiToolsIndexRoute
   '/{-$locale}/services': typeof Char123LocaleChar125ServicesIndexRoute
   '/{-$locale}/services/integrations/holded-hubspot': typeof Char123LocaleChar125ServicesIntegrationsHoldedHubspotRoute
   '/{-$locale}/services/integrations/holded-prestashop': typeof Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRoute
@@ -264,10 +305,12 @@ export interface FileRoutesById {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/{-$locale}': typeof Char123LocaleChar125RouteWithChildren
+  '/api/health': typeof ApiHealthRoute
   '/api/lead': typeof ApiLeadRoute
   '/internal/leads': typeof InternalLeadsRouteWithChildren
   '/internal/leads.csv': typeof InternalLeadsDotcsvRoute
   '/{-$locale}/about': typeof Char123LocaleChar125AboutRoute
+  '/{-$locale}/book': typeof Char123LocaleChar125BookRoute
   '/{-$locale}/cookies': typeof Char123LocaleChar125CookiesRoute
   '/{-$locale}/legal-notice': typeof Char123LocaleChar125LegalNoticeRoute
   '/{-$locale}/llms-full.txt': typeof Char123LocaleChar125LlmsFullDottxtRoute
@@ -276,6 +319,8 @@ export interface FileRoutesById {
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}/verifactu': typeof Char123LocaleChar125VerifactuRoute
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
+  '/api/book/slots': typeof ApiBookSlotsRoute
+  '/api/tools/$name': typeof ApiToolsNameRoute
   '/internal/leads/$id': typeof InternalLeadsIdRoute
   '/{-$locale}/case-studies/viatsy': typeof Char123LocaleChar125CaseStudiesViatsyRoute
   '/{-$locale}/industries/travel-agencies': typeof Char123LocaleChar125IndustriesTravelAgenciesRoute
@@ -284,6 +329,7 @@ export interface FileRoutesById {
   '/{-$locale}/services/ai-automation': typeof Char123LocaleChar125ServicesAiAutomationRoute
   '/{-$locale}/services/ai-training': typeof Char123LocaleChar125ServicesAiTrainingRoute
   '/{-$locale}/services/custom-software': typeof Char123LocaleChar125ServicesCustomSoftwareRoute
+  '/api/tools/': typeof ApiToolsIndexRoute
   '/{-$locale}/services/': typeof Char123LocaleChar125ServicesIndexRoute
   '/{-$locale}/services/integrations/holded-hubspot': typeof Char123LocaleChar125ServicesIntegrationsHoldedHubspotRoute
   '/{-$locale}/services/integrations/holded-prestashop': typeof Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRoute
@@ -296,10 +342,12 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/{-$locale}'
+    | '/api/health'
     | '/api/lead'
     | '/internal/leads'
     | '/internal/leads.csv'
     | '/{-$locale}/about'
+    | '/{-$locale}/book'
     | '/{-$locale}/cookies'
     | '/{-$locale}/legal-notice'
     | '/{-$locale}/llms-full.txt'
@@ -308,6 +356,8 @@ export interface FileRouteTypes {
     | '/{-$locale}/privacy'
     | '/{-$locale}/verifactu'
     | '/{-$locale}/'
+    | '/api/book/slots'
+    | '/api/tools/$name'
     | '/internal/leads/$id'
     | '/{-$locale}/case-studies/viatsy'
     | '/{-$locale}/industries/travel-agencies'
@@ -316,6 +366,7 @@ export interface FileRouteTypes {
     | '/{-$locale}/services/ai-automation'
     | '/{-$locale}/services/ai-training'
     | '/{-$locale}/services/custom-software'
+    | '/api/tools/'
     | '/{-$locale}/services/'
     | '/{-$locale}/services/integrations/holded-hubspot'
     | '/{-$locale}/services/integrations/holded-prestashop'
@@ -325,10 +376,12 @@ export interface FileRouteTypes {
   to:
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/api/health'
     | '/api/lead'
     | '/internal/leads'
     | '/internal/leads.csv'
     | '/{-$locale}/about'
+    | '/{-$locale}/book'
     | '/{-$locale}/cookies'
     | '/{-$locale}/legal-notice'
     | '/{-$locale}/llms-full.txt'
@@ -337,6 +390,8 @@ export interface FileRouteTypes {
     | '/{-$locale}/privacy'
     | '/{-$locale}/verifactu'
     | '/{-$locale}'
+    | '/api/book/slots'
+    | '/api/tools/$name'
     | '/internal/leads/$id'
     | '/{-$locale}/case-studies/viatsy'
     | '/{-$locale}/industries/travel-agencies'
@@ -345,6 +400,7 @@ export interface FileRouteTypes {
     | '/{-$locale}/services/ai-automation'
     | '/{-$locale}/services/ai-training'
     | '/{-$locale}/services/custom-software'
+    | '/api/tools'
     | '/{-$locale}/services'
     | '/{-$locale}/services/integrations/holded-hubspot'
     | '/{-$locale}/services/integrations/holded-prestashop'
@@ -355,10 +411,12 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/{-$locale}'
+    | '/api/health'
     | '/api/lead'
     | '/internal/leads'
     | '/internal/leads.csv'
     | '/{-$locale}/about'
+    | '/{-$locale}/book'
     | '/{-$locale}/cookies'
     | '/{-$locale}/legal-notice'
     | '/{-$locale}/llms-full.txt'
@@ -367,6 +425,8 @@ export interface FileRouteTypes {
     | '/{-$locale}/privacy'
     | '/{-$locale}/verifactu'
     | '/{-$locale}/'
+    | '/api/book/slots'
+    | '/api/tools/$name'
     | '/internal/leads/$id'
     | '/{-$locale}/case-studies/viatsy'
     | '/{-$locale}/industries/travel-agencies'
@@ -375,6 +435,7 @@ export interface FileRouteTypes {
     | '/{-$locale}/services/ai-automation'
     | '/{-$locale}/services/ai-training'
     | '/{-$locale}/services/custom-software'
+    | '/api/tools/'
     | '/{-$locale}/services/'
     | '/{-$locale}/services/integrations/holded-hubspot'
     | '/{-$locale}/services/integrations/holded-prestashop'
@@ -386,9 +447,13 @@ export interface RootRouteChildren {
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   Char123LocaleChar125Route: typeof Char123LocaleChar125RouteWithChildren
+  ApiHealthRoute: typeof ApiHealthRoute
   ApiLeadRoute: typeof ApiLeadRoute
   InternalLeadsRoute: typeof InternalLeadsRouteWithChildren
   InternalLeadsDotcsvRoute: typeof InternalLeadsDotcsvRoute
+  ApiBookSlotsRoute: typeof ApiBookSlotsRoute
+  ApiToolsNameRoute: typeof ApiToolsNameRoute
+  ApiToolsIndexRoute: typeof ApiToolsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -412,6 +477,13 @@ declare module '@tanstack/react-router' {
       path: '/{-$locale}'
       fullPath: '/{-$locale}'
       preLoaderRoute: typeof Char123LocaleChar125RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/lead': {
@@ -447,6 +519,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/{-$locale}/about'
       preLoaderRoute: typeof Char123LocaleChar125AboutRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
+    '/{-$locale}/book': {
+      id: '/{-$locale}/book'
+      path: '/book'
+      fullPath: '/{-$locale}/book'
+      preLoaderRoute: typeof Char123LocaleChar125BookRouteImport
       parentRoute: typeof Char123LocaleChar125Route
     }
     '/{-$locale}/cookies': {
@@ -497,6 +576,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/{-$locale}/verifactu'
       preLoaderRoute: typeof Char123LocaleChar125VerifactuRouteImport
       parentRoute: typeof Char123LocaleChar125Route
+    }
+    '/api/book/slots': {
+      id: '/api/book/slots'
+      path: '/api/book/slots'
+      fullPath: '/api/book/slots'
+      preLoaderRoute: typeof ApiBookSlotsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/tools/': {
+      id: '/api/tools/'
+      path: '/api/tools'
+      fullPath: '/api/tools/'
+      preLoaderRoute: typeof ApiToolsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/tools/$name': {
+      id: '/api/tools/$name'
+      path: '/api/tools/$name'
+      fullPath: '/api/tools/$name'
+      preLoaderRoute: typeof ApiToolsNameRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/internal/leads/$id': {
       id: '/internal/leads/$id'
@@ -594,6 +694,7 @@ declare module '@tanstack/react-router' {
 
 interface Char123LocaleChar125RouteChildren {
   Char123LocaleChar125AboutRoute: typeof Char123LocaleChar125AboutRoute
+  Char123LocaleChar125BookRoute: typeof Char123LocaleChar125BookRoute
   Char123LocaleChar125CookiesRoute: typeof Char123LocaleChar125CookiesRoute
   Char123LocaleChar125LegalNoticeRoute: typeof Char123LocaleChar125LegalNoticeRoute
   Char123LocaleChar125LlmsFullDottxtRoute: typeof Char123LocaleChar125LlmsFullDottxtRoute
@@ -618,6 +719,7 @@ interface Char123LocaleChar125RouteChildren {
 
 const Char123LocaleChar125RouteChildren: Char123LocaleChar125RouteChildren = {
   Char123LocaleChar125AboutRoute: Char123LocaleChar125AboutRoute,
+  Char123LocaleChar125BookRoute: Char123LocaleChar125BookRoute,
   Char123LocaleChar125CookiesRoute: Char123LocaleChar125CookiesRoute,
   Char123LocaleChar125LegalNoticeRoute: Char123LocaleChar125LegalNoticeRoute,
   Char123LocaleChar125LlmsFullDottxtRoute:
@@ -672,9 +774,13 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   Char123LocaleChar125Route: Char123LocaleChar125RouteWithChildren,
+  ApiHealthRoute: ApiHealthRoute,
   ApiLeadRoute: ApiLeadRoute,
   InternalLeadsRoute: InternalLeadsRouteWithChildren,
   InternalLeadsDotcsvRoute: InternalLeadsDotcsvRoute,
+  ApiBookSlotsRoute: ApiBookSlotsRoute,
+  ApiToolsNameRoute: ApiToolsNameRoute,
+  ApiToolsIndexRoute: ApiToolsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

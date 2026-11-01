@@ -8,7 +8,12 @@ import {
 } from '@playwright/test';
 import { siteConfig } from '../site.config';
 import { NOTIFY_TO, sentFor, uniqueEmail } from './fakes';
-import { gotoHydrated, PAGES, settleAnimations } from './helpers';
+import {
+  BOOKING_PUBLISHED,
+  gotoHydrated,
+  PAGES,
+  settleAnimations,
+} from './helpers';
 
 declare global {
   interface Window {
@@ -384,12 +389,16 @@ test.describe('events', () => {
 
     await page.locator('a[data-cta="hero"]').click();
     expect(entries).toContainEqual(['event', 'cta_click', { cta_id: 'hero' }]);
+    if (BOOKING_PUBLISHED) {
+      await page.waitForURL('**/book');
+      await page.waitForFunction(() => window.zenetTracking === true);
+    }
 
     await page
       .getByRole('navigation', { name: 'Language', exact: true })
       .getByRole('link', { name: 'ES' })
       .click();
-    await page.waitForURL('**/es');
+    await page.waitForURL(BOOKING_PUBLISHED ? '**/es/reservar' : '**/es');
     expect(entries).toContainEqual(['event', 'language_switch', undefined]);
   });
 
@@ -402,7 +411,7 @@ test.describe('events', () => {
       .getByRole('navigation', { name: 'Language', exact: true })
       .getByRole('link', { name: 'ES' })
       .click();
-    await page.waitForURL('**/es');
+    await page.waitForURL(BOOKING_PUBLISHED ? '**/es/reservar' : '**/es');
     await settled(page);
     expect(entries.filter((entry) => entry[0] === 'event')).toEqual([]);
     expect(requests).toEqual([]);
@@ -412,9 +421,11 @@ test.describe('events', () => {
     for (const path of PAGES.filter((entry) => entry !== LEGAL_NOTICE)) {
       const html = await (await request.get(path)).text();
       const anchors = (html.match(/<a\b[^>]*>/g) ?? []).filter((tag) =>
-        /href="(?:\/es)?\/?#contact"/.test(tag),
+        /href="(?:\/es)?\/?#contact"|href="(?:\/book|\/es\/reservar)"/.test(
+          tag,
+        ),
       );
-      for (const tag of anchors) {
+      for (const tag of anchors.filter((tag) => !tag.includes('hrefLang'))) {
         expect(tag, `${path} ${tag}`).toContain('data-cta="');
       }
     }

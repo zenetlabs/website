@@ -1,7 +1,13 @@
 import { expect, test } from '@playwright/test';
 import { formatPriceSummary } from '../src/lib/money';
 import { SERVICES } from '../test/page-content';
-import { gotoHydrated, navLinks, waitForHydration } from './helpers';
+import {
+  BOOKING_PUBLISHED,
+  CTA,
+  gotoHydrated,
+  navLinks,
+  waitForHydration,
+} from './helpers';
 
 const COMMON = [
   'companies',
@@ -22,7 +28,7 @@ const HOMES = [
     nav: ['/services', '/pricing', '/#cases', '/about'],
     faq: 15,
     pricing: '/pricing',
-    cta: '/#contact',
+    cta: CTA.en,
     about: '/about',
     ladder: [
       '/pricing#diagnostic',
@@ -41,7 +47,7 @@ const HOMES = [
     nav: ['/es/servicios', '/es/precios', '/es#cases', '/es/sobre-nosotros'],
     faq: 16,
     pricing: '/es/precios',
-    cta: '/es#contact',
+    cta: CTA.es,
     about: '/es/sobre-nosotros',
     ladder: [
       '/es/precios#diagnostic',
@@ -86,7 +92,7 @@ for (const home of HOMES) {
               : [];
           }),
         );
-      expect(anchors.length).toBeGreaterThan(3);
+      expect(anchors.length).toBeGreaterThan(BOOKING_PUBLISHED ? 1 : 3);
       for (const id of anchors) {
         await expect(page.locator(`[id="${id}"]`), id).toHaveCount(1);
       }
@@ -214,7 +220,7 @@ test.describe('mobile menu', () => {
     await expect(menu).toHaveAttribute('open', '');
     await expect(
       menu.getByRole('link', { name: 'Book a diagnostic' }),
-    ).toHaveAttribute('href', '/#contact');
+    ).toHaveAttribute('href', CTA.en);
     await menu.getByRole('link', { name: 'Services' }).click();
     await expect(page).toHaveURL(/\/services$/);
     await waitForHydration(page);
