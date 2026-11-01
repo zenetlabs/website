@@ -220,12 +220,14 @@ function stripLinks(text: string): string {
     .replace(/ +([.,;:!?])/g, '$1');
 }
 
+const LEAK_MARKERS = new RegExp(
+  [CANARY, ...Object.values(RULES_PHRASE)]
+    .map((marker) => fold(marker).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('|'),
+);
+
 function isLeak(sentence: string): boolean {
-  const probe = fold(sentence);
-  return (
-    probe.includes(fold(CANARY)) ||
-    Object.values(RULES_PHRASE).some((phrase) => probe.includes(fold(phrase)))
-  );
+  return LEAK_MARKERS.test(fold(sentence));
 }
 
 function isForeign(address: string): boolean {

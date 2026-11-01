@@ -1,12 +1,5 @@
 import type { TurnstileInstance } from '@marsidev/react-turnstile';
-import {
-  lazy,
-  type ReactNode,
-  type Ref,
-  type RefObject,
-  Suspense,
-  useId,
-} from 'react';
+import { lazy, type ReactNode, type Ref, Suspense, useId } from 'react';
 import { TEXT_LINK } from '@/components/ui';
 import { BOOKING_LIMITS } from '@/lib/booking-limits';
 import { legalEntity } from '@/lib/content';
@@ -247,22 +240,6 @@ export function LazyTurnstile({
       />
     </Suspense>
   );
-}
-
-const TOKEN_TIMEOUT_MS = 30_000;
-
-// A fresh token on demand, for the panels that run the challenge themselves
-// ('execute' mode): reset the widget, run it, wait for its answer.
-export function challengeToken(
-  widget: RefObject<TurnstileInstance | undefined>,
-): () => Promise<string> {
-  return async () => {
-    const instance = widget.current;
-    if (!instance) throw new Error('no challenge');
-    instance.reset();
-    instance.execute();
-    return instance.getResponsePromise(TOKEN_TIMEOUT_MS);
-  };
 }
 
 export function FormAlert({

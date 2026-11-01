@@ -82,7 +82,7 @@ Error codes in Workers Logs (`booking: calendar error { op, code }`):
 
 ### Booking activation
 
-`booking.published` in `site.config.ts` (true locally, false in production) gates the whole feature: the `/book` page (404, and out of the sitemap, llms and `CTA_TARGET`) and the booking API (`check_availability` and `book_meeting` answer `not_configured`, and the page loads no Google). So production stays dark even after the real secret exists. Activation is: edit the existing secret `ZENETLABS_PROD_GOOGLE_CALENDAR` (Dashboard, Secrets Store, Edit), check `/api/health` shows `booking:true`, then set the flag and deploy. Run the `[TEST] Acceptance` booking on a preview alias built with the flag on (`CLOUDFLARE_ENV=production` build with the flag set, then `wrangler versions upload --preview-alias`), or right after the flip. Owner steps G1-G11 are in the vault note (`plans/zenetlabs-redesign-r09-tools-booking.md`) and the PR description.
+`booking.published` in `site.config.ts` (true locally, false in production) gates the whole feature: the `/book` page (404, and out of the sitemap, llms and `CTA_TARGET`) and the booking API (`check_availability` and `book_meeting` answer `not_configured`, and the page loads no Google). So production stays dark even after the real secret exists. The ordered activation recipe (the secret, the health check, the `[TEST] Acceptance` booking on a preview alias, the flip PR and its checks) is in [RUNBOOK.md](RUNBOOK.md) section 9, `booking.published`. Owner steps G1-G11 (Google Cloud, delegation, the secret bundle) are in the [owner checklist](owner-checklist.md), P2 Booking.
 
 ### Failure handling
 
@@ -197,12 +197,7 @@ When the visitor closes the tab mid-turn the model is not aborted: the stream is
 
 ### Activation
 
-1. Owner steps first (below), then set production `assistant.published: true` in a PR and update `src/site-config.test.ts`. In the same PR bump `CONSENT_VERSION` (`src/server/lead-fields.ts`), the `updated` date of both privacy pages and `PAGES.privacy.lastmod`, and update `legal.test.tsx` to the new date: the assistant section of the privacy pages renders only when the assistant is published, so the text a visitor consents to changes at the flip, not before.
-2. Preview check: `CLOUDFLARE_ENV=production pnpm build && pnpm exec wrangler versions upload --config dist/server/wrangler.json --preview-alias chat-check` with the flag on, then try the chat in a browser on the alias (non-live hosts mark sessions `is_test`).
-3. Run the 11 EN and 11 ES questions from the plan (prices, discount attempt, injections, off-topic, booking) by hand and read the transcripts; delete test sessions afterwards.
-4. After the first deploy, `/api/health` must show `assistant:true`.
-
-Kill switches: `assistant.published: false` plus a deploy, `dailyNeuronBudget: 0`, or `wrangler rollback`.
+The ordered recipe (owner steps, the flip PR with its `CONSENT_VERSION`, privacy and `lastmod` bumps, the preview check, the health check) is in [RUNBOOK.md](RUNBOOK.md) section 9, `assistant.published`; the kill switches are in section 10. Feature-specific verification stays here: run the 11 EN and 11 ES questions from the plan by hand on a preview alias built with the flag on (prices, discount attempt, injections, off-topic, booking), read the transcripts, and delete the test sessions afterwards (non-live hosts mark sessions `is_test`). After the first deploy `/api/health` must show `assistant:true`.
 
 ### Owner steps
 
@@ -338,8 +333,9 @@ The ElevenLabs tools send `Authorization: Bearer <tool-secret>` (the workspace s
 `scripts/voice-agent.mjs` (no dependency, `fetch` only) applies it:
 
 ```bash
-ELEVENLABS_API_KEY=<elevenlabs-api-key> pnpm voice:plan
-ELEVENLABS_API_KEY=<elevenlabs-api-key> ZENETLABS_TOOL_SECRET=<tool-secret> pnpm voice:apply
+# enter both values first with `read -rs NAME && export NAME` (docs/RUNBOOK.md section 6), never inline
+pnpm voice:plan
+pnpm voice:apply
 ```
 
 Before anything else `plan` and `apply` read ElevenLabs' list of agent models (`GET /v1/convai/llm-list`) and stop if the agents' model (`VOICE_SETTINGS.llm`, `glm-52`) is not in it; if the list cannot be read they say so and carry on, because the API itself refuses an unknown model. `apply` upserts, in order, the workspace secret `zenetlabs-tools-bearer` (value `Bearer <tool-secret>`, at least 32 characters), the tools and the two agents, resolves the `$secret:` and `$tool:` placeholders and prints `en=<agent-id> es=<agent-id>`. Everything is read and checked before the first write. Only tools and agents with our marker are ever patched; a tool of another project with the same name is left alone and ours is created beside it, and an agent of that name that is not ours stops the run. `--update-only` never creates and never touches the secret (the deploy uses it when the GitHub secret `ELEVENLABS_API_KEY` exists); it stops before any write, listing what is missing, when a tool or agent it would update does not exist yet. So a release that adds a tool needs one manual `pnpm voice:apply` (without the flag) after it deploys, and until then the deploy sync fails with a warning and changes nothing: the agents keep their previous, consistent configuration. `--rotate-secret` replaces the secret with `ZENETLABS_TOOL_SECRET`. Neither the key nor the secret is ever printed.
@@ -354,14 +350,14 @@ Authentication on with no allowlist, no overrides, `record_voice: false`, `reten
 
 ### Activation
 
-Owner steps first (below). Then, in one PR: set production `voice.published: true` and the two agent ids in `site.config.ts`, update `src/site-config.test.ts`, bump `CONSENT_VERSION` (`src/server/lead-fields.ts`), the `updated` date of both privacy pages, `PAGES.privacy.lastmod` and `PAGES.home.lastmod` (the contact section changes), and `legal.test.tsx`. Activate bookings first. After the deploy `/api/health` shows `"voice":true`. Acceptance calls per locale on a preview alias (sessions minted there are tests): a price (compare with the table), an FAQ, "open the pricing page", an off-topic request, an instruction override, a booking with the read-back, the 5-minute limit and 20 s of silence.
+The ordered recipe (owner steps, then one PR with the flag, the two agent ids and the `CONSENT_VERSION`, privacy, `lastmod` and test bumps; bookings first) is in [RUNBOOK.md](RUNBOOK.md) section 9, `voice.published`. After the deploy `/api/health` shows `"voice":true`. Feature-specific verification: acceptance calls per locale on a preview alias (sessions minted there are tests): a price (compare with the table), an FAQ, "open the pricing page", an off-topic request, an instruction override, a booking with the read-back, the 5-minute limit and 20 s of silence.
 
 ### Owner steps
 
 1. Create the ElevenLabs account on a plan with enough minutes (Creator: 275 a month), accept the DPA, check the training opt-outs.
 2. Create an API key restricted to ElevenLabs Agents with a credit limit; store it in the Cloudflare Secrets Store as `ZENETLABS_PROD_ELEVENLABS_API_KEY` (Workers scope). Keep a second key with Agents write on your machine for step 4.
 3. Generate a tool secret (`openssl rand -base64 32`) and store the same value as `ZENETLABS_PROD_ELEVENLABS_TOOL_SECRET`.
-4. `ELEVENLABS_API_KEY=... ZENETLABS_TOOL_SECRET=<same value> pnpm voice:plan`, then `pnpm voice:apply`. It prints both agent ids.
+4. Enter `ELEVENLABS_API_KEY` and `ZENETLABS_TOOL_SECRET` (the same value as the stored secret) with `read -rs NAME && export NAME` ([RUNBOOK.md](RUNBOOK.md) section 6), then `pnpm voice:plan` and `pnpm voice:apply`. It prints both agent ids.
 5. Put the ids in `site.config.ts` and open the activation PR.
 6. Optional: GitHub `production` environment secret `ELEVENLABS_API_KEY` so every deploy re-syncs prompt and tools.
 7. Check that Bot Fight Mode is off for `zenetlabs.com`: it challenges server-to-server webhooks and every voice tool would fail silently.

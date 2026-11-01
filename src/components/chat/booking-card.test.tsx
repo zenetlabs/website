@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { type Ref, useImperativeHandle } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BookingCard } from '@/components/chat/booking-card';
 import { chatCopy as en } from '@/content/en/chat';
@@ -8,6 +9,7 @@ import { chatCopy as es } from '@/content/es/chat';
 const submitBooking = vi.hoisted(() => vi.fn());
 const attribution = vi.hoisted(() => vi.fn());
 const track = vi.hoisted(() => vi.fn());
+const reset = vi.hoisted(() => vi.fn());
 const ATTRIBUTION = {
   landing: '/?utm_source=news',
   referrer: '',
@@ -32,11 +34,20 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
   }) => select({ locale: 'en' }),
 }));
 vi.mock('@marsidev/react-turnstile', () => ({
-  Turnstile: ({ onSuccess }: { onSuccess: (token: string) => void }) => (
-    <button type="button" onClick={() => onSuccess('tok_book')}>
-      solve challenge
-    </button>
-  ),
+  Turnstile: ({
+    onSuccess,
+    ref,
+  }: {
+    onSuccess: (token: string) => void;
+    ref: Ref<{ reset: () => void }>;
+  }) => {
+    useImperativeHandle(ref, () => ({ reset }));
+    return (
+      <button type="button" onClick={() => onSuccess('tok_book')}>
+        solve challenge
+      </button>
+    );
+  },
 }));
 
 function card(
@@ -69,6 +80,7 @@ async function fill(user: ReturnType<typeof userEvent.setup>) {
 beforeEach(() => {
   submitBooking.mockReset();
   track.mockReset();
+  reset.mockReset();
   attribution.mockReset().mockResolvedValue(ATTRIBUTION);
 });
 
@@ -167,6 +179,24 @@ describe('BookingCard', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(message);
     expect(onDone).not.toHaveBeenCalled();
     expect(track).not.toHaveBeenCalled();
+  });
+
+  it('after a failed booking shows the alert, re-enables the fields and asks Turnstile for a new token', async () => {
+    submitBooking.mockResolvedValue({ kind: 'failed', error: 'unavailable' });
+    const user = userEvent.setup();
+    card();
+    await fill(user);
+    expect(reset).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: en.booking.confirm }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      en.booking.error,
+    );
+    expect(screen.getByLabelText(en.booking.name)).toBeEnabled();
+    expect(screen.getByLabelText(en.booking.topic)).toBeEnabled();
+    expect(reset).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByRole('button', { name: en.booking.confirm }),
+    ).toBeDisabled();
   });
 
   it('cancels from "Not now"', async () => {

@@ -1,12 +1,13 @@
 import type { TurnstileInstance } from '@marsidev/react-turnstile';
 import { useId, useRef, useState } from 'react';
 import { ContactLinks } from '@/components/contact-links';
-import { challengeToken, LazyTurnstile } from '@/components/form-parts';
+import { LazyTurnstile } from '@/components/form-parts';
 import {
   PRIMARY_BUTTON,
   SECONDARY_BUTTON_SM,
   TEXT_LINK,
 } from '@/components/ui';
+import { challengeToken } from '@/components/use-challenge';
 import type { VoiceCopy } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { isPublished, pagePath } from '@/lib/page-registry';

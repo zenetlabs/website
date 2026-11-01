@@ -84,16 +84,15 @@ Extend `ParamEvents` or `PlainEvent` in `src/lib/track.ts`, then call `track()`.
 7. **Search Console link:** Admin, Product links, Search Console links.
 8. **Internal traffic (optional):** define your IP.
 
-## 6. Activation (one PR)
+## 6. Activation
 
-1. Set `production.ga4Id` in `site.config.ts` (`G-XXXXXXXXXX`).
-2. Set `updated` in `cookies-{en,es}.tsx` and `privacy-{en,es}.tsx` to the activation date.
-3. Set `PAGES.cookies.lastmod` and `PAGES.privacy.lastmod` in `src/lib/page-registry.ts` to that date.
-4. Set `CONSENT_VERSION` in `src/server/lead.ts` to the new privacy date, and update the date assertion in `legal.test.tsx`. That file is the lead path, so the PR review level follows `CLAUDE.md` (`high`).
-5. Remove the "no consent defaults" check from `scripts/smoke.sh` (the inline snippet now exists on purpose).
-6. Deploy, then run Tag Assistant and DebugView on prod, plus `bash scripts/smoke.sh`.
-7. **Owner step, cookie check:** open `https://zenetlabs.com/?gclid=x` in a fresh browser profile, click Accept all, then list the cookies (DevTools, Application, Cookies). Expect only `zenet-consent`'s storage entry plus `_ga` and `_ga_<ID>`. If any `_gcl_*` cookie (for example `_gcl_au` or `_gcl_aw`) appears, either disclose it on the cookies page (name, purpose, duration, in both locales) and bump `COOKIE_CONSENT_REVISION`, or stop granting `ad_storage`, `ad_user_data` and `ad_personalization` while there is no ads tag. Withdrawal already deletes `_gcl_*` along with `_ga*`.
-8. Keep the Cloudflare **Google tag gateway** and **Zaraz** off for the zone. Both inject tags before consent.
+The ordered recipe (the PR contents, the bumps, the CI guards to change and the review level) is in [RUNBOOK.md](RUNBOOK.md) section 9, `ga4Id`. What stays here is the feature-specific verification after the deploy:
+
+- **Tag Assistant and DebugView** on production (section 4), plus `bash scripts/smoke.sh` once its "no consent defaults" lines have been removed. Keep the "no Google tag" lines: the SSR HTML never carries the tag before consent.
+- **Owner step, cookie check:** open `https://zenetlabs.com/?gclid=x` in a fresh browser profile, click Accept all, then list the cookies (DevTools, Application, Cookies). Expect only `zenet-consent`'s storage entry plus `_ga` and `_ga_<ID>`. If any `_gcl_*` cookie (for example `_gcl_au` or `_gcl_aw`) appears, either disclose it on the cookies page (name, purpose, duration, in both locales) and bump `COOKIE_CONSENT_REVISION`, or stop granting `ad_storage`, `ad_user_data` and `ad_personalization` while there is no ads tag. Withdrawal already deletes `_gcl_*` along with `_ga*`.
+- Keep the Cloudflare **Google tag gateway** and **Zaraz** off for the zone. Both inject tags before consent.
+
+`CONSENT_VERSION` lives in `src/server/lead-fields.ts`, so the flip PR touches the lead path and is reviewed at `high` (`CLAUDE.md`).
 
 ## 7. Google Search Console (both locales)
 

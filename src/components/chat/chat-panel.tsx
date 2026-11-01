@@ -5,27 +5,26 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
+  type Ref,
   useId,
   useRef,
   useState,
 } from 'react';
 import { BookingCard } from '@/components/chat/booking-card';
 import { ContactLinks } from '@/components/contact-links';
-import {
-  CONTROL,
-  challengeToken,
-  LazyTurnstile,
-} from '@/components/form-parts';
+import { CONTROL, LazyTurnstile } from '@/components/form-parts';
 import {
   PRIMARY_BUTTON,
   SECONDARY_BUTTON_SM,
   TEXT_LINK,
 } from '@/components/ui';
+import { challengeToken } from '@/components/use-challenge';
 import type { ChatCopy } from '@/content/types';
 import { CHAT_LIMITS } from '@/lib/chat-events';
 import {
   addNotice,
   type ChatItem,
+  type ChatState,
   dismissProposal,
   ensureLocale,
   send,
@@ -47,6 +46,8 @@ const FALLBACK: ReadonlySet<string> = new Set([
   'unsupported',
 ]);
 
+type NavigateItem = Extract<ChatItem, { kind: 'navigate' }>;
+
 function Speaker({ children }: { children: ReactNode }) {
   return <span className="sr-only">{children}: </span>;
 }
@@ -56,13 +57,303 @@ function toolLabel(copy: ChatCopy, name: string): string {
   return found?.[1] ?? copy.writing;
 }
 
-function labelFor(
-  item: Extract<ChatItem, { kind: 'navigate' }>,
-  copy: ChatCopy,
-) {
+function labelFor(item: NavigateItem, copy: ChatCopy) {
   return item.section === null
     ? copy.pages[item.page]
     : copy.sections[item.section];
+}
+
+function statusText(state: ChatState, copy: ChatCopy): string {
+  if (state.status === 'verifying') return copy.verifying;
+  if (state.status === 'tool' && state.tool !== null) {
+    return toolLabel(copy, state.tool);
+  }
+  return state.status === 'writing' ? copy.writing : '';
+}
+
+function isPlainClick(event: MouseEvent<HTMLAnchorElement>): boolean {
+  return (
+    event.button === 0 &&
+    !event.metaKey &&
+    !event.ctrlKey &&
+    !event.shiftKey &&
+    !event.altKey
+  );
+}
+
+function isSendKey(event: KeyboardEvent<HTMLTextAreaElement>): boolean {
+  return (
+    event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing
+  );
+}
+
+function ChatHeader({
+  copy,
+  titleId,
+  canTalk,
+  onTalk,
+  onClose,
+}: {
+  copy: ChatCopy;
+  titleId: string;
+  canTalk: boolean;
+  onTalk: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <header className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-3">
+      <div className="flex items-center gap-2">
+        <h2
+          id={titleId}
+          className="font-sans text-base font-semibold leading-snug tracking-normal"
+        >
+          {copy.title}
+        </h2>
+        <span className="rounded-input border border-border px-1.5 py-0.5 font-mono text-xs">
+          {copy.badge}
+        </span>
+      </div>
+      <div className="flex items-center gap-1">
+        {canTalk ? (
+          <button
+            type="button"
+            onClick={onTalk}
+            className={SECONDARY_BUTTON_SM}
+          >
+            {copy.talk}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          aria-label={copy.close}
+          onClick={onClose}
+          className="inline-flex size-11 items-center justify-center rounded-input hover:bg-surface"
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="size-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+      </div>
+    </header>
+  );
+}
+
+function ChatLog({
+  copy,
+  welcome,
+  state,
+  onNavigate,
+}: {
+  copy: ChatCopy;
+  welcome: string;
+  state: ChatState;
+  onNavigate: (
+    item: NavigateItem,
+    event: MouseEvent<HTMLAnchorElement>,
+  ) => void;
+}) {
+  return (
+    <div role="log" aria-label={copy.logLabel}>
+      <ol className="grid gap-3 text-sm">
+        <li className="max-w-[90%] rounded-card bg-surface px-3 py-2">
+          <Speaker>{copy.assistant}</Speaker>
+          {welcome}
+        </li>
+        {state.items.map((item) =>
+          item.kind === 'navigate' ? (
+            <li key={item.id}>
+              <a
+                href={item.href}
+                onClick={(event) => onNavigate(item, event)}
+                className={`${SECONDARY_BUTTON_SM} ${TEXT_LINK}`}
+              >
+                {copy.open.replace('{label}', labelFor(item, copy))}
+              </a>
+            </li>
+          ) : item.kind === 'notice' ? (
+            <li key={item.id} className="text-xs text-muted-fg">
+              {item.text}
+            </li>
+          ) : (
+            <li
+              key={item.id}
+              data-ai-generated={item.kind === 'assistant' ? 'true' : undefined}
+              className={`max-w-[90%] whitespace-pre-line rounded-card px-3 py-2 ${item.kind === 'user' ? 'ml-auto bg-accent text-accent-fg' : 'bg-surface'}`}
+            >
+              <Speaker>
+                {item.kind === 'user' ? copy.you : copy.assistant}
+              </Speaker>
+              {item.text}
+            </li>
+          ),
+        )}
+        {state.streaming === '' ? null : (
+          <li
+            aria-hidden="true"
+            data-streaming
+            className="max-w-[90%] whitespace-pre-line rounded-card bg-surface px-3 py-2"
+          >
+            {state.streaming}
+          </li>
+        )}
+      </ol>
+    </div>
+  );
+}
+
+function ChatSuggestions({
+  suggestions,
+  canSend,
+  onPick,
+}: {
+  suggestions: readonly string[];
+  canSend: boolean;
+  onPick: (suggestion: string) => void;
+}) {
+  return (
+    <ul className="mt-3 flex flex-wrap gap-2">
+      {suggestions.map((suggestion) => (
+        <li key={suggestion}>
+          <button
+            type="button"
+            disabled={!canSend}
+            onClick={() => onPick(suggestion)}
+            className={SECONDARY_BUTTON_SM}
+          >
+            {suggestion}
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function ChatAlerts({
+  copy,
+  locale,
+  booking,
+  state,
+}: {
+  copy: ChatCopy;
+  locale: Locale;
+  booking: boolean;
+  state: ChatState;
+}) {
+  const showFallback = state.failure !== null && FALLBACK.has(state.failure);
+  return (
+    <>
+      {showFallback || state.cut ? (
+        <div
+          role="alert"
+          className="mt-3 rounded-card border border-border p-3 text-sm"
+        >
+          <p className="font-medium">
+            {showFallback ? copy.fallback.title : copy.errorReply}
+          </p>
+          {state.failure === 'session-full' ? (
+            <p>{copy.fallback.full}</p>
+          ) : null}
+          <p>{copy.fallback.text}</p>
+          <ContactLinks
+            locale={locale}
+            booking={booking}
+            labels={copy.fallback}
+            className="mt-2"
+          />
+        </div>
+      ) : null}
+      {state.failure === 'rate' ? (
+        <p role="alert" className="mt-3 text-sm">
+          {copy.errorRate}
+        </p>
+      ) : null}
+      {state.failure === 'captcha' ? (
+        <p role="alert" className="mt-3 text-sm">
+          {copy.errorCaptcha}
+        </p>
+      ) : null}
+    </>
+  );
+}
+
+function ChatStatusLine({ copy, state }: { copy: ChatCopy; state: ChatState }) {
+  const status = statusText(state, copy);
+  return (
+    <p role="status" className="min-h-6 px-4 text-xs text-muted-fg">
+      {status}
+      {status === '' &&
+      state.remaining !== null &&
+      state.remaining <= LOW_REMAINING
+        ? copy.remaining.replace('{n}', String(state.remaining))
+        : ''}
+    </p>
+  );
+}
+
+function ChatComposer({
+  copy,
+  inputId,
+  inputRef,
+  draft,
+  canSubmit,
+  onDraftChange,
+  onSubmit,
+}: {
+  copy: ChatCopy;
+  inputId: string;
+  inputRef: Ref<HTMLTextAreaElement>;
+  draft: string;
+  canSubmit: boolean;
+  onDraftChange: (value: string) => void;
+  onSubmit: () => void;
+}) {
+  function onFormSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    onSubmit();
+  }
+
+  function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (!isSendKey(event)) return;
+    event.preventDefault();
+    onSubmit();
+  }
+
+  return (
+    <form
+      onSubmit={onFormSubmit}
+      className="grid gap-2 border-t border-hairline p-3"
+    >
+      <label htmlFor={inputId} className="sr-only">
+        {copy.inputLabel}
+      </label>
+      <textarea
+        id={inputId}
+        ref={inputRef}
+        value={draft}
+        onChange={(event) => onDraftChange(event.target.value)}
+        onKeyDown={onKeyDown}
+        maxLength={CHAT_LIMITS.messageChars}
+        rows={2}
+        placeholder={copy.placeholder}
+        className={`${CONTROL} resize-none`}
+      />
+      <button
+        type="submit"
+        disabled={!canSubmit}
+        className={`${PRIMARY_BUTTON} w-full`}
+      >
+        {copy.send}
+      </button>
+    </form>
+  );
 }
 
 export function ChatPanel({
@@ -95,18 +386,13 @@ export function ChatPanel({
   const suggestions = booking
     ? [...copy.suggestions, copy.suggestionBooking]
     : copy.suggestions;
-  const showFallback = state.failure !== null && FALLBACK.has(state.failure);
-  const status =
-    state.status === 'verifying'
-      ? copy.verifying
-      : state.status === 'tool' && state.tool !== null
-        ? toolLabel(copy, state.tool)
-        : state.status === 'writing'
-          ? copy.writing
-          : '';
+
+  function canSendText(text: string) {
+    return canSend && text.trim() !== '';
+  }
 
   function submit(text: string) {
-    if (!canSend || text.trim() === '') return;
+    if (!canSendText(text)) return;
     setDraft('');
     void send(text, {
       locale,
@@ -118,38 +404,11 @@ export function ChatPanel({
     });
   }
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  function navigate(item: NavigateItem, event: MouseEvent<HTMLAnchorElement>) {
+    if (!isPlainClick(event)) return;
     event.preventDefault();
-    submit(draft);
-  }
-
-  function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (
-      event.key !== 'Enter' ||
-      event.shiftKey ||
-      event.nativeEvent.isComposing
-    ) {
-      return;
-    }
-    event.preventDefault();
-    submit(draft);
-  }
-
-  function open(item: Extract<ChatItem, { kind: 'navigate' }>) {
-    return (event: MouseEvent<HTMLAnchorElement>) => {
-      if (
-        event.button !== 0 ||
-        event.metaKey ||
-        event.ctrlKey ||
-        event.shiftKey ||
-        event.altKey
-      ) {
-        return;
-      }
-      event.preventDefault();
-      dialog.current?.close();
-      router.history.push(item.href);
-    };
+    dialog.current?.close();
+    router.history.push(item.href);
   }
 
   return (
@@ -170,51 +429,16 @@ export function ChatPanel({
       className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none border-0 bg-bg p-0 text-fg md:inset-auto md:right-4 md:bottom-4 md:h-[min(40rem,85dvh)] md:w-[26rem] md:rounded-card md:border md:border-border backdrop:bg-bg/60"
     >
       <div className="flex h-full flex-col">
-        <header className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-3">
-          <div className="flex items-center gap-2">
-            <h2
-              id={titleId}
-              className="font-sans text-base font-semibold leading-snug tracking-normal"
-            >
-              {copy.title}
-            </h2>
-            <span className="rounded-input border border-border px-1.5 py-0.5 font-mono text-xs">
-              {copy.badge}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            {voiceAvailable(locale) ? (
-              <button
-                type="button"
-                onClick={() => {
-                  dialog.current?.close();
-                  openVoice(locale, (href) => router.history.push(href));
-                }}
-                className={SECONDARY_BUTTON_SM}
-              >
-                {copy.talk}
-              </button>
-            ) : null}
-            <button
-              type="button"
-              aria-label={copy.close}
-              onClick={() => dialog.current?.close()}
-              className="inline-flex size-11 items-center justify-center rounded-input hover:bg-surface"
-            >
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                className="size-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              >
-                <path d="M6 6l12 12M18 6L6 18" />
-              </svg>
-            </button>
-          </div>
-        </header>
+        <ChatHeader
+          copy={copy}
+          titleId={titleId}
+          canTalk={voiceAvailable(locale)}
+          onTalk={() => {
+            dialog.current?.close();
+            openVoice(locale, (href) => router.history.push(href));
+          }}
+          onClose={() => dialog.current?.close()}
+        />
         <p
           id={noticeId}
           className="border-b border-hairline px-4 py-2 text-xs leading-snug text-muted-fg"
@@ -225,68 +449,18 @@ export function ChatPanel({
           </a>
         </p>
         <div className="flex-1 overflow-y-auto px-4 py-3">
-          <div role="log" aria-label={copy.logLabel}>
-            <ol className="grid gap-3 text-sm">
-              <li className="max-w-[90%] rounded-card bg-surface px-3 py-2">
-                <Speaker>{copy.assistant}</Speaker>
-                {welcome}
-              </li>
-              {state.items.map((item) =>
-                item.kind === 'navigate' ? (
-                  <li key={item.id}>
-                    <a
-                      href={item.href}
-                      onClick={open(item)}
-                      className={`${SECONDARY_BUTTON_SM} ${TEXT_LINK}`}
-                    >
-                      {copy.open.replace('{label}', labelFor(item, copy))}
-                    </a>
-                  </li>
-                ) : item.kind === 'notice' ? (
-                  <li key={item.id} className="text-xs text-muted-fg">
-                    {item.text}
-                  </li>
-                ) : (
-                  <li
-                    key={item.id}
-                    data-ai-generated={
-                      item.kind === 'assistant' ? 'true' : undefined
-                    }
-                    className={`max-w-[90%] whitespace-pre-line rounded-card px-3 py-2 ${item.kind === 'user' ? 'ml-auto bg-accent text-accent-fg' : 'bg-surface'}`}
-                  >
-                    <Speaker>
-                      {item.kind === 'user' ? copy.you : copy.assistant}
-                    </Speaker>
-                    {item.text}
-                  </li>
-                ),
-              )}
-              {state.streaming === '' ? null : (
-                <li
-                  aria-hidden="true"
-                  data-streaming
-                  className="max-w-[90%] whitespace-pre-line rounded-card bg-surface px-3 py-2"
-                >
-                  {state.streaming}
-                </li>
-              )}
-            </ol>
-          </div>
+          <ChatLog
+            copy={copy}
+            welcome={welcome}
+            state={state}
+            onNavigate={navigate}
+          />
           {state.items.length === 0 ? (
-            <ul className="mt-3 flex flex-wrap gap-2">
-              {suggestions.map((suggestion) => (
-                <li key={suggestion}>
-                  <button
-                    type="button"
-                    disabled={!canSend}
-                    onClick={() => submit(suggestion)}
-                    className={SECONDARY_BUTTON_SM}
-                  >
-                    {suggestion}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <ChatSuggestions
+              suggestions={suggestions}
+              canSend={canSend}
+              onPick={submit}
+            />
           ) : null}
           {state.proposal === null ? null : (
             <div className="mt-3">
@@ -307,71 +481,23 @@ export function ChatPanel({
               />
             </div>
           )}
-          {showFallback || state.cut ? (
-            <div
-              role="alert"
-              className="mt-3 rounded-card border border-border p-3 text-sm"
-            >
-              <p className="font-medium">
-                {showFallback ? copy.fallback.title : copy.errorReply}
-              </p>
-              {state.failure === 'session-full' ? (
-                <p>{copy.fallback.full}</p>
-              ) : null}
-              <p>{copy.fallback.text}</p>
-              <ContactLinks
-                locale={locale}
-                booking={booking}
-                labels={copy.fallback}
-                className="mt-2"
-              />
-            </div>
-          ) : null}
-          {state.failure === 'rate' ? (
-            <p role="alert" className="mt-3 text-sm">
-              {copy.errorRate}
-            </p>
-          ) : null}
-          {state.failure === 'captcha' ? (
-            <p role="alert" className="mt-3 text-sm">
-              {copy.errorCaptcha}
-            </p>
-          ) : null}
-        </div>
-        <p role="status" className="min-h-6 px-4 text-xs text-muted-fg">
-          {status}
-          {status === '' &&
-          state.remaining !== null &&
-          state.remaining <= LOW_REMAINING
-            ? copy.remaining.replace('{n}', String(state.remaining))
-            : ''}
-        </p>
-        <form
-          onSubmit={onSubmit}
-          className="grid gap-2 border-t border-hairline p-3"
-        >
-          <label htmlFor={inputId} className="sr-only">
-            {copy.inputLabel}
-          </label>
-          <textarea
-            id={inputId}
-            ref={input}
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={onKeyDown}
-            maxLength={CHAT_LIMITS.messageChars}
-            rows={2}
-            placeholder={copy.placeholder}
-            className={`${CONTROL} resize-none`}
+          <ChatAlerts
+            copy={copy}
+            locale={locale}
+            booking={booking}
+            state={state}
           />
-          <button
-            type="submit"
-            disabled={!canSend || draft.trim() === ''}
-            className={`${PRIMARY_BUTTON} w-full`}
-          >
-            {copy.send}
-          </button>
-        </form>
+        </div>
+        <ChatStatusLine copy={copy} state={state} />
+        <ChatComposer
+          copy={copy}
+          inputId={inputId}
+          inputRef={input}
+          draft={draft}
+          canSubmit={canSendText(draft)}
+          onDraftChange={setDraft}
+          onSubmit={() => submit(draft)}
+        />
         <LazyTurnstile
           engaged
           action="chat"

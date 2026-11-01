@@ -31,41 +31,64 @@ const OPTION =
   'flex min-h-11 cursor-pointer items-start gap-3 rounded-input border border-hairline bg-surface px-4 py-2.5 has-checked:border-accent';
 const INPUT = 'mt-1 size-4 shrink-0 accent-accent';
 
-function Option({
-  kind,
-  name,
-  value,
-  option,
-  checked,
-  required,
-}: {
-  kind: 'radio' | 'checkbox';
+type OptionProps = {
   name: string;
   value: string;
   option: CalculatorOption;
   checked: boolean;
   required?: boolean;
-}) {
-  const hintId = `${name}-${value}-hint`;
+};
+
+function hintIdOf({ name, value }: Pick<OptionProps, 'name' | 'value'>) {
+  return `${name}-${value}-hint`;
+}
+
+function inputProps(props: OptionProps) {
+  const { name, value, option, checked, required } = props;
+  return {
+    name,
+    value,
+    defaultChecked: checked,
+    required,
+    'aria-describedby': option.hint ? hintIdOf(props) : undefined,
+    className: INPUT,
+  };
+}
+
+function OptionText({
+  name,
+  value,
+  option,
+}: Pick<OptionProps, 'name' | 'value' | 'option'>) {
+  return (
+    <span>
+      {option.label}
+      {option.hint ? (
+        <span
+          id={hintIdOf({ name, value })}
+          className="block text-sm text-muted-fg"
+        >
+          {option.hint}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+function RadioOption(props: OptionProps) {
   return (
     <label className={OPTION}>
-      <input
-        type={kind}
-        name={name}
-        value={value}
-        defaultChecked={checked}
-        required={required}
-        aria-describedby={option.hint ? hintId : undefined}
-        className={INPUT}
-      />
-      <span>
-        {option.label}
-        {option.hint ? (
-          <span id={hintId} className="block text-sm text-muted-fg">
-            {option.hint}
-          </span>
-        ) : null}
-      </span>
+      <input type="radio" {...inputProps(props)} />
+      <OptionText {...props} />
+    </label>
+  );
+}
+
+function CheckboxOption(props: OptionProps) {
+  return (
+    <label className={OPTION}>
+      <input type="checkbox" {...inputProps(props)} />
+      <OptionText {...props} />
     </label>
   );
 }
@@ -126,9 +149,8 @@ export function CalculatorForm({
     >
       <Question legend={questions.type.legend}>
         {PROJECT_TYPES.map((id) => (
-          <Option
+          <RadioOption
             key={id}
-            kind="radio"
             name="type"
             value={id}
             option={questions.type.options[id]}
@@ -139,9 +161,8 @@ export function CalculatorForm({
       </Question>
       <Question legend={questions.tools.legend} hint={questions.tools.hint}>
         {TOOL_IDS.map((id) => (
-          <Option
+          <CheckboxOption
             key={id}
-            kind="checkbox"
             name={id}
             value="true"
             option={questions.tools.options[id]}
@@ -151,9 +172,8 @@ export function CalculatorForm({
       </Question>
       <Question legend={questions.volume.legend}>
         {VOLUMES.map((id) => (
-          <Option
+          <RadioOption
             key={id}
-            kind="radio"
             name="volume"
             value={id}
             option={questions.volume.options[id]}
@@ -163,15 +183,13 @@ export function CalculatorForm({
         ))}
       </Question>
       <Question legend={questions.extras.legend} hint={questions.extras.hint}>
-        <Option
-          kind="checkbox"
+        <CheckboxOption
           name="agent"
           value="true"
           option={questions.extras.options.agent}
           checked={search.agent === true}
         />
-        <Option
-          kind="checkbox"
+        <CheckboxOption
           name="web"
           value="true"
           option={questions.extras.options.web}
@@ -180,9 +198,8 @@ export function CalculatorForm({
       </Question>
       <Question legend={questions.urgency.legend}>
         {URGENCIES.map((id) => (
-          <Option
+          <RadioOption
             key={id}
-            kind="radio"
             name="urgency"
             value={id}
             option={questions.urgency.options[id]}
@@ -192,16 +209,14 @@ export function CalculatorForm({
         ))}
       </Question>
       <Question legend={questions.maintenance.legend}>
-        <Option
-          kind="radio"
+        <RadioOption
           name="maintenance"
           value="true"
           option={questions.maintenance.options.yes}
           checked={search.maintenance === true}
           required
         />
-        <Option
-          kind="radio"
+        <RadioOption
           name="maintenance"
           value="false"
           option={questions.maintenance.options.no}

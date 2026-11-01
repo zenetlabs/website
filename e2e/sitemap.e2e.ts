@@ -11,6 +11,14 @@ import { htmlLang, LLMS_PATHS, markdownPathOf, PAGES, tagsOf } from './helpers';
 
 const LASTMOD = /^\d{4}-\d{2}-\d{2}$/;
 
+function decoded(fragment: string): string {
+  try {
+    return decodeURIComponent(fragment);
+  } catch {
+    return fragment;
+  }
+}
+
 test('every sitemap url is a self-canonical, indexable, reciprocal page', async ({
   request,
 }) => {
@@ -22,6 +30,8 @@ test('every sitemap url is a self-canonical, indexable, reciprocal page', async 
   const internalLinks = new Set<string>();
   const blocksByPage = new Map<string, unknown[]>();
   const linksByPage = new Map<string, Set<string>>();
+  const idsByPage = new Map<string, Set<string>>();
+  const fragmentLinks: { from: string; path: string; fragment: string }[] = [];
 
   for (const entry of entries) {
     await test.step(entry.loc, async () => {
@@ -60,6 +70,7 @@ test('every sitemap url is a self-canonical, indexable, reciprocal page', async 
       expect(markdown.status()).toBe(200);
       expect(markdown.headers()['content-type']).toContain('text/markdown');
       expect(markdown.headers().link).toBe(`<${entry.loc}>; rel="canonical"`);
+      expect(await markdown.text()).not.toMatch(PLACEHOLDER);
 
       expect(html).not.toMatch(PLACEHOLDER);
       const blocks = jsonLdBlocks(html);
@@ -77,12 +88,28 @@ test('every sitemap url is a self-canonical, indexable, reciprocal page', async 
       expect(html.match(/<h1\b/g)).toHaveLength(1);
       expect(entry.lastmod).toMatch(LASTMOD);
 
+      idsByPage.set(
+        path,
+        new Set(
+          [...html.matchAll(/\sid="([^"]+)"/g)].flatMap(([, id]) => id ?? []),
+        ),
+      );
       const links = new Set<string>();
       for (const [, href] of html.matchAll(/<a\b[^>]*\shref="([^"]+)"/g)) {
-        if (!href || !/^\/(?!\/)/.test(href)) continue;
-        const target = href.split('#')[0] || '/';
-        internalLinks.add(target);
-        links.add(target);
+        if (!href || !/^[/#](?!\/)/.test(href)) continue;
+        const [location = '', fragment = ''] = href.split('#');
+        const target = location || path;
+        if (fragment) {
+          fragmentLinks.push({
+            from: path,
+            path: target.split('?')[0] ?? target,
+            fragment,
+          });
+        }
+        if (!href.startsWith('#')) {
+          internalLinks.add(target);
+          links.add(target);
+        }
       }
       linksByPage.set(path, links);
     });
@@ -103,6 +130,24 @@ test('every sitemap url is a self-canonical, indexable, reciprocal page', async 
       .filter((path) => path !== '/' && path !== '/es')
       .filter((path) => !linked.has(path));
     expect(orphans).toEqual([]);
+  });
+
+  await test.step('every linked fragment exists on its target page', () => {
+    expect(fragmentLinks.length).toBeGreaterThan(0);
+    const unknownPages = new Set<string>();
+    const missingIds: string[] = [];
+    for (const { from, path, fragment } of fragmentLinks) {
+      const ids = idsByPage.get(path);
+      if (!ids) {
+        unknownPages.add(path);
+      } else if (!ids.has(decoded(fragment))) {
+        missingIds.push(`${from} -> ${path}#${fragment}`);
+      }
+    }
+    expect([...unknownPages], 'fragment targets outside the sitemap').toEqual(
+      [],
+    );
+    expect(missingIds, 'fragments without a matching id').toEqual([]);
   });
 
   await test.step('internal links answer 200 without a redirect', async () => {
