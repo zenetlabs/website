@@ -5,8 +5,11 @@ import { PAGE_IDS } from '@/lib/page-registry';
 import { defineClientTool } from '@/server/tools/types';
 
 export const navigateInput = z.object({
-  page: z.enum(PAGE_IDS),
-  section: z.enum(NAVIGATE_SECTIONS).optional(),
+  page: z.enum(PAGE_IDS).describe('Id of the page to open.'),
+  section: z
+    .enum(NAVIGATE_SECTIONS)
+    .optional()
+    .describe('Section of the home page to scroll to.'),
   locale: z.enum(locales).default('en'),
 });
 

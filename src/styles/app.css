@@ -239,3 +239,18 @@ html:has([data-consent-banner]):has([data-chat-launcher]) {
 body:has([data-consent-banner]):has([data-chat-launcher]) {
   padding-bottom: calc(var(--consent-reserve) + 5rem);
 }
+
+/* The voice panel is non-modal and fixed to the bottom: the chat launcher gives
+   way to it, focused elements keep clear of it, and the consent banner lifts it
+   the way it lifts the launcher. */
+html:has([data-voice-panel][open]) [data-chat-launcher] {
+  display: none;
+}
+
+html:has([data-voice-panel][open]) {
+  scroll-padding-bottom: 22rem;
+}
+
+html:has([data-consent-banner]) [data-voice-panel] {
+  translate: 0 calc(-1 * var(--consent-reserve));
+}

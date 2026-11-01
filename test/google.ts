@@ -40,6 +40,7 @@ export const TEST_SERVER: ServerConfig = {
     dailyNeuronBudget: 1_000,
     perAddressDailyTurns: 40,
   },
+  voice: { apiOrigin: 'https://elevenlabs.test', dailySessions: 2 },
 };
 
 export const TEST_SITE: SiteConfig = {
@@ -51,6 +52,11 @@ export const TEST_SITE: SiteConfig = {
   booking: { published: true },
   assistant: { published: true },
   webmcp: { published: true, originTrialToken: null },
+  voice: {
+    published: true,
+    agents: { en: 'agent-en', es: 'agent-es' },
+    fakeSdk: false,
+  },
 };
 
 type Interval = { start: number; end: number };

@@ -64,6 +64,8 @@ jobs:
     needs: [check-ci, security]
     environment:
       name: production
+    env:
+      HAS_ELEVENLABS: ${{ secrets.ELEVENLABS_API_KEY != '' }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
@@ -78,6 +80,13 @@ jobs:
             exit 1
           fi
           node -e "const c=require('./dist/server/wrangler.json'); if (c.ai?.binding!=='AI' || !c.ratelimits?.some((r)=>r.name==='CHAT_LIMITER')) { console.error('::error::dist/server/wrangler.json lacks the AI binding or CHAT_LIMITER'); process.exit(1); }"
+      - name: The production build ships the voice bindings and no scripted voice SDK
+        run: |
+          if grep -rq FAKE_VOICE_SENTINEL dist/client dist/server; then
+            echo "::error::The scripted voice SDK reached the production bundle (voice.fakeSdk must be false)"
+            exit 1
+          fi
+          node -e "const c=require('./dist/server/wrangler.json'); if (!c.secrets_store_secrets?.some((s)=>s.binding==='ELEVENLABS_API_KEY') || !c.ratelimits?.some((r)=>r.name==='VOICE_LIMITER')) { console.error('::error::dist/server/wrangler.json lacks the ELEVENLABS_API_KEY secret or VOICE_LIMITER'); process.exit(1); }"
       - name: Apply D1 migrations (expand-only)
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -90,6 +99,15 @@ jobs:
           api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       - name: Smoke test
         run: bash scripts/smoke.sh
+      - name: Sync ElevenLabs agents
+        if: ${{ env.HAS_ELEVENLABS == 'true' }}
+        continue-on-error: true
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+        run: node scripts/voice-agent.mjs apply --update-only || echo "::warning::The ElevenLabs agent sync failed; run pnpm voice:apply by hand"
+      - name: ElevenLabs sync skipped
+        if: ${{ env.HAS_ELEVENLABS != 'true' }}
+        run: echo "::notice::ELEVENLABS_API_KEY is not set for the production environment, so the voice agents were not synced"
       - name: Sitemap walk
         env:
           PLAYWRIGHT_BASE_URL: https://zenetlabs.com

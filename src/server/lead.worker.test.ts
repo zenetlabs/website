@@ -26,6 +26,7 @@ const SERVER: ServerConfig = {
     dailyNeuronBudget: 1_000,
     perAddressDailyTurns: 40,
   },
+  voice: { apiOrigin: 'https://elevenlabs.test', dailySessions: 2 },
 };
 const SITE: SiteConfig = {
   url: ORIGIN,
@@ -36,6 +37,7 @@ const SITE: SiteConfig = {
   booking: { published: false },
   assistant: { published: false },
   webmcp: { published: false, originTrialToken: null },
+  voice: { published: false, agents: { en: null, es: null }, fakeSdk: false },
 };
 
 const BODY: LeadRequest = {

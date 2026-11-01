@@ -22,7 +22,7 @@ One registry, `src/server/tools/registry.ts`, defines six tools with zod input a
 | `GET /api/tools` | manifest `{ version, tools[] }` with `inputSchema` / `outputSchema` (JSON Schema from zod), `Cache-Control: public, max-age=300` |
 | `POST /api/tools/:name` | `200 { ok: true, result }` for every tool outcome, including `unavailable` and `rejected` |
 | other methods | 405 with `Allow` |
-| `GET /api/health` | `{ ok, booking, toolsBearer }`; each boolean means the secret parses. No Google call |
+| `GET /api/health` | `{ ok, booking, toolsBearer, assistant, voice }`; each boolean means the feature is published and its secrets parse. No Google, Workers AI or ElevenLabs call |
 
 Transport errors are `{ ok: false, error, issues? }` with `Cache-Control: no-store`:
 
@@ -30,6 +30,7 @@ Transport errors are `{ ok: false, error, issues? }` with `Cache-Control: no-sto
 |---|---|---|
 | 404 | `unknown` | no such tool, or `navigate` (client-only) |
 | 401 | `auth` | an `Authorization` header is present and wrong (never falls through to the browser path) |
+| 401 | `session` | a bearer call without a live voice session (see Voice) |
 | 403 | `origin` | browser `book_meeting` without a same-origin `Origin` |
 | 415 | `unsupported` | not `application/json` |
 | 429 | `rate` | `TOOLS_LIMITER` (reads) or `BOOK_LIMITER` (booking), `Retry-After: 60` |
@@ -42,7 +43,7 @@ Auth matrix:
 
 - **Read tools:** public, `TOOLS_LIMITER` per `CF-Connecting-IP`.
 - **`book_meeting` from a browser:** same-origin `Origin`, `BOOK_LIMITER`, and the body extends the tool input with `consent: true`, `turnstileToken`, `website` (honeypot, must be empty) and `attribution`. A filled honeypot gets a fake `booked` result and nothing is stored or sent.
-- **`book_meeting` from a server (voice):** `Authorization: Bearer <TOOLS_BEARER_SECRET>`. Channel `voice`, no Turnstile, no per-IP limit. The D1 caps still apply. Consent is the caller's responsibility (R12).
+- **Any tool from a server (the voice agents):** `Authorization: Bearer <TOOLS_BEARER_SECRET>` plus `X-Voice-Session`. Channel `voice`, no Turnstile, no per-IP limit; the session stands in for them (see Voice). The D1 caps still apply.
 
 Curl examples (local preview with `scripts/fake-services.mjs`):
 
@@ -51,8 +52,8 @@ curl -s localhost:4173/api/tools | head -c 300
 curl -s -X POST localhost:4173/api/tools/get_pricing -H 'Content-Type: application/json' -d '{"locale":"es"}'
 curl -s -X POST localhost:4173/api/tools/check_availability -H 'Content-Type: application/json' -d '{"timeZone":"Asia/Tokyo","limit":5}'
 curl -s -X POST localhost:4173/api/tools/book_meeting -H 'Content-Type: application/json' \
-  -H 'Authorization: Bearer <local-tools-bearer>' \
-  -d '{"slot":"2027-01-12T09:00:00.000Z","name":"[TEST] Ada","email":"ada@example.com","topic":"Automate our inbox triage."}'
+  -H 'Authorization: Bearer <local-tools-bearer>' -H 'X-Voice-Session: <session-id>' \
+  -d '{"slot":"2027-01-12T09:00:00.000Z","name":"[TEST] Ada","email":"ada@example.com","topic":"Automate our inbox triage.","confirmed":true}'
 ```
 
 ### Booking rules
@@ -267,3 +268,137 @@ Stable Chrome 149 to 156 exposes the API only to origins with a token, or behind
 `navigate-client`, `webmcp/{boot,tools,register,confirmation}` and the dialog component test run in the unit project. `e2e/webmcp.e2e.ts` injects a stub `modelContext` (`e2e/webmcp-stub.ts`): absence costs nothing, registration, the read tools in both markets, `navigate`, the confirmation gate (no POST before the visitor, Cancel, Escape, abort, busy, a booking on the test calendar) and axe on the open dialog. `e2e/webmcp-real.e2e.ts` runs in the `chromium-webmcp` project against Chrome's real API (`--enable-blink-features=WebMCP`) and is the drift alarm. The default project must stay without `modelContext`.
 
 Manually: Chrome 156 with `chrome://flags/#enable-webmcp-testing` (or `--enable-blink-features=WebMCP`), then in DevTools `await document.modelContext.getTools()` and `executeTool(<tool from getTools>, input)`, or the Model Context Tool Inspector extension.
+
+## Voice (R12)
+
+Visitors can talk to the assistant on the home page. A call runs on ElevenLabs Agents; our Worker only mints a short-lived conversation token after Turnstile and answers the agent's tool calls. Nothing about voice loads until a visitor clicks.
+
+### Architecture
+
+```
+browser                                       Worker                                  ElevenLabs
+ VoiceCallout -click-> VoicePanel (lazy)       POST /api/voice/session                 GET /v1/convai/conversation/token
+   panel opens: import('@elevenlabs/client')    origin, JSON, VOICE_LIMITER, size, zod  (xi-api-key, one agent per locale)
+   Start: getUserMedia (tracks stopped)         configured? Turnstile 'voice'
+          Turnstile execute('voice')            claim voice_sessions (daily cap) ----> { token, conversation_id }
+          POST {locale,page,timeZone,token} --> { token, sessionId, maxSeconds }
+   startSession(webrtc, secret__zl_session)                                              agent: prompt, tools, limits
+   <== LiveKit WebRTC audio ====================================================>      webhook tools
+   navigate -> router.history.push              /api/tools/* <------------------------- Authorization: Bearer (secret_id)
+                                                bearer ok, X-Voice-Session ok            X-Voice-Session: {{secret__zl_session}}
+cron (03:00 tick): purgeVoiceSessions (30 days)
+```
+
+There is one agent per locale (`zenetlabs-voice-en`, `zenetlabs-voice-es`). The market follows the site, not the spoken language: the English prompt quotes S$ excluding GST, the Spanish one EUR excluding IVA, and the tools price in the session's locale. The client never sends an override and the agents enable none.
+
+### Gate
+
+`voice.published` in `site.config.ts` (`true` locally, `false` in production, `TODO(albert)`) is the build-time constant `__VOICE__`. While it is false:
+
+- the build ships no voice client code (the callout, the host and their dynamic imports fold away) and the button never renders;
+- `POST /api/voice/session` answers 503 `unavailable` before it imports anything, reads a secret or touches D1;
+- every bearer call with a valid secret answers 503 `unavailable` without a D1 query;
+- the privacy pages say nothing about voice, and the home content loader drops `contact.voice`, so neither the HTML nor the data the page hands to the client holds the call-to-action copy.
+
+`Permissions-Policy` follows the flag: `microphone=(self)` in the Worker's headers when `__VOICE__` is on, `microphone=()` otherwise. `public/_headers` only covers static assets, which never need the microphone, so it keeps `microphone=()` and the parity test holds for a dark build. The retention purge runs whatever the flag, so the kill switch leaves nothing behind.
+
+Agent ids are `voice.agents` (public; an id is useless without a token from our server). `null` for a locale means no button and 503 for that locale. `voice.fakeSdk` is true only locally: `__VOICE_FAKE__` swaps the SDK for `src/lib/voice-fake-sdk.ts`, and `deploy-prod.yml` fails if `FAKE_VOICE_SENTINEL` reaches `dist/client` or `dist/server`.
+
+### `POST /api/voice/session`
+
+Request `{ locale, page, timeZone, turnstileToken }` (`src/server/voice/schema.ts`), at most 4 KiB. Order: voice flag, origin, JSON, `VOICE_LIMITER` (3 per minute per address in production), size, schema, configured check (agent id for the locale, `ELEVENLABS_API_KEY` and `TOOLS_BEARER_SECRET` readable and not a placeholder), Turnstile action `voice`, D1 claim, ElevenLabs token.
+
+| Status | `error` | When |
+|---|---|---|
+| 403 | `origin` | no same-origin `Origin` |
+| 415 | `unsupported` | not JSON |
+| 429 | `rate` | `VOICE_LIMITER`, `Retry-After: 60` |
+| 413 / 400 | `too-large` / `invalid` | body over 4 KiB / schema failure (paths only) |
+| 503 | `unavailable` | the flag is off, the agent or a secret is missing or a placeholder, the Turnstile secret is unreadable, or ElevenLabs refused or timed out (the claimed row is deleted) |
+| 403 | `captcha` | Turnstile failed or was minted for another action |
+| 503 | `budget` | `SERVER.voice.dailySessions` (30) sessions already started today (UTC). Previews and local runs count against the same cap: a preview alias is public and spends the same minutes |
+| 200 | | `{ ok: true, token, sessionId, maxSeconds: 300 }`, `Cache-Control: no-store` |
+
+The unconfigured check runs before Turnstile, so a missing secret costs no siteverify call. The cap is one conditional `INSERT ... WHERE (SELECT COUNT(*) ...) < cap`, so parallel mints cannot overshoot; it runs after Turnstile, so bots cannot eat it. Logs carry the session id, locale and test flag, never the token, key, page or zone. Sessions minted on a non-live host (previews, local) are `is_test`.
+
+### Tool auth for the agents
+
+The ElevenLabs tools send `Authorization: Bearer <tool-secret>` (the workspace secret holds the whole header) and `X-Voice-Session: {{secret__zl_session}}`. `secret__` variables are usable only in tool headers and never reach the model. `src/server/voice/call.ts` (dispatched from `tools/http.ts`) then:
+
+1. compares the bearer in constant time (401 `auth`);
+2. requires the header to be a UUID and runs one `UPDATE voice_sessions SET tool_calls = tool_calls + 1 WHERE id = ? AND created_at > now - 15 min AND tool_calls < 40 RETURNING ...`; no row is 401 `session`. A leaked bearer alone books nothing: it also needs an unexpired session, and a session needs Turnstile;
+3. takes the market, the time zone and the test flag from the session, never from the body. The agent also sends `X-Voice-Conversation: {{system__conversation_id}}`; the first call binds the session to it and a different id after that is 401 `session`. A missing or unresolved value skips the binding (the gap: ElevenLabs may not resolve that system variable in a header, which only the first real call shows), and the owner email then names the id the token carried. The claim and, for `book_meeting`, the booking-attempt increment are one statement; only a miss costs a second query, to tell a dead session (401 `session`) from a spent allowance (`limit`). A booking without `confirmed` is refused before it can use an attempt;
+4. accepts an empty body whatever its content type (a tool with no parameters may send none);
+5. for `book_meeting`, requires `confirmed: true` (the agent sets it after reading the time, name and email back and hearing a yes), allows three attempts and one booking per session (`limit` after that), and stores a lead with `source = 'voice'` and `context.voice = { sessionId, conversationId }`. The per-address (1 per 24 h) and per-day (3) caps and the 12 h notice apply unchanged. The owner email carries `Voice call: <conversation-id> (ElevenLabs -> Agents -> Call history; kept 30 days)`.
+
+### Agents as code
+
+`src/server/voice/agent-config.ts` builds `elevenlabs/voice-agents.generated.json` from the tool registry (JSON Schema converted by `elevenlabs-schema.ts`, which throws on anything ElevenLabs cannot express and on a leaf without a `.describe()`), the voice prompt (`prompt.ts`, which reuses the chat prompt's shared rules word for word) and `buildKnowledge`. `agent-config.test.ts` snapshots the file: **after changing content, prices, the registry or a prompt, run `VITEST_MAX_WORKERS=2 pnpm exec vitest run src/server/voice/agent-config.test.ts -u` and commit the JSON**; CI fails on drift. The file is generated from the real production flags, so while production booking is dark the agents get no booking tool, no booking rule and no promise of a call; the test fails when the booking flag flips until the file is regenerated, and `voice.published` may only be true where `booking.published` is (a `site-config` test). The `book_meeting` parameters come from `voiceBookingSchema`, so the model must send `confirmed`; a test builds a body from every generated schema and runs it through the server's parser. Tools and agents carry the marker `[zenetlabs-web]` (description suffix and `zenetlabs-web` tag).
+
+`scripts/voice-agent.mjs` (no dependency, `fetch` only) applies it:
+
+```bash
+ELEVENLABS_API_KEY=<elevenlabs-api-key> pnpm voice:plan
+ELEVENLABS_API_KEY=<elevenlabs-api-key> ZENETLABS_TOOL_SECRET=<tool-secret> pnpm voice:apply
+```
+
+Before anything else `plan` and `apply` read ElevenLabs' list of agent models (`GET /v1/convai/llm-list`) and stop if the agents' model (`VOICE_SETTINGS.llm`, `glm-52`) is not in it; if the list cannot be read they say so and carry on, because the API itself refuses an unknown model. `apply` upserts, in order, the workspace secret `zenetlabs-tools-bearer` (value `Bearer <tool-secret>`, at least 32 characters), the tools and the two agents, resolves the `$secret:` and `$tool:` placeholders and prints `en=<agent-id> es=<agent-id>`. Everything is read and checked before the first write. Only tools and agents with our marker are ever patched; a tool of another project with the same name is left alone and ours is created beside it, and an agent of that name that is not ours stops the run. `--update-only` never creates and never touches the secret (the deploy uses it when the GitHub secret `ELEVENLABS_API_KEY` exists); it stops before any write, listing what is missing, when a tool or agent it would update does not exist yet. So a release that adds a tool needs one manual `pnpm voice:apply` (without the flag) after it deploys, and until then the deploy sync fails with a warning and changes nothing: the agents keep their previous, consistent configuration. `--rotate-secret` replaces the secret with `ZENETLABS_TOOL_SECRET`. Neither the key nor the secret is ever printed.
+
+### Limits
+
+5 minutes a call, 20 s of silence ends it, 30 calls a day (D1, exact, across both locales and previews), 3 mints per address per minute, 40 tool calls and one booking per session, ElevenLabs `daily_limit` split between the two agents so that together they equal the 30 (15 and 15), `agent_concurrency_limit: 2` and no bursting. Worst case 30 x 5 min = 150 min a day, about US$12 a day at US$0.08 a minute for the agent platform (the model is billed on top), up to about US$360 a month if the cap is hit every day. One booking per session is atomic: the claim sets `booking_started_at` in the same statement and the attempt that fails clears it; a booking that never reports back stops blocking after a minute.
+
+### Privacy settings at ElevenLabs
+
+Authentication on with no allowlist, no overrides, `record_voice: false`, `retention_days: 30`. No post-call webhook: ElevenLabs keeps the text transcript for 30 days and the lead points to it by conversation id. If any of this changes, change the privacy pages and bump `CONSENT_VERSION`.
+
+### Activation
+
+Owner steps first (below). Then, in one PR: set production `voice.published: true` and the two agent ids in `site.config.ts`, update `src/site-config.test.ts`, bump `CONSENT_VERSION` (`src/server/lead-fields.ts`), the `updated` date of both privacy pages, `PAGES.privacy.lastmod` and `PAGES.home.lastmod` (the contact section changes), and `legal.test.tsx`. Activate bookings first. After the deploy `/api/health` shows `"voice":true`. Acceptance calls per locale on a preview alias (sessions minted there are tests): a price (compare with the table), an FAQ, "open the pricing page", an off-topic request, an instruction override, a booking with the read-back, the 5-minute limit and 20 s of silence.
+
+### Owner steps
+
+1. Create the ElevenLabs account on a plan with enough minutes (Creator: 275 a month), accept the DPA, check the training opt-outs.
+2. Create an API key restricted to ElevenLabs Agents with a credit limit; store it in the Cloudflare Secrets Store as `ZENETLABS_PROD_ELEVENLABS_API_KEY` (Workers scope). Keep a second key with Agents write on your machine for step 4.
+3. Generate a tool secret (`openssl rand -base64 32`) and store the same value as `ZENETLABS_PROD_ELEVENLABS_TOOL_SECRET`.
+4. `ELEVENLABS_API_KEY=... ZENETLABS_TOOL_SECRET=<same value> pnpm voice:plan`, then `pnpm voice:apply`. It prints both agent ids.
+5. Put the ids in `site.config.ts` and open the activation PR.
+6. Optional: GitHub `production` environment secret `ELEVENLABS_API_KEY` so every deploy re-syncs prompt and tools.
+7. Check that Bot Fight Mode is off for `zenetlabs.com`: it challenges server-to-server webhooks and every voice tool would fail silently.
+8. Review the `TODO(albert)` items: the voice rules, the spoken messages, the notice, the caps, the model (`glm-52`), the retention and the privacy sentences.
+
+Rotation: new value in the Secrets Store, then `pnpm voice:apply --rotate-secret` with the same value (calls fail in between, so do it out of hours). API key: new key in the store, then revoke the old one in ElevenLabs.
+
+### Panel behaviour
+
+- The panel is a non-modal `<dialog>` (bottom sheet on phones). It opens with focus on its title, "Start call" enabled once Turnstile has loaded; Escape, the close button and "Not now" end the call and close.
+- Order on Start: feature check, microphone (denial ends here, with no session and no cap used), Turnstile, mint, SDK.
+- The SDK (about 167 KB gzip with LiveKit) is imported when the panel opens, so its iOS audio unlock is armed before the Start tap.
+- The page carries only `src/lib/voice-entry.ts` and the callout button. The first click or hover dynamic-imports `voice-open.tsx`, which mounts the panel in its own React root on an appended node (like the WebMCP dialog), so no host sits in the page shell and `/book` pays nothing for voice.
+- `navigate` opens the page at once in the call's locale and keeps the call alive (`router.history.push`); the status line says what opened. Only registry pages and the home sections resolve.
+- Any other link on the page is a plain anchor, so following one reloads the page and ends the call.
+- Entry points: the home contact section (after hydration) and "Talk instead" in the chat panel. Without JavaScript neither shows.
+
+### Test bookings
+
+A voice booking is a test when its session was minted on a non-live host, like every other channel (`isLiveHost`); a `[TEST]` name does not mark it. ElevenLabs always calls `https://zenetlabs.com`, so the acceptance calls run on a preview alias, which mints test sessions and books the test calendar.
+
+### Troubleshooting
+
+- 401 `session` from a call made in the ElevenLabs dashboard preview: expected, it has no dynamic variables. Test through the site.
+- 401 `auth`: the workspace secret and the Cloudflare secret differ; run `pnpm voice:apply --rotate-secret`.
+- 503 `budget`: the day's cap; `SELECT day, COUNT(*) FROM voice_sessions GROUP BY day`.
+- Microphone denied: the browser's site settings. Networks that block WebRTC need the signed-URL WebSocket path (not built).
+- A future CSP must allow `connect-src https://api.elevenlabs.io wss://livekit.rtc.elevenlabs.io` plus LiveKit TURN, `worker-src blob: data:` and `media-src blob:`.
+
+Kill switches: set the locale's agent id to `null` or `voice.published: false` and deploy; set `dailySessions` to 0; disable the agent in ElevenLabs; rotate the tool secret.
+
+Runbook SQL: erasure `DELETE FROM voice_sessions WHERE id = '<session-id>'` plus the lead delete plus deleting the conversation in ElevenLabs; test cleanup `DELETE FROM voice_sessions WHERE is_test = 1`.
+
+### Behaviour change for chat bookings
+
+The owner email and the visitor's confirmation now pick the booking template from the lead's booking context, not from `source === 'booking'`. A booking made from the chat card (`source = 'chat'`) therefore gets the booking confirmation and the booking lines in the owner email; before, it got the generic acknowledgement.
+
+### Tests
+
+Unit: the schema converter, the prompt goldens, the agent file snapshot, `voice-agent.mjs` against an in-memory ElevenLabs, the reducer and call flow, the SDK adapter (mocked package), the panel and button. Workers: the D1 store, every step of the mint contract, the bearer-plus-session rows in `http.worker.test.ts`. e2e (`e2e/voice.e2e.ts`) drives the real panel with the fake SDK and the fake ElevenLabs on :4175 (`/__elevenlabs/v1/convai/conversation/token`, `/__calls`, `/__fail`, `/__state`), with Chromium's fake microphone, axe in both locales and colour schemes. ElevenLabs is never called in CI.

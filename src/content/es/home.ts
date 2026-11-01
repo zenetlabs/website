@@ -158,5 +158,10 @@ export const home = {
     mail: '¿Prefieres el correo? Escribe a',
     human: 'Te responde una persona, personalmente.',
     book: '¿Prefieres una llamada? Elige una hora',
+    // TODO(albert): revisar el texto de voz
+    voice: {
+      text: '¿Prefieres hablar? Nuestro asistente de voz con IA responde tus dudas y te reserva una llamada.',
+      button: 'Habla con el asistente',
+    },
   },
 } satisfies HomeContent;

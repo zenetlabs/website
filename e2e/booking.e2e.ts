@@ -16,13 +16,14 @@ import {
   zonedToInstant,
 } from '../src/lib/slots';
 import {
+  agentHeaders,
   googleBusy,
   googleEvents,
   googleFail,
   googleReset,
   sentFor,
+  startVoiceSession,
   TEST_CALENDAR,
-  TOOL_SECRET,
   uniqueEmail,
 } from './fakes';
 import { BOOKING_PUBLISHED, gotoHydrated, settleAnimations } from './helpers';
@@ -31,7 +32,6 @@ test.skip(!BOOKING_PUBLISHED, 'booking is not published in this build');
 test.describe.configure({ mode: 'serial' });
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
-const BEARER = { Authorization: `Bearer ${TOOL_SECRET}` };
 
 // Owner-zone days that currently have bookable slots. Each test uses its own
 // index so that the tests never share a slot, and none sits near the notice edge.
@@ -88,8 +88,9 @@ async function bearerBook(
   email = uniqueEmail('api'),
 ) {
   const response = await request.post('/api/tools/book_meeting', {
-    headers: BEARER,
+    headers: agentHeaders(await startVoiceSession(request)),
     data: {
+      confirmed: true,
       slot,
       name: '[TEST] Api',
       email,

@@ -93,6 +93,23 @@ body_lacks_html() {
   ! grep -qE "$2" <<<"$body"
 }
 
+post_json_status_in() {
+  local first="$1" second="$2" url="$3" data="$4" got
+  got=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -X POST \
+    -H 'Content-Type: application/json' --data "$data" "$url") || return 1
+  [ "$got" = "$first" ] || [ "$got" = "$second" ]
+}
+
+post_status_in() {
+  local url="$1" got ok=1
+  shift
+  got=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -X POST \
+    -H 'Origin: https://zenetlabs.com' -H 'Content-Type: application/json' \
+    --data '{}' "$url") || return 1
+  for expected in "$@"; do [ "$got" = "$expected" ] && ok=0; done
+  return "$ok"
+}
+
 header_matches() {
   local accept="$1" url="$2" pattern="$3"
   local headers
@@ -134,6 +151,17 @@ attempt "get_pricing answers 200" post_json_status_is 200 "${SITE}/api/tools/get
 attempt "check_availability answers 200 (ok or unavailable)" post_json_status_is 200 "${SITE}/api/tools/check_availability" '{}'
 attempt "book_meeting without Origin is 403" post_json_status_is 403 "${SITE}/api/tools/book_meeting" '{}'
 attempt "book_meeting with a wrong bearer is 401" post_json_status_is 401 "${SITE}/api/tools/book_meeting" '{}' -H 'Authorization: Bearer smoke-check'
+attempt "get_pricing with a wrong bearer is 401" post_json_status_is 401 "${SITE}/api/tools/get_pricing" '{}' -H 'Authorization: Bearer smoke-check'
+# 503 while voice is dark, 400 once it is published; neither mints a token.
+attempt "405 GET /api/voice/session" status_is 405 "${SITE}/api/voice/session"
+attempt "400 or 503 POST /api/voice/session {}" post_status_in "${SITE}/api/voice/session" 400 503
+attempt "403 or 503 POST /api/voice/session without Origin" post_json_status_in 403 503 "${SITE}/api/voice/session" '{}'
+# Dark builds keep the microphone off; a live voice build allows this origin only.
+if grep -qF '"voice":true' <<<"$(curl -s --max-time 20 "${SITE}/api/health")"; then
+  attempt "microphone is allowed for this origin only" header_matches 'text/html' "${SITE}/" '^permissions-policy: camera=\(\), microphone=\(self\), geolocation=\(\)$'
+else
+  attempt "microphone stays off while voice is dark" header_matches 'text/html' "${SITE}/" '^permissions-policy: camera=\(\), microphone=\((self)?\), geolocation=\(\)$'
+fi
 
 attempt "301 http://zenetlabs.com/es" redirects_to "http://zenetlabs.com/es" "${SITE}/es"
 for rule in \

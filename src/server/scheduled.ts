@@ -2,6 +2,7 @@ import { purgeChats } from '@/server/chat/store';
 import { deadOwnerEmails, purgeExpired } from '@/server/lead-store';
 import { deliverDue, outboxDeps } from '@/server/outbox';
 import { errorName } from '@/server/responses';
+import { purgeVoiceSessions } from '@/server/voice/store';
 
 const PURGE_HOUR_UTC = 3;
 const TICK_MINUTES = 10;
@@ -41,5 +42,14 @@ export async function runScheduled(
     });
   } catch (error) {
     console.error('scheduled: chat purge failed', { error: errorName(error) });
+  }
+  try {
+    console.log('scheduled: voice purge', {
+      purged: await purgeVoiceSessions(env.DB, now),
+    });
+  } catch (error) {
+    console.error('scheduled: voice purge failed', {
+      error: errorName(error),
+    });
   }
 }

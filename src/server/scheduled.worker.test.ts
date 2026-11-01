@@ -129,6 +129,27 @@ describe('runScheduled', () => {
     });
   });
 
+  it('purges voice sessions after 30 days on the daily tick only', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    const session = (id: string, createdAt: number) =>
+      DB.prepare(
+        `INSERT INTO voice_sessions (id, created_at, day, locale, time_zone, start_page)
+         VALUES (?1, ?2, '2026-10-01', 'en', 'UTC', '/')`,
+      )
+        .bind(id, createdAt)
+        .run();
+    await DB.prepare('DELETE FROM voice_sessions').run();
+    await session('old', TICK - 31 * DAY);
+    await session('fresh', TICK - 29 * DAY);
+    await runScheduled(testEnv, TICK - 10 * 60_000);
+    expect(
+      (await DB.prepare('SELECT COUNT(*) AS n FROM voice_sessions').first())?.n,
+    ).toBe(2);
+    await runScheduled(testEnv, TICK);
+    const { results } = await DB.prepare('SELECT id FROM voice_sessions').all();
+    expect(results).toEqual([{ id: 'fresh' }]);
+  });
+
   it('logs no summary outside the daily tick', async () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     await runScheduled(testEnv, NOW);

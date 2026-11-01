@@ -131,3 +131,47 @@ describe('assistant server config', () => {
       expect(aiGatewayName).toMatch(/^[a-z0-9-]{1,64}$/);
   });
 });
+
+describe('voice config', () => {
+  it('is published only where bookings are, since the agents book calls', () => {
+    for (const env of [undefined, 'production']) {
+      const { voice, booking } = siteConfig(env);
+      if (voice.published) expect(booking.published).toBe(true);
+    }
+  });
+
+  it('runs on dummy agents and the scripted SDK locally', () => {
+    const { voice } = siteConfig(undefined);
+    expect(voice.published).toBe(true);
+    expect(voice.fakeSdk).toBe(true);
+    expect(voice.agents).toEqual({
+      en: 'local-agent-en',
+      es: 'local-agent-es',
+    });
+    expect(serverConfig(undefined).voice).toEqual({
+      apiOrigin: 'http://127.0.0.1:4175/__elevenlabs',
+      dailySessions: 1000,
+    });
+  });
+
+  it('stays dark in production with no agents, no fake SDK and the real API', () => {
+    const { voice } = siteConfig('production');
+    expect(voice).toEqual({
+      published: false,
+      agents: { en: null, es: null },
+      fakeSdk: false,
+    });
+    expect(serverConfig('production').voice).toEqual({
+      apiOrigin: 'https://api.elevenlabs.io',
+      dailySessions: 30,
+    });
+  });
+
+  it('only ever holds a real-looking agent id or null', () => {
+    for (const env of [undefined, 'production']) {
+      for (const id of Object.values(siteConfig(env).voice.agents)) {
+        if (id !== null) expect(id).toMatch(/^[\w-]{6,64}$/);
+      }
+    }
+  });
+});

@@ -10,7 +10,12 @@ import {
   useState,
 } from 'react';
 import { BookingCard } from '@/components/chat/booking-card';
-import { CONTROL, LazyTurnstile } from '@/components/form-parts';
+import { ContactLinks } from '@/components/contact-links';
+import {
+  CONTROL,
+  challengeToken,
+  LazyTurnstile,
+} from '@/components/form-parts';
 import {
   PRIMARY_BUTTON,
   SECONDARY_BUTTON_SM,
@@ -27,12 +32,10 @@ import {
   useChatState,
 } from '@/lib/chat-store';
 import type { Locale } from '@/lib/i18n';
-import { navHref } from '@/lib/nav';
 import { pagePath } from '@/lib/page-registry';
-import { PUBLIC_EMAIL } from '@/lib/site';
 import { noop } from '@/lib/time';
+import { openVoice, voiceAvailable } from '@/lib/voice-entry';
 
-const TOKEN_TIMEOUT_MS = 30_000;
 const LOW_REMAINING = 5;
 const FALLBACK: ReadonlySet<string> = new Set([
   'budget',
@@ -46,41 +49,6 @@ const FALLBACK: ReadonlySet<string> = new Set([
 
 function Speaker({ children }: { children: ReactNode }) {
   return <span className="sr-only">{children}: </span>;
-}
-
-function Contact({
-  locale,
-  copy,
-  booking,
-}: {
-  locale: Locale;
-  copy: ChatCopy;
-  booking: boolean;
-}) {
-  return (
-    <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-      {booking ? (
-        <li>
-          <a href={pagePath(locale, 'book')} className={TEXT_LINK}>
-            {copy.fallback.book}
-          </a>
-        </li>
-      ) : null}
-      <li>
-        <a
-          href={navHref(locale, { page: 'home', section: 'contact' })}
-          className={TEXT_LINK}
-        >
-          {copy.fallback.form}
-        </a>
-      </li>
-      <li>
-        <a href={`mailto:${PUBLIC_EMAIL}`} className={TEXT_LINK}>
-          {PUBLIC_EMAIL}
-        </a>
-      </li>
-    </ul>
-  );
 }
 
 function toolLabel(copy: ChatCopy, name: string): string {
@@ -146,13 +114,7 @@ export function ChatPanel({
       timeZone: zone,
       newSession: copy.newSession,
       resetToken: () => widget.current?.reset(),
-      token: async () => {
-        const instance = widget.current;
-        if (!instance) throw new Error('no challenge');
-        instance.reset();
-        instance.execute();
-        return instance.getResponsePromise(TOKEN_TIMEOUT_MS);
-      },
+      token: challengeToken(widget),
     });
   }
 
@@ -220,24 +182,38 @@ export function ChatPanel({
               {copy.badge}
             </span>
           </div>
-          <button
-            type="button"
-            aria-label={copy.close}
-            onClick={() => dialog.current?.close()}
-            className="inline-flex size-11 items-center justify-center rounded-input hover:bg-surface"
-          >
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 24 24"
-              className="size-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
+          <div className="flex items-center gap-1">
+            {voiceAvailable(locale) ? (
+              <button
+                type="button"
+                onClick={() => {
+                  dialog.current?.close();
+                  openVoice(locale, (href) => router.history.push(href));
+                }}
+                className={SECONDARY_BUTTON_SM}
+              >
+                {copy.talk}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              aria-label={copy.close}
+              onClick={() => dialog.current?.close()}
+              className="inline-flex size-11 items-center justify-center rounded-input hover:bg-surface"
             >
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
-          </button>
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="size-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
+          </div>
         </header>
         <p
           id={noticeId}
@@ -343,7 +319,12 @@ export function ChatPanel({
                 <p>{copy.fallback.full}</p>
               ) : null}
               <p>{copy.fallback.text}</p>
-              <Contact locale={locale} copy={copy} booking={booking} />
+              <ContactLinks
+                locale={locale}
+                booking={booking}
+                labels={copy.fallback}
+                className="mt-2"
+              />
             </div>
           ) : null}
           {state.failure === 'rate' ? (

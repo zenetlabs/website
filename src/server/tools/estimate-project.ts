@@ -40,7 +40,9 @@ export const estimateProject = defineTool({
     es: 'Devuelve un rango de precio orientativo, un plazo y un plan de mantenimiento sugerido para un proyecto, calculado con reglas fijas. Es una estimación, no un presupuesto: el precio final sale del diagnóstico.',
   },
   input: z.object({
-    answers: calculatorAnswersSchema,
+    answers: calculatorAnswersSchema.describe(
+      'The visitor answers about their project.',
+    ),
     locale: z.enum(locales).default('en'),
   }),
   output,

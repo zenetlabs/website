@@ -13,6 +13,7 @@ import type {
   ServicePageContent,
   Services,
   ServicesHubContent,
+  VoiceCopy,
 } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import type { HoldedPageId, ServicePageId } from '@/lib/page-registry';
@@ -170,13 +171,20 @@ const SERVICES_HUB = {
     ]),
 };
 
+// While voice is dark the call-to-action copy must not reach the page, not even
+// in the data a route hands to the client.
+function withoutVoice(home: HomeContent): HomeContent {
+  const { voice: _voice, ...contact } = home.contact;
+  return { ...home, contact };
+}
+
 export async function loadHomeContent(locale: Locale): Promise<{
   home: HomeContent;
   faq: readonly FaqItem[];
   services: Services;
 }> {
   const [{ home }, { faq }, { services }] = await HOME[locale]();
-  return { home, faq, services };
+  return { home: __VOICE__ ? home : withoutVoice(home), faq, services };
 }
 
 export async function loadPricingContent(locale: Locale): Promise<{
@@ -283,4 +291,13 @@ const CHAT = {
 
 export function loadChatCopy(locale: Locale): Promise<ChatCopy> {
   return CHAT[locale]();
+}
+
+const VOICE = {
+  en: () => import('@/content/en/voice').then((m) => m.voiceCopy),
+  es: () => import('@/content/es/voice').then((m) => m.voiceCopy),
+};
+
+export function loadVoiceCopy(locale: Locale): Promise<VoiceCopy> {
+  return VOICE[locale]();
 }

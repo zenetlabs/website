@@ -4,8 +4,20 @@ import type { PublishedEntity } from '@/content/types';
 import { describeEntity } from '@/lib/content';
 import { legalClausesFor } from '@/lib/legal-clauses';
 import { PUBLIC_EMAIL } from '@/lib/site';
+import {
+  AssistantBasis,
+  AssistantRetention,
+  AssistantSection,
+  AssistantTransfer,
+  CloudflareProcessor,
+  VoiceBasis,
+  VoiceProcessor,
+  VoiceRetention,
+  VoiceSection,
+  VoiceTransfer,
+} from '@/routes/{-$locale}/-legal/privacy-extras-es';
 
-// TODO(albert): legal review (R6 storage, attribution, retention; R7 GA4, consent, first-touch; R10 assistant, Workers AI, transcripts, retention)
+// TODO(albert): legal review (R6 storage, attribution, retention; R7 GA4, consent, first-touch; R10 assistant, Workers AI, transcripts, retention; R12 voice, ElevenLabs, US transfer, retention)
 export function PrivacyEs({
   title,
   entity,
@@ -14,7 +26,6 @@ export function PrivacyEs({
   entity: PublishedEntity;
 }) {
   const analytics = __GA4_ID__ !== null;
-  const assistant = __ASSISTANT__;
   const legalEs = legalClausesFor(entity);
 
   return (
@@ -99,40 +110,8 @@ export function PrivacyEs({
           Cloudflare Access.
         </p>
       </LegalSection>
-      {assistant ? (
-        <LegalSection title="El asistente de la web">
-          <p>
-            Nuestra web tiene un asistente de IA, que te indica que es una IA
-            antes de que le escribas. Cuando lo usas, tratamos tus mensajes, sus
-            respuestas, la página en la que estabas y la hora, para responderte
-            y evitar abusos del servicio.
-          </p>
-          <p>
-            Las respuestas las genera automáticamente un modelo de IA que
-            funciona en Cloudflare Workers AI. Cloudflare no usa este contenido
-            para entrenar modelos. Guardamos las conversaciones en nuestra base
-            de datos en la Unión Europea y no guardamos con ellas tu dirección
-            IP.
-          </p>
-          <p>
-            Si reservas una llamada desde el asistente, el formulario de reserva
-            del chat te pide el nombre y el email; se usan para la reserva y no
-            se envían al modelo de IA.
-          </p>
-          <p>
-            Para limitar los abusos contamos también cuántas preguntas hace cada
-            conexión al día. Para ello guardamos, hasta dos días, una huella
-            unidireccional con clave de tu dirección IP: no se puede convertir
-            de nuevo en la dirección y no está vinculada a tu conversación.
-          </p>
-          <p>
-            El asistente puede equivocarse. Los precios y las fechas salen solo
-            de nuestra información publicada, y una persona lee cada reserva y
-            cada consulta. No compartas en el chat contraseñas, datos de salud
-            ni otra información sensible.
-          </p>
-        </LegalSection>
-      ) : null}
+      <AssistantSection />
+      <VoiceSection />
       <LegalSection title="Base jurídica">
         <ul>
           <li>{legalEs.consentBasis}</li>
@@ -145,14 +124,8 @@ export function PrivacyEs({
             los datos de referente y de campaña (art. 6.1.f del RGPD). Se
             limitan a lo que el enlace y tu navegador ya envían.
           </li>
-          {assistant ? (
-            <li>
-              El interés legítimo en responder a las preguntas sobre nuestros
-              servicios mediante el asistente y en evitar su uso abusivo (art.
-              6.1.f del RGPD). Cuando le pides una llamada, la aplicación de
-              medidas precontractuales a petición tuya (art. 6.1.b del RGPD).
-            </li>
-          ) : null}
+          <AssistantBasis />
+          <VoiceBasis />
           {analytics ? (
             <li>
               Tu consentimiento para las cookies analíticas y de marketing (art.
@@ -172,28 +145,13 @@ export function PrivacyEs({
             Resend, para entregarnos por correo el mensaje del formulario y
             enviarte el acuse de recibo.
           </li>
-          <li>
-            {assistant ? (
-              <>
-                Cloudflare, para alojar el sitio, guardar las consultas y las
-                conversaciones del asistente en una base de datos en la Unión
-                Europea, ejecutar el modelo de IA del asistente (Workers AI),
-                proteger los formularios y el asistente con Turnstile y medir el
-                tráfico con Web Analytics sin cookies.
-              </>
-            ) : (
-              <>
-                Cloudflare, para alojar el sitio, guardar las consultas en una
-                base de datos en la Unión Europea, proteger el formulario con
-                Turnstile y medir el tráfico con Web Analytics sin cookies.
-              </>
-            )}
-          </li>
+          <CloudflareProcessor />
           <li>Google Workspace, que aloja el buzón que recibe tu mensaje.</li>
           <li>
             Google (Google Ireland Limited y Google LLC), para Google Workspace
             Calendar y Meet cuando reservas una llamada.
           </li>
+          <VoiceProcessor />
           {analytics ? (
             <li>
               Google (Google Ireland Limited y Google LLC), para Google
@@ -208,13 +166,8 @@ export function PrivacyEs({
           {legalEs.transferPlaces}. Cuando es necesario, las transferencias se
           apoyan en garantías adecuadas, como las cláusulas contractuales tipo
           de la Comisión Europea.
-          {assistant ? (
-            <>
-              {' '}
-              Cloudflare puede ejecutar el modelo del asistente en centros de
-              datos fuera de la Unión Europea.
-            </>
-          ) : null}
+          <AssistantTransfer />
+          <VoiceTransfer />
           {analytics ? (
             <> Google se apoya en el Marco de Privacidad de Datos UE-EE. UU.</>
           ) : null}
@@ -229,14 +182,8 @@ export function PrivacyEs({
           dure la relación y lo exijan nuestras obligaciones legales.
         </p>
         <p>Borramos a los 30 días los intentos de reserva sin confirmar.</p>
-        {assistant ? (
-          <p>
-            Borramos las conversaciones del asistente 30 días después de que
-            empiecen. Si durante la misma visita reservas una llamada o nos
-            envías una consulta, la conversación se conserva con esa consulta y
-            se borra con ella.
-          </p>
-        ) : null}
+        <AssistantRetention />
+        <VoiceRetention />
         {analytics ? (
           <p>
             {/* TODO(albert): match the GA4 retention setting */}

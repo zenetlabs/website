@@ -164,7 +164,48 @@ export type HomeContent = {
   };
   founder: SectionCopy & { more: string };
   faq: SectionCopy;
-  contact: SectionCopy & { mail: string; human: string; book: string };
+  contact: SectionCopy & {
+    mail: string;
+    human: string;
+    book: string;
+    // Present only while voice is published; the loader drops it otherwise.
+    voice?: { text: string; button: string };
+  };
+};
+
+export type VoiceCopy = {
+  title: string;
+  badge: string;
+  notice: string;
+  privacyLink: string;
+  micNote: string;
+  start: string;
+  cancel: string;
+  connecting: string;
+  listening: string;
+  speaking: string;
+  mute: string;
+  unmute: string;
+  end: string;
+  transcript: string;
+  you: string;
+  assistant: string;
+  opened: string;
+  booked: string;
+  ended: string;
+  again: string;
+  micDenied: string;
+  unsupported: string;
+  errorBudget: string;
+  errorRate: string;
+  errorCaptcha: string;
+  errorCall: string;
+  fallbackText: string;
+  fallbackBook: string;
+  fallbackForm: string;
+  close: string;
+  pages: ChatCopy['pages'];
+  sections: ChatCopy['sections'];
 };
 
 export type PricingPageContent = {
@@ -565,6 +606,7 @@ export type BookPageContent = {
 
 export type ChatCopy = {
   title: string;
+  talk: string;
   badge: string;
   notice: string;
   privacyLink: string;

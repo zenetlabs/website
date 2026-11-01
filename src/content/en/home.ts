@@ -141,5 +141,10 @@ export const home = {
     mail: 'Prefer email? Write to',
     human: 'A human replies, personally.',
     book: 'Prefer a call? Pick a time',
+    // TODO(albert): review the voice copy
+    voice: {
+      text: 'Prefer to talk? Our AI voice assistant can answer questions and book a call.',
+      button: 'Talk to the assistant',
+    },
   },
 } satisfies HomeContent;

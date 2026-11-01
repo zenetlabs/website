@@ -1,12 +1,11 @@
 import { z } from 'zod';
 import { DEFAULT_ZONE } from '@/content/booking-rules';
 import { locales } from '@/lib/i18n';
-import { isLiveHost } from '@/lib/redirects';
 import { formatSlotLabel } from '@/lib/slot-format';
 import { canonicalZone, isTimeZone, zonedToInstant } from '@/lib/slots';
 import { availability } from '@/server/booking';
 import { contactFor, contactSchema } from '@/server/tools/contact';
-import { defineTool } from '@/server/tools/types';
+import { defineTool, isTestContext } from '@/server/tools/types';
 
 const SLOT_LIMIT = 30;
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -55,9 +54,17 @@ export const checkAvailability = defineTool({
     es: 'Devuelve las horas libres para una llamada de 30 minutos con Zenet Labs, opcionalmente entre dos fechas en una zona horaria. Ofrece solo horas que devuelva esta herramienta.',
   },
   input: z.object({
-    from: z.iso.date().optional(),
-    to: z.iso.date().optional(),
-    timeZone: z.string().max(64).refine(isTimeZone).optional(),
+    from: z.iso
+      .date()
+      .optional()
+      .describe('First day to look at, as YYYY-MM-DD.'),
+    to: z.iso.date().optional().describe('Last day to look at, as YYYY-MM-DD.'),
+    timeZone: z
+      .string()
+      .max(64)
+      .refine(isTimeZone)
+      .optional()
+      .describe('IANA time zone of the visitor, such as Europe/Madrid.'),
     locale: z.enum(locales).default('en'),
   }),
   output,
@@ -72,7 +79,7 @@ export const checkAvailability = defineTool({
       {
         deps: ctx.deps,
         now: ctx.now,
-        isTest: !isLiveHost(ctx.hostname),
+        isTest: isTestContext(ctx),
       },
       { from: startOfDay(from, zone, 0), to: startOfDay(to, zone, 1) },
     );

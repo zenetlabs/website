@@ -1,13 +1,12 @@
 import { z } from 'zod';
 import { DEFAULT_ZONE } from '@/content/booking-rules';
 import type { Locale } from '@/lib/i18n';
-import { isLiveHost } from '@/lib/redirects';
 import { formatSlotLabel } from '@/lib/slot-format';
 import { canonicalZone } from '@/lib/slots';
 import { bookMeeting as book } from '@/server/booking';
 import { bookingInputSchema } from '@/server/booking-schema';
 import { contactFor, contactSchema } from '@/server/tools/contact';
-import { defineTool } from '@/server/tools/types';
+import { defineTool, isTestContext } from '@/server/tools/types';
 
 export function bookedResult({
   start,
@@ -71,11 +70,12 @@ export const bookMeeting = defineTool({
         consentAt: ctx.consentAt,
         attribution: ctx.attribution,
         chatSessionId: ctx.chatSessionId,
+        voice: ctx.voice,
       },
       {
         deps: ctx.deps,
         now: ctx.now,
-        isTest: !isLiveHost(ctx.hostname),
+        isTest: isTestContext(ctx),
       },
     );
     if (result.status === 'booked') {

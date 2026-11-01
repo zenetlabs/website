@@ -3,6 +3,7 @@ import type { ChatCopy } from '@/content/types';
 // TODO(albert): review the widget copy
 export const chatCopy = {
   title: 'Zenet Labs assistant',
+  talk: 'Talk instead',
   badge: 'AI',
   notice:
     "You're chatting with an AI assistant, not a person. It answers from this site's content and can make mistakes; prices come only from our official list. We keep this conversation for 30 days to reply to you and to prevent abuse, or for 24 months with your enquiry if you book a call or send the contact form. Please don't share passwords or sensitive personal data.",

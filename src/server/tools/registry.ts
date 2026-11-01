@@ -29,6 +29,15 @@ export function enabledTools(site: SiteFlags): readonly Tool[] {
   return TOOLS.filter((tool) => booking || !BOOKING_TOOLS.has(tool.name));
 }
 
+// What an agent (chat or voice) may call: the enabled tools, minus the estimate
+// while the calculator is dark. Dark features are never offered.
+export function offeredTools(site: SiteFlags): readonly Tool[] {
+  return enabledTools(site).filter(
+    (tool) =>
+      tool.name !== 'estimate_project' || isPublished('calculator', site),
+  );
+}
+
 export function manifest(site: SiteFlags) {
   return {
     version: 1,

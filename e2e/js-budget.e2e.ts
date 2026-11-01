@@ -228,6 +228,24 @@ test('the chat panel, its copy and the system prompt stay out of the up-front sc
   }
 });
 
+test('the voice panel, its copy, the SDK and the session client stay out of the up-front scripts', async ({
+  request,
+}) => {
+  for (const path of ['/', '/es', '/pricing', '/book', '/privacy']) {
+    const html = await (await request.get(path)).text();
+    const scripts = await upFrontScripts(request, html);
+    for (const script of scripts) {
+      const label = `${script.source} in ${path}`;
+      expect(script.source, label).not.toMatch(
+        /voice-panel|voice-store|voice-sdk|voice-fake|voice-client|livekit/,
+      );
+      expect(script.text, label).not.toMatch(
+        /about to talk to an AI voice|Vas a hablar con un asistente de voz|FAKE_VOICE_SENTINEL|\/api\/voice\/session|secret__zl_session|livekit/i,
+      );
+    }
+  }
+});
+
 test.describe('the built client', () => {
   test.skip(
     Boolean(process.env.PLAYWRIGHT_BASE_URL),

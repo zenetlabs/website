@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
+import { ORIGIN } from './fakes';
 import { ASSISTANT_PUBLISHED } from './helpers';
 
-const ORIGIN = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:4173';
 const GOOD = {
   locale: 'en',
   message: 'hi',

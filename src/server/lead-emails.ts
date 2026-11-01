@@ -1,3 +1,4 @@
+import type { z } from 'zod';
 import { BOOKING_RULES, DEFAULT_ZONE } from '@/content/booking-rules';
 import { legalEntity } from '@/lib/content';
 import type { Locale } from '@/lib/i18n';
@@ -17,14 +18,21 @@ function orDash(value: string | null): string {
   return value === null || value === '' ? '-' : value;
 }
 
-function bookingOf(lead: LeadRow): BookingContext | null {
-  if (lead.source !== 'booking' || lead.context === null) return null;
+type ParsedContext = z.infer<typeof bookingContextSchema>;
+
+// Booked from the page, the chat or a voice call: the context decides, not the source.
+function contextOf(lead: LeadRow): ParsedContext | null {
+  if (lead.context === null) return null;
   try {
     const parsed = bookingContextSchema.safeParse(JSON.parse(lead.context));
-    return parsed.success ? parsed.data.booking : null;
+    return parsed.success ? parsed.data : null;
   } catch {
     return null;
   }
+}
+
+function bookingOf(lead: LeadRow): BookingContext | null {
+  return contextOf(lead)?.booking ?? null;
 }
 
 const SUBJECT_FLAG = {
@@ -92,8 +100,13 @@ export function ownerEmail(
     `Test lead: ${lead.is_test === 1 ? 'yes' : 'no'}`,
     `Lead: ${link}`,
   ];
-  const booking = bookingOf(lead);
-  if (booking) lines.push(...bookingLines(booking, lead.locale));
+  const context = contextOf(lead);
+  if (context) lines.push(...bookingLines(context.booking, lead.locale));
+  if (context?.voice) {
+    lines.push(
+      `Voice call: ${context.voice.conversationId ?? 'unknown'} (ElevenLabs → Agents → Call history; kept 30 days)`,
+    );
+  }
   if (lead.chat_session_id) lines.push(`Conversation: ${link}#conversation`);
   if (lead.context) lines.push('Context:', prettyJson(lead.context));
   return {

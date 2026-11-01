@@ -1,3 +1,4 @@
+import type { APIRequestContext } from '@playwright/test';
 import { z } from 'zod';
 
 export const FAKES = 'http://127.0.0.1:4175';
@@ -89,5 +90,72 @@ export async function googleFail(
 }
 
 export const TOOL_SECRET = 'local-tool-secret';
+
+export const ORIGIN =
+  process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:4173';
+
+// The envelope every tool answers in.
+export const toolEnvelope = z.object({
+  ok: z.boolean(),
+  error: z.string().optional(),
+  result: z.looseObject({ status: z.string().optional() }).optional(),
+});
+
+export const voiceSessionSchema = z.object({
+  ok: z.boolean(),
+  error: z.string().optional(),
+  token: z.string().optional(),
+  sessionId: z.string().optional(),
+});
+
+// What the ElevenLabs agent sends with each tool call: the bearer secret and the
+// session the site minted for this call after Turnstile.
+export async function startVoiceSession(
+  request: APIRequestContext,
+  locale: 'en' | 'es' = 'en',
+): Promise<string> {
+  const response = await request.post('/api/voice/session', {
+    headers: { Origin: ORIGIN },
+    data: {
+      locale,
+      page: '/',
+      timeZone: 'Europe/Madrid',
+      turnstileToken: 'e2e-token',
+    },
+  });
+  const body = voiceSessionSchema.parse(await response.json());
+  if (!body.sessionId) throw new Error(`no voice session: ${body.error}`);
+  return body.sessionId;
+}
+
+export function agentHeaders(sessionId: string): Record<string, string> {
+  return {
+    Authorization: `Bearer ${TOOL_SECRET}`,
+    'X-Voice-Session': sessionId,
+  };
+}
+
+export async function elevenLabsCalls(): Promise<
+  Array<{ agentId: string; keyPresent: boolean }>
+> {
+  const response = await fetch(`${FAKES}/__elevenlabs/__calls`);
+  return z
+    .array(z.object({ agentId: z.string(), keyPresent: z.boolean() }))
+    .parse(await response.json());
+}
+
+export async function elevenLabsReset(): Promise<void> {
+  await fetch(`${FAKES}/__elevenlabs/__state`, { method: 'DELETE' });
+}
+
+export async function elevenLabsFail(
+  count: number,
+  status = 500,
+): Promise<void> {
+  await fetch(`${FAKES}/__elevenlabs/__fail`, {
+    method: 'POST',
+    body: JSON.stringify({ count, status }),
+  });
+}
 
 export const TEST_CALENDAR = 'local-test';

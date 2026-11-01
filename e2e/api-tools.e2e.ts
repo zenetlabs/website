@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { z } from 'zod';
-import { TOOL_SECRET } from './fakes';
+import { agentHeaders, startVoiceSession, toolEnvelope } from './fakes';
 
 const manifestSchema = z.object({
   version: z.number(),
@@ -12,12 +12,6 @@ const manifestSchema = z.object({
       inputSchema: z.object({ type: z.literal('object') }),
     }),
   ),
-});
-
-const envelope = z.object({
-  ok: z.boolean(),
-  error: z.string().optional(),
-  result: z.looseObject({ status: z.string().optional() }).optional(),
 });
 
 const BOOKING = {
@@ -51,7 +45,7 @@ test('read tools answer 200 in a stable envelope', async ({ request }) => {
   });
   expect(pricing.status()).toBe(200);
   expect(pricing.headers()['cache-control']).toBe('no-store');
-  expect(envelope.parse(await pricing.json())).toMatchObject({
+  expect(toolEnvelope.parse(await pricing.json())).toMatchObject({
     ok: true,
     result: { currency: 'EUR' },
   });
@@ -59,7 +53,7 @@ test('read tools answer 200 in a stable envelope', async ({ request }) => {
   const faq = await request.post('/api/tools/get_faq', {
     data: { query: 'how long' },
   });
-  expect(envelope.parse(await faq.json()).ok).toBe(true);
+  expect(toolEnvelope.parse(await faq.json()).ok).toBe(true);
 
   const estimate = await request.post('/api/tools/estimate_project', {
     data: {
@@ -74,12 +68,12 @@ test('read tools answer 200 in a stable envelope', async ({ request }) => {
       },
     },
   });
-  expect(envelope.parse(await estimate.json()).ok).toBe(true);
+  expect(toolEnvelope.parse(await estimate.json()).ok).toBe(true);
 
   const slots = await request.post('/api/tools/check_availability', {
     data: { timeZone: 'Asia/Tokyo' },
   });
-  const body = envelope.parse(await slots.json());
+  const body = toolEnvelope.parse(await slots.json());
   expect(body.result?.status).toBe('ok');
 });
 
@@ -99,7 +93,7 @@ test('transport failures use 4xx with an error code', async ({ request }) => {
     data: BOOKING,
   });
   expect(noOrigin.status()).toBe(403);
-  expect(envelope.parse(await noOrigin.json()).error).toBe('origin');
+  expect(toolEnvelope.parse(await noOrigin.json()).error).toBe('origin');
 
   const wrongBearer = await request.post('/api/tools/book_meeting', {
     headers: { Authorization: 'Bearer wrong' },
@@ -117,7 +111,7 @@ test('transport failures use 4xx with an error code', async ({ request }) => {
     data: { service: 'nope' },
   });
   expect(invalid.status()).toBe(400);
-  expect(envelope.parse(await invalid.json()).error).toBe('invalid');
+  expect(toolEnvelope.parse(await invalid.json()).error).toBe('invalid');
 });
 
 test('a bearer caller books on the test calendar', async ({ request }) => {
@@ -136,16 +130,19 @@ test('a bearer caller books on the test calendar', async ({ request }) => {
   const start = slots.at(0)?.start;
   if (!start) throw new Error('no slot left to book');
   const response = await request.post('/api/tools/book_meeting', {
-    headers: { Authorization: `Bearer ${TOOL_SECRET}` },
+    headers: agentHeaders(await startVoiceSession(request)),
     data: {
       ...BOOKING,
+      confirmed: true,
       slot: start,
       name: '[TEST] Bearer',
       email: `bearer-${crypto.randomUUID().slice(0, 8)}@example.com`,
     },
   });
   expect(response.status()).toBe(200);
-  expect(envelope.parse(await response.json()).result?.status).toBe('booked');
+  expect(toolEnvelope.parse(await response.json()).result?.status).toBe(
+    'booked',
+  );
 });
 
 test('/api/health reports booleans only', async ({ request }) => {
@@ -158,6 +155,7 @@ test('/api/health reports booleans only', async ({ request }) => {
         booking: z.boolean(),
         toolsBearer: z.boolean(),
         assistant: z.boolean(),
+        voice: z.boolean(),
       })
       .parse(await response.json()),
   ).toEqual({
@@ -165,6 +163,7 @@ test('/api/health reports booleans only', async ({ request }) => {
     booking: true,
     toolsBearer: true,
     assistant: true,
+    voice: true,
   });
 });
 

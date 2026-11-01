@@ -24,10 +24,13 @@
     "lhci": "pnpm lhci:mobile; mobile=$?; pnpm lhci:desktop; desktop=$?; exit $((mobile | desktop))",
     "lhci:mobile": "lhci healthcheck --fatal && lhci collect && lhci upload --target=filesystem --outputDir=lhci-reports/mobile && lhci assert",
     "lhci:desktop": "lhci healthcheck --fatal && lhci collect --settings.preset=desktop && lhci upload --target=filesystem --outputDir=lhci-reports/desktop && lhci assert",
+    "voice:plan": "node scripts/voice-agent.mjs plan",
+    "voice:apply": "node scripts/voice-agent.mjs apply",
     "knip": "knip",
     "doctor": "react-doctor"
   },
   "dependencies": {
+    "@elevenlabs/client": "1.32.1",
     "@fontsource-variable/inter": "5.3.0",
     "@fontsource-variable/jetbrains-mono": "5.3.0",
     "@fontsource/instrument-serif": "5.3.0",

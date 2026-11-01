@@ -341,3 +341,92 @@ describe('booking emails', () => {
     expect(email.subject).toBe('We have your message | Zenet Labs');
   });
 });
+
+describe('voice booking emails', () => {
+  const START = Date.UTC(2026, 10, 3, 9, 0);
+  const voiceLead = (conversationId: string | null) => ({
+    ...LEAD,
+    source: 'voice' as const,
+    context: JSON.stringify({
+      booking: {
+        id: 'b1',
+        start: START,
+        end: START + 1_800_000,
+        timeZone: 'Asia/Singapore',
+        channel: 'voice',
+        status: 'confirmed',
+        meetUrl: 'https://meet.google.com/abc-defg-hij',
+        eventLink: null,
+        calendar: 'main',
+      },
+      voice: { sessionId: 's1', conversationId },
+    }),
+  });
+
+  it('subjects the lead as voice and names the ElevenLabs call', () => {
+    const email = ownerEmail(voiceLead('conv-7'), OWNER);
+    expect(email.subject).toBe(
+      '[Lead EN] Ada Lovelace — Analytical Engines — voice',
+    );
+    expect(email.text).toContain('Booking: confirmed');
+    expect(email.text).toContain('Channel: voice');
+    expect(email.text).toContain(
+      'Voice call: conv-7 (ElevenLabs → Agents → Call history; kept 30 days)',
+    );
+  });
+
+  it('says the call id is unknown when ElevenLabs gave none', () => {
+    expect(ownerEmail(voiceLead(null), OWNER).text).toContain(
+      'Voice call: unknown (',
+    );
+  });
+
+  it('sends the visitor the booking confirmation, not the generic one', () => {
+    const email = confirmationEmail(voiceLead('conv-7'), CONFIRMATION);
+    expect(email.subject).toContain('Booked: 30-minute call with Zenet Labs');
+  });
+});
+
+describe('chat booking emails', () => {
+  const START = Date.UTC(2026, 10, 3, 9, 0);
+  const chatLead = {
+    ...LEAD,
+    source: 'chat' as const,
+    chat_session_id: 'chat-1',
+    context: JSON.stringify({
+      booking: {
+        id: 'b1',
+        start: START,
+        end: START + 1_800_000,
+        timeZone: 'Asia/Singapore',
+        channel: 'chat',
+        status: 'confirmed',
+        meetUrl: 'https://meet.google.com/abc-defg-hij',
+        eventLink: null,
+        calendar: 'main',
+      },
+    }),
+  };
+
+  it('describes the booking to the owner, as for any booking', () => {
+    const email = ownerEmail(chatLead, OWNER);
+    expect(email.text).toContain('Booking: confirmed');
+    expect(email.text).toContain('Channel: chat');
+    expect(email.text).not.toContain('Voice call:');
+  });
+
+  it('confirms the booking to the visitor, not the generic message', () => {
+    expect(confirmationEmail(chatLead, CONFIRMATION).subject).toContain(
+      'Booked: 30-minute call with Zenet Labs',
+    );
+  });
+
+  it('keeps the generic message for a chat enquiry without a booking', () => {
+    expect(
+      confirmationEmail(
+        { ...LEAD, source: 'chat', context: null },
+        CONFIRMATION,
+      ).subject,
+    ).toBe('We have your message | Zenet Labs');
+  });
+});

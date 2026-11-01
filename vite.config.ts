@@ -17,6 +17,12 @@ export default defineConfig({
     __WEBMCP__: JSON.stringify(
       siteConfig(process.env.CLOUDFLARE_ENV).webmcp.published,
     ),
+    __VOICE__: JSON.stringify(
+      siteConfig(process.env.CLOUDFLARE_ENV).voice.published,
+    ),
+    __VOICE_FAKE__: JSON.stringify(
+      siteConfig(process.env.CLOUDFLARE_ENV).voice.fakeSdk,
+    ),
     __CHAT_FAKE__: JSON.stringify(
       serverConfig(process.env.CLOUDFLARE_ENV).assistant.model === 'fake',
     ),

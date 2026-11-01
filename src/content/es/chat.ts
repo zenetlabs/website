@@ -3,6 +3,7 @@ import type { ChatCopy } from '@/content/types';
 // TODO(albert): review the widget copy
 export const chatCopy = {
   title: 'Asistente de Zenet Labs',
+  talk: 'Mejor por voz',
   badge: 'IA',
   notice:
     'Estás hablando con un asistente de IA, no con una persona. Responde con el contenido de esta web y puede equivocarse; los precios salen solo de nuestra lista oficial. Guardamos esta conversación 30 días para responderte y evitar abusos, o 24 meses junto a tu consulta si reservas una llamada o envías el formulario de contacto. No compartas contraseñas ni datos personales sensibles.',
