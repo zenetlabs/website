@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { locales } from '@/lib/i18n';
-import { manifest, TOOLS, toolByName } from '@/server/tools/registry';
+import {
+  enabledTools,
+  manifest,
+  TOOLS,
+  toolByName,
+} from '@/server/tools/registry';
 
 describe('TOOLS', () => {
   it('has six uniquely named snake_case tools', () => {
@@ -64,6 +69,23 @@ describe('TOOLS', () => {
     expect(toolByName('get_faq')?.name).toBe('get_faq');
     expect(toolByName('nope')).toBeUndefined();
     expect(toolByName('__proto__')).toBeUndefined();
+  });
+});
+
+describe('enabledTools', () => {
+  it('drops the booking tools while the booking flag is off, and nothing else', () => {
+    const names = (booking: boolean) =>
+      enabledTools({
+        calculator: { published: false },
+        booking: { published: booking },
+      }).map((tool) => tool.name);
+    expect(names(true)).toEqual(TOOLS.map((tool) => tool.name));
+    expect(names(false)).toEqual([
+      'get_faq',
+      'get_pricing',
+      'estimate_project',
+      'navigate',
+    ]);
   });
 });
 

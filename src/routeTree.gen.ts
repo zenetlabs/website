@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as Char123LocaleChar125RouteImport } from './routes/{-$locale}'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiLeadRouteImport } from './routes/api/lead'
 import { Route as InternalLeadsRouteImport } from './routes/internal/leads'
@@ -56,6 +57,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const Char123LocaleChar125Route = Char123LocaleChar125RouteImport.update({
   id: '/{-$locale}',
   path: '/{-$locale}',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
@@ -235,6 +241,7 @@ export interface FileRoutesByFullPath {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/{-$locale}': typeof Char123LocaleChar125RouteWithChildren
+  '/api/chat': typeof ApiChatRoute
   '/api/health': typeof ApiHealthRoute
   '/api/lead': typeof ApiLeadRoute
   '/internal/leads': typeof InternalLeadsRouteWithChildren
@@ -269,6 +276,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/chat': typeof ApiChatRoute
   '/api/health': typeof ApiHealthRoute
   '/api/lead': typeof ApiLeadRoute
   '/internal/leads': typeof InternalLeadsRouteWithChildren
@@ -305,6 +313,7 @@ export interface FileRoutesById {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/{-$locale}': typeof Char123LocaleChar125RouteWithChildren
+  '/api/chat': typeof ApiChatRoute
   '/api/health': typeof ApiHealthRoute
   '/api/lead': typeof ApiLeadRoute
   '/internal/leads': typeof InternalLeadsRouteWithChildren
@@ -342,6 +351,7 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/{-$locale}'
+    | '/api/chat'
     | '/api/health'
     | '/api/lead'
     | '/internal/leads'
@@ -376,6 +386,7 @@ export interface FileRouteTypes {
   to:
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/api/chat'
     | '/api/health'
     | '/api/lead'
     | '/internal/leads'
@@ -411,6 +422,7 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/{-$locale}'
+    | '/api/chat'
     | '/api/health'
     | '/api/lead'
     | '/internal/leads'
@@ -447,6 +459,7 @@ export interface RootRouteChildren {
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   Char123LocaleChar125Route: typeof Char123LocaleChar125RouteWithChildren
+  ApiChatRoute: typeof ApiChatRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiLeadRoute: typeof ApiLeadRoute
   InternalLeadsRoute: typeof InternalLeadsRouteWithChildren
@@ -477,6 +490,13 @@ declare module '@tanstack/react-router' {
       path: '/{-$locale}'
       fullPath: '/{-$locale}'
       preLoaderRoute: typeof Char123LocaleChar125RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/health': {
@@ -774,6 +794,7 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   Char123LocaleChar125Route: Char123LocaleChar125RouteWithChildren,
+  ApiChatRoute: ApiChatRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiLeadRoute: ApiLeadRoute,
   InternalLeadsRoute: InternalLeadsRouteWithChildren,

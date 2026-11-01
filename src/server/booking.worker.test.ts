@@ -9,6 +9,7 @@ import {
 } from '@/server/booking';
 import type { BookingInput } from '@/server/booking-schema';
 import { clearTokenCache } from '@/server/google-auth';
+import { CONSENT_VERSION } from '@/server/lead-fields';
 import { storeLead } from '@/server/lead-store';
 import {
   bookingDeps,
@@ -84,6 +85,7 @@ function request(
     channel: 'web',
     consentAt: NOW,
     attribution: { landing: '/?utm_source=news', referrer: '', page: '/book' },
+    chatSessionId: null,
     ...rest,
   };
 }
@@ -145,7 +147,7 @@ describe('bookMeeting', () => {
       message: 'We want to automate our inbox triage and invoicing.',
       utm_source: 'news',
       submit_page: '/book',
-      consent_version: '2026-11-01',
+      consent_version: CONSENT_VERSION,
       is_test: 0,
     });
     expect(booking?.lead_id).toBe(lead?.id);

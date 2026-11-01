@@ -3,7 +3,8 @@ import type { Attribution } from '@/lib/lead-schema';
 import { isPublished, type SiteFlags } from '@/lib/page-registry';
 import { noop } from '@/lib/time';
 import type { BookingDeps } from '@/server/booking';
-import { browserBookingSchema } from '@/server/booking-schema';
+import { browserBookingSchema, type Channel } from '@/server/booking-schema';
+import { linkedChatSession } from '@/server/chat/store';
 import { isLimited, type Limiter } from '@/server/rate-limit';
 import {
   guardBrowserPost,
@@ -12,7 +13,7 @@ import {
   parseJson,
   readCapped,
 } from '@/server/request';
-import { errorName } from '@/server/responses';
+import { errorName, jsonError, jsonOk } from '@/server/responses';
 import { bookedResult } from '@/server/tools/book-meeting';
 import { contactFor } from '@/server/tools/contact';
 import { manifest, toolByName } from '@/server/tools/registry';
@@ -45,19 +46,11 @@ const STATUS = {
 type ToolError = keyof typeof STATUS;
 
 function reject(error: ToolError, issues?: Issue[]): Response {
-  const headers = new Headers({ 'Cache-Control': 'no-store' });
-  if (error === 'rate') headers.set('Retry-After', '60');
-  return Response.json(
-    { ok: false, error, ...(issues ? { issues } : {}) },
-    { status: STATUS[error], headers },
-  );
+  return jsonError(error, STATUS[error], issues ? { issues } : {});
 }
 
 function succeed(result: unknown): Response {
-  return Response.json(
-    { ok: true, result },
-    { headers: { 'Cache-Control': 'no-store' } },
-  );
+  return jsonOk({ result });
 }
 
 export function manifestResponse(site: SiteFlags): Response {
@@ -120,15 +113,17 @@ export async function handleToolRequest(
     channel: bearer ? 'voice' : 'web',
     consentAt: books ? now : null,
     attribution: null,
+    chatSessionId: null,
     hostname,
     now,
   });
 }
 
 type Transport = {
-  channel: 'web' | 'voice';
+  channel: Channel;
   consentAt: number | null;
   attribution: Attribution | null;
+  chatSessionId: string | null;
   hostname: string;
   now: number;
 };
@@ -196,10 +191,17 @@ async function browserBooking(
     return reject(guarded.error, guarded.issues);
   }
   const { input } = guarded;
+  const chatSessionId = await linkedChatSession(
+    deps.db,
+    deps.site,
+    input.chatSessionId,
+    now,
+  );
   return execute(tool, input, deps, {
-    channel: 'web',
+    channel: chatSessionId === null ? 'web' : 'chat',
     consentAt: now,
     attribution: input.attribution,
+    chatSessionId,
     hostname: new URL(request.url).hostname,
     now,
   });

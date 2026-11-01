@@ -20,6 +20,12 @@ const SERVER: ServerConfig = {
     busyCacheMs: 0,
     failureCacheMs: 0,
   },
+  assistant: {
+    model: 'fake',
+    aiGatewayName: null,
+    dailyNeuronBudget: 1_000,
+    perAddressDailyTurns: 40,
+  },
 };
 const SITE: SiteConfig = {
   url: ORIGIN,
@@ -28,6 +34,7 @@ const SITE: SiteConfig = {
   ga4Id: null,
   calculator: { published: false },
   booking: { published: false },
+  assistant: { published: false },
 };
 
 const BODY: LeadRequest = {
@@ -457,5 +464,73 @@ describe('success', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     limit.mockRejectedValue(new Error('down'));
     expect((await handleLeadPost(post(), deps())).status).toBe(200);
+  });
+});
+
+describe('a form sent after chatting', () => {
+  const SESSION = '5f0c2a52-6f4e-4a6c-9d4e-0b1d7b3b0a11';
+  const LIVE_SITE: SiteConfig = { ...SITE, assistant: { published: true } };
+
+  async function session(createdAt: number) {
+    await DB.prepare(
+      `INSERT INTO chat_sessions (id, created_at, last_at, locale, model, start_page, user_messages)
+       VALUES (?1, ?2, ?2, 'en', 'fake', '/', 1)`,
+    )
+      .bind(SESSION, createdAt)
+      .run();
+  }
+
+  beforeEach(async () => {
+    await DB.prepare('DELETE FROM chat_sessions').run();
+    turnstileOk();
+  });
+
+  it('links the conversation of the same visit and keeps the source as form', async () => {
+    await session(NOW - 60_000);
+    const response = await handleLeadPost(
+      post({ ...BODY, chatSessionId: SESSION }),
+      deps({ site: LIVE_SITE }),
+    );
+    expect(response.status).toBe(200);
+    const [lead] = await leads();
+    expect(lead).toMatchObject({ source: 'form', chat_session_id: SESSION });
+    await Promise.all(background.splice(0));
+    const owner = fetchMock.mock.calls
+      .map(([, init]) => JSON.parse(String(init?.body ?? '{}')))
+      .find((body) => body.to?.[0] === 'owner@example.com');
+    expect(owner.text).toContain(`#conversation`);
+  });
+
+  it.each([
+    ['a session that does not exist', null],
+    ['a session older than a day', 25 * 3_600_000],
+  ])(
+    'links nothing for %s, and still accepts the form',
+    async (_label, age) => {
+      if (age !== null) await session(NOW - age);
+      const response = await handleLeadPost(
+        post({ ...BODY, chatSessionId: SESSION }),
+        deps({ site: LIVE_SITE }),
+      );
+      expect(response.status).toBe(200);
+      expect((await leads())[0]?.chat_session_id).toBeNull();
+    },
+  );
+
+  it('ignores the id while the assistant is dark, without reading the table', async () => {
+    await session(NOW - 60_000);
+    await handleLeadPost(
+      post({ ...BODY, chatSessionId: SESSION }),
+      deps({ site: SITE }),
+    );
+    expect((await leads())[0]?.chat_session_id).toBeNull();
+  });
+
+  it('rejects an id that is not a uuid', async () => {
+    const response = await handleLeadPost(
+      post({ ...BODY, chatSessionId: 'abc' }),
+      deps({ site: LIVE_SITE }),
+    );
+    expect(response.status).toBe(400);
   });
 });

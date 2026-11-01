@@ -3,6 +3,7 @@ import type {
   BookPageContent,
   CalculatorPageContent,
   CasePageContent,
+  ChatCopy,
   CompanyCopy,
   FaqItem,
   HoldedPairContent,
@@ -273,4 +274,13 @@ export async function loadCaseContent(locale: Locale): Promise<{
 
 export function loadLegalMeta(locale: Locale) {
   return LEGAL_META[locale]();
+}
+
+const CHAT = {
+  en: () => import('@/content/en/chat').then((m) => m.chatCopy),
+  es: () => import('@/content/es/chat').then((m) => m.chatCopy),
+};
+
+export function loadChatCopy(locale: Locale): Promise<ChatCopy> {
+  return CHAT[locale]();
 }

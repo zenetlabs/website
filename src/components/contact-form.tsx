@@ -11,6 +11,7 @@ import {
 } from '@/components/form-parts';
 import { PRIMARY_BUTTON } from '@/components/ui';
 import { useChallenge } from '@/components/use-challenge';
+import { getChatSessionId } from '@/lib/chat-session';
 import { text } from '@/lib/form-data';
 import { useLocale, useMessages } from '@/lib/i18n';
 import { attribution, submitLead } from '@/lib/lead-client';
@@ -23,6 +24,11 @@ type Status = 'idle' | 'pending' | 'sent' | FailStatus;
 function failureFor(error: LeadError): FailStatus {
   if (error === 'captcha') return 'errorCaptcha';
   return error === 'rate' ? 'errorRate' : 'errorSend';
+}
+
+function linkedChat(): { chatSessionId?: string } {
+  const chatSessionId = getChatSessionId();
+  return chatSessionId === null ? {} : { chatSessionId };
 }
 
 export type ContactPrefill = { message: string; method: LeadMethod };
@@ -66,6 +72,7 @@ export function ContactForm({ prefill }: { prefill?: ContactPrefill }) {
         turnstileToken: token,
         website: text(data, 'website'),
         attribution: await attribution(),
+        ...linkedChat(),
       });
       if (result.ok) {
         track('generate_lead', { method: prefill?.method ?? 'form' });

@@ -11,6 +11,8 @@ const shared = {
     __SITE__: JSON.stringify(siteConfig('production')),
     __GA4_ID__: JSON.stringify(siteConfig('production').ga4Id),
     __SERVER__: JSON.stringify(serverConfig('production')),
+    __ASSISTANT__: JSON.stringify(siteConfig('production').assistant.published),
+    __CHAT_FAKE__: JSON.stringify(false),
   },
 };
 const limits = maxWorkers > 0 ? { maxWorkers } : {};

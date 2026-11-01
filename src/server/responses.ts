@@ -24,6 +24,25 @@ export function methodNotAllowed(allow: string): Response {
   });
 }
 
+// A transport error: `{ ok: false, error }` with the status, never cached.
+export function jsonError(
+  error: string,
+  status: number,
+  extra: Record<string, unknown> = {},
+): Response {
+  const headers = new Headers({ 'Cache-Control': 'no-store' });
+  if (error === 'rate') headers.set('Retry-After', '60');
+  return Response.json({ ok: false, error, ...extra }, { status, headers });
+}
+
+// A success answer: `{ ok: true, ...body }`, never cached.
+export function jsonOk(body: Record<string, unknown> = {}): Response {
+  return Response.json(
+    { ok: true, ...body },
+    { headers: { 'Cache-Control': 'no-store' } },
+  );
+}
+
 export function errorName(error: unknown): string {
   return error instanceof Error ? error.name : 'unknown';
 }

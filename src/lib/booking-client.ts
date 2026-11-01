@@ -1,4 +1,5 @@
 import type { Locale } from '@/lib/i18n';
+import { isRecord } from '@/lib/is-record';
 import type { Attribution } from '@/lib/lead-schema';
 
 export type BookingRequest = {
@@ -13,6 +14,7 @@ export type BookingRequest = {
   turnstileToken: string;
   website: string;
   attribution: Attribution;
+  chatSessionId?: string;
 };
 
 export type BookingFailure = 'unavailable' | 'captcha' | 'rate' | 'invalid';
@@ -33,10 +35,6 @@ export type PageAvailability =
 
 const UNAVAILABLE: BookingOutcome = { kind: 'failed', error: 'unavailable' };
 const REJECTIONS = ['invalid_slot', 'slot_taken', 'day_full', 'limit'] as const;
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
 
 function timestamp(value: unknown): number | null {
   if (typeof value !== 'string') return null;

@@ -1,3 +1,4 @@
+import type { Transcript } from '@/server/chat/store';
 import { isoTime, prettyJson } from '@/server/format';
 import {
   EXPORT_SHAPE,
@@ -186,9 +187,53 @@ const EMAIL_COLUMNS: ReadonlyArray<
   ['Provider id', (e) => `<td>${shown(e.provider_id)}</td>`],
 ];
 
+const ROLE_LABEL = {
+  user: 'You',
+  assistant: 'Assistant',
+  tool: 'Tool',
+} as const;
+
+// `undefined`: the lead has no conversation. `null`: it had one that is gone.
+function conversationHtml(conversation: Transcript | null | undefined): string {
+  if (conversation === undefined) return '';
+  if (conversation === null) {
+    return '<section id="conversation"><h2>Conversation</h2><p class="muted">Conversation no longer stored.</p></section>';
+  }
+  const { session } = conversation;
+  const meta = [
+    ['Started', isoTime(session.created_at)],
+    ['Start page', session.start_page],
+    ['Locale', session.locale],
+    ['Model', session.model],
+    ['Visitor messages', String(session.user_messages)],
+    ['Neurons', String(session.neurons)],
+    ['Guards', String(session.guards)],
+    ['Test session', session.is_test === 1 ? 'yes' : 'no'],
+  ]
+    .map(
+      ([label, value]) => `<dt>${label}</dt><dd>${shown(value ?? null)}</dd>`,
+    )
+    .join('\n');
+  const lines = conversation.messages
+    .map(
+      (message) =>
+        `<li><strong>${ROLE_LABEL[message.role]}:</strong> ${escapeHtml(message.text)}</li>`,
+    )
+    .join('\n');
+  return `<section id="conversation"><h2>Conversation</h2>
+<dl>
+${meta}
+</dl>
+<ol>
+${lines}
+</ol>
+</section>`;
+}
+
 export function leadDetailHtml(
   lead: LeadRow,
   emails: readonly OutboxRow[],
+  conversation?: Transcript | null,
 ): string {
   const fields = DETAIL_FIELDS.map(
     ([label, key]) =>
@@ -207,6 +252,7 @@ ${fields}
 <h2>Message</h2>
 <pre>${escapeHtml(lead.message)}</pre>
 ${context}
+${conversationHtml(conversation)}
 <h2>Emails</h2>
 ${table(
   'Emails',

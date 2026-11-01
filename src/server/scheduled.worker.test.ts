@@ -79,6 +79,56 @@ describe('runScheduled', () => {
     expect(JSON.stringify(error.mock.calls)).not.toContain('@');
   });
 
+  it('purges unlinked chats after 30 days on the daily tick, keeping linked and recent ones', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    const session = (id: string, createdAt: number) =>
+      DB.prepare(
+        `INSERT INTO chat_sessions (id, created_at, last_at, locale, model, start_page)
+         VALUES (?1, ?2, ?2, 'en', 'fake', '/')`,
+      )
+        .bind(id, createdAt)
+        .run();
+    const OLD = 'aaaaaaaa-0000-4000-8000-000000000001';
+    const FRESH = 'aaaaaaaa-0000-4000-8000-000000000002';
+    const LINKED = 'aaaaaaaa-0000-4000-8000-000000000003';
+    await DB.prepare('DELETE FROM chat_sessions').run();
+    await session(OLD, TICK - 31 * DAY);
+    await session(FRESH, TICK - 29 * DAY);
+    await session(LINKED, TICK - 31 * DAY);
+    await storeLead(DB, { ...NEW_LEAD, chat_session_id: LINKED }, TICK);
+    await runScheduled(testEnv, TICK - 10 * 60_000);
+    expect(
+      (await DB.prepare('SELECT COUNT(*) AS n FROM chat_sessions').first())?.n,
+    ).toBe(3);
+    await runScheduled(testEnv, TICK);
+    const { results } = await DB.prepare(
+      'SELECT id FROM chat_sessions ORDER BY id',
+    ).all();
+    expect(results.map((row) => row.id)).toEqual([FRESH, LINKED]);
+  });
+
+  it('still reports the lead summary when the chat purge fails', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await DB.prepare(
+      'ALTER TABLE chat_sessions RENAME TO chat_sessions_gone',
+    ).run();
+    try {
+      await runScheduled(testEnv, TICK);
+    } finally {
+      await DB.prepare(
+        'ALTER TABLE chat_sessions_gone RENAME TO chat_sessions',
+      ).run();
+    }
+    expect(log).toHaveBeenCalledWith(
+      'scheduled: daily summary',
+      expect.anything(),
+    );
+    expect(error).toHaveBeenCalledWith('scheduled: chat purge failed', {
+      error: 'Error',
+    });
+  });
+
   it('logs no summary outside the daily tick', async () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     await runScheduled(testEnv, NOW);

@@ -36,6 +36,11 @@ describe('siteConfig', () => {
     expect(siteConfig('production').booking.published).toBe(false);
   });
 
+  it('publishes the assistant locally but not in production until the bake-off passes', () => {
+    expect(siteConfig(undefined).assistant.published).toBe(true);
+    expect(siteConfig('production').assistant.published).toBe(false);
+  });
+
   it('rejects unknown environments', () => {
     expect(() => siteConfig('staging')).toThrow('Unknown CLOUDFLARE_ENV');
   });
@@ -84,5 +89,37 @@ describe('serverConfig', () => {
 
   it('rejects unknown environments', () => {
     expect(() => serverConfig('staging')).toThrow('Unknown CLOUDFLARE_ENV');
+  });
+});
+
+describe('assistant server config', () => {
+  const REAL_MODELS = [
+    '@cf/zai-org/glm-4.7-flash',
+    '@cf/google/gemma-4-26b-a4b-it',
+    '@cf/meta/llama-4-scout-17b-16e-instruct',
+  ];
+
+  it('uses the scripted model locally, so nothing calls Workers AI', () => {
+    expect(serverConfig(undefined).assistant.model).toBe('fake');
+    expect(serverConfig(undefined).assistant.aiGatewayName).toBeNull();
+  });
+
+  it('names one of the candidate models in production', () => {
+    expect(REAL_MODELS).toContain(serverConfig('production').assistant.model);
+  });
+
+  it('keeps the daily budget under the Free-plan cap while no gateway or plan upgrade exists', () => {
+    const { dailyNeuronBudget, aiGatewayName } =
+      serverConfig('production').assistant;
+    if (aiGatewayName === null) {
+      expect(dailyNeuronBudget).toBeGreaterThan(0);
+      expect(dailyNeuronBudget).toBeLessThanOrEqual(10_000);
+    }
+  });
+
+  it('accepts only a well-formed gateway name', () => {
+    const { aiGatewayName } = serverConfig('production').assistant;
+    if (aiGatewayName !== null)
+      expect(aiGatewayName).toMatch(/^[a-z0-9-]{1,64}$/);
   });
 });

@@ -19,9 +19,12 @@ GA4 events (`src/lib/track.ts`, typed, no free-text params):
 | `cta_click` | `cta_id`: `header`, `header_menu`, `hero`, `hero_pricing`, `page_hero`, `page_cta`, `pricing`, `about`, `services`, `contact_book` | `CtaLink` |
 | `language_switch` | none | the non-current link of the language switch |
 | `pricing_view` | none | once per pricing page load, when GA starts |
-| `generate_lead` | `method`: `form`, `chat`, `voice`, `calculator`, `booking` | the contact form after a successful submit (`form`; `calculator` when it was sent from the price calculator page) |
+| `generate_lead` | `method`: `form`, `chat`, `voice`, `calculator`, `booking` | the contact form after a successful submit (`form`; `calculator` when it was sent from the price calculator page), the `/book` form (`booking`) and the chat booking card (`chat`) |
 | `calculator_complete` | `project_type`: `automation`, `agent`, `web` | the price calculator, when the form is submitted with JavaScript. Not on a direct visit to a result link |
-| `book_meeting`, `chat_open`, `chat_message`, `voice_call_start` | none | typed only; later phases call `track()` |
+| `book_meeting` | none | the `/book` form and the chat booking card, after the booking succeeded |
+| `chat_open` | none | the chat launcher, on every open |
+| `chat_message` | none | the chat panel, for each visitor message actually sent (never its text) |
+| `voice_call_start` | none | typed only; a later phase calls `track()` |
 
 Lead attribution: with **marketing** consent the first landing page, referrer and campaign tags are kept in `localStorage` for 90 days and sent with each lead instead of the current page load. Without it a lead carries only the page load it was sent from. The request shape and the server do not change.
 

@@ -50,5 +50,12 @@
     "title": "Page not found",
     "description": "The page you are looking for does not exist.",
     "home": "Back to the home page"
+  },
+  "chat": {
+    "launcher": "AI assistant",
+    "launcherLabel": "Open the AI assistant",
+    "unavailable": "The assistant could not load. Write to hello@zenetlabs.com or use the contact form.",
+    "close": "Close",
+    "contact": "Use the contact form"
   }
 }

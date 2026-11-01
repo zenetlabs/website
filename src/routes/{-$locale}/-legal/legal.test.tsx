@@ -317,3 +317,64 @@ describe('consent version', () => {
     expect(CONSENT_VERSION).toBe('2026-11-01');
   });
 });
+
+const ASSISTANT_EN = [
+  'The site assistant',
+  'Cloudflare Workers AI',
+  'does not use this content to train models',
+  'database in the European Union',
+  'do not store your IP address',
+  'keyed one-way fingerprint of your IP address',
+  'not sent to the AI model',
+  'a person reads every booking and enquiry',
+  "run the assistant's AI model (Workers AI)",
+  'outside the European Union',
+  'We delete assistant conversations 30 days after they start',
+  'kept with that enquiry and deleted with it',
+];
+const ASSISTANT_ES = [
+  'El asistente de la web',
+  'Cloudflare Workers AI',
+  'no usa este contenido para entrenar modelos',
+  'base de datos en la Unión Europea',
+  'no guardamos con ellas tu dirección IP',
+  'huella unidireccional con clave de tu dirección IP',
+  'no se envían al modelo de IA',
+  'una persona lee cada reserva y cada consulta',
+  'ejecutar el modelo de IA del asistente (Workers AI)',
+  'fuera de la Unión Europea',
+  'Borramos las conversaciones del asistente 30 días después de que empiecen',
+  'se conserva con esa consulta y se borra con ella',
+];
+
+describe('assistant disclosure', () => {
+  afterAll(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it.each([
+    ['PrivacyEn', PrivacyEn, ASSISTANT_EN],
+    ['PrivacyEs', PrivacyEs, ASSISTANT_ES],
+  ])(
+    '%s describes the assistant when it is published',
+    (_name, Page, expected) => {
+      vi.stubGlobal('__ASSISTANT__', true);
+      const body = text(<Page title="t" entity={SINGAPORE} />);
+      for (const snippet of expected) expect(body).toContain(snippet);
+      expect(body).not.toMatch(PLACEHOLDER);
+    },
+  );
+
+  it.each([
+    ['PrivacyEn', PrivacyEn, ASSISTANT_EN],
+    ['PrivacyEs', PrivacyEs, ASSISTANT_ES],
+  ])(
+    '%s says nothing about the assistant while it is dark',
+    (_name, Page, forbidden) => {
+      vi.stubGlobal('__ASSISTANT__', false);
+      const body = text(<Page title="t" entity={SINGAPORE} />);
+      expect(body).not.toContain('Workers AI');
+      expect(body).not.toContain(forbidden[0]);
+    },
+  );
+});

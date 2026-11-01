@@ -1,3 +1,4 @@
+import { purgeChats } from '@/server/chat/store';
 import { deadOwnerEmails, purgeExpired } from '@/server/lead-store';
 import { deliverDue, outboxDeps } from '@/server/outbox';
 import { errorName } from '@/server/responses';
@@ -32,5 +33,13 @@ export async function runScheduled(
     console.error('scheduled: daily summary failed', {
       error: errorName(error),
     });
+  }
+  // After the leads, so a transcript whose lead just expired goes in the same run.
+  try {
+    console.log('scheduled: chat purge', {
+      purged: await purgeChats(env.DB, now),
+    });
+  } catch (error) {
+    console.error('scheduled: chat purge failed', { error: errorName(error) });
   }
 }

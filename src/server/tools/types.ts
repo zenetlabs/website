@@ -11,6 +11,7 @@ export type ToolContext = {
   hostname: string;
   consentAt: number | null;
   attribution: Attribution | null;
+  chatSessionId: string | null;
   deps: BookingDeps;
 };
 

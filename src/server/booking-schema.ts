@@ -23,6 +23,7 @@ export const browserBookingSchema = bookingInputSchema.extend({
   turnstileToken: z.string().min(1).max(2048),
   website: z.string().max(200),
   attribution: attributionSchema,
+  chatSessionId: z.uuid().optional(),
 });
 
 export const bookingContextSchema = z.object({

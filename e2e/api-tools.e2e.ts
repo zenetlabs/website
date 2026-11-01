@@ -157,12 +157,14 @@ test('/api/health reports booleans only', async ({ request }) => {
         ok: z.literal(true),
         booking: z.boolean(),
         toolsBearer: z.boolean(),
+        assistant: z.boolean(),
       })
       .parse(await response.json()),
   ).toEqual({
     ok: true,
     booking: true,
     toolsBearer: true,
+    assistant: true,
   });
 });
 

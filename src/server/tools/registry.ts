@@ -24,19 +24,21 @@ export function toolByName(name: string): Tool | undefined {
   return TOOLS.find((tool) => tool.name === name);
 }
 
-export function manifest(site: SiteFlags) {
+export function enabledTools(site: SiteFlags): readonly Tool[] {
   const booking = isPublished('book', site);
+  return TOOLS.filter((tool) => booking || !BOOKING_TOOLS.has(tool.name));
+}
+
+export function manifest(site: SiteFlags) {
   return {
     version: 1,
-    tools: TOOLS.filter((tool) => booking || !BOOKING_TOOLS.has(tool.name)).map(
-      (tool) => ({
-        name: tool.name,
-        description: tool.description,
-        readOnly: tool.readOnly,
-        clientOnly: tool.clientOnly,
-        inputSchema: z.toJSONSchema(tool.input, { io: 'input' }),
-        outputSchema: z.toJSONSchema(tool.output),
-      }),
-    ),
+    tools: enabledTools(site).map((tool) => ({
+      name: tool.name,
+      description: tool.description,
+      readOnly: tool.readOnly,
+      clientOnly: tool.clientOnly,
+      inputSchema: z.toJSONSchema(tool.input, { io: 'input' }),
+      outputSchema: z.toJSONSchema(tool.output),
+    })),
   };
 }
