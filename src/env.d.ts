@@ -3,6 +3,8 @@ declare const __GA4_ID__: string | null;
 declare const __SERVER__: import('../site.config').ServerConfig;
 declare const __ASSISTANT__: boolean;
 declare const __WEBMCP__: boolean;
+declare const __VOICE__: boolean;
+declare const __VOICE_FAKE__: boolean;
 declare const __CHAT_FAKE__: boolean;
 
 declare namespace Cloudflare {
@@ -13,9 +15,11 @@ declare namespace Cloudflare {
     AI?: Ai;
     GOOGLE_CALENDAR: SecretsStoreSecret;
     TOOLS_BEARER_SECRET: SecretsStoreSecret;
+    ELEVENLABS_API_KEY: SecretsStoreSecret;
     LEAD_LIMITER: RateLimit;
     TOOLS_LIMITER: RateLimit;
     BOOK_LIMITER: RateLimit;
     CHAT_LIMITER: RateLimit;
+    VOICE_LIMITER: RateLimit;
   }
 }

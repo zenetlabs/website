@@ -3,8 +3,20 @@ import { TEXT_LINK } from '@/components/ui';
 import type { PublishedEntity } from '@/content/types';
 import { formatAddress, taxIdLabel } from '@/lib/content';
 import { PUBLIC_EMAIL } from '@/lib/site';
+import {
+  AssistantBasis,
+  AssistantRetention,
+  AssistantSection,
+  AssistantTransfer,
+  CloudflareProcessor,
+  VoiceBasis,
+  VoiceProcessor,
+  VoiceRetention,
+  VoiceSection,
+  VoiceTransfer,
+} from '@/routes/{-$locale}/-legal/privacy-extras-en';
 
-// TODO(albert): legal review (R6 storage, attribution, retention; R7 GA4, consent, first-touch; R9 Google Calendar bookings; R10 assistant, Workers AI, transcripts, retention)
+// TODO(albert): legal review (R6 storage, attribution, retention; R7 GA4, consent, first-touch; R9 Google Calendar bookings; R10 assistant, Workers AI, transcripts, retention; R12 voice, ElevenLabs, US transfer, retention)
 export function PrivacyEn({
   title,
   entity,
@@ -13,7 +25,6 @@ export function PrivacyEn({
   entity: PublishedEntity;
 }) {
   const analytics = __GA4_ID__ !== null;
-  const assistant = __ASSISTANT__;
 
   return (
     <LegalPage title={title} updated="Last updated: 1 November 2026">
@@ -97,39 +108,8 @@ export function PrivacyEn({
           can open it, through a login protected by Cloudflare Access.
         </p>
       </LegalSection>
-      {assistant ? (
-        <LegalSection title="The site assistant">
-          <p>
-            Our site has an AI assistant. It tells you it is an AI before you
-            write to it. When you use it, we process your messages, its replies,
-            the page you were on and the time, to answer you and to prevent
-            abuse of the service.
-          </p>
-          <p>
-            The replies are written automatically by an AI model running on
-            Cloudflare Workers AI. Cloudflare does not use this content to train
-            models. We keep the conversations in our database in the European
-            Union, and we do not store your IP address with them.
-          </p>
-          <p>
-            If you book a call from the assistant, the booking form in the chat
-            asks for your name and email; they are used for the booking, not
-            sent to the AI model.
-          </p>
-          <p>
-            To limit abuse we also count how many questions each connection asks
-            in a day. For that we keep, for up to two days, a keyed one-way
-            fingerprint of your IP address: it cannot be turned back into the
-            address and it is not linked to your conversation.
-          </p>
-          <p>
-            The assistant can make mistakes. Prices and dates come only from our
-            published information, and a person reads every booking and enquiry.
-            Please do not share passwords, health information or other sensitive
-            data in the chat.
-          </p>
-        </LegalSection>
-      ) : null}
+      <AssistantSection />
+      <VoiceSection />
       <LegalSection title="Legal basis">
         <ul>
           <li>
@@ -145,15 +125,8 @@ export function PrivacyEn({
             for the referrer and campaign data (GDPR Art. 6(1)(f)). It is
             limited to what the link and your browser already send.
           </li>
-          {assistant ? (
-            <li>
-              Our legitimate interest in answering questions about our services
-              through the assistant and in preventing its abuse (GDPR Art.
-              6(1)(f)). When you ask it for a call, steps taken at your request
-              before an agreement (Art. 6(1)(b)). Under the PDPA, using the
-              assistant after reading its notice is your consent to this use.
-            </li>
-          ) : null}
+          <AssistantBasis />
+          <VoiceBasis />
           {analytics ? (
             <li>
               Your consent for analytics and marketing cookies (GDPR Art.
@@ -171,23 +144,7 @@ export function PrivacyEn({
             Resend, to deliver the contact form message to us and your
             acknowledgement email.
           </li>
-          <li>
-            {assistant ? (
-              <>
-                Cloudflare, to host the site, store enquiries and assistant
-                conversations in a database in the European Union, run the
-                assistant's AI model (Workers AI), protect the forms and the
-                assistant with Turnstile and measure traffic with cookieless Web
-                Analytics.
-              </>
-            ) : (
-              <>
-                Cloudflare, to host the site, store enquiries in a database in
-                the European Union, protect the form with Turnstile and measure
-                traffic with cookieless Web Analytics.
-              </>
-            )}
-          </li>
+          <CloudflareProcessor />
           <li>
             Google Workspace, which hosts the mailbox that receives your
             message.
@@ -196,6 +153,7 @@ export function PrivacyEn({
             Google (Google Ireland Limited and Google LLC), for Google Workspace
             Calendar and Meet when you book a call.
           </li>
+          <VoiceProcessor />
           {analytics ? (
             <li>
               Google (Google Ireland Limited and Google LLC), for Google
@@ -210,13 +168,8 @@ export function PrivacyEn({
           the United States and Singapore. Where required, transfers rely on
           appropriate safeguards such as the European Commission's standard
           contractual clauses.
-          {assistant ? (
-            <>
-              {' '}
-              Cloudflare may run the assistant's model in data centres outside
-              the European Union.
-            </>
-          ) : null}
+          <AssistantTransfer />
+          <VoiceTransfer />
           {analytics ? (
             <> Google relies on the EU–US Data Privacy Framework.</>
           ) : null}
@@ -231,13 +184,8 @@ export function PrivacyEn({
           obligations require.
         </p>
         <p>Unconfirmed booking attempts are deleted after 30 days.</p>
-        {assistant ? (
-          <p>
-            We delete assistant conversations 30 days after they start. If you
-            book a call or send us an enquiry during the same visit, the
-            conversation is kept with that enquiry and deleted with it.
-          </p>
-        ) : null}
+        <AssistantRetention />
+        <VoiceRetention />
         {analytics ? (
           <p>
             {/* TODO(albert): match the GA4 retention setting */}

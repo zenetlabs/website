@@ -4,11 +4,11 @@ import type { Proposal } from '@/lib/chat-events';
 import type { Locale } from '@/lib/i18n';
 import { isRecord } from '@/lib/is-record';
 import { type NavigateSection, resolveNavigation } from '@/lib/navigate';
-import { isPublished, type PageId, type SiteFlags } from '@/lib/page-registry';
+import type { PageId, SiteFlags } from '@/lib/page-registry';
 import { bookingInputSchema } from '@/server/booking-schema';
 import { errorName } from '@/server/responses';
 import { navigateInput } from '@/server/tools/navigate';
-import { enabledTools } from '@/server/tools/registry';
+import { offeredTools } from '@/server/tools/registry';
 import type {
   ClientTool,
   ServerTool,
@@ -38,16 +38,8 @@ export type ChatToolContext = {
   onProposal: (proposal: Proposal) => void;
 };
 
-// What the model may call: the enabled registry tools, minus the estimate while
-// the calculator is dark. Dark features are never offered.
-function offered(site: SiteFlags): readonly Tool[] {
-  return enabledTools(site).filter(
-    (def) => def.name !== 'estimate_project' || isPublished('calculator', site),
-  );
-}
-
 export function chatToolNames(site: SiteFlags): string[] {
-  return offered(site).map((def) => def.name);
+  return offeredTools(site).map((def) => def.name);
 }
 
 // The model never chooses the language: the page does, and the schema it sees has no locale.
@@ -187,7 +179,7 @@ function toolFor(def: Tool, ctx: ChatToolContext): ChatTool {
 
 export function chatTools(ctx: ChatToolContext): Record<string, ChatTool> {
   return Object.fromEntries(
-    offered(ctx.site).map((def) => [def.name, toolFor(def, ctx)]),
+    offeredTools(ctx.site).map((def) => [def.name, toolFor(def, ctx)]),
   );
 }
 

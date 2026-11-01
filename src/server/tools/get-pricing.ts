@@ -37,7 +37,10 @@ export const getPricing = defineTool({
     es: 'Devuelve la lista oficial de precios de Zenet Labs, o un servicio, en la moneda del idioma. Los precios son oficiales: no cites otra cifra.',
   },
   input: z.object({
-    service: z.enum(SERVICE_IDS).optional(),
+    service: z
+      .enum(SERVICE_IDS)
+      .optional()
+      .describe('One service to price. Leave out for the whole list.'),
     locale: z.enum(locales).default('en'),
   }),
   output: z.object({

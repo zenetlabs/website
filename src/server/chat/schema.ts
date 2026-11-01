@@ -1,26 +1,28 @@
 import { z } from 'zod';
 import { CHAT_LIMITS } from '@/lib/chat-events';
-import { locales } from '@/lib/i18n';
-import { isRelativePath } from '@/lib/lead-result';
-import { isSingleLine } from '@/lib/single-line';
-import { isTimeZone } from '@/lib/slots';
+import {
+  localeField,
+  pageField,
+  timeZoneField,
+  turnstileTokenField,
+} from '@/server/request-fields';
 
 const CONTROL_EXCEPT_NEWLINE = /(?!\n)\p{Cc}/u;
 const TEST_PREFIX = /^\[TEST\]\s+/;
 
 export const chatRequestSchema = z
   .object({
-    locale: z.enum(locales),
+    locale: localeField,
     message: z
       .string()
       .trim()
       .min(1)
       .max(CHAT_LIMITS.messageChars)
       .refine((value) => !CONTROL_EXCEPT_NEWLINE.test(value)),
-    page: z.string().max(512).refine(isRelativePath).refine(isSingleLine),
-    timeZone: z.string().max(64).refine(isTimeZone).optional(),
+    page: pageField,
+    timeZone: timeZoneField.optional(),
     sessionId: z.uuid().optional(),
-    turnstileToken: z.string().min(1).max(2048).optional(),
+    turnstileToken: turnstileTokenField.optional(),
   })
   .refine(
     ({ sessionId, turnstileToken }) =>

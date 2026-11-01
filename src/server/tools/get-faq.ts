@@ -13,7 +13,12 @@ export const getFaq = defineTool({
     es: 'Busca en las preguntas frecuentes de Zenet Labs y devuelve hasta tres preguntas con su respuesta oficial. Úsala antes de responder sobre qué hace Zenet Labs, cómo trabaja o cómo trata los datos.',
   },
   input: z.object({
-    query: z.string().trim().min(1).max(200),
+    query: z
+      .string()
+      .trim()
+      .min(1)
+      .max(200)
+      .describe('The visitor question, in a few words.'),
     locale: z.enum(locales).default('en'),
   }),
   output: z.object({

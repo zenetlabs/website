@@ -6,6 +6,7 @@
       "**",
       "!pnpm-lock.yaml",
       "!**/routeTree.gen.ts",
+      "!elevenlabs/*.generated.json",
       "!**/dist/**/*",
       "!**/.wrangler/**/*",
       "!**/.tanstack/**/*",

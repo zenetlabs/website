@@ -1,8 +1,9 @@
 import type { z } from 'zod';
 import type { Locale } from '@/lib/i18n';
 import type { Attribution } from '@/lib/lead-schema';
+import { isLiveHost } from '@/lib/redirects';
 import type { BookingDeps } from '@/server/booking';
-import type { Channel } from '@/server/booking-schema';
+import type { Channel, VoiceRef } from '@/server/booking-schema';
 import { type Issue, issuesOf } from '@/server/request';
 
 export type ToolContext = {
@@ -12,8 +13,19 @@ export type ToolContext = {
   consentAt: number | null;
   attribution: Attribution | null;
   chatSessionId: string | null;
+  // Set on calls from an ElevenLabs agent: the session minted after Turnstile.
+  voice?: VoiceRef;
+  // The session was minted on a preview or local host.
+  testSession?: boolean;
   deps: BookingDeps;
 };
+
+// A preview or local host, or a call whose session was minted on one.
+export function isTestContext(
+  ctx: Pick<ToolContext, 'hostname' | 'testSession'>,
+): boolean {
+  return !isLiveHost(ctx.hostname) || ctx.testSession === true;
+}
 
 export type RunResult =
   | { ok: true; result: unknown }

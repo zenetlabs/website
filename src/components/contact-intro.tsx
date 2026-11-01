@@ -1,6 +1,7 @@
 import { CtaLink } from '@/components/cta-link';
 import { Container, EmphasisTitle } from '@/components/section';
 import { EYEBROW, TEXT_LINK } from '@/components/ui';
+import { VoiceCallout } from '@/components/voice-button';
 import type { TitleParts } from '@/content/types';
 import { useLocale } from '@/lib/i18n';
 import { ctaTarget, navHref } from '@/lib/nav';
@@ -13,6 +14,7 @@ export type ContactCopy = {
   mail: string;
   human?: string;
   book?: string;
+  voice?: { text: string; button: string };
 };
 
 export const CONTACT_FRAME =
@@ -51,6 +53,9 @@ export function ContactIntro({ copy, id }: { copy: ContactCopy; id?: string }) {
         </p>
       ) : null}
       {copy.human ? <p className={`mt-4 ${EYEBROW}`}>{copy.human}</p> : null}
+      {copy.voice ? (
+        <VoiceCallout text={copy.voice.text} button={copy.voice.button} />
+      ) : null}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-// Local stand-ins for Resend, Cloudflare Access and Google (token + Calendar), used by e2e and manual tests.
+// Local stand-ins for Resend, Cloudflare Access, Google (token + Calendar) and ElevenLabs (conversation token), used by e2e and manual tests.
 // Never used by CI deploys or production builds. Listens on :4175.
 import http from 'node:http';
 import { exportJWK, generateKeyPair, SignJWT } from 'jose';
@@ -328,11 +328,64 @@ async function handleGoogle(request, response, url) {
   return send(response, 404, { error: 'not found' });
 }
 
+const ELEVENLABS = '/__elevenlabs';
+const LOCAL_ELEVENLABS_KEY = 'local-elevenlabs-key';
+const LOCAL_AGENTS = new Set(['local-agent-en', 'local-agent-es']);
+const elevenLabsCalls = [];
+const elevenLabsFailures = [];
+let elevenLabsTokens = 0;
+
+async function handleElevenLabs(request, response, url) {
+  const { pathname } = url;
+  const route = `${request.method} ${pathname.slice(ELEVENLABS.length)}`;
+  if (route === 'GET /v1/convai/conversation/token') {
+    const agentId = url.searchParams.get('agent_id') ?? '';
+    elevenLabsCalls.push({
+      agentId,
+      keyPresent: Boolean(request.headers['xi-api-key']),
+    });
+    const failure = elevenLabsFailures.find((rule) => rule.remaining > 0);
+    if (failure) {
+      failure.remaining -= 1;
+      return send(response, failure.status, { detail: 'fake failure' });
+    }
+    if (request.headers['xi-api-key'] !== LOCAL_ELEVENLABS_KEY) {
+      return send(response, 401, { detail: 'invalid key' });
+    }
+    if (!LOCAL_AGENTS.has(agentId)) {
+      return send(response, 404, { detail: 'unknown agent' });
+    }
+    elevenLabsTokens += 1;
+    return send(response, 200, {
+      token: `fake-voice-token-${elevenLabsTokens}`,
+      conversation_id: `conv-local-${elevenLabsTokens}`,
+    });
+  }
+  if (route === 'GET /__calls') return send(response, 200, elevenLabsCalls);
+  if (route === 'POST /__fail') {
+    const options = parse(await readBody(request)) ?? {};
+    elevenLabsFailures.push({
+      status: Number(options.status) || 500,
+      remaining: Number(options.count) || 0,
+    });
+    return send(response, 200, { rules: elevenLabsFailures.length });
+  }
+  if (route === 'DELETE /__state') {
+    elevenLabsCalls.length = 0;
+    elevenLabsFailures.length = 0;
+    return send(response, 200, { ok: true });
+  }
+  return send(response, 404, { error: 'not found' });
+}
+
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url ?? '/', ORIGIN);
   const { pathname } = url;
   if (pathname.startsWith(`${GOOGLE}/`)) {
     return handleGoogle(request, response, url);
+  }
+  if (pathname.startsWith(`${ELEVENLABS}/`)) {
+    return handleElevenLabs(request, response, url);
   }
   const route = `${request.method} ${pathname}`;
   if (route === 'GET /__health') return send(response, 200, { ok: true });

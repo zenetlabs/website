@@ -18,9 +18,14 @@ const postChat = vi.hoisted(() => vi.fn());
 const track = vi.hoisted(() => vi.fn());
 const push = vi.hoisted(() => vi.fn());
 const widget = vi.hoisted(() => ({ ready: true }));
+const voice = vi.hoisted(() => ({ available: false, openVoice: vi.fn() }));
 
 vi.mock('@/lib/chat-client', () => ({ postChat }));
 vi.mock('@/lib/track', () => ({ track }));
+vi.mock('@/lib/voice-entry', () => ({
+  openVoice: voice.openVoice,
+  voiceAvailable: () => voice.available,
+}));
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@tanstack/react-router')>()),
   useRouter: () => ({ history: { push } }),
@@ -112,6 +117,8 @@ beforeEach(() => {
   track.mockReset();
   push.mockReset();
   widget.ready = true;
+  voice.available = false;
+  voice.openVoice.mockReset();
   resetChat('en');
 });
 
@@ -377,5 +384,22 @@ describe('page chips', () => {
     const chip = await screen.findByRole('link', { name: 'Open: FAQ' });
     fireEvent.click(chip, { ctrlKey: true });
     expect(push).not.toHaveBeenCalled();
+  });
+});
+
+describe('Talk instead', () => {
+  it('is not offered when the locale has no voice agent', () => {
+    open();
+    expect(
+      screen.queryByRole('button', { name: en.talk }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('closes the chat and opens the voice panel in the chat locale', async () => {
+    voice.available = true;
+    const { onClose } = open({ locale: 'es' });
+    await userEvent.click(screen.getByRole('button', { name: es.talk }));
+    expect(onClose).toHaveBeenCalled();
+    expect(voice.openVoice).toHaveBeenCalledWith('es', expect.any(Function));
   });
 });

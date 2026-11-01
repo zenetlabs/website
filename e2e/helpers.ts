@@ -76,6 +76,8 @@ export const CALCULATOR_RESULTS: readonly string[] = CALCULATOR_PUBLISHED
 
 export const ASSISTANT_PUBLISHED = SITE_FLAGS.assistant.published;
 
+export const VOICE_PUBLISHED = SITE_FLAGS.voice.published;
+
 export const WEBMCP_PUBLISHED = SITE_FLAGS.webmcp.published;
 
 export const BOOK_PAIR = { en: '/book', es: '/es/reservar' } as const;

@@ -1,25 +1,27 @@
 import { BOOKING_RULES } from '@/content/booking-rules';
-import type { Attribution } from '@/lib/lead-schema';
 import { isPublished, type SiteFlags } from '@/lib/page-registry';
-import { noop } from '@/lib/time';
 import type { BookingDeps } from '@/server/booking';
-import { browserBookingSchema, type Channel } from '@/server/booking-schema';
+import { browserBookingSchema } from '@/server/booking-schema';
 import { linkedChatSession } from '@/server/chat/store';
 import { isLimited, type Limiter } from '@/server/rate-limit';
 import {
   guardBrowserPost,
-  type Issue,
   isJsonRequest,
   parseJson,
   readCapped,
 } from '@/server/request';
-import { errorName, jsonError, jsonOk } from '@/server/responses';
 import { bookedResult } from '@/server/tools/book-meeting';
 import { contactFor } from '@/server/tools/contact';
+import {
+  execute,
+  MAX_BODY_BYTES,
+  reject,
+  succeed,
+} from '@/server/tools/execute';
 import { manifest, toolByName } from '@/server/tools/registry';
 import type { ServerTool } from '@/server/tools/types';
+import { voiceCall } from '@/server/voice/call';
 
-const MAX_BODY_BYTES = 16_384;
 const SLOT_MS = BOOKING_RULES.slotMinutes * 60_000;
 const BEARER = /^Bearer (\S+)$/;
 
@@ -30,28 +32,6 @@ export type ToolHttpDeps = BookingDeps & {
   bookLimiter: Limiter;
   now: () => number;
 };
-
-const STATUS = {
-  unknown: 404,
-  auth: 401,
-  origin: 403,
-  unsupported: 415,
-  rate: 429,
-  'too-large': 413,
-  invalid: 400,
-  captcha: 403,
-  unavailable: 503,
-} as const;
-
-type ToolError = keyof typeof STATUS;
-
-function reject(error: ToolError, issues?: Issue[]): Response {
-  return jsonError(error, STATUS[error], issues ? { issues } : {});
-}
-
-function succeed(result: unknown): Response {
-  return jsonOk({ result });
-}
 
 export function manifestResponse(site: SiteFlags): Response {
   return Response.json(manifest(site), {
@@ -90,65 +70,30 @@ export async function handleToolRequest(
   if (tool === undefined || tool.clientOnly) return reject('unknown');
 
   const authorization = request.headers.get('authorization');
-  const bearer = authorization !== null;
-  if (
-    bearer &&
-    !(await bearerMatches(authorization, await deps.bearerSecret()))
-  ) {
-    return reject('auth');
-  }
-  const books = tool.name === 'book_meeting';
-  const { hostname } = new URL(request.url);
   const now = deps.now();
-  if (books && !bearer) return browserBooking(tool, request, deps, now);
+  if (authorization !== null) {
+    if (!(await bearerMatches(authorization, await deps.bearerSecret()))) {
+      return reject('auth');
+    }
+    return voiceCall(tool, request, deps, now);
+  }
+  if (tool.name === 'book_meeting') {
+    return browserBooking(tool, request, deps, now);
+  }
 
   if (!isJsonRequest(request)) return reject('unsupported');
-  if (!bearer) {
-    const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
-    if (await isLimited(deps.toolsLimiter, ip, 'tools')) return reject('rate');
-  }
+  const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
+  if (await isLimited(deps.toolsLimiter, ip, 'tools')) return reject('rate');
   const text = await readCapped(request, MAX_BODY_BYTES);
   if (text === null) return reject('too-large');
   return execute(tool, parseJson(text), deps, {
-    channel: bearer ? 'voice' : 'web',
-    consentAt: books ? now : null,
+    channel: 'web',
+    consentAt: null,
     attribution: null,
     chatSessionId: null,
-    hostname,
+    hostname: new URL(request.url).hostname,
     now,
   });
-}
-
-type Transport = {
-  channel: Channel;
-  consentAt: number | null;
-  attribution: Attribution | null;
-  chatSessionId: string | null;
-  hostname: string;
-  now: number;
-};
-
-async function execute(
-  tool: ServerTool,
-  body: unknown,
-  deps: ToolHttpDeps,
-  transport: Transport,
-): Promise<Response> {
-  // Under waitUntil, like bookMeeting: a client disconnect must not cut the work.
-  const work = tool.run(body, { ...transport, deps });
-  deps.waitUntil(work.then(noop, noop));
-  try {
-    const outcome = await work;
-    return outcome.ok
-      ? succeed(outcome.result)
-      : reject('invalid', outcome.issues);
-  } catch (error) {
-    console.error('tools: failed', {
-      tool: tool.name,
-      code: errorName(error),
-    });
-    return reject('unavailable');
-  }
 }
 
 async function browserBooking(

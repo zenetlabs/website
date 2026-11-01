@@ -378,3 +378,58 @@ describe('assistant disclosure', () => {
     },
   );
 });
+
+const VOICE_EN = [
+  'Voice calls',
+  'streamed to ElevenLabs (ElevenLabs Inc., United States)',
+  "We don't record audio",
+  'keeps the text of the conversation for 30 days',
+  'a technical record of the call',
+  'your time zone and the page',
+  "ElevenLabs' conversation id",
+  "follow the enquiry's 24 months",
+  'ElevenLabs (ElevenLabs Inc., United States), for voice calls',
+  'ElevenLabs processes voice calls in the United States',
+  'Voice call texts: 30 days at ElevenLabs',
+];
+const VOICE_ES = [
+  'Llamadas de voz',
+  'se transmite a ElevenLabs (ElevenLabs Inc., Estados Unidos)',
+  'No grabamos el audio',
+  'guarda el texto de la conversación 30 días',
+  'un registro técnico de la llamada',
+  'tu zona horaria y la página',
+  'la conversación en ElevenLabs',
+  'siguen los 24 meses de la consulta',
+  'ElevenLabs (ElevenLabs Inc., Estados Unidos), para las llamadas de voz',
+  'ElevenLabs trata las llamadas de voz en Estados Unidos',
+  'Textos de las llamadas de voz: 30 días en ElevenLabs',
+];
+
+describe('voice disclosure', () => {
+  afterAll(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it.each([
+    ['PrivacyEn', PrivacyEn, VOICE_EN],
+    ['PrivacyEs', PrivacyEs, VOICE_ES],
+  ])(
+    '%s names ElevenLabs, the transfer and the retention when voice is published',
+    (_name, Page, expected) => {
+      vi.stubGlobal('__VOICE__', true);
+      const body = text(<Page title="t" entity={SINGAPORE} />);
+      for (const snippet of expected) expect(body).toContain(snippet);
+      expect(body).not.toMatch(PLACEHOLDER);
+    },
+  );
+
+  it.each([
+    ['PrivacyEn', PrivacyEn],
+    ['PrivacyEs', PrivacyEs],
+  ])('%s says nothing about voice while it is dark', (_name, Page) => {
+    vi.stubGlobal('__VOICE__', false);
+    const body = text(<Page title="t" entity={SINGAPORE} />);
+    expect(body).not.toContain('ElevenLabs');
+  });
+});

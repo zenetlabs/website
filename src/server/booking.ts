@@ -14,6 +14,7 @@ import type {
   BookingContext,
   BookingInput,
   Channel,
+  VoiceRef,
 } from '@/server/booking-schema';
 import {
   activeBookings,
@@ -252,23 +253,33 @@ export type BookRequest = {
   consentAt: number | null;
   attribution: Attribution | null;
   chatSessionId: string | null;
+  voice?: VoiceRef;
 };
 
+function leadSource({
+  voice,
+  chatSessionId,
+}: BookRequest): 'voice' | 'chat' | 'booking' {
+  if (voice) return 'voice';
+  return chatSessionId === null ? 'booking' : 'chat';
+}
+
 function bookingLead(
-  { input, attribution, chatSessionId }: BookRequest,
+  request: BookRequest,
   scope: BookingScope,
   context: BookingContext,
 ): NewLead {
+  const { input, attribution, chatSessionId, voice } = request;
   return {
     locale: input.locale,
-    source: chatSessionId === null ? 'booking' : 'chat',
+    source: leadSource(request),
     name: input.name,
     email: input.email,
     company: input.company || null,
     message: input.topic,
     consent_version: CONSENT_VERSION,
     ...attributionFields(attribution, scope.deps.site.url),
-    context: JSON.stringify({ booking: context }),
+    context: JSON.stringify({ booking: context, ...(voice ? { voice } : {}) }),
     chat_session_id: chatSessionId,
     is_test: scope.isTest ? 1 : 0,
   };

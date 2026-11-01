@@ -30,6 +30,7 @@ import { Route as Char123LocaleChar125VerifactuRouteImport } from './routes/{-$l
 import { Route as ApiBookSlotsRouteImport } from './routes/api/book.slots'
 import { Route as ApiToolsIndexRouteImport } from './routes/api/tools/index'
 import { Route as ApiToolsNameRouteImport } from './routes/api/tools/$name'
+import { Route as ApiVoiceSessionRouteImport } from './routes/api/voice/session'
 import { Route as InternalLeadsIdRouteImport } from './routes/internal/leads.$id'
 import { Route as Char123LocaleChar125CaseStudiesViatsyRouteImport } from './routes/{-$locale}/case-studies/viatsy'
 import { Route as Char123LocaleChar125IndustriesTravelAgenciesRouteImport } from './routes/{-$locale}/industries/travel-agencies'
@@ -159,6 +160,11 @@ const ApiToolsNameRoute = ApiToolsNameRouteImport.update({
   path: '/api/tools/$name',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiVoiceSessionRoute = ApiVoiceSessionRouteImport.update({
+  id: '/api/voice/session',
+  path: '/api/voice/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InternalLeadsIdRoute = InternalLeadsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -258,6 +264,7 @@ export interface FileRoutesByFullPath {
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
   '/api/book/slots': typeof ApiBookSlotsRoute
   '/api/tools/$name': typeof ApiToolsNameRoute
+  '/api/voice/session': typeof ApiVoiceSessionRoute
   '/internal/leads/$id': typeof InternalLeadsIdRoute
   '/{-$locale}/case-studies/viatsy': typeof Char123LocaleChar125CaseStudiesViatsyRoute
   '/{-$locale}/industries/travel-agencies': typeof Char123LocaleChar125IndustriesTravelAgenciesRoute
@@ -293,6 +300,7 @@ export interface FileRoutesByTo {
   '/{-$locale}': typeof Char123LocaleChar125IndexRoute
   '/api/book/slots': typeof ApiBookSlotsRoute
   '/api/tools/$name': typeof ApiToolsNameRoute
+  '/api/voice/session': typeof ApiVoiceSessionRoute
   '/internal/leads/$id': typeof InternalLeadsIdRoute
   '/{-$locale}/case-studies/viatsy': typeof Char123LocaleChar125CaseStudiesViatsyRoute
   '/{-$locale}/industries/travel-agencies': typeof Char123LocaleChar125IndustriesTravelAgenciesRoute
@@ -330,6 +338,7 @@ export interface FileRoutesById {
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
   '/api/book/slots': typeof ApiBookSlotsRoute
   '/api/tools/$name': typeof ApiToolsNameRoute
+  '/api/voice/session': typeof ApiVoiceSessionRoute
   '/internal/leads/$id': typeof InternalLeadsIdRoute
   '/{-$locale}/case-studies/viatsy': typeof Char123LocaleChar125CaseStudiesViatsyRoute
   '/{-$locale}/industries/travel-agencies': typeof Char123LocaleChar125IndustriesTravelAgenciesRoute
@@ -368,6 +377,7 @@ export interface FileRouteTypes {
     | '/{-$locale}/'
     | '/api/book/slots'
     | '/api/tools/$name'
+    | '/api/voice/session'
     | '/internal/leads/$id'
     | '/{-$locale}/case-studies/viatsy'
     | '/{-$locale}/industries/travel-agencies'
@@ -403,6 +413,7 @@ export interface FileRouteTypes {
     | '/{-$locale}'
     | '/api/book/slots'
     | '/api/tools/$name'
+    | '/api/voice/session'
     | '/internal/leads/$id'
     | '/{-$locale}/case-studies/viatsy'
     | '/{-$locale}/industries/travel-agencies'
@@ -439,6 +450,7 @@ export interface FileRouteTypes {
     | '/{-$locale}/'
     | '/api/book/slots'
     | '/api/tools/$name'
+    | '/api/voice/session'
     | '/internal/leads/$id'
     | '/{-$locale}/case-studies/viatsy'
     | '/{-$locale}/industries/travel-agencies'
@@ -466,6 +478,7 @@ export interface RootRouteChildren {
   InternalLeadsDotcsvRoute: typeof InternalLeadsDotcsvRoute
   ApiBookSlotsRoute: typeof ApiBookSlotsRoute
   ApiToolsNameRoute: typeof ApiToolsNameRoute
+  ApiVoiceSessionRoute: typeof ApiVoiceSessionRoute
   ApiToolsIndexRoute: typeof ApiToolsIndexRoute
 }
 
@@ -616,6 +629,13 @@ declare module '@tanstack/react-router' {
       path: '/api/tools/$name'
       fullPath: '/api/tools/$name'
       preLoaderRoute: typeof ApiToolsNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/voice/session': {
+      id: '/api/voice/session'
+      path: '/api/voice/session'
+      fullPath: '/api/voice/session'
+      preLoaderRoute: typeof ApiVoiceSessionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/internal/leads/$id': {
@@ -801,6 +821,7 @@ const rootRouteChildren: RootRouteChildren = {
   InternalLeadsDotcsvRoute: InternalLeadsDotcsvRoute,
   ApiBookSlotsRoute: ApiBookSlotsRoute,
   ApiToolsNameRoute: ApiToolsNameRoute,
+  ApiVoiceSessionRoute: ApiVoiceSessionRoute,
   ApiToolsIndexRoute: ApiToolsIndexRoute,
 }
 export const routeTree = rootRouteImport

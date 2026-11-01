@@ -98,6 +98,38 @@ async function json(response: Response) {
   return BODY.parse(await response.json());
 }
 
+type SessionRow = Partial<{
+  id: string;
+  createdAt: number;
+  locale: 'en' | 'es';
+  timeZone: string;
+  isTest: boolean;
+  toolCalls: number;
+}>;
+
+async function voiceSession(row: SessionRow = {}): Promise<string> {
+  const id = row.id ?? crypto.randomUUID();
+  await DB.prepare(
+    `INSERT INTO voice_sessions (id, created_at, day, locale, time_zone, start_page, is_test, tool_calls, conversation_id)
+     VALUES (?1, ?2, '2027-01-04', ?3, ?4, '/', ?5, ?6, 'conv-1')`,
+  )
+    .bind(
+      id,
+      row.createdAt ?? NOW - 60_000,
+      row.locale ?? 'en',
+      row.timeZone ?? 'Asia/Singapore',
+      row.isTest ? 1 : 0,
+      row.toolCalls ?? 0,
+    )
+    .run();
+  return id;
+}
+
+const agent = (session: string): Record<string, string> => ({
+  Authorization: `Bearer ${BEARER}`,
+  'X-Voice-Session': session,
+});
+
 async function count(table: string): Promise<number> {
   const row = await DB.prepare(`SELECT count(*) AS n FROM ${table}`).first<{
     n: number;
@@ -116,6 +148,7 @@ beforeEach(async () => {
   clearBusyCache();
   await DB.prepare('DELETE FROM bookings').run();
   await DB.prepare('DELETE FROM leads').run();
+  await DB.prepare('DELETE FROM voice_sessions').run();
 });
 
 describe('routing and auth', () => {
@@ -151,11 +184,13 @@ describe('routing and auth', () => {
     expect(world.turnstileCalls).toBe(0);
   });
 
-  it('lets a correct bearer book without Turnstile, origin or a per-IP limit', async () => {
+  it('lets a correct bearer with a session book without Turnstile, origin or a per-IP limit', async () => {
     limiter = { tools: true, book: true };
-    const response = await post('book_meeting', BOOKING, {
-      Authorization: `Bearer ${BEARER}`,
-    });
+    const response = await post(
+      'book_meeting',
+      { ...BOOKING, confirmed: true },
+      agent(await voiceSession()),
+    );
     expect(response.status).toBe(200);
     expect(await json(response)).toMatchObject({
       ok: true,
@@ -167,17 +202,298 @@ describe('routing and auth', () => {
     expect(row).toEqual({ channel: 'voice' });
   });
 
-  it('still applies the D1 caps to bearer bookings', async () => {
-    const headers = { Authorization: `Bearer ${BEARER}` };
-    await post('book_meeting', BOOKING, headers);
-    const second = await post(
-      'book_meeting',
-      { ...BOOKING, slot: '2027-01-13T09:00:00.000Z' },
-      headers,
-    );
-    expect(await json(second)).toMatchObject({
+  it('still applies the D1 caps to bearer bookings from different sessions', async () => {
+    const book = async (slot: string) =>
+      json(
+        await post(
+          'book_meeting',
+          { ...BOOKING, slot, confirmed: true },
+          agent(await voiceSession()),
+        ),
+      );
+    await book(BOOKING.slot);
+    expect(await book('2027-01-13T09:00:00.000Z')).toMatchObject({
       ok: true,
       result: { status: 'rejected', reason: 'limit' },
+    });
+  });
+});
+
+describe('a bearer call needs a live voice session', () => {
+  const read = (headers: Record<string, string>) =>
+    post('get_pricing', {}, headers);
+
+  it('answers 401 session without the header, with a malformed one and with an unknown id', async () => {
+    const unknown = crypto.randomUUID();
+    for (const headers of [
+      { Authorization: `Bearer ${BEARER}` },
+      { Authorization: `Bearer ${BEARER}`, 'X-Voice-Session': 'not-a-uuid' },
+      agent(unknown),
+    ]) {
+      const response = await read(headers);
+      expect(response.status).toBe(401);
+      expect(await json(response)).toMatchObject({
+        ok: false,
+        error: 'session',
+      });
+    }
+  });
+
+  it('answers 401 session for an expired session and one out of tool calls', async () => {
+    const expired = await voiceSession({ createdAt: NOW - 16 * 60_000 });
+    const spent = await voiceSession({ toolCalls: 40 });
+    for (const id of [expired, spent]) {
+      expect((await read(agent(id))).status).toBe(401);
+    }
+  });
+
+  it('counts each call against the session', async () => {
+    const id = await voiceSession();
+    await read(agent(id));
+    await read(agent(id));
+    const row = await DB.prepare(
+      'SELECT tool_calls FROM voice_sessions WHERE id = ?1',
+    )
+      .bind(id)
+      .first();
+    expect(row).toEqual({ tool_calls: 2 });
+  });
+
+  it('answers 503 and touches nothing while voice is dark, even with a valid bearer and session', async () => {
+    const id = await voiceSession();
+    const response = await post('get_pricing', {}, agent(id), undefined, {
+      site: { ...TEST_SITE, voice: { ...TEST_SITE.voice, published: false } },
+    });
+    expect(response.status).toBe(503);
+    expect(await json(response)).toMatchObject({
+      ok: false,
+      error: 'unavailable',
+    });
+    const row = await DB.prepare(
+      'SELECT tool_calls FROM voice_sessions WHERE id = ?1',
+    )
+      .bind(id)
+      .first();
+    expect(row).toEqual({ tool_calls: 0 });
+  });
+
+  it('prices in the market of the session, whatever the model says', async () => {
+    const id = await voiceSession({ locale: 'es' });
+    const response = await post(
+      'get_pricing',
+      { locale: 'en', service: 'diagnostic' },
+      agent(id),
+    );
+    expect(await json(response)).toMatchObject({
+      ok: true,
+      result: { currency: 'EUR' },
+    });
+  });
+
+  it('takes the visitor time zone from the session, whatever the model says', async () => {
+    const id = await voiceSession({ timeZone: 'America/New_York' });
+    for (const body of [{}, { timeZone: 'Asia/Tokyo' }]) {
+      const response = await post('check_availability', body, agent(id));
+      expect(await json(response)).toMatchObject({
+        ok: true,
+        result: { timeZone: 'America/New_York' },
+      });
+    }
+  });
+
+  it('accepts an empty body whatever its content type, and refuses other bodies that are not JSON', async () => {
+    const id = await voiceSession();
+    const empty = await post('get_pricing', '', {
+      ...agent(id),
+      'Content-Type': 'text/plain',
+    });
+    expect(empty.status).toBe(200);
+    const text = await post('get_pricing', 'service=agent', {
+      ...agent(id),
+      'Content-Type': 'text/plain',
+    });
+    expect(text.status).toBe(415);
+  });
+
+  it('refuses a booking without confirmed, naming the field', async () => {
+    const id = await voiceSession();
+    const response = await post('book_meeting', BOOKING, agent(id));
+    expect(response.status).toBe(400);
+    const body = await json(response);
+    expect(body.issues?.map((issue) => issue.path)).toContain('confirmed');
+    expect(await count('bookings')).toBe(0);
+    const row = await DB.prepare(
+      'SELECT tool_calls, book_attempts FROM voice_sessions WHERE id = ?1',
+    )
+      .bind(id)
+      .first();
+    expect(row).toEqual({ tool_calls: 1, book_attempts: 0 });
+  });
+
+  it('stores a voice lead with the call reference and books the test calendar for a preview session', async () => {
+    const id = await voiceSession({ isTest: true });
+    const response = await post(
+      'book_meeting',
+      { ...BOOKING, confirmed: true },
+      agent(id),
+    );
+    expect(await json(response)).toMatchObject({
+      result: { status: 'booked' },
+    });
+    await Promise.allSettled(background);
+    const lead = await DB.prepare(
+      'SELECT source, is_test, context FROM leads',
+    ).first<{ source: string; is_test: number; context: string }>();
+    expect(lead).toMatchObject({ source: 'voice', is_test: 1 });
+    expect(JSON.parse(lead?.context ?? '{}')).toMatchObject({
+      voice: { sessionId: id, conversationId: 'conv-1' },
+      booking: { channel: 'voice', calendar: 'test' },
+    });
+    const booking = await DB.prepare('SELECT is_test FROM bookings').first();
+    expect(booking).toEqual({ is_test: 1 });
+  });
+
+  it('allows one booking per session and three attempts', async () => {
+    const id = await voiceSession();
+    const book = async (slot: string) => {
+      const answer = await json(
+        await post(
+          'book_meeting',
+          { ...BOOKING, slot, confirmed: true },
+          agent(id),
+        ),
+      );
+      await Promise.allSettled(background);
+      return answer;
+    };
+    const saturday = '2027-01-09T09:00:00.000Z';
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      expect(await book(saturday)).toMatchObject({
+        result: { status: 'rejected', reason: 'invalid_slot' },
+      });
+    }
+    expect(await book(BOOKING.slot)).toMatchObject({
+      result: { status: 'rejected', reason: 'limit' },
+    });
+    expect(await count('bookings')).toBe(0);
+  });
+
+  it('refuses a second booking once the first went through', async () => {
+    const id = await voiceSession();
+    const first = await post(
+      'book_meeting',
+      { ...BOOKING, confirmed: true },
+      agent(id),
+    );
+    expect(await json(first)).toMatchObject({ result: { status: 'booked' } });
+    await Promise.allSettled(background);
+    const second = await post(
+      'book_meeting',
+      { ...BOOKING, slot: '2027-01-13T09:00:00.000Z', confirmed: true },
+      agent(id),
+    );
+    expect(await json(second)).toMatchObject({
+      result: { status: 'rejected', reason: 'limit' },
+    });
+  });
+
+  it('books exactly once when three bookings arrive at the same time', async () => {
+    const id = await voiceSession();
+    const slots = [
+      '2027-01-12T09:00:00.000Z',
+      '2027-01-13T09:00:00.000Z',
+      '2027-01-14T09:00:00.000Z',
+    ];
+    const answers = await Promise.all(
+      slots.map(async (slot) =>
+        json(
+          await post(
+            'book_meeting',
+            { ...BOOKING, slot, confirmed: true },
+            agent(id),
+          ),
+        ),
+      ),
+    );
+    await Promise.allSettled(background);
+    const statuses = answers.map(
+      (answer) => z.object({ status: z.string() }).parse(answer.result).status,
+    );
+    expect(statuses.filter((status) => status === 'booked')).toHaveLength(1);
+    expect(statuses.filter((status) => status === 'rejected')).toHaveLength(2);
+    expect(await count('bookings')).toBe(1);
+    const row = await DB.prepare(
+      'SELECT booked_at, booking_started_at FROM voice_sessions WHERE id = ?1',
+    )
+      .bind(id)
+      .first();
+    expect(row).toEqual({ booked_at: NOW, booking_started_at: null });
+  });
+
+  it('settles the booking even when the caller stops waiting', async () => {
+    const id = await voiceSession();
+    const response = await post(
+      'book_meeting',
+      { ...BOOKING, confirmed: true },
+      agent(id),
+    );
+    expect(response.status).toBe(200);
+    // Nothing awaited the answer's own continuation: only waitUntil work remains.
+    await Promise.allSettled(background);
+    const row = await DB.prepare(
+      'SELECT booked_at FROM voice_sessions WHERE id = ?1',
+    )
+      .bind(id)
+      .first();
+    expect(row).toEqual({ booked_at: NOW });
+  });
+
+  it('binds a session to the conversation of its first call', async () => {
+    const id = await voiceSession();
+    const call = (conversation: string) =>
+      post(
+        'get_pricing',
+        {},
+        {
+          ...agent(id),
+          'X-Voice-Conversation': conversation,
+        },
+      );
+    expect((await call('conv_first1')).status).toBe(200);
+    expect((await call('conv_other2')).status).toBe(401);
+    expect((await call('conv_first1')).status).toBe(200);
+    expect(
+      (
+        await post(
+          'get_pricing',
+          {},
+          {
+            ...agent(id),
+            'X-Voice-Conversation': '{{system__conversation_id}}',
+          },
+        )
+      ).status,
+    ).toBe(200);
+  });
+
+  it('puts the conversation id on the voice lead', async () => {
+    const id = await voiceSession();
+    await post(
+      'get_pricing',
+      {},
+      { ...agent(id), 'X-Voice-Conversation': 'conv_first1' },
+    );
+    await post(
+      'book_meeting',
+      { ...BOOKING, confirmed: true },
+      { ...agent(id), 'X-Voice-Conversation': 'conv_first1' },
+    );
+    await Promise.allSettled(background);
+    const lead = await DB.prepare('SELECT context FROM leads').first<{
+      context: string;
+    }>();
+    expect(JSON.parse(lead?.context ?? '{}')).toMatchObject({
+      voice: { sessionId: id, conversationId: 'conv_first1' },
     });
   });
 });
@@ -593,9 +909,11 @@ describe('a placeholder or invalid calendar secret', () => {
       expect(await json(read1)).toMatchObject({
         result: { status: 'unavailable', reason: 'not_configured' },
       });
-      const book = await request('book_meeting', BOOKING, {
-        Authorization: `Bearer ${BEARER}`,
-      });
+      const book = await request(
+        'book_meeting',
+        { ...BOOKING, confirmed: true },
+        agent(await voiceSession()),
+      );
       expect(book.status).toBe(200);
       expect(await json(book)).toMatchObject({
         result: { status: 'unavailable', reason: 'not_configured' },
@@ -604,6 +922,7 @@ describe('a placeholder or invalid calendar secret', () => {
         await getHealth({
           GOOGLE_CALENDAR: binding,
           TOOLS_BEARER_SECRET: binding,
+          ELEVENLABS_API_KEY: binding,
         }),
       ).toMatchObject({
         booking: false,
@@ -704,37 +1023,71 @@ describe('manifest and health', () => {
       await getHealth({
         GOOGLE_CALENDAR: binding(secret),
         TOOLS_BEARER_SECRET: binding('x'),
+        ELEVENLABS_API_KEY: binding('key'),
       }),
     ).toEqual({
       ok: true,
       booking: true,
       toolsBearer: true,
       assistant: false,
+      voice: false,
     });
     expect(
       await getHealth({
         GOOGLE_CALENDAR: binding('UNSET'),
         TOOLS_BEARER_SECRET: binding(new Error('Secret not found')),
+        ELEVENLABS_API_KEY: binding('UNSET'),
       }),
     ).toEqual({
       ok: true,
       booking: false,
       toolsBearer: false,
       assistant: false,
+      voice: false,
     });
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(
       await getHealth({
         GOOGLE_CALENDAR: binding('{"broken"'),
         TOOLS_BEARER_SECRET: binding('x'),
+        ELEVENLABS_API_KEY: binding('key'),
       }),
     ).toEqual({
       ok: true,
       booking: false,
       toolsBearer: true,
       assistant: false,
+      voice: false,
     });
     log.mockRestore();
+  });
+
+  it('reports voice only when it is published, an agent exists and both secrets are real', async () => {
+    const binding = (value: string) => ({ get: async () => value });
+    const health = (key: string, tool: string, site = TEST_SITE) =>
+      getHealth(
+        {
+          GOOGLE_CALENDAR: binding(secret),
+          TOOLS_BEARER_SECRET: binding(tool),
+          ELEVENLABS_API_KEY: binding(key),
+        },
+        false,
+        site,
+      );
+    expect((await health('key', 'tool')).voice).toBe(true);
+    expect((await health('UNSET', 'tool')).voice).toBe(false);
+    expect((await health('unconfigured', 'tool')).voice).toBe(false);
+    expect((await health('key', 'UNSET')).voice).toBe(false);
+    const dark = {
+      ...TEST_SITE,
+      voice: { ...TEST_SITE.voice, published: false },
+    };
+    expect((await health('key', 'tool', dark)).voice).toBe(false);
+    const noAgent = {
+      ...TEST_SITE,
+      voice: { ...TEST_SITE.voice, agents: { en: null, es: null } },
+    };
+    expect((await health('key', 'tool', noAgent)).voice).toBe(false);
   });
 
   it('reports the assistant only when it is published and a model exists', () => {
