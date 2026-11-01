@@ -251,16 +251,17 @@ export type BookRequest = {
   channel: Channel;
   consentAt: number | null;
   attribution: Attribution | null;
+  chatSessionId: string | null;
 };
 
 function bookingLead(
-  { input, attribution }: BookRequest,
+  { input, attribution, chatSessionId }: BookRequest,
   scope: BookingScope,
   context: BookingContext,
 ): NewLead {
   return {
     locale: input.locale,
-    source: 'booking',
+    source: chatSessionId === null ? 'booking' : 'chat',
     name: input.name,
     email: input.email,
     company: input.company || null,
@@ -268,7 +269,7 @@ function bookingLead(
     consent_version: CONSENT_VERSION,
     ...attributionFields(attribution, scope.deps.site.url),
     context: JSON.stringify({ booking: context }),
-    chat_session_id: null,
+    chat_session_id: chatSessionId,
     is_test: scope.isTest ? 1 : 0,
   };
 }

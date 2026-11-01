@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContactForm } from '@/components/contact-form';
+import { setChatSessionId } from '@/lib/chat-session';
 
 const state = vi.hoisted(() => ({ hydrated: true }));
 const submitLead = vi.hoisted(() => vi.fn());
@@ -146,6 +147,26 @@ describe('ContactForm', () => {
     expect(screen.queryByRole('form')).not.toBeInTheDocument();
     expect(screen.getByText('Message sent')).toHaveFocus();
     expect(track).toHaveBeenCalledWith('generate_lead', { method: 'form' });
+  });
+
+  it('links the enquiry to the open conversation, and sends nothing without one', async () => {
+    const id = '5f0c2a52-6f4e-4a6c-9d4e-0b1d7b3b0a11';
+    submitLead.mockResolvedValue({ ok: true });
+    for (const session of [id, null]) {
+      setChatSessionId(session);
+      const user = userEvent.setup();
+      const { unmount } = render(<ContactForm />);
+      await user.click(screen.getByLabelText('Name'));
+      await fillIn(user);
+      await user.click(await screen.findByText('solve challenge'));
+      await user.click(screen.getByRole('button', { name: 'Send message' }));
+      await waitFor(() => expect(submitLead).toHaveBeenCalled());
+      const sent = submitLead.mock.calls.at(-1)?.[0];
+      if (session === null) expect(sent).not.toHaveProperty('chatSessionId');
+      else expect(sent).toMatchObject({ chatSessionId: session });
+      unmount();
+    }
+    setChatSessionId(null);
   });
 
   it('starts from a prefilled message and counts the lead for its method', async () => {

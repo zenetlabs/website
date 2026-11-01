@@ -28,6 +28,7 @@ export const leadRequestSchema = z.object({
   turnstileToken: z.string().min(1).max(2048),
   website: z.string().max(200),
   attribution: attributionSchema,
+  chatSessionId: z.uuid().optional(),
 });
 
 export type LeadRequest = z.infer<typeof leadRequestSchema>;

@@ -11,6 +11,12 @@ export default defineConfig({
     __SITE__: JSON.stringify(siteConfig(process.env.CLOUDFLARE_ENV)),
     __GA4_ID__: JSON.stringify(siteConfig(process.env.CLOUDFLARE_ENV).ga4Id),
     __SERVER__: JSON.stringify(serverConfig(process.env.CLOUDFLARE_ENV)),
+    __ASSISTANT__: JSON.stringify(
+      siteConfig(process.env.CLOUDFLARE_ENV).assistant.published,
+    ),
+    __CHAT_FAKE__: JSON.stringify(
+      serverConfig(process.env.CLOUDFLARE_ENV).assistant.model === 'fake',
+    ),
   },
   build: { modulePreload: false },
   plugins: [

@@ -34,6 +34,12 @@ export const TEST_SERVER: ServerConfig = {
     busyCacheMs: 0,
     failureCacheMs: 0,
   },
+  assistant: {
+    model: 'fake',
+    aiGatewayName: null,
+    dailyNeuronBudget: 1_000,
+    perAddressDailyTurns: 40,
+  },
 };
 
 export const TEST_SITE: SiteConfig = {
@@ -43,6 +49,7 @@ export const TEST_SITE: SiteConfig = {
   ga4Id: null,
   calculator: { published: false },
   booking: { published: true },
+  assistant: { published: true },
 };
 
 type Interval = { start: number; end: number };

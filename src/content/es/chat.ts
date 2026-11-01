@@ -1,0 +1,99 @@
+import type { ChatCopy } from '@/content/types';
+
+// TODO(albert): review the widget copy
+export const chatCopy = {
+  title: 'Asistente de Zenet Labs',
+  badge: 'IA',
+  notice:
+    'Estás hablando con un asistente de IA, no con una persona. Responde con el contenido de esta web y puede equivocarse; los precios salen solo de nuestra lista oficial. Guardamos esta conversación 30 días para responderte y evitar abusos, o 24 meses junto a tu consulta si reservas una llamada o envías el formulario de contacto. No compartas contraseñas ni datos personales sensibles.',
+  privacyLink: 'Política de privacidad',
+  welcome:
+    '¡Hola! Pregúntame por nuestros servicios, precios o cómo trabajamos.',
+  welcomeBooking:
+    ' También puedo buscarte hueco para una llamada de 30 minutos.',
+  suggestions: [
+    '¿Cuánto cuesta un agente de IA?',
+    '¿Qué incluye el diagnóstico de automatización?',
+  ],
+  suggestionBooking: 'Reservar una llamada de 30 minutos',
+  logLabel: 'Conversación',
+  you: 'Tú',
+  assistant: 'Asistente (IA)',
+  inputLabel: 'Tu mensaje',
+  placeholder: 'Escribe tu pregunta',
+  send: 'Enviar',
+  close: 'Cerrar el asistente',
+  verifying: 'Comprobando que no eres un bot…',
+  writing: 'El asistente está escribiendo…',
+  tools: {
+    get_faq: 'Consultando las preguntas frecuentes…',
+    get_pricing: 'Consultando nuestros precios…',
+    estimate_project: 'Preparando una estimación…',
+    check_availability: 'Buscando horas libres…',
+    book_meeting: 'Preparando tu reserva…',
+    navigate: 'Buscando la página…',
+  },
+  open: 'Abrir: {label}',
+  remaining: 'Te quedan {n} mensajes en esta conversación',
+  newSession:
+    'Esta conversación había caducado, así que he empezado una nueva.',
+  errorRate:
+    'Estás enviando mensajes demasiado rápido. Espera un minuto y vuelve a intentarlo.',
+  errorCaptcha:
+    'No hemos podido verificar tu navegador. Vuelve a intentarlo o escribe a hello@zenetlabs.com.',
+  errorReply:
+    'La respuesta se ha cortado. Puedes volver a preguntar o contactarnos directamente:',
+  fallback: {
+    title: 'El asistente no puede responder ahora',
+    full: 'Esta conversación ha llegado al límite de mensajes.',
+    text: 'Puedes contactarnos directamente:',
+    book: 'Reservar una llamada de 30 minutos',
+    form: 'Usar el formulario de contacto',
+  },
+  pages: {
+    home: 'Inicio',
+    services: 'Servicios',
+    automation: 'Automatización de procesos',
+    integrations: 'Integraciones',
+    agents: 'Agentes de IA',
+    software: 'Software a medida',
+    training: 'Formación en IA',
+    holdedPrestashop: 'Holded y PrestaShop',
+    holdedWoocommerce: 'Holded y WooCommerce',
+    holdedHubspot: 'Holded y HubSpot',
+    verifactu: 'Verifactu',
+    travelAgencies: 'Agencias de viajes',
+    viatsyCase: 'Caso Viatsy',
+    pricing: 'Precios',
+    calculator: 'Calculadora de precios',
+    about: 'Sobre nosotros',
+    book: 'Reservar una llamada',
+    privacy: 'Política de privacidad',
+    cookies: 'Política de cookies',
+    legalNotice: 'Aviso legal',
+  },
+  sections: {
+    services: 'Servicios',
+    cases: 'Casos',
+    faq: 'Preguntas frecuentes',
+    contact: 'Contacto',
+  },
+  booking: {
+    title: 'Confirma tu llamada',
+    when: 'Cuándo',
+    format: '30 minutos por Google Meet',
+    name: 'Nombre',
+    email: 'Email de trabajo',
+    company: 'Empresa (opcional)',
+    topic: '¿De qué quieres hablar?',
+    confirm: 'Confirmar reserva',
+    sending: 'Reservando…',
+    cancel: 'Ahora no',
+    done: 'Reservada para el {when}. Te hemos enviado por email la invitación con el enlace de Google Meet.',
+    taken: 'Esa hora se acaba de ocupar. Pídeme otra.',
+    error:
+      'No hemos podido reservarla. Vuelve a intentarlo, usa la página de reservas o escribe a hello@zenetlabs.com.',
+    rate: 'Demasiados intentos desde tu conexión. Espera un minuto y vuelve a intentarlo.',
+    captcha: 'La comprobación de seguridad ha fallado. Vuelve a intentarlo.',
+  },
+} satisfies ChatCopy;

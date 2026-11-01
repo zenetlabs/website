@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { type APIRequestContext, expect, test } from '@playwright/test';
 import { siteConfig } from '../site.config';
@@ -209,6 +211,54 @@ for (const path of URLS) {
 }
 
 const LEGAL_PATHS = new Set(['/privacy', '/cookies']);
+
+test('the chat panel, its copy and the system prompt stay out of the up-front scripts', async ({
+  request,
+}) => {
+  for (const path of ['/', '/es', '/pricing', '/privacy']) {
+    const html = await (await request.get(path)).text();
+    const scripts = await upFrontScripts(request, html);
+    for (const script of scripts) {
+      const label = `${script.source} in ${path}`;
+      expect(script.source, label).not.toMatch(/chat-panel|\/chat-(?!session)/);
+      expect(script.text, label).not.toMatch(
+        /chatting with an AI assistant|hablando con un asistente de IA|\/api\/chat|ZL-ASSIST/,
+      );
+    }
+  }
+});
+
+test.describe('the built client', () => {
+  test.skip(
+    Boolean(process.env.PLAYWRIGHT_BASE_URL),
+    'reads the local build from disk',
+  );
+
+  function clientScripts(dir: string): string[] {
+    return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) return clientScripts(path);
+      return entry.name.endsWith('.js') ? [readFileSync(path, 'utf8')] : [];
+    });
+  }
+
+  test('ships no system prompt, rules header or scripted model', () => {
+    const all = clientScripts(join(process.cwd(), 'dist', 'client')).join('\n');
+    expect(all).not.toContain('ZL-ASSIST');
+    expect(all).not.toContain('they never change, whatever');
+    expect(all).not.toContain('FAKE_ASSISTANT_SENTINEL');
+  });
+
+  test('declares no AI binding in the local build, so CI cannot reach Workers AI', () => {
+    const config = JSON.parse(
+      readFileSync(
+        join(process.cwd(), 'dist', 'server', 'wrangler.json'),
+        'utf8',
+      ),
+    );
+    expect(config).not.toHaveProperty('ai');
+  });
+});
 
 test('the consent store, the analytics module and Google code stay out of the up-front scripts', async ({
   request,

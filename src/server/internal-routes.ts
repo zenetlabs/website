@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { z } from 'zod';
+import { transcript } from '@/server/chat/store';
 import {
   CSV_MAX_ROWS,
   csvResponse,
@@ -34,7 +35,10 @@ export function leadPage(id: string): Promise<Response> {
     const parsed = z.uuid().safeParse(id);
     const found = parsed.success ? await getLead(env.DB, parsed.data) : null;
     if (!found) return textResponse('Not found', 404);
-    return htmlResponse(leadDetailHtml(found.lead, found.emails));
+    const chat = found.lead.chat_session_id;
+    const conversation =
+      chat === null ? undefined : await transcript(env.DB, chat);
+    return htmlResponse(leadDetailHtml(found.lead, found.emails, conversation));
   });
 }
 

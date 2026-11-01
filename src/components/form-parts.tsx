@@ -88,6 +88,8 @@ export function LazyTurnstile({
   instance,
   onToken,
   onError,
+  onLoad,
+  options,
 }: {
   engaged: boolean;
   action: string;
@@ -95,6 +97,8 @@ export function LazyTurnstile({
   instance: Ref<TurnstileInstance | undefined>;
   onToken: (token: string) => void;
   onError: () => void;
+  onLoad?: () => void;
+  options?: { appearance?: 'interaction-only'; execution?: 'execute' };
 }) {
   if (!engaged) return null;
   return (
@@ -108,7 +112,9 @@ export function LazyTurnstile({
           language: locale,
           size: 'flexible',
           refreshExpired: 'auto',
+          ...options,
         }}
+        onWidgetLoad={onLoad}
         onSuccess={onToken}
         onExpire={() => onToken('')}
         onError={onError}

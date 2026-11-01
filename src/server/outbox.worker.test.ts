@@ -19,6 +19,12 @@ const SERVER: ServerConfig = {
     busyCacheMs: 0,
     failureCacheMs: 0,
   },
+  assistant: {
+    model: 'fake',
+    aiGatewayName: null,
+    dailyNeuronBudget: 1_000,
+    perAddressDailyTurns: 40,
+  },
 };
 const SITE: SiteConfig = {
   url: 'https://zenetlabs.com',
@@ -27,6 +33,7 @@ const SITE: SiteConfig = {
   ga4Id: null,
   calculator: { published: false },
   booking: { published: false },
+  assistant: { published: false },
 };
 
 const fetchMock = vi.fn<typeof fetch>();

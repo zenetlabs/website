@@ -216,3 +216,26 @@
     scroll-behavior: auto;
   }
 }
+
+/* The launcher is fixed bottom-right. These rules are unlayered so they beat its utilities. */
+body:has([data-chat-launcher]) {
+  padding-bottom: 5rem;
+}
+
+html:has([data-chat-launcher]) {
+  scroll-padding-bottom: 5rem;
+}
+
+/* A transform, not a new `bottom`: the banner appears after hydration and a
+   moved fixed box would count as layout shift. */
+html:has([data-consent-banner]) [data-chat-launcher] {
+  translate: 0 calc(-1 * var(--consent-reserve));
+}
+
+html:has([data-consent-banner]):has([data-chat-launcher]) {
+  scroll-padding-bottom: calc(var(--consent-reserve) + 5rem);
+}
+
+body:has([data-consent-banner]):has([data-chat-launcher]) {
+  padding-bottom: calc(var(--consent-reserve) + 5rem);
+}

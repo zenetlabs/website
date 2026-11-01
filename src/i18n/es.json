@@ -50,5 +50,12 @@
     "title": "Página no encontrada",
     "description": "La página que buscas no existe.",
     "home": "Volver al inicio"
+  },
+  "chat": {
+    "launcher": "Asistente IA",
+    "launcherLabel": "Abrir el asistente de IA",
+    "unavailable": "No se ha podido cargar el asistente. Escribe a hello@zenetlabs.com o usa el formulario de contacto.",
+    "close": "Cerrar",
+    "contact": "Usar el formulario de contacto"
   }
 }

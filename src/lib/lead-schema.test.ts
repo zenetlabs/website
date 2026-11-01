@@ -83,6 +83,17 @@ describe('leadRequestSchema', () => {
     expect(result.success).toBe(ok);
   });
 
+  it('accepts an optional chat session id and rejects one that is not a uuid', () => {
+    const id = '5f0c2a52-6f4e-4a6c-9d4e-0b1d7b3b0a11';
+    expect(
+      leadRequestSchema.safeParse({ ...VALID, chatSessionId: id }).success,
+    ).toBe(true);
+    expect(
+      leadRequestSchema.safeParse({ ...VALID, chatSessionId: 'abc' }).success,
+    ).toBe(false);
+    expect(leadRequestSchema.safeParse(VALID).success).toBe(true);
+  });
+
   it('rejects a missing attribution', () => {
     const { attribution: _attribution, ...rest } = VALID;
     expect(leadRequestSchema.safeParse(rest).success).toBe(false);

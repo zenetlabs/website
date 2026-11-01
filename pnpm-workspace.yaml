@@ -6,3 +6,6 @@ allowBuilds:
   esbuild: true
   sharp: true
   workerd: true
+
+overrides:
+  '@ai-sdk/provider-utils>undici': 7.30.1

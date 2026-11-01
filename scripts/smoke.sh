@@ -202,6 +202,14 @@ attempt "robots disallows server functions" body_contains "${SITE}/robots.txt" '
 attempt "robots disallows internal" body_contains "${SITE}/robots.txt" 'Disallow: /internal/'
 attempt "405 GET /api/lead" status_is 405 "${SITE}/api/lead"
 attempt "400 POST /api/lead {}" post_status_is 400 "${SITE}/api/lead"
+attempt "405 GET /api/chat" status_is 405 "${SITE}/api/chat"
+# None of these reach the model, so the smoke test costs no neurons.
+if grep -qF '"assistant":true' <<<"$(curl -s --max-time 20 "${SITE}/api/health")"; then
+  attempt "400 POST /api/chat {}" post_status_is 400 "${SITE}/api/chat"
+  attempt "403 POST /api/chat without Origin" post_json_status_is 403 "${SITE}/api/chat" '{}'
+else
+  attempt "503 POST /api/chat while the assistant is dark" post_status_is 503 "${SITE}/api/chat"
+fi
 attempt "internal leads not public" status_is_not 200 "${SITE}/internal/leads"
 attempt "internal leads csv not public" status_is_not 200 "${SITE}/internal/leads.csv"
 attempt "canonical link ${SITE}/es" header_matches 'text/markdown' "${SITE}/es" '^link: <https://zenetlabs\.com/es>; rel="canonical"$'

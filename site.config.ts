@@ -5,6 +5,7 @@ export type SiteConfig = {
   ga4Id: string | null;
   calculator: { published: boolean };
   booking: { published: boolean };
+  assistant: { published: boolean };
 };
 
 const local: SiteConfig = {
@@ -14,6 +15,7 @@ const local: SiteConfig = {
   ga4Id: 'G-LOCALTEST00',
   calculator: { published: true },
   booking: { published: true },
+  assistant: { published: true },
 };
 
 const production: SiteConfig = {
@@ -26,6 +28,8 @@ const production: SiteConfig = {
   calculator: { published: false },
   // TODO(albert): set true once the Google Calendar secret exists and /api/health reports booking:true (docs/ai-assistant.md "Booking activation")
   booking: { published: false },
+  // TODO(albert): set true after the model bake-off passes (docs/ai-assistant.md "Activation")
+  assistant: { published: false },
 };
 
 export function siteConfig(env: string | undefined): SiteConfig {
@@ -43,11 +47,24 @@ export type BookingServerConfig = {
   failureCacheMs: number;
 };
 
+export type ChatModelId =
+  | '@cf/zai-org/glm-4.7-flash'
+  | '@cf/google/gemma-4-26b-a4b-it'
+  | '@cf/meta/llama-4-scout-17b-16e-instruct';
+
+export type AssistantServerConfig = {
+  model: ChatModelId | 'fake';
+  aiGatewayName: string | null;
+  dailyNeuronBudget: number;
+  perAddressDailyTurns: number;
+};
+
 export type ServerConfig = {
   leads: { notifyTo: string };
   resendBaseUrl: string;
   access: AccessConfig | null;
   booking: BookingServerConfig;
+  assistant: AssistantServerConfig;
 };
 
 const localServer: ServerConfig = {
@@ -59,6 +76,12 @@ const localServer: ServerConfig = {
     calendarUrl: 'http://127.0.0.1:4175/__google/calendar/v3',
     busyCacheMs: 0,
     failureCacheMs: 0,
+  },
+  assistant: {
+    model: 'fake',
+    aiGatewayName: null,
+    dailyNeuronBudget: 1_000_000,
+    perAddressDailyTurns: 100_000,
   },
 };
 
@@ -73,6 +96,16 @@ const productionServer: ServerConfig = {
     calendarUrl: 'https://www.googleapis.com/calendar/v3',
     busyCacheMs: 60_000,
     failureCacheMs: 45_000,
+  },
+  assistant: {
+    // TODO(albert): confirm the model after the bake-off (pnpm eval:chat against a preview alias)
+    model: '@cf/zai-org/glm-4.7-flash',
+    // TODO(albert): AI Gateway name (docs/ai-assistant.md "AI Gateway"); null calls Workers AI directly
+    aiGatewayName: null,
+    // TODO(albert): raise on Workers Paid; the Free plan stops at 10,000 neurons a day for the whole account
+    dailyNeuronBudget: 8_000,
+    // Two full 20-message sessions a day from one address; the same limit for every visitor behind a shared one.
+    perAddressDailyTurns: 40,
   },
 };
 

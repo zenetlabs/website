@@ -70,6 +70,7 @@ export const bookMeeting = defineTool({
         channel: ctx.channel,
         consentAt: ctx.consentAt,
         attribution: ctx.attribution,
+        chatSessionId: ctx.chatSessionId,
       },
       {
         deps: ctx.deps,

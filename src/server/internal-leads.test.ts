@@ -150,6 +150,58 @@ describe('leadDetailHtml', () => {
   });
 });
 
+describe('the conversation section', () => {
+  const TRANSCRIPT = {
+    session: {
+      created_at: T,
+      locale: 'en' as const,
+      model: 'fake',
+      start_page: '/pricing',
+      user_messages: 2,
+      neurons: 12,
+      guards: 1,
+      is_test: 1,
+    },
+    messages: [
+      { at: T, role: 'user' as const, text: 'How much?' },
+      { at: T, role: 'tool' as const, text: 'get_pricing' },
+      { at: T, role: 'assistant' as const, text: 'See the price list.' },
+    ],
+  };
+
+  it('is absent for a lead without a conversation', () => {
+    expect(leadDetailHtml(DETAIL, [EMAIL])).not.toContain('id="conversation"');
+  });
+
+  it('lists the session and the exchange under #conversation', () => {
+    const html = leadDetailHtml(DETAIL, [EMAIL], TRANSCRIPT);
+    expect(html).toContain('<section id="conversation">');
+    expect(html).toContain('<strong>You:</strong> How much?');
+    expect(html).toContain('<strong>Tool:</strong> get_pricing');
+    expect(html).toContain('<strong>Assistant:</strong> See the price list.');
+    expect(html).toContain('/pricing');
+    expect(html).toContain('<dt>Test session</dt><dd>yes</dd>');
+  });
+
+  it('escapes what the visitor and the model wrote', () => {
+    const html = leadDetailHtml(DETAIL, [EMAIL], {
+      session: { ...TRANSCRIPT.session, start_page: XSS },
+      messages: [
+        { at: T, role: 'user', text: XSS },
+        { at: T, role: 'assistant', text: XSS },
+      ],
+    });
+    expect(html).not.toContain('<script>alert');
+    expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+  });
+
+  it('says so when the transcript has been purged', () => {
+    expect(leadDetailHtml(DETAIL, [EMAIL], null)).toContain(
+      'Conversation no longer stored.',
+    );
+  });
+});
+
 describe('leadsCsv', () => {
   function rows(csv: string): string[] {
     return csv.slice(1).split('\r\n');

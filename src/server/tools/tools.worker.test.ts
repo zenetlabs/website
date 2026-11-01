@@ -34,6 +34,7 @@ function context(
     hostname: 'zenetlabs.com',
     consentAt: NOW,
     attribution: null,
+    chatSessionId: null,
     deps: { ...bookingDeps(DB, world, secret, background), site },
     ...overrides,
   };

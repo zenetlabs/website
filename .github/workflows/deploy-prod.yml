@@ -71,6 +71,13 @@ jobs:
       - uses: ./.github/actions/pnpm-install-hosted
       - name: Build
         run: CLOUDFLARE_ENV=production pnpm build
+      - name: The production build ships the assistant binding and no scripted model
+        run: |
+          if grep -rq FAKE_ASSISTANT_SENTINEL dist/server; then
+            echo "::error::The scripted chat model reached the production server bundle (assistant.model must not be 'fake')"
+            exit 1
+          fi
+          node -e "const c=require('./dist/server/wrangler.json'); if (c.ai?.binding!=='AI' || !c.ratelimits?.some((r)=>r.name==='CHAT_LIMITER')) { console.error('::error::dist/server/wrangler.json lacks the AI binding or CHAT_LIMITER'); process.exit(1); }"
       - name: Apply D1 migrations (expand-only)
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

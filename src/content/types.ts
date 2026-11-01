@@ -561,3 +561,64 @@ export type BookPageContent = {
   contactMail: string;
   llms: string;
 };
+
+export type ChatCopy = {
+  title: string;
+  badge: string;
+  notice: string;
+  privacyLink: string;
+  welcome: string;
+  welcomeBooking: string;
+  suggestions: readonly [string, string];
+  suggestionBooking: string;
+  logLabel: string;
+  you: string;
+  assistant: string;
+  inputLabel: string;
+  placeholder: string;
+  send: string;
+  close: string;
+  verifying: string;
+  writing: string;
+  tools: Record<
+    | 'get_faq'
+    | 'get_pricing'
+    | 'estimate_project'
+    | 'check_availability'
+    | 'book_meeting'
+    | 'navigate',
+    string
+  >;
+  open: string;
+  remaining: string;
+  newSession: string;
+  errorRate: string;
+  errorCaptcha: string;
+  errorReply: string;
+  fallback: {
+    title: string;
+    full: string;
+    text: string;
+    book: string;
+    form: string;
+  };
+  pages: Record<PageId, string>;
+  sections: Record<'services' | 'cases' | 'faq' | 'contact', string>;
+  booking: {
+    title: string;
+    when: string;
+    format: string;
+    name: string;
+    email: string;
+    company: string;
+    topic: string;
+    confirm: string;
+    sending: string;
+    cancel: string;
+    done: string;
+    taken: string;
+    error: string;
+    rate: string;
+    captcha: string;
+  };
+};

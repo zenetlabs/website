@@ -1,5 +1,6 @@
 import type { LeadError } from '@/lib/lead-result';
 import { type LeadRequest, leadRequestSchema } from '@/lib/lead-schema';
+import { linkedChatSession } from '@/server/chat/store';
 import {
   attributionFields,
   CONSENT_VERSION,
@@ -9,7 +10,7 @@ import { type NewLead, storeLead } from '@/server/lead-store';
 import { deliver, type OutboxDeps } from '@/server/outbox';
 import type { Limiter } from '@/server/rate-limit';
 import { guardBrowserPost } from '@/server/request';
-import { errorName } from '@/server/responses';
+import { errorName, jsonError, jsonOk } from '@/server/responses';
 import type { SiteConfig } from '../../site.config';
 
 const MAX_BODY_BYTES = 32_768;
@@ -31,23 +32,15 @@ const STATUS = {
   unavailable: 503,
 } as const satisfies Record<LeadError, number>;
 
-function respond(body: { ok: true } | { ok: false; error: LeadError }) {
-  const headers = new Headers({ 'Cache-Control': 'no-store' });
-  if (!body.ok && body.error === 'rate') headers.set('Retry-After', '60');
-  return Response.json(body, {
-    status: body.ok ? 200 : STATUS[body.error],
-    headers,
-  });
-}
-
 function reject(error: LeadError): Response {
-  return respond({ ok: false, error });
+  return jsonError(error, STATUS[error]);
 }
 
 function newLead(
   input: LeadRequest,
   request: Request,
   site: SiteConfig,
+  chatSessionId: string | null,
 ): NewLead {
   return {
     locale: input.locale,
@@ -59,7 +52,7 @@ function newLead(
     consent_version: CONSENT_VERSION,
     ...attributionFields(input.attribution, site.url),
     context: null,
-    chat_session_id: null,
+    chat_session_id: chatSessionId,
     is_test: isTestSubmission(new URL(request.url).hostname, input.name)
       ? 1
       : 0,
@@ -80,14 +73,24 @@ export async function handleLeadPost(
     turnstileSecret: deps.turnstileSecret,
     fetch: deps.fetch,
   });
-  if (guarded.status === 'honeypot') return respond({ ok: true });
+  if (guarded.status === 'honeypot') return jsonOk();
   if (guarded.status === 'rejected') return reject(guarded.error);
   const { input } = guarded;
 
   const now = deps.now();
+  const chatSessionId = await linkedChatSession(
+    deps.db,
+    deps.site,
+    input.chatSessionId,
+    now,
+  );
   let emails: Awaited<ReturnType<typeof storeLead>>;
   try {
-    emails = await storeLead(deps.db, newLead(input, request, deps.site), now);
+    emails = await storeLead(
+      deps.db,
+      newLead(input, request, deps.site, chatSessionId),
+      now,
+    );
   } catch (error) {
     console.error('lead: store failed', { error: errorName(error) });
     return reject('unavailable');
@@ -97,5 +100,5 @@ export async function handleLeadPost(
       console.error('lead-email: delivery failed', { error: errorName(error) });
     }),
   );
-  return respond({ ok: true });
+  return jsonOk();
 }

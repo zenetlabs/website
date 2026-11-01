@@ -75,6 +75,13 @@ jobs:
             echo "::error::Analytics or consent code reached the production client bundle (ga4Id must be null)"
             exit 1
           fi
+      - name: The production build ships the assistant binding and no scripted model
+        run: |
+          if grep -rq FAKE_ASSISTANT_SENTINEL dist/server; then
+            echo "::error::The scripted chat model reached the production server bundle (assistant.model must not be 'fake')"
+            exit 1
+          fi
+          node -e "const c=require('./dist/server/wrangler.json'); if (c.ai?.binding!=='AI' || !c.ratelimits?.some((r)=>r.name==='CHAT_LIMITER')) { console.error('::error::dist/server/wrangler.json lacks the AI binding or CHAT_LIMITER'); process.exit(1); }"
       - name: Route tree is committed
         run: git diff --exit-code src/routeTree.gen.ts
       - name: Validate the deploy config

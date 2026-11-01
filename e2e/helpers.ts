@@ -73,6 +73,8 @@ export const CALCULATOR_RESULTS: readonly string[] = CALCULATOR_PUBLISHED
   ? [CALCULATOR_PAIR.en, CALCULATOR_PAIR.es].map((path) => `${path}?${RESULT}`)
   : [];
 
+export const ASSISTANT_PUBLISHED = SITE_FLAGS.assistant.published;
+
 export const BOOK_PAIR = { en: '/book', es: '/es/reservar' } as const;
 
 export const BOOKING_PUBLISHED = SITE_FLAGS.booking.published;

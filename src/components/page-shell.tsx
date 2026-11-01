@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { ChatLauncher } from '@/components/chat-launcher';
 import { ConsentManager } from '@/components/consent-manager';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
@@ -15,6 +16,7 @@ export function PageShell({ children }: { children: ReactNode }) {
         {children}
       </main>
       <SiteFooter locale={locale} />
+      <ChatLauncher />
     </>
   );
 }

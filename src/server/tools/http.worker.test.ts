@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { clearBusyCache } from '@/server/booking';
 import { clearTokenCache } from '@/server/google-auth';
-import { getHealth } from '@/server/health';
+import { assistantLive, getHealth } from '@/server/health';
 import {
   handleToolRequest,
   manifestResponse,
@@ -75,6 +75,7 @@ function post(
   body: unknown,
   headers: Record<string, string> = {},
   url = `${ORIGIN}/api/tools/${name}`,
+  overrides: Partial<ToolHttpDeps> = {},
 ): Promise<Response> {
   const request = new Request(url, {
     method: 'POST',
@@ -85,7 +86,7 @@ function post(
     },
     body: typeof body === 'string' ? body : JSON.stringify(body),
   });
-  return handleToolRequest(request, name, deps());
+  return handleToolRequest(request, name, deps(overrides));
 }
 
 const browser = (
@@ -317,6 +318,142 @@ describe('the browser booking path', () => {
     expect(await json(response)).toMatchObject({ error: 'captcha' });
     expect(world.events).toEqual([]);
     expect(await count('bookings')).toBe(0);
+  });
+
+  describe('from the chat card', () => {
+    const SESSION = '5f0c2a52-6f4e-4a6c-9d4e-0b1d7b3b0a11';
+    const LIVE_SITE = { ...TEST_SITE, assistant: { published: true } };
+    const withChat = { ...BROWSER, chatSessionId: SESSION };
+
+    async function session(createdAt: number) {
+      await DB.prepare(
+        `INSERT INTO chat_sessions (id, created_at, last_at, locale, model, start_page, user_messages)
+         VALUES (?1, ?2, ?2, 'en', 'fake', '/', 1)`,
+      )
+        .bind(SESSION, createdAt)
+        .run();
+    }
+
+    beforeEach(async () => {
+      await DB.prepare('DELETE FROM chat_sessions').run();
+      world.turnstile = {
+        success: true,
+        action: 'book',
+        hostname: 'zenetlabs.com',
+      };
+    });
+
+    it('books through book_meeting with its checks, as the chat channel, linked to the conversation', async () => {
+      await session(NOW - 60_000);
+      const response = await post(
+        'book_meeting',
+        withChat,
+        { Origin: ORIGIN },
+        undefined,
+        {
+          site: LIVE_SITE,
+        },
+      );
+      expect(await json(response)).toMatchObject({
+        ok: true,
+        result: { status: 'booked' },
+      });
+      await Promise.allSettled(background);
+      expect(world.turnstileCalls).toBe(1);
+      expect(
+        await DB.prepare('SELECT source, chat_session_id FROM leads').first(),
+      ).toEqual({
+        source: 'chat',
+        chat_session_id: SESSION,
+      });
+      expect(await DB.prepare('SELECT channel FROM bookings').first()).toEqual({
+        channel: 'chat',
+      });
+    });
+
+    it('still enforces the booking caps: a second booking from the same address is refused', async () => {
+      await session(NOW - 60_000);
+      const site = { site: LIVE_SITE };
+      await post('book_meeting', withChat, { Origin: ORIGIN }, undefined, site);
+      const again = await post(
+        'book_meeting',
+        { ...withChat, slot: '2027-01-13T09:00:00.000Z' },
+        { Origin: ORIGIN },
+        undefined,
+        site,
+      );
+      expect(await json(again)).toMatchObject({
+        result: { status: 'rejected', reason: 'limit' },
+      });
+    });
+
+    it('needs Turnstile like any browser booking', async () => {
+      await session(NOW - 60_000);
+      world.turnstile = {
+        success: false,
+        action: 'book',
+        hostname: 'zenetlabs.com',
+      };
+      const response = await post(
+        'book_meeting',
+        withChat,
+        { Origin: ORIGIN },
+        undefined,
+        { site: LIVE_SITE },
+      );
+      expect(response.status).toBe(403);
+      expect(await count('bookings')).toBe(0);
+    });
+
+    it.each([
+      ['an unknown session', null],
+      ['a session older than a day', 25 * 3_600_000],
+    ])('falls back to the web channel for %s', async (_label, age) => {
+      if (age !== null) await session(NOW - age);
+      const response = await post(
+        'book_meeting',
+        withChat,
+        { Origin: ORIGIN },
+        undefined,
+        { site: LIVE_SITE },
+      );
+      expect(await json(response)).toMatchObject({
+        result: { status: 'booked' },
+      });
+      await Promise.allSettled(background);
+      expect(
+        await DB.prepare('SELECT source, chat_session_id FROM leads').first(),
+      ).toEqual({
+        source: 'booking',
+        chat_session_id: null,
+      });
+      expect(await DB.prepare('SELECT channel FROM bookings').first()).toEqual({
+        channel: 'web',
+      });
+    });
+
+    it('ignores the session while the assistant is dark', async () => {
+      await session(NOW - 60_000);
+      await post('book_meeting', withChat, { Origin: ORIGIN }, undefined, {
+        site: { ...TEST_SITE, assistant: { published: false } },
+      });
+      await Promise.allSettled(background);
+      expect(
+        await DB.prepare('SELECT source, chat_session_id FROM leads').first(),
+      ).toEqual({
+        source: 'booking',
+        chat_session_id: null,
+      });
+    });
+
+    it('rejects a session id that is not a uuid', async () => {
+      const response = await post(
+        'book_meeting',
+        { ...BROWSER, chatSessionId: 'x' },
+        { Origin: ORIGIN },
+      );
+      expect(response.status).toBe(400);
+    });
   });
 
   it('books, records the channel and the campaign, and sets no CORS headers', async () => {
@@ -568,20 +705,43 @@ describe('manifest and health', () => {
         GOOGLE_CALENDAR: binding(secret),
         TOOLS_BEARER_SECRET: binding('x'),
       }),
-    ).toEqual({ ok: true, booking: true, toolsBearer: true });
+    ).toEqual({
+      ok: true,
+      booking: true,
+      toolsBearer: true,
+      assistant: false,
+    });
     expect(
       await getHealth({
         GOOGLE_CALENDAR: binding('UNSET'),
         TOOLS_BEARER_SECRET: binding(new Error('Secret not found')),
       }),
-    ).toEqual({ ok: true, booking: false, toolsBearer: false });
+    ).toEqual({
+      ok: true,
+      booking: false,
+      toolsBearer: false,
+      assistant: false,
+    });
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(
       await getHealth({
         GOOGLE_CALENDAR: binding('{"broken"'),
         TOOLS_BEARER_SECRET: binding('x'),
       }),
-    ).toEqual({ ok: true, booking: false, toolsBearer: true });
+    ).toEqual({
+      ok: true,
+      booking: false,
+      toolsBearer: true,
+      assistant: false,
+    });
     log.mockRestore();
+  });
+
+  it('reports the assistant only when it is published and a model exists', () => {
+    expect(assistantLive(TEST_SITE, true)).toBe(true);
+    expect(assistantLive(TEST_SITE, false)).toBe(false);
+    expect(assistantLive({ assistant: { published: false } }, true)).toBe(
+      false,
+    );
   });
 });
