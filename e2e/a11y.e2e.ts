@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import {
+  CALCULATOR_RESULTS,
   CASE_PAIR,
   gotoHydrated,
   HOLDED_PAGES,
@@ -16,7 +17,7 @@ const VIEWPORTS = [
   { width: 412, height: 915 },
   { width: 1280, height: 900 },
 ];
-const URLS = [...PAGES, '/nope', '/es/nope'];
+const URLS = [...PAGES, ...CALCULATOR_RESULTS, '/nope', '/es/nope'];
 
 for (const viewport of VIEWPORTS) {
   for (const colorScheme of ['light', 'dark'] as const) {
@@ -63,6 +64,7 @@ const OVERFLOW_URLS = [
   SECTOR_PAGE,
   CASE_PAIR.en,
   CASE_PAIR.es,
+  ...CALCULATOR_RESULTS,
 ];
 
 for (const url of OVERFLOW_URLS) {

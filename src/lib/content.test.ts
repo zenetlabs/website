@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { aboutPage as enAbout } from '@/content/en/about';
+import { calculatorPage as enCalculator } from '@/content/en/calculator';
 import { cases as enCases } from '@/content/en/cases';
 import { companies as enCompanies } from '@/content/en/companies';
 import {
@@ -12,6 +13,7 @@ import { home as enHome } from '@/content/en/home';
 import { llms as enLlms } from '@/content/en/llms';
 import { pricingPage as enPricing } from '@/content/en/pricing';
 import { aboutPage as esAbout } from '@/content/es/about';
+import { calculatorPage as esCalculator } from '@/content/es/calculator';
 import { cases as esCases } from '@/content/es/cases';
 import { companies as esCompanies } from '@/content/es/companies';
 import {
@@ -23,6 +25,7 @@ import { legalNotice } from '@/content/es/legal-notice';
 import { llms as esLlms } from '@/content/es/llms';
 import { pricingPage as esPricing } from '@/content/es/pricing';
 import { verifactuDates } from '@/content/es/verifactu';
+import type { CalculatorPageContent } from '@/content/types';
 import en from '@/i18n/en.json';
 import es from '@/i18n/es.json';
 import {
@@ -202,6 +205,8 @@ describe('placeholders', () => {
       esHome,
       enPricing,
       esPricing,
+      enCalculator,
+      esCalculator,
       enAbout,
       esAbout,
       enCases,
@@ -492,5 +497,62 @@ describe('page bodies across locales', () => {
   it('gives only the Spanish home a Verifactu strip', () => {
     expect('verifactu' in enHome).toBe(false);
     expect('verifactu' in esHome).toBe(true);
+  });
+});
+
+describe('calculator content', () => {
+  const COPY = { en: enCalculator, es: esCalculator };
+
+  it.each(locales)('keeps the template tokens in %s', (locale) => {
+    const { result, contact } = COPY[locale];
+    const templates: ReadonlyArray<readonly [string, readonly string[]]> = [
+      [result.weeks, ['{min}', '{max}']],
+      [result.weeksSingle, ['{n}']],
+      [result.tools.many, ['{n}']],
+      [result.rounding, ['{step}']],
+      [result.maintenanceWanted, ['{plan}', '{price}']],
+      [result.maintenanceNotWanted, ['{plan}', '{price}']],
+      [result.diagnosticText, ['{name}', '{price}']],
+      [result.percent, ['{sign}', '{n}']],
+      [contact.intro, ['{version}']],
+    ];
+    for (const [template, tokens] of templates) {
+      for (const token of tokens) expect(template).toContain(token);
+    }
+  });
+
+  it.each(locales)('has no empty copy in %s', (locale) => {
+    expect(
+      stringsOf(COPY[locale]).filter((text) => text.trim() === ''),
+    ).toEqual([]);
+  });
+
+  it('describes the same questions in both locales', () => {
+    const shape = (copy: CalculatorPageContent) =>
+      Object.fromEntries(
+        Object.entries(copy.questions).map(([key, question]) => [
+          key,
+          Object.entries(question.options).map(([id, option]) => [
+            id,
+            option.hint !== undefined,
+          ]),
+        ]),
+      );
+    expect(Object.keys(shape(esCalculator))).toEqual(
+      Object.keys(shape(enCalculator)),
+    );
+    for (const [key, options] of Object.entries(shape(enCalculator))) {
+      expect(
+        shape(esCalculator)[key]?.map(([id]) => id),
+        key,
+      ).toEqual(options.map(([id]) => id));
+    }
+  });
+
+  it('keeps the SEO strings within sane limits', () => {
+    for (const { meta } of [enCalculator, esCalculator]) {
+      expect(meta.metaTitle.length).toBeLessThanOrEqual(70);
+      expect(meta.description.length).toBeLessThanOrEqual(200);
+    }
   });
 });

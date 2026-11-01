@@ -1,6 +1,7 @@
 import type { LocationRewrite } from '@tanstack/react-router';
 import type { ServiceId } from '@/content/types';
 import { defaultLocale, type Locale, localePath, locales } from '@/lib/i18n';
+import { SITE } from '@/lib/site';
 
 export const PAGE_IDS = [
   'home',
@@ -17,6 +18,7 @@ export const PAGE_IDS = [
   'travelAgencies',
   'viatsyCase',
   'pricing',
+  'calculator',
   'about',
   'privacy',
   'cookies',
@@ -41,9 +43,15 @@ export const LANDING_PAGE_IDS = [
 ] as const satisfies readonly PageId[];
 export type LandingPageId = (typeof LANDING_PAGE_IDS)[number];
 
+export type SiteFlags = Pick<typeof SITE, 'calculator'>;
+
 type Slugs = Partial<Record<Locale, string>>;
 
-type BaseEntry = { lastmod: string; parent?: PageId } & (
+type BaseEntry = {
+  lastmod: string;
+  parent?: PageId;
+  flag?: keyof SiteFlags;
+} & (
   | { slugs: Slugs & { en: string }; route?: string }
   | { slugs: Slugs & { en?: undefined }; route: string }
 );
@@ -156,6 +164,12 @@ export const PAGES: Record<
     slugs: { en: '/pricing', es: '/precios' },
     lastmod: '2026-10-31',
   },
+  calculator: {
+    slugs: { en: '/pricing/calculator', es: '/precios/calculadora' },
+    parent: 'pricing',
+    flag: 'calculator',
+    lastmod: '2026-11-01',
+  },
   about: {
     slugs: { en: '/about', es: '/sobre-nosotros' },
     lastmod: '2026-10-31',
@@ -219,8 +233,15 @@ export function pageLocales(page: PageId): Locale[] {
   return locales.filter((locale) => hasLocale(page, locale));
 }
 
-export function pagesIn(locale: Locale): PageId[] {
-  return PAGE_IDS.filter((page) => hasLocale(page, locale));
+export function isPublished(page: PageId, site: SiteFlags = SITE): boolean {
+  const { flag } = PAGES[page];
+  return flag === undefined || site[flag].published;
+}
+
+export function pagesIn(locale: Locale, site: SiteFlags = SITE): PageId[] {
+  return PAGE_IDS.filter(
+    (page) => hasLocale(page, locale) && isPublished(page, site),
+  );
 }
 
 export function slugForms(page: PageId): string[] {

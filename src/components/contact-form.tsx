@@ -9,7 +9,7 @@ import { attribution, submitLead } from '@/lib/lead-client';
 import type { LeadError } from '@/lib/lead-result';
 import { pagePath } from '@/lib/page-registry';
 import { PUBLIC_EMAIL, SITE } from '@/lib/site';
-import { track } from '@/lib/track';
+import { type LeadMethod, track } from '@/lib/track';
 
 const CONTROL =
   'w-full rounded-input border border-border bg-bg px-3.5 py-3 text-base';
@@ -45,7 +45,9 @@ function text(data: FormData, name: string): string {
   return typeof value === 'string' ? value : '';
 }
 
-export function ContactForm() {
+export type ContactPrefill = { message: string; method: LeadMethod };
+
+export function ContactForm({ prefill }: { prefill?: ContactPrefill }) {
   const { contact } = useMessages();
   const { form: copy } = contact;
   const locale = useLocale();
@@ -93,7 +95,7 @@ export function ContactForm() {
         attribution: await attribution(),
       });
       if (result.ok) {
-        track('generate_lead', { method: 'form' });
+        track('generate_lead', { method: prefill?.method ?? 'form' });
         succeed();
       } else fail(failureFor(result.error));
     } catch {
@@ -165,6 +167,7 @@ export function ContactForm() {
                 <textarea
                   id={id}
                   name="message"
+                  defaultValue={prefill?.message}
                   required
                   minLength={10}
                   maxLength={5000}

@@ -1,10 +1,11 @@
 import { locales } from '@/lib/i18n';
-import { PAGES, pagesIn } from '@/lib/page-registry';
+import { PAGES, pagesIn, type SiteFlags } from '@/lib/page-registry';
 import { alternateUrls, pageUrl } from '@/lib/seo';
+import { SITE } from '@/lib/site';
 
-function buildSitemap(): string {
+export function buildSitemap(site: SiteFlags = SITE): string {
   const entries = locales.flatMap((locale) =>
-    pagesIn(locale).map((page) => {
+    pagesIn(locale, site).map((page) => {
       const alternates = alternateUrls(page)
         .map(
           ({ hreflang, href }) =>

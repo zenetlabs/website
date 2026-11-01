@@ -29,6 +29,13 @@ describe('{-$locale} layout', () => {
     expect(hasNotFound(await load(path))).toBe(false);
   });
 
+  it.each(['/pricing/calculator', '/es/precios/calculadora'])(
+    'answers 404 for %s while the calculator is unpublished',
+    async (path) => {
+      expect(hasNotFound(await load(path))).toBe(true);
+    },
+  );
+
   it.each(['/legal-notice', '/fr/privacy'])(
     'answers 404 for %s',
     async (path) => {

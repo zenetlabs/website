@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import {
+  CALCULATOR_RESULTS,
   deferredScripts,
   gotoHydrated,
   HOLDED_PAGES,
@@ -10,7 +11,7 @@ import {
   waitForHydration,
 } from './helpers';
 
-for (const url of PAGES) {
+for (const url of [...PAGES, ...CALCULATOR_RESULTS]) {
   test(`${url} hydrates without errors`, async ({ page }) => {
     const problems: string[] = [];
     page.on('pageerror', (error) =>

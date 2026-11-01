@@ -2,12 +2,17 @@ import { gzipSync } from 'node:zlib';
 import { type APIRequestContext, expect, test } from '@playwright/test';
 import { siteConfig } from '../site.config';
 import { aboutPage as enAbout } from '../src/content/en/about';
+import { calculatorPage as enCalculator } from '../src/content/en/calculator';
 import { home as enHome } from '../src/content/en/home';
 import { pricingPage as enPricing } from '../src/content/en/pricing';
 import { aboutPage as esAbout } from '../src/content/es/about';
+import { calculatorPage as esCalculator } from '../src/content/es/calculator';
 import { home as esHome } from '../src/content/es/home';
 import { pricingPage as esPricing } from '../src/content/es/pricing';
 import {
+  CALCULATOR_PAIR,
+  CALCULATOR_PUBLISHED,
+  CALCULATOR_RESULTS,
   CASE_PAIR,
   deferredScripts,
   ES_ONLY_PAGES,
@@ -25,7 +30,11 @@ const { FAQ } = await import('../test/faq');
 const R1_ENTRY_JS_GZIP = 128_361;
 const BUDGET = R1_ENTRY_JS_GZIP + 10_240;
 
-const URLS = [...PAIRS.flatMap(({ en, es }) => [en, es]), ...ES_ONLY_PAGES];
+const URLS = [
+  ...PAIRS.flatMap(({ en, es }) => [en, es]),
+  ...ES_ONLY_PAGES,
+  ...CALCULATOR_RESULTS,
+];
 
 type Kind =
   | 'home'
@@ -43,7 +52,8 @@ type Kind =
   | 'hubspot'
   | 'verifactu'
   | 'sector'
-  | 'case';
+  | 'case'
+  | 'calculator';
 type Locale = 'en' | 'es';
 
 const NEEDLES: Record<Kind, Partial<Record<Locale, string>>> = {
@@ -87,13 +97,22 @@ const NEEDLES: Record<Kind, Partial<Record<Locale, string>>> = {
   verifactu: { es: 'Registros encadenados' },
   sector: { es: 'Reservas y confirmaciones de proveedores' },
   case: { en: 'a lot of copying', es: 'mucho copiar y pegar' },
+  calculator: {
+    en: enCalculator.disclaimer.title,
+    es: esCalculator.disclaimer.title,
+  },
 };
 
-const PAGES: ReadonlyArray<{
-  path: string;
-  locale: Locale;
-  kinds: readonly Kind[];
-}> = [
+type PageCase = { path: string; locale: Locale; kinds: readonly Kind[] };
+
+const CALCULATOR_CASES: readonly PageCase[] = CALCULATOR_PUBLISHED
+  ? [
+      { path: CALCULATOR_PAIR.en, locale: 'en', kinds: ['calculator'] },
+      { path: CALCULATOR_PAIR.es, locale: 'es', kinds: ['calculator'] },
+    ]
+  : [];
+
+const PAGES: readonly PageCase[] = [
   { path: '/', locale: 'en', kinds: ['home', 'faq'] },
   { path: '/es', locale: 'es', kinds: ['home', 'faq'] },
   { path: '/pricing', locale: 'en', kinds: ['pricing'] },
@@ -135,6 +154,7 @@ const PAGES: ReadonlyArray<{
   { path: SECTOR_PAGE, locale: 'es', kinds: ['sector'] },
   { path: CASE_PAIR.en, locale: 'en', kinds: ['case'] },
   { path: CASE_PAIR.es, locale: 'es', kinds: ['case'] },
+  ...CALCULATOR_CASES,
 ];
 
 const KINDS: readonly Kind[] = [
@@ -154,6 +174,7 @@ const KINDS: readonly Kind[] = [
   'verifactu',
   'sector',
   'case',
+  'calculator',
 ];
 const LOCALES: readonly Locale[] = ['en', 'es'];
 

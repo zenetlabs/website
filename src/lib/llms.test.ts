@@ -517,3 +517,14 @@ describe('llmsResponse', () => {
     expect(headers.get('X-Robots-Tag')).toBe('noindex');
   });
 });
+
+describe.each(locales)('while the calculator is unpublished (%s)', (locale) => {
+  it('mentions it in neither llms.txt nor llms-full.txt', () => {
+    const { meta } = SERVICE_BODIES[locale].calculator;
+    for (const text of [LLMS_TXT[locale], LLMS_FULL[locale]]) {
+      expect(text).not.toContain(meta.metaTitle);
+      expect(text).not.toContain(pageUrl(locale, 'calculator'));
+      expect(text).not.toContain(markdownUrl(locale, 'calculator'));
+    }
+  });
+});

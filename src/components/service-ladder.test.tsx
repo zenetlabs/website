@@ -78,3 +78,18 @@ describe.each([
     expect(links[0]).toHaveAttribute('href', pricing);
   });
 });
+
+describe('ServiceLadder while the calculator is unpublished', () => {
+  it('does not link to it', () => {
+    render(
+      <ServiceLadder
+        copy={enHome.services}
+        services={SERVICES.en}
+        locale="en"
+      />,
+    );
+    expect(
+      screen.queryByRole('link', { name: /estimate your project/i }),
+    ).toBeNull();
+  });
+});

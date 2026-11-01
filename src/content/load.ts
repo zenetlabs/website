@@ -1,5 +1,6 @@
 import type {
   AboutPageContent,
+  CalculatorPageContent,
   CasePageContent,
   CompanyCopy,
   FaqItem,
@@ -41,6 +42,19 @@ const PRICING = {
       import('@/content/es/pricing'),
       import('@/content/es/services'),
       import('@/content/es/services-hub'),
+    ]),
+};
+
+const CALCULATOR = {
+  en: () =>
+    Promise.all([
+      import('@/content/en/calculator'),
+      import('@/content/en/services'),
+    ]),
+  es: () =>
+    Promise.all([
+      import('@/content/es/calculator'),
+      import('@/content/es/services'),
     ]),
 };
 
@@ -164,6 +178,14 @@ export async function loadPricingContent(locale: Locale): Promise<{
   const [{ pricingPage }, { services }, { servicesHub }] =
     await PRICING[locale]();
   return { page: pricingPage, services, hub: servicesHub };
+}
+
+export async function loadCalculatorContent(locale: Locale): Promise<{
+  copy: CalculatorPageContent;
+  services: Services;
+}> {
+  const [{ calculatorPage }, { services }] = await CALCULATOR[locale]();
+  return { copy: calculatorPage, services };
 }
 
 export async function loadAboutContent(locale: Locale): Promise<{

@@ -1,3 +1,5 @@
+import type { ProjectType } from '@/lib/calculator-answers';
+
 export type LeadMethod = 'form' | 'chat' | 'voice' | 'calculator' | 'booking';
 
 export type CtaId =
@@ -14,13 +16,13 @@ export type CtaId =
 type ParamEvents = {
   generate_lead: { method: LeadMethod };
   cta_click: { cta_id: CtaId };
+  calculator_complete: { project_type: ProjectType };
 };
 type PlainEvent =
   | 'book_meeting'
   | 'chat_open'
   | 'chat_message'
   | 'voice_call_start'
-  | 'calculator_complete'
   | 'pricing_view'
   | 'language_switch';
 

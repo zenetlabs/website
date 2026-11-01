@@ -27,6 +27,7 @@ import { Route as Char123LocaleChar125VerifactuRouteImport } from './routes/{-$l
 import { Route as InternalLeadsIdRouteImport } from './routes/internal/leads.$id'
 import { Route as Char123LocaleChar125CaseStudiesViatsyRouteImport } from './routes/{-$locale}/case-studies/viatsy'
 import { Route as Char123LocaleChar125IndustriesTravelAgenciesRouteImport } from './routes/{-$locale}/industries/travel-agencies'
+import { Route as Char123LocaleChar125PricingCalculatorRouteImport } from './routes/{-$locale}/pricing_.calculator'
 import { Route as Char123LocaleChar125ServicesIndexRouteImport } from './routes/{-$locale}/services/index'
 import { Route as Char123LocaleChar125ServicesAiAgentsRouteImport } from './routes/{-$locale}/services/ai-agents'
 import { Route as Char123LocaleChar125ServicesAiAutomationRouteImport } from './routes/{-$locale}/services/ai-automation'
@@ -138,6 +139,12 @@ const Char123LocaleChar125IndustriesTravelAgenciesRoute =
     path: '/industries/travel-agencies',
     getParentRoute: () => Char123LocaleChar125Route,
   } as any)
+const Char123LocaleChar125PricingCalculatorRoute =
+  Char123LocaleChar125PricingCalculatorRouteImport.update({
+    id: '/pricing_/calculator',
+    path: '/pricing/calculator',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
 const Char123LocaleChar125ServicesIndexRoute =
   Char123LocaleChar125ServicesIndexRouteImport.update({
     id: '/services/',
@@ -212,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/internal/leads/$id': typeof InternalLeadsIdRoute
   '/{-$locale}/case-studies/viatsy': typeof Char123LocaleChar125CaseStudiesViatsyRoute
   '/{-$locale}/industries/travel-agencies': typeof Char123LocaleChar125IndustriesTravelAgenciesRoute
+  '/{-$locale}/pricing/calculator': typeof Char123LocaleChar125PricingCalculatorRoute
   '/{-$locale}/services/ai-agents': typeof Char123LocaleChar125ServicesAiAgentsRoute
   '/{-$locale}/services/ai-automation': typeof Char123LocaleChar125ServicesAiAutomationRoute
   '/{-$locale}/services/ai-training': typeof Char123LocaleChar125ServicesAiTrainingRoute
@@ -240,6 +248,7 @@ export interface FileRoutesByTo {
   '/internal/leads/$id': typeof InternalLeadsIdRoute
   '/{-$locale}/case-studies/viatsy': typeof Char123LocaleChar125CaseStudiesViatsyRoute
   '/{-$locale}/industries/travel-agencies': typeof Char123LocaleChar125IndustriesTravelAgenciesRoute
+  '/{-$locale}/pricing/calculator': typeof Char123LocaleChar125PricingCalculatorRoute
   '/{-$locale}/services/ai-agents': typeof Char123LocaleChar125ServicesAiAgentsRoute
   '/{-$locale}/services/ai-automation': typeof Char123LocaleChar125ServicesAiAutomationRoute
   '/{-$locale}/services/ai-training': typeof Char123LocaleChar125ServicesAiTrainingRoute
@@ -270,6 +279,7 @@ export interface FileRoutesById {
   '/internal/leads/$id': typeof InternalLeadsIdRoute
   '/{-$locale}/case-studies/viatsy': typeof Char123LocaleChar125CaseStudiesViatsyRoute
   '/{-$locale}/industries/travel-agencies': typeof Char123LocaleChar125IndustriesTravelAgenciesRoute
+  '/{-$locale}/pricing_/calculator': typeof Char123LocaleChar125PricingCalculatorRoute
   '/{-$locale}/services/ai-agents': typeof Char123LocaleChar125ServicesAiAgentsRoute
   '/{-$locale}/services/ai-automation': typeof Char123LocaleChar125ServicesAiAutomationRoute
   '/{-$locale}/services/ai-training': typeof Char123LocaleChar125ServicesAiTrainingRoute
@@ -301,6 +311,7 @@ export interface FileRouteTypes {
     | '/internal/leads/$id'
     | '/{-$locale}/case-studies/viatsy'
     | '/{-$locale}/industries/travel-agencies'
+    | '/{-$locale}/pricing/calculator'
     | '/{-$locale}/services/ai-agents'
     | '/{-$locale}/services/ai-automation'
     | '/{-$locale}/services/ai-training'
@@ -329,6 +340,7 @@ export interface FileRouteTypes {
     | '/internal/leads/$id'
     | '/{-$locale}/case-studies/viatsy'
     | '/{-$locale}/industries/travel-agencies'
+    | '/{-$locale}/pricing/calculator'
     | '/{-$locale}/services/ai-agents'
     | '/{-$locale}/services/ai-automation'
     | '/{-$locale}/services/ai-training'
@@ -358,6 +370,7 @@ export interface FileRouteTypes {
     | '/internal/leads/$id'
     | '/{-$locale}/case-studies/viatsy'
     | '/{-$locale}/industries/travel-agencies'
+    | '/{-$locale}/pricing_/calculator'
     | '/{-$locale}/services/ai-agents'
     | '/{-$locale}/services/ai-automation'
     | '/{-$locale}/services/ai-training'
@@ -506,6 +519,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char123LocaleChar125IndustriesTravelAgenciesRouteImport
       parentRoute: typeof Char123LocaleChar125Route
     }
+    '/{-$locale}/pricing_/calculator': {
+      id: '/{-$locale}/pricing_/calculator'
+      path: '/pricing/calculator'
+      fullPath: '/{-$locale}/pricing/calculator'
+      preLoaderRoute: typeof Char123LocaleChar125PricingCalculatorRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
     '/{-$locale}/services/': {
       id: '/{-$locale}/services/'
       path: '/services'
@@ -584,6 +604,7 @@ interface Char123LocaleChar125RouteChildren {
   Char123LocaleChar125IndexRoute: typeof Char123LocaleChar125IndexRoute
   Char123LocaleChar125CaseStudiesViatsyRoute: typeof Char123LocaleChar125CaseStudiesViatsyRoute
   Char123LocaleChar125IndustriesTravelAgenciesRoute: typeof Char123LocaleChar125IndustriesTravelAgenciesRoute
+  Char123LocaleChar125PricingCalculatorRoute: typeof Char123LocaleChar125PricingCalculatorRoute
   Char123LocaleChar125ServicesAiAgentsRoute: typeof Char123LocaleChar125ServicesAiAgentsRoute
   Char123LocaleChar125ServicesAiAutomationRoute: typeof Char123LocaleChar125ServicesAiAutomationRoute
   Char123LocaleChar125ServicesAiTrainingRoute: typeof Char123LocaleChar125ServicesAiTrainingRoute
@@ -610,6 +631,8 @@ const Char123LocaleChar125RouteChildren: Char123LocaleChar125RouteChildren = {
     Char123LocaleChar125CaseStudiesViatsyRoute,
   Char123LocaleChar125IndustriesTravelAgenciesRoute:
     Char123LocaleChar125IndustriesTravelAgenciesRoute,
+  Char123LocaleChar125PricingCalculatorRoute:
+    Char123LocaleChar125PricingCalculatorRoute,
   Char123LocaleChar125ServicesAiAgentsRoute:
     Char123LocaleChar125ServicesAiAgentsRoute,
   Char123LocaleChar125ServicesAiAutomationRoute:

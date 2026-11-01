@@ -91,6 +91,7 @@ export const home = {
     },
     lead: 'Todo proyecto empieza con un diagnóstico a precio cerrado. Precios en euros, IVA no incluido.',
     more: 'Ver todos los precios',
+    calculator: 'Calcula tu proyecto',
   },
   process: {
     eyebrow: '03 — Cómo trabajamos',

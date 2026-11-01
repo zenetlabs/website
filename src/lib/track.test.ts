@@ -7,6 +7,7 @@ import {
   it,
   vi,
 } from 'vitest';
+import type { ProjectType } from '@/lib/calculator-answers';
 import { type CtaId, type LeadMethod, track } from '@/lib/track';
 
 let calls: unknown[][];
@@ -62,6 +63,9 @@ describe('track', () => {
     >();
     expectTypeOf(track<'generate_lead'>).parameters.toEqualTypeOf<
       ['generate_lead', { method: LeadMethod }]
+    >();
+    expectTypeOf(track<'calculator_complete'>).parameters.toEqualTypeOf<
+      ['calculator_complete', { project_type: ProjectType }]
     >();
     expectTypeOf(track).toBeCallableWith('pricing_view');
   });

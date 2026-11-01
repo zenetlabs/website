@@ -41,6 +41,16 @@ post_status_is() {
   [ "$got" = "$expected" ]
 }
 
+listed_iff_200() {
+  local path="$1" sitemap listed got
+  sitemap=$(curl -s --max-time 20 "${SITE}/sitemap.xml") || return 1
+  grep -qF '</urlset>' <<<"$sitemap" || return 1
+  listed=no
+  grep -qF "<loc>${SITE}${path}</loc>" <<<"$sitemap" && listed=yes
+  got=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${SITE}${path}") || return 1
+  if [ "$listed" = yes ]; then [ "$got" = 200 ]; else [ "$got" = 404 ]; fi
+}
+
 redirects_to() {
   local url="$1" expected="$2" out code location
   out=$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' --max-time 20 "$url") || return 1
@@ -92,6 +102,10 @@ done
 
 for path in /this-does-not-exist /es/no-existe; do
   attempt "404 ${SITE}${path}" status_is 404 "${SITE}${path}"
+done
+
+for path in /pricing/calculator /es/precios/calculadora; do
+  attempt "calculator ${path} is listed in the sitemap if and only if it answers 200" listed_iff_200 "$path"
 done
 
 attempt "301 http://zenetlabs.com/es" redirects_to "http://zenetlabs.com/es" "${SITE}/es"

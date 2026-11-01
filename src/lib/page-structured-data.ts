@@ -10,6 +10,7 @@ import type {
   WithContext,
 } from 'schema-dts';
 import type {
+  CalculatorPageContent,
   CasePageContent,
   Country,
   FaqItem,
@@ -203,6 +204,7 @@ const byFaq = new WeakMap<object, Entries>();
 const byEntity = new WeakMap<object, WeakMap<object, Entries>>();
 const byPage = new Map<string, Entries>();
 const byHub = new WeakMap<object, Entries>();
+const byCalculator = new WeakMap<object, Entries>();
 
 export function homeStructuredData(locale: Locale, faq: readonly FaqItem[]) {
   const found = byFaq.get(faq);
@@ -255,6 +257,25 @@ export function breadcrumbStructuredData(
     jsonLd(breadcrumbNode(locale, page, { home: SITE_NAME, [page]: name })),
   ];
   byPage.set(key, made);
+  return made;
+}
+
+export function calculatorStructuredData(
+  locale: Locale,
+  page: CalculatorPageContent,
+) {
+  const found = byCalculator.get(page);
+  if (found) return found;
+  const made = [
+    jsonLd(
+      breadcrumbNode(locale, 'calculator', {
+        home: SITE_NAME,
+        pricing: page.breadcrumb.pricing,
+        calculator: page.meta.title,
+      }),
+    ),
+  ];
+  byCalculator.set(page, made);
   return made;
 }
 

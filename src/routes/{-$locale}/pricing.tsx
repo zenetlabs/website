@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { CalculatorCallout } from '@/components/calculator-callout';
 import { CtaSection } from '@/components/cta-section';
 import { BulletList } from '@/components/lists';
 import { Container, EmphasisTitle } from '@/components/section';
@@ -42,6 +43,7 @@ function Pricing() {
         <p className="mt-8 max-w-2xl text-lg text-muted-fg">{page.lead}</p>
         <p className={`mt-6 ${EYEBROW}`}>{page.taxNote}</p>
       </Container>
+      <CalculatorCallout copy={page.calculator} locale={locale} />
       <Container className="grid gap-6 pb-20 md:pb-28">
         {Object.values(services).map((service) => {
           const detail = page.details[service.id];

@@ -86,6 +86,11 @@ export const pricingPage = {
       'The code, accounts and data we set up for you are yours.',
     ],
   },
+  calculator: {
+    title: 'Not sure which line fits?',
+    text: 'Answer six questions and see an indicative range for your project, without leaving your email.',
+    link: 'Open the price calculator',
+  },
   cta: {
     title: 'Start with the diagnostic',
     text: 'Tell us what your team does by hand and we will reply personally.',

@@ -12,11 +12,13 @@ import {
   PAGES,
   type PageId,
   pageLocales,
+  pagesIn,
   SERVICE_PAGE_IDS,
   type ServicePageId,
 } from '@/lib/page-registry';
 import {
   breadcrumbStructuredData,
+  calculatorStructuredData,
   caseStructuredData,
   homeStructuredData,
   pricingStructuredData,
@@ -406,6 +408,11 @@ function routeData(locale: Locale, id: PageId) {
         SERVICE_BODIES[locale].landing.viatsy,
         SERVICE_BODIES[locale].hub,
       );
+    case 'calculator':
+      return calculatorStructuredData(
+        locale,
+        SERVICE_BODIES[locale].calculator,
+      );
     default:
       return breadcrumbStructuredData(locale, id, `Name of ${id}`);
   }
@@ -525,7 +532,11 @@ describe.each(locales)('route structured data (%s)', (locale) => {
 
   it.each(
     PAGE_IDS.filter(
-      (id) => id !== 'home' && !isServicePage(id) && !isHoldedPage(id),
+      (id) =>
+        id !== 'home' &&
+        id !== 'calculator' &&
+        !isServicePage(id) &&
+        !isHoldedPage(id),
     ),
   )('adds a two-step breadcrumb to %s', (id) => {
     if (!pageLocales(id).includes(locale)) return;
@@ -539,6 +550,36 @@ describe.each(locales)('route structured data (%s)', (locale) => {
       item: `${base}${locale === 'en' ? '/' : ''}`,
     });
     expect(itemListElement[1]?.item.startsWith(ORIGIN)).toBe(true);
+  });
+
+  it('adds a three-step breadcrumb to the calculator, under pricing', () => {
+    const { itemListElement } = breadcrumbSchema.parse(
+      page('calculator').find(
+        (block) => breadcrumbSchema.safeParse(block).success,
+      ),
+    );
+    expect(page('calculator')).toHaveLength(1);
+    expect(itemListElement.map((entry) => entry.position)).toEqual([1, 2, 3]);
+    expect(itemListElement.map((entry) => entry.name)).toEqual([
+      'Zenet Labs',
+      SERVICE_BODIES[locale].calculator.breadcrumb.pricing,
+      SERVICE_BODIES[locale].calculator.meta.title,
+    ]);
+    expect(itemListElement.map((entry) => entry.item)).toEqual([
+      `${base}${locale === 'en' ? '/' : ''}`,
+      pageUrl(locale, 'pricing'),
+      pageUrl(locale, 'calculator'),
+    ]);
+  });
+
+  it('links to the calculator from no JSON-LD while it is unpublished', () => {
+    const slug = PAGES.calculator.slugs[locale] ?? '';
+    expect(slug).not.toBe('');
+    const json = JSON.stringify([
+      ...layout,
+      ...pagesIn(locale).flatMap((id) => page(id)),
+    ]);
+    expect(json).not.toContain(slug);
   });
 
   it.each(SERVICE_PAGE_IDS)('adds a three-step breadcrumb to %s', (id) => {
