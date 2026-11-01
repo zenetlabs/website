@@ -217,13 +217,13 @@
   }
 }
 
-/* The launcher is fixed bottom-right. These rules are unlayered so they beat its utilities. */
+/* The launcher is fixed bottom-right. These rules are unlayered so they beat its utilities.
+   There is deliberately no scroll-padding-bottom for the launcher alone: with the page's
+   smooth scrolling it made focus and form validation start an extra scroll animation,
+   and a click landing in the middle of it missed (the contact e2e flaked on CI). The body
+   padding keeps the last footer links clear; the banner case below still reserves room. */
 body:has([data-chat-launcher]) {
   padding-bottom: 5rem;
-}
-
-html:has([data-chat-launcher]) {
-  scroll-padding-bottom: 5rem;
 }
 
 /* A transform, not a new `bottom`: the banner appears after hydration and a
