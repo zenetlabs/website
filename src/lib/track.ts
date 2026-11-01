@@ -11,7 +11,8 @@ export type CtaId =
   | 'page_cta'
   | 'pricing'
   | 'about'
-  | 'services';
+  | 'services'
+  | 'contact_book';
 
 type ParamEvents = {
   generate_lead: { method: LeadMethod };

@@ -1,3 +1,4 @@
+import type { BookingZone } from '@/content/booking-rules';
 import type {
   ProjectType,
   ToolId,
@@ -162,7 +163,7 @@ export type HomeContent = {
   };
   founder: SectionCopy & { more: string };
   faq: SectionCopy;
-  contact: SectionCopy & { mail: string; human: string };
+  contact: SectionCopy & { mail: string; human: string; book: string };
 };
 
 export type PricingPageContent = {
@@ -502,4 +503,61 @@ export type CalculatorPageContent = {
     page: string;
     mail: string;
   };
+};
+
+export type BookPageContent = {
+  meta: PageMeta;
+  breadcrumb: { label: string };
+  eyebrow: string;
+  title: TitleParts;
+  lead: string;
+  facts: readonly {
+    id: 'duration' | 'where' | 'cost' | 'next';
+    label: string;
+    value: string;
+  }[];
+  zone: {
+    label: string;
+    show: string;
+    legend: string;
+    zones: Record<BookingZone, string>;
+  };
+  picker: {
+    legend: string;
+    times: { one: string; other: string };
+    required: string;
+  };
+  form: {
+    label: string;
+    details: string;
+    name: string;
+    email: string;
+    company: string;
+    topic: string;
+    consent: string;
+    consentLink: string;
+    honeypot: string;
+    submit: string;
+    sending: string;
+    noscript: string;
+  };
+  success: {
+    title: string;
+    when: string;
+    text: string;
+    meet: string;
+    meetLater: string;
+  };
+  errors: {
+    taken: string;
+    dayFull: string;
+    limit: string;
+    send: string;
+    captcha: string;
+    rate: string;
+  };
+  unavailable: { title: string; text: string };
+  empty: { title: string; text: string };
+  contactMail: string;
+  llms: string;
 };

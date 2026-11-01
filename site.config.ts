@@ -4,6 +4,7 @@ export type SiteConfig = {
   cfBeaconToken: string;
   ga4Id: string | null;
   calculator: { published: boolean };
+  booking: { published: boolean };
 };
 
 const local: SiteConfig = {
@@ -12,6 +13,7 @@ const local: SiteConfig = {
   cfBeaconToken: '',
   ga4Id: 'G-LOCALTEST00',
   calculator: { published: true },
+  booking: { published: true },
 };
 
 const production: SiteConfig = {
@@ -22,6 +24,8 @@ const production: SiteConfig = {
   ga4Id: null,
   // TODO(albert): set true after reviewing src/content/pricing-rules.ts
   calculator: { published: false },
+  // TODO(albert): set true once the Google Calendar secret exists and /api/health reports booking:true (docs/ai-assistant.md "Booking activation")
+  booking: { published: false },
 };
 
 export function siteConfig(env: string | undefined): SiteConfig {
@@ -32,16 +36,30 @@ export function siteConfig(env: string | undefined): SiteConfig {
 
 export type AccessConfig = { teamDomain: string; aud: string };
 
+export type BookingServerConfig = {
+  tokenUrl: string;
+  calendarUrl: string;
+  busyCacheMs: number;
+  failureCacheMs: number;
+};
+
 export type ServerConfig = {
   leads: { notifyTo: string };
   resendBaseUrl: string;
   access: AccessConfig | null;
+  booking: BookingServerConfig;
 };
 
 const localServer: ServerConfig = {
   leads: { notifyTo: 'owner-alerts@example.com' },
   resendBaseUrl: 'http://127.0.0.1:4175',
   access: { teamDomain: 'http://127.0.0.1:4175', aud: 'local-access-aud' },
+  booking: {
+    tokenUrl: 'http://127.0.0.1:4175/__google/token',
+    calendarUrl: 'http://127.0.0.1:4175/__google/calendar/v3',
+    busyCacheMs: 0,
+    failureCacheMs: 0,
+  },
 };
 
 const productionServer: ServerConfig = {
@@ -50,6 +68,12 @@ const productionServer: ServerConfig = {
   resendBaseUrl: 'https://api.resend.com',
   // TODO(albert): set { teamDomain: 'https://<team>.cloudflareaccess.com', aud } once the Access app exists
   access: null,
+  booking: {
+    tokenUrl: 'https://oauth2.googleapis.com/token',
+    calendarUrl: 'https://www.googleapis.com/calendar/v3',
+    busyCacheMs: 60_000,
+    failureCacheMs: 45_000,
+  },
 };
 
 export function serverConfig(env: string | undefined): ServerConfig {

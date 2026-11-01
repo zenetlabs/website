@@ -1,7 +1,8 @@
 import { env } from 'cloudflare:workers';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LeadRequest } from '@/lib/lead-schema';
-import { CONSENT_VERSION, handleLeadPost, type LeadDeps } from '@/server/lead';
+import { handleLeadPost, type LeadDeps } from '@/server/lead';
+import { CONSENT_VERSION } from '@/server/lead-fields';
 import type { LeadRow } from '@/server/lead-store';
 import type { ServerConfig, SiteConfig } from '../../site.config';
 
@@ -13,6 +14,12 @@ const SERVER: ServerConfig = {
   leads: { notifyTo: 'owner@example.com' },
   resendBaseUrl: 'https://resend.test',
   access: null,
+  booking: {
+    tokenUrl: 'https://google.test/token',
+    calendarUrl: 'https://google.test/calendar/v3',
+    busyCacheMs: 0,
+    failureCacheMs: 0,
+  },
 };
 const SITE: SiteConfig = {
   url: ORIGIN,
@@ -20,6 +27,7 @@ const SITE: SiteConfig = {
   cfBeaconToken: '',
   ga4Id: null,
   calculator: { published: false },
+  booking: { published: false },
 };
 
 const BODY: LeadRequest = {

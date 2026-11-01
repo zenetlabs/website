@@ -8,6 +8,7 @@ import {
   dueEmails,
   exportLeads,
   getLead,
+  leadStatements,
   leadsOverview,
   markDead,
   markFailed,
@@ -147,6 +148,91 @@ describe('storeLead', () => {
     expect(found?.lead.company).toBeNull();
     expect(found?.lead.context).toBe('{"a":1}');
     expect(found?.lead.utm_source).toBe('x');
+  });
+});
+
+describe('leadStatements confirmation modes', () => {
+  async function kinds(mode: 'capped' | 'always' | 'none', now: number) {
+    const { statements, emails } = leadStatements(DB, NEW_LEAD, now, mode);
+    return emails(await DB.batch(statements)).map((email) => email.kind);
+  }
+
+  it("'always' queues a confirmation despite one within 24 hours", async () => {
+    await store(NEW_LEAD, NOW);
+    expect(await kinds('capped', NOW + 1)).toEqual(['owner']);
+    expect(await kinds('always', NOW + 2)).toEqual(['owner', 'confirmation']);
+  });
+
+  it("'none' queues only the owner email", async () => {
+    expect(await kinds('none', NOW)).toEqual(['owner']);
+    expect(await count('email_outbox')).toBe(1);
+  });
+
+  it("'capped' behaves like storeLead", async () => {
+    expect(await kinds('capped', NOW)).toEqual(['owner', 'confirmation']);
+    expect(await kinds('capped', NOW + 1)).toEqual(['owner']);
+  });
+});
+
+describe('purgeExpired and bookings', () => {
+  async function booking(
+    id: string,
+    createdAt: number,
+    leadId: string | null,
+    status = 'failed',
+  ) {
+    await DB.prepare(
+      `INSERT INTO bookings (id, created_at, slot_start, slot_end, day, status, email, channel, lead_id)
+       VALUES (?1, ?2, ?2, ?2, '2027-01-12', ?4, 'x@example.com', 'web', ?3)`,
+    )
+      .bind(id, createdAt, leadId, status)
+      .run();
+  }
+
+  async function ids(): Promise<string[]> {
+    const { results } = await DB.prepare(
+      'SELECT id FROM bookings ORDER BY id',
+    ).all();
+    return results.map((row) => String(row.id));
+  }
+
+  beforeEach(async () => {
+    await DB.prepare('DELETE FROM bookings').run();
+  });
+
+  it('deletes unconfirmed attempts after 30 days and keeps younger ones', async () => {
+    await booking('old', NOW - 31 * DAY, null, 'expired');
+    await booking('young', NOW - 29 * DAY, null, 'expired');
+    await purgeExpired(DB, NOW);
+    expect(await ids()).toEqual(['young']);
+  });
+
+  it('deletes failed and unknown attempts after 30 days even with a lead, and keeps the lead', async () => {
+    const failed = await store(NEW_LEAD, NOW - 100 * DAY);
+    const unknown = await store(
+      { ...NEW_LEAD, email: 'u@example.com' },
+      NOW - 100 * DAY,
+    );
+    await booking('failed', NOW - 31 * DAY, failed.id, 'failed');
+    await booking('unknown', NOW - 31 * DAY, unknown.id, 'unknown');
+    await booking('recent-failed', NOW - 5 * DAY, failed.id, 'failed');
+    await purgeExpired(DB, NOW);
+    expect(await ids()).toEqual(['recent-failed']);
+    expect(await count('leads')).toBe(2);
+  });
+
+  it('keeps a confirmed booking until its lead goes, then deletes it with the lead', async () => {
+    const linked = await store(NEW_LEAD, NOW - 100 * DAY);
+    await booking('linked', NOW - 100 * DAY, linked.id, 'confirmed');
+    await purgeExpired(DB, NOW);
+    expect(await ids()).toEqual(['linked']);
+    const old = await store(
+      { ...NEW_LEAD, email: 'old@example.com' },
+      NOW - 731 * DAY,
+    );
+    await booking('old-linked', NOW - 731 * DAY, old.id, 'confirmed');
+    expect(await purgeExpired(DB, NOW)).toBe(1);
+    expect(await ids()).toEqual(['linked']);
   });
 });
 

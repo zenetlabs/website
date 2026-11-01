@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { jsonLdBlocks } from '../test/json-ld';
-import { gotoHydrated, typesOf } from './helpers';
+import { CTA, gotoHydrated, typesOf } from './helpers';
 
 const SERVICE_IDS = [
   'diagnostic',
@@ -16,20 +16,20 @@ const PRICING = [
   {
     path: '/pricing',
     tax: 'exclude GST',
-    cta: '/#contact',
+    cta: CTA.en,
     faq: '/#faq',
   },
   {
     path: '/es/precios',
     tax: 'no incluyen el IVA',
-    cta: '/es#contact',
+    cta: CTA.es,
     faq: '/es#faq',
   },
 ] as const;
 
 const ABOUT = [
-  { path: '/about', cta: '/#contact' },
-  { path: '/es/sobre-nosotros', cta: '/es#contact' },
+  { path: '/about', cta: CTA.en },
+  { path: '/es/sobre-nosotros', cta: CTA.es },
 ] as const;
 
 const CARD_LINKS: Record<string, (string | null)[][]> = {

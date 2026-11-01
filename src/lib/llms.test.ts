@@ -528,3 +528,32 @@ describe.each(locales)('while the calculator is unpublished (%s)', (locale) => {
     }
   });
 });
+
+describe.each(locales)('the booking page in the llms files (%s)', (locale) => {
+  const PUBLISHED = {
+    calculator: { published: false },
+    booking: { published: true },
+  };
+  const { book } = SERVICE_BODIES[locale];
+
+  it('is absent while unpublished', () => {
+    for (const text of [LLMS_TXT[locale], LLMS_FULL[locale]]) {
+      expect(text).not.toContain(pageUrl(locale, 'book'));
+      expect(text).not.toContain(markdownUrl(locale, 'book'));
+      expect(text).not.toContain(book.llms);
+    }
+  });
+
+  it('adds one contact line and one page entry once published', async () => {
+    const full = await buildLlmsFull(locale, undefined, PUBLISHED);
+    const index = await buildLlmsTxt(locale, undefined, PUBLISHED);
+    expect(full).toContain(
+      `- [${book.llms}](${pageUrl(locale, 'book')}): ${book.lead}`,
+    );
+    expect(full.split(`](${pageUrl(locale, 'book')})`).length - 1).toBe(1);
+    expect(full).toContain(
+      `- [${book.meta.metaTitle}](${markdownUrl(locale, 'book')}): ${book.meta.description}`,
+    );
+    expect(index).toContain(markdownUrl(locale, 'book'));
+  });
+});

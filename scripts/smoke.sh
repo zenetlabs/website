@@ -41,6 +41,21 @@ post_status_is() {
   [ "$got" = "$expected" ]
 }
 
+post_json_status_is() {
+  local expected="$1" url="$2" data="$3" got
+  shift 3
+  got=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -X POST \
+    -H 'Content-Type: application/json' "$@" --data "$data" "$url") || return 1
+  [ "$got" = "$expected" ]
+}
+
+health_shows() {
+  local body
+  body=$(curl -s --max-time 20 "${SITE}/api/health") || return 1
+  grep -qF '"ok":true' <<<"$body" || return 1
+  echo "     health: $body"
+}
+
 listed_iff_200() {
   local path="$1" sitemap listed got
   sitemap=$(curl -s --max-time 20 "${SITE}/sitemap.xml") || return 1
@@ -108,6 +123,18 @@ for path in /pricing/calculator /es/precios/calculadora; do
   attempt "calculator ${path} is listed in the sitemap if and only if it answers 200" listed_iff_200 "$path"
 done
 
+for path in /book /es/reservar; do
+  attempt "booking ${path} is listed in the sitemap if and only if it answers 200" listed_iff_200 "$path"
+done
+
+attempt "api health answers (prints the booking state)" health_shows
+attempt "tools manifest lists book_meeting" body_contains "${SITE}/api/tools" '"book_meeting"'
+attempt "405 GET /api/tools/get_pricing" status_is 405 "${SITE}/api/tools/get_pricing"
+attempt "get_pricing answers 200" post_json_status_is 200 "${SITE}/api/tools/get_pricing" '{}'
+attempt "check_availability answers 200 (ok or unavailable)" post_json_status_is 200 "${SITE}/api/tools/check_availability" '{}'
+attempt "book_meeting without Origin is 403" post_json_status_is 403 "${SITE}/api/tools/book_meeting" '{}'
+attempt "book_meeting with a wrong bearer is 401" post_json_status_is 401 "${SITE}/api/tools/book_meeting" '{}' -H 'Authorization: Bearer smoke-check'
+
 attempt "301 http://zenetlabs.com/es" redirects_to "http://zenetlabs.com/es" "${SITE}/es"
 for rule in \
   "/en|/" \
@@ -136,7 +163,11 @@ for rule in \
   "/verifactu|/es/verifactu-integracion" \
   "/es/case-studies/viatsy|/es/casos/viatsy" \
   "/servicios/integraciones/holded-hubspot|/es/servicios/integraciones/holded-hubspot" \
-  "/case-studies/viatsy/|/case-studies/viatsy"; do
+  "/case-studies/viatsy/|/case-studies/viatsy" \
+  "/reservar|/book" \
+  "/es/book|/es/reservar" \
+  "/en/book|/book" \
+  "/book/|/book"; do
   attempt "301 ${SITE}${rule%%|*}" redirects_to "${SITE}${rule%%|*}" "${SITE}${rule#*|}"
 done
 

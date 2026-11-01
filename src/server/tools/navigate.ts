@@ -1,0 +1,19 @@
+import { z } from 'zod';
+import { locales } from '@/lib/i18n';
+import { NAVIGATE_SECTIONS } from '@/lib/navigate';
+import { PAGE_IDS } from '@/lib/page-registry';
+import { defineClientTool } from '@/server/tools/types';
+
+export const navigate = defineClientTool({
+  name: 'navigate',
+  description: {
+    en: 'Opens a page of the Zenet Labs website in the visitor browser. Only pages of the site can be opened.',
+    es: 'Abre una página del sitio de Zenet Labs en el navegador del visitante. Solo se pueden abrir páginas del sitio.',
+  },
+  input: z.object({
+    page: z.enum(PAGE_IDS),
+    section: z.enum(NAVIGATE_SECTIONS).optional(),
+    locale: z.enum(locales).default('en'),
+  }),
+  output: z.object({ url: z.string() }),
+});

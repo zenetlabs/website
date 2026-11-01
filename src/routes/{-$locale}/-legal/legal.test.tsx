@@ -5,7 +5,7 @@ import { legalEntity } from '@/lib/content';
 import { locales } from '@/lib/i18n';
 import { PAGE_IDS, pagePath } from '@/lib/page-registry';
 import { PUBLIC_EMAIL } from '@/lib/site';
-import { CONSENT_VERSION } from '@/server/lead';
+import { CONSENT_VERSION } from '@/server/lead-fields';
 import { FLIPPED } from '../../../../test/entities';
 import { PLACEHOLDER } from '../../../../test/placeholders';
 import { CookiesEn } from './cookies-en';
@@ -42,6 +42,10 @@ const SINGAPORE_COMPANY = 'Zenet Technology Pte. Ltd.';
 const SINGAPORE_ADDRESS_ES = '160 Robinson Road #14-04, Singapur 068914';
 const SOLE_TRADER = ['Albert Sabaté Martínez', 'NIF 47986151D'];
 const STORAGE_ES = [
+  'calendario de Google Workspace',
+  'no se incluyen en la invitación',
+  'Google Workspace Calendar y Meet cuando reservas una llamada',
+  'a los 30 días los intentos de reserva sin confirmar',
   'Unión Europea',
   '24 meses',
   'acuse de recibo',
@@ -53,6 +57,10 @@ const STORAGE_ES = [
   'un correo de acuse de recibo',
 ];
 const STORAGE_EN = [
+  'Google Workspace calendar',
+  'they are not put in the invitation',
+  'Google Workspace Calendar and Meet when you book a call',
+  'Unconfirmed booking attempts are deleted after 30 days',
   'European Union',
   '24 months',
   'acknowledgement email',
@@ -91,7 +99,8 @@ const UNCONFIGURED_COOKIES = [
 ];
 const UNCONFIGURED_PRIVACY = [
   'Google Analytics',
-  'Google Ireland',
+  'Google Ireland Limited y Google LLC), para Google Analytics',
+  'Google Ireland Limited and Google LLC), for Google Analytics',
   'Data Privacy Framework',
   'Marco de Privacidad de Datos',
   'zenet-first-touch',
@@ -300,11 +309,11 @@ checkPages(CONFIGURED_STATES, 'G-TEST1234');
 
 describe('consent version', () => {
   it.each([
-    ['PrivacyEn', PrivacyEn, '31 October 2026'],
-    ['PrivacyEs', PrivacyEs, '31 de octubre de 2026'],
+    ['PrivacyEn', PrivacyEn, '1 November 2026'],
+    ['PrivacyEs', PrivacyEs, '1 de noviembre de 2026'],
   ])('%s is dated like CONSENT_VERSION', (_name, Page, date) => {
     const body = text(<Page title="t" entity={SINGAPORE} />);
     expect(body).toContain(date);
-    expect(CONSENT_VERSION).toBe('2026-10-31');
+    expect(CONSENT_VERSION).toBe('2026-11-01');
   });
 });

@@ -7,6 +7,10 @@ declare namespace Cloudflare {
     RESEND_API_KEY: SecretsStoreSecret;
     TURNSTILE_SECRET_KEY: SecretsStoreSecret;
     DB: D1Database;
+    GOOGLE_CALENDAR: SecretsStoreSecret;
+    TOOLS_BEARER_SECRET: SecretsStoreSecret;
     LEAD_LIMITER: RateLimit;
+    TOOLS_LIMITER: RateLimit;
+    BOOK_LIMITER: RateLimit;
   }
 }

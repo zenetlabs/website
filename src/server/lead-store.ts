@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import { locales } from '@/lib/i18n';
+import { DAY_MS } from '@/lib/time';
 
-const DAY_MS = 86_400_000;
 const RETENTION_MS = 730 * DAY_MS;
+const ATTEMPT_RETENTION_MS = 30 * DAY_MS;
 const BACKOFF_MS = [600_000, 1_800_000, 3_600_000, 10_800_000, 21_600_000];
 const MAX_ATTEMPTS = BACKOFF_MS.length + 1;
 
@@ -93,11 +94,20 @@ export type DueEmail = {
   lead: LeadRow;
 };
 
-export async function storeLead(
+export type ConfirmationMode = 'capped' | 'always' | 'none';
+
+export type LeadStatements = {
+  leadId: string;
+  statements: D1PreparedStatement[];
+  emails: (results: readonly D1Result[]) => DueEmail[];
+};
+
+export function leadStatements(
   db: D1Database,
   lead: NewLead,
   now: number,
-): Promise<DueEmail[]> {
+  mode: ConfirmationMode = 'capped',
+): LeadStatements {
   const row: LeadRow = {
     ...lead,
     id: crypto.randomUUID(),
@@ -106,7 +116,8 @@ export async function storeLead(
   };
   const ownerId = crypto.randomUUID();
   const confirmationId = crypto.randomUUID();
-  const results = await db.batch([
+  const confirmation = mode !== 'none';
+  const statements = [
     db
       .prepare(
         `INSERT INTO leads (id, created_at, locale, source, name, email, company, message,
@@ -144,30 +155,58 @@ export async function storeLead(
          VALUES (?1, ?2, 'owner', ?3, ?3)`,
       )
       .bind(ownerId, row.id, now),
-    db
-      .prepare(
-        `INSERT INTO email_outbox (id, lead_id, kind, created_at, next_attempt_at)
+  ];
+  if (mode === 'capped') {
+    statements.push(
+      db
+        .prepare(
+          `INSERT INTO email_outbox (id, lead_id, kind, created_at, next_attempt_at)
          SELECT ?1, ?2, 'confirmation', ?3, ?3
          WHERE NOT EXISTS (
            SELECT 1 FROM email_outbox o JOIN leads l ON l.id = o.lead_id
            WHERE o.kind = 'confirmation' AND o.status IN ('pending', 'sent')
              AND l.email = ?4 AND l.is_test = ?5 AND o.created_at > ?3 - ${DAY_MS}
          )`,
-      )
-      .bind(confirmationId, row.id, now, row.email, row.is_test),
-  ]);
-  const queued: DueEmail[] = [
-    { outboxId: ownerId, kind: 'owner', attempts: 0, lead: row },
-  ];
-  if (results[2]?.meta.changes === 1) {
-    queued.push({
-      outboxId: confirmationId,
-      kind: 'confirmation',
-      attempts: 0,
-      lead: row,
-    });
+        )
+        .bind(confirmationId, row.id, now, row.email, row.is_test),
+    );
+  } else if (mode === 'always') {
+    statements.push(
+      db
+        .prepare(
+          `INSERT INTO email_outbox (id, lead_id, kind, created_at, next_attempt_at)
+         VALUES (?1, ?2, 'confirmation', ?3, ?3)`,
+        )
+        .bind(confirmationId, row.id, now),
+    );
   }
-  return queued;
+  return {
+    leadId: row.id,
+    statements,
+    emails: (results) => {
+      const queued: DueEmail[] = [
+        { outboxId: ownerId, kind: 'owner', attempts: 0, lead: row },
+      ];
+      if (confirmation && results[2]?.meta.changes === 1) {
+        queued.push({
+          outboxId: confirmationId,
+          kind: 'confirmation',
+          attempts: 0,
+          lead: row,
+        });
+      }
+      return queued;
+    },
+  };
+}
+
+export async function storeLead(
+  db: D1Database,
+  lead: NewLead,
+  now: number,
+): Promise<DueEmail[]> {
+  const { statements, emails } = leadStatements(db, lead, now);
+  return emails(await db.batch(statements));
 }
 
 const dueRowSchema = leadRowSchema.extend({
@@ -322,11 +361,17 @@ export async function purgeExpired(
   db: D1Database,
   now: number,
 ): Promise<number> {
-  const { results } = await db
-    .prepare('DELETE FROM leads WHERE created_at < ?1 RETURNING id')
-    .bind(now - RETENTION_MS)
-    .all();
-  return results.length;
+  const [leads] = await db.batch([
+    db
+      .prepare('DELETE FROM leads WHERE created_at < ?1 RETURNING id')
+      .bind(now - RETENTION_MS),
+    db
+      .prepare(
+        "DELETE FROM bookings WHERE status <> 'confirmed' AND created_at < ?1",
+      )
+      .bind(now - ATTEMPT_RETENTION_MS),
+  ]);
+  return leads?.results.length ?? 0;
 }
 
 type Kind = 'text' | 'nullable' | 'number' | 'time';

@@ -115,7 +115,7 @@ describe('ContactForm', () => {
     expect(submit).toBeDisabled();
 
     await user.click(screen.getByLabelText('Name'));
-    await user.click(screen.getByText('solve challenge'));
+    await user.click(await screen.findByText('solve challenge'));
     expect(submit).toBeEnabled();
   });
 
@@ -125,7 +125,7 @@ describe('ContactForm', () => {
     render(<ContactForm />);
     await user.click(screen.getByLabelText('Name'));
     await fillIn(user);
-    await user.click(screen.getByText('solve challenge'));
+    await user.click(await screen.findByText('solve challenge'));
     await user.click(screen.getByRole('button', { name: 'Send message' }));
 
     await waitFor(() =>
@@ -161,7 +161,7 @@ describe('ContactForm', () => {
     await user.type(screen.getByLabelText('Email'), 'ada@example.com');
     await user.type(field, 'We ship on Fridays.');
     await user.click(screen.getByRole('checkbox'));
-    await user.click(screen.getByText('solve challenge'));
+    await user.click(await screen.findByText('solve challenge'));
     await user.click(screen.getByRole('button', { name: 'Send message' }));
 
     await waitFor(() =>
@@ -182,7 +182,7 @@ describe('ContactForm', () => {
     const user = userEvent.setup();
     render(<ContactForm />);
     await user.click(screen.getByLabelText('Name'));
-    await user.click(screen.getByText('break challenge'));
+    await user.click(await screen.findByText('break challenge'));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'The security check failed',
@@ -206,7 +206,7 @@ describe('ContactForm', () => {
       render(<ContactForm />);
       await user.click(screen.getByLabelText('Name'));
       await fillIn(user);
-      await user.click(screen.getByText('solve challenge'));
+      await user.click(await screen.findByText('solve challenge'));
       await user.click(screen.getByRole('button', { name: 'Send message' }));
 
       const alert = await screen.findByRole('alert');
@@ -230,7 +230,7 @@ describe('ContactForm when attribution fails', () => {
     render(<ContactForm />);
     await user.click(screen.getByLabelText('Name'));
     await fillIn(user);
-    await user.click(screen.getByText('solve challenge'));
+    await user.click(await screen.findByText('solve challenge'));
     await user.click(screen.getByRole('button', { name: 'Send message' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(

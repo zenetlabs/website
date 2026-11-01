@@ -140,5 +140,6 @@ export const home = {
     lead: 'Tell us which tools you use and what your team still does by hand. We reply personally and agree the next step with you.',
     mail: 'Prefer email? Write to',
     human: 'A human replies, personally.',
+    book: 'Prefer a call? Pick a time',
   },
 } satisfies HomeContent;

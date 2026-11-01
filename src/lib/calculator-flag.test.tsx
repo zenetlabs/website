@@ -14,8 +14,8 @@ import { buildSitemap } from '@/lib/sitemap';
 import { SERVICES } from '../../test/page-content';
 import { SERVICE_BODIES } from '../../test/service-bodies';
 
-const ON = { calculator: { published: true } };
-const OFF = { calculator: { published: false } };
+const ON = { calculator: { published: true }, booking: { published: false } };
+const OFF = { calculator: { published: false }, booking: { published: false } };
 
 describe('the calculator, published', () => {
   it.each(locales)('lists it for %s, right after pricing', (locale) => {

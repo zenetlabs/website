@@ -5,6 +5,7 @@ import { jsonLdBlocks } from '../test/json-ld';
 import { SERVICES } from '../test/page-content';
 import {
   CASE_PAIR,
+  CTA,
   gotoHydrated,
   HOLDED_PAGES,
   navLinks,
@@ -47,7 +48,7 @@ for (const path of ES_PAGES) {
       const hero = page.locator('main section').first();
       await expect(hero.getByRole('link').nth(-2)).toHaveAttribute(
         'href',
-        '/es#contact',
+        CTA.es,
       );
       await expect(hero.getByRole('link').last()).toHaveAttribute(
         'href',
@@ -55,7 +56,7 @@ for (const path of ES_PAGES) {
       );
       await expect(page.locator('#cta-title ~ div a').first()).toHaveAttribute(
         'href',
-        '/es#contact',
+        CTA.es,
       );
     });
 
@@ -241,7 +242,7 @@ for (const [locale, path, switchTo, label, nav] of [
       await gotoHydrated(page, path);
       await expect(page.locator('#cta-title ~ div a').first()).toHaveAttribute(
         'href',
-        locale === 'en' ? '/#contact' : '/es#contact',
+        locale === 'en' ? CTA.en : CTA.es,
       );
     });
 

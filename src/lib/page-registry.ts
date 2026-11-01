@@ -20,6 +20,7 @@ export const PAGE_IDS = [
   'pricing',
   'calculator',
   'about',
+  'book',
   'privacy',
   'cookies',
   'legalNotice',
@@ -43,7 +44,7 @@ export const LANDING_PAGE_IDS = [
 ] as const satisfies readonly PageId[];
 export type LandingPageId = (typeof LANDING_PAGE_IDS)[number];
 
-export type SiteFlags = Pick<typeof SITE, 'calculator'>;
+export type SiteFlags = Pick<typeof SITE, 'calculator' | 'booking'>;
 
 type Slugs = Partial<Record<Locale, string>>;
 
@@ -174,9 +175,14 @@ export const PAGES: Record<
     slugs: { en: '/about', es: '/sobre-nosotros' },
     lastmod: '2026-10-31',
   },
+  book: {
+    slugs: { en: '/book', es: '/reservar' },
+    flag: 'booking',
+    lastmod: '2026-11-01',
+  },
   privacy: {
     slugs: { en: '/privacy', es: '/privacidad' },
-    lastmod: '2026-10-31',
+    lastmod: '2026-11-01',
   },
   cookies: {
     slugs: { en: '/cookies', es: '/cookies' },

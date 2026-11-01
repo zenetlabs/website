@@ -157,5 +157,6 @@ export const home = {
     lead: 'Cuéntanos qué herramientas usa tu empresa y qué sigue haciendo tu equipo a mano. Te responde una persona y acordamos contigo el siguiente paso.',
     mail: '¿Prefieres el correo? Escribe a',
     human: 'Te responde una persona, personalmente.',
+    book: '¿Prefieres una llamada? Elige una hora',
   },
 } satisfies HomeContent;

@@ -10,6 +10,7 @@
   },
   "scripts": {
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:clear-bookings:local": "wrangler d1 execute DB --local --command \"DELETE FROM bookings\"",
     "dev": "vite dev --port 3000",
     "build": "vite build",
     "preview": "vite preview --port 4173 --strictPort",

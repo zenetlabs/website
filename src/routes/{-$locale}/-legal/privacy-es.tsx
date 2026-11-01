@@ -19,7 +19,7 @@ export function PrivacyEs({
   return (
     <LegalPage
       title={title}
-      updated="Última actualización: 31 de octubre de 2026"
+      updated="Última actualización: 1 de noviembre de 2026"
     >
       <LegalSection title="Quién es el responsable de tus datos">
         <p>{describeEntity(legalEs.controller, entity, 'es')}</p>
@@ -56,6 +56,13 @@ export function PrivacyEs({
           ) : (
             <>Para ello no guardamos nada en tu dispositivo.</>
           )}
+        </p>
+        <p>
+          Si reservas una llamada, creamos un evento en nuestro calendario de
+          Google Workspace con tu dirección de correo electrónico, Google te
+          envía una invitación de calendario con un enlace de Google Meet y
+          guardamos la reserva junto con tu consulta. Tu nombre y el tema que
+          escribes se quedan con nosotros; no se incluyen en la invitación.
         </p>
         <p>
           También guardamos la versión de esta política a la que diste tu
@@ -128,6 +135,10 @@ export function PrivacyEs({
             medir el tráfico con Web Analytics sin cookies.
           </li>
           <li>Google Workspace, que aloja el buzón que recibe tu mensaje.</li>
+          <li>
+            Google (Google Ireland Limited y Google LLC), para Google Workspace
+            Calendar y Meet cuando reservas una llamada.
+          </li>
           {analytics ? (
             <li>
               Google (Google Ireland Limited y Google LLC), para Google
@@ -155,6 +166,7 @@ export function PrivacyEs({
           inicie una relación profesional; en ese caso, las conservamos mientras
           dure la relación y lo exijan nuestras obligaciones legales.
         </p>
+        <p>Borramos a los 30 días los intentos de reserva sin confirmar.</p>
         {analytics ? (
           <p>
             {/* TODO(albert): match the GA4 retention setting */}

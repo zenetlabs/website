@@ -17,6 +17,16 @@
       "binding": "TURNSTILE_SECRET_KEY",
       "store_id": "5a96b366abb34e3991c881dab187adfd",
       "secret_name": "ZENETLABS_PROD_TURNSTILE_SECRET"
+    },
+    {
+      "binding": "GOOGLE_CALENDAR",
+      "store_id": "5a96b366abb34e3991c881dab187adfd",
+      "secret_name": "ZENETLABS_PROD_GOOGLE_CALENDAR"
+    },
+    {
+      "binding": "TOOLS_BEARER_SECRET",
+      "store_id": "5a96b366abb34e3991c881dab187adfd",
+      "secret_name": "ZENETLABS_PROD_ELEVENLABS_TOOL_SECRET"
     }
   ],
   "d1_databases": [
@@ -31,6 +41,16 @@
     {
       "name": "LEAD_LIMITER",
       "namespace_id": "7301",
+      "simple": { "limit": 100, "period": 60 }
+    },
+    {
+      "name": "TOOLS_LIMITER",
+      "namespace_id": "7302",
+      "simple": { "limit": 1000, "period": 60 }
+    },
+    {
+      "name": "BOOK_LIMITER",
+      "namespace_id": "7303",
       "simple": { "limit": 100, "period": 60 }
     }
   ],
@@ -51,6 +71,16 @@
           "name": "LEAD_LIMITER",
           "namespace_id": "7301",
           "simple": { "limit": 5, "period": 60 }
+        },
+        {
+          "name": "TOOLS_LIMITER",
+          "namespace_id": "7302",
+          "simple": { "limit": 30, "period": 60 }
+        },
+        {
+          "name": "BOOK_LIMITER",
+          "namespace_id": "7303",
+          "simple": { "limit": 5, "period": 60 }
         }
       ],
       "triggers": { "crons": ["*/10 * * * *"] },
@@ -64,6 +94,16 @@
           "binding": "TURNSTILE_SECRET_KEY",
           "store_id": "5a96b366abb34e3991c881dab187adfd",
           "secret_name": "ZENETLABS_PROD_TURNSTILE_SECRET"
+        },
+        {
+          "binding": "GOOGLE_CALENDAR",
+          "store_id": "5a96b366abb34e3991c881dab187adfd",
+          "secret_name": "ZENETLABS_PROD_GOOGLE_CALENDAR"
+        },
+        {
+          "binding": "TOOLS_BEARER_SECRET",
+          "store_id": "5a96b366abb34e3991c881dab187adfd",
+          "secret_name": "ZENETLABS_PROD_ELEVENLABS_TOOL_SECRET"
         }
       ],
       "routes": [

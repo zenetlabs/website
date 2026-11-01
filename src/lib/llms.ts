@@ -13,6 +13,7 @@ import { llms as esLlms } from '@/content/es/llms';
 import { pricingPage as esPricing } from '@/content/es/pricing';
 import { services as esServices } from '@/content/es/services';
 import {
+  loadBookContent,
   loadCalculatorContent,
   loadCaseContent,
   loadHoldedPairContent,
@@ -23,6 +24,7 @@ import {
 } from '@/content/load';
 import type {
   AboutPageContent,
+  BookPageContent,
   CalculatorPageContent,
   Card,
   CasePageContent,
@@ -114,6 +116,7 @@ export type LandingBodies = {
 };
 
 export type ServiceBodies = {
+  book: BookPageContent;
   calculator: CalculatorPageContent;
   hub: ServicesHubContent;
   pages: Record<ServicePageId, ServicePageContent>;
@@ -158,6 +161,7 @@ export async function serviceBodies(locale: Locale): Promise<ServiceBodies> {
     training,
     landing,
     { copy: calculator },
+    { copy: book },
   ] = await Promise.all([
     loadServicesHubContent(locale),
     loadServicePageContent(locale, 'automation'),
@@ -167,8 +171,10 @@ export async function serviceBodies(locale: Locale): Promise<ServiceBodies> {
     loadServicePageContent(locale, 'training'),
     landingBodies(locale),
     loadCalculatorContent(locale),
+    loadBookContent(locale),
   ]);
   return {
+    book,
     calculator,
     hub,
     landing,
@@ -257,7 +263,7 @@ function pagesLines(
 export function metaOf(
   locale: Locale,
   page: PageId,
-  { calculator, hub, pages, landing }: ServiceBodies,
+  { book, calculator, hub, pages, landing }: ServiceBodies,
 ): { title: string; description: string } {
   if (page === 'services') return contentMeta(hub.meta);
   if (isServicePage(page)) return contentMeta(pages[page].meta);
@@ -269,6 +275,7 @@ export function metaOf(
   if (page === 'pricing') return contentMeta(BODIES[locale].pricing.meta);
   if (page === 'about') return contentMeta(BODIES[locale].about.meta);
   if (page === 'calculator') return contentMeta(calculator.meta);
+  if (page === 'book') return contentMeta(book.meta);
   if (page === 'privacy' || page === 'cookies') {
     return contentMeta(LEGAL_META[locale][legalMetaKey(page)]);
   }
@@ -308,11 +315,18 @@ function portfolioLines(locale: Locale): string[] {
   );
 }
 
-function contactLines(locale: Locale): string[] {
+function contactLines(
+  locale: Locale,
+  { book }: ServiceBodies,
+  site: SiteFlags,
+): string[] {
   const { home, copy } = BODIES[locale];
   return [
     `- [${copy.labels.email}](mailto:${PUBLIC_EMAIL}): ${home.contact.human}`,
     `- [${copy.labels.form}](${pageUrl(locale, 'home')}#contact): ${home.contact.lead}`,
+    ...(isPublished('book', site)
+      ? [`- [${book.llms}](${pageUrl(locale, 'book')}): ${book.lead}`]
+      : []),
   ];
 }
 
@@ -336,7 +350,7 @@ export async function buildLlmsTxt(
     section(copy.headings.pages, pagesLines(locale, bodies, site)),
     section(copy.headings.faq, faqLines(locale, bodies)),
     section(copy.headings.portfolio, portfolioLines(locale)),
-    section(copy.headings.contact, contactLines(locale)),
+    section(copy.headings.contact, contactLines(locale, bodies, site)),
     optional(locale, 'llms'),
   ]);
 }
@@ -675,7 +689,7 @@ export async function buildLlmsFull(
       faq.flatMap(({ question, answer }) => [`### ${question}`, answer]),
       '\n\n',
     ),
-    section(copy.headings.contact, contactLines(locale)),
+    section(copy.headings.contact, contactLines(locale, bodies, site)),
     section(copy.headings.pages, pagesLines(locale, bodies, site)),
     optional(locale, 'llms-full'),
   ]);

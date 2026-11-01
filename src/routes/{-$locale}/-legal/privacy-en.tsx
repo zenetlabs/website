@@ -4,7 +4,7 @@ import type { PublishedEntity } from '@/content/types';
 import { formatAddress, taxIdLabel } from '@/lib/content';
 import { PUBLIC_EMAIL } from '@/lib/site';
 
-// TODO(albert): legal review (R6 storage, attribution, retention; R7 GA4, consent, first-touch)
+// TODO(albert): legal review (R6 storage, attribution, retention; R7 GA4, consent, first-touch; R9 Google Calendar bookings)
 export function PrivacyEn({
   title,
   entity,
@@ -15,7 +15,7 @@ export function PrivacyEn({
   const analytics = __GA4_ID__ !== null;
 
   return (
-    <LegalPage title={title} updated="Last updated: 31 October 2026">
+    <LegalPage title={title} updated="Last updated: 1 November 2026">
       <LegalSection title="Who is responsible for your data">
         <p>
           The controller of the personal data collected through zenetlabs.com is{' '}
@@ -55,6 +55,13 @@ export function PrivacyEn({
           ) : (
             <>We do not store anything on your device to do this.</>
           )}
+        </p>
+        <p>
+          If you book a call, we create an event in our Google Workspace
+          calendar with your email address, Google sends you a calendar
+          invitation with a Google Meet link, and we keep the booking with your
+          enquiry. Your name and the topic you write stay with us; they are not
+          put in the invitation.
         </p>
         <p>
           We also store which version of this policy you consented to, and when
@@ -130,6 +137,10 @@ export function PrivacyEn({
             Google Workspace, which hosts the mailbox that receives your
             message.
           </li>
+          <li>
+            Google (Google Ireland Limited and Google LLC), for Google Workspace
+            Calendar and Meet when you book a call.
+          </li>
           {analytics ? (
             <li>
               Google (Google Ireland Limited and Google LLC), for Google
@@ -157,6 +168,7 @@ export function PrivacyEn({
           that case we keep them for as long as the relationship and our legal
           obligations require.
         </p>
+        <p>Unconfirmed booking attempts are deleted after 30 days.</p>
         {analytics ? (
           <p>
             {/* TODO(albert): match the GA4 retention setting */}

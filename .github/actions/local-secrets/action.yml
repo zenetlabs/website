@@ -1,7 +1,8 @@
 name: "Local-only secrets"
 description: >
   Seed the local Secrets Store with dummy values (Turnstile always-pass test
-  secret, fake Resend key) so the built worker runs under preview.
+  secret, fake Resend key, fake tools bearer secret, throwaway Google service
+  account for the fake Google) so the built worker runs under preview.
 
 runs:
   using: composite
@@ -12,3 +13,5 @@ runs:
         set -euo pipefail
         pnpm exec wrangler secrets-store secret create 5a96b366abb34e3991c881dab187adfd --name ZENETLABS_PROD_TURNSTILE_SECRET --value 1x0000000000000000000000000000000AA --scopes workers
         pnpm exec wrangler secrets-store secret create 5a96b366abb34e3991c881dab187adfd --name PROD_RESEND_API_KEY --value re_local_dummy --scopes workers
+        pnpm exec wrangler secrets-store secret create 5a96b366abb34e3991c881dab187adfd --name ZENETLABS_PROD_ELEVENLABS_TOOL_SECRET --value local-tool-secret --scopes workers
+        node scripts/local-calendar-secret.mjs 5a96b366abb34e3991c881dab187adfd
