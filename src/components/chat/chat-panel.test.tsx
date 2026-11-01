@@ -217,6 +217,16 @@ describe('sending', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('clears the composer when a suggestion is sent', async () => {
+    postChat.mockResolvedValue(ok({ t: 'done', remaining: 18 }));
+    open();
+    const { box } = await ask('half-typed');
+    expect(box).toHaveValue('half-typed');
+    fireEvent.click(screen.getByRole('button', { name: en.suggestions[0] }));
+    await waitFor(() => expect(postChat).toHaveBeenCalledTimes(1));
+    expect(box).toHaveValue('');
+  });
+
   it('waits for the bot check before the first send', async () => {
     widget.ready = false;
     open();

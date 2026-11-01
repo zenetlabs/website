@@ -1,5 +1,4 @@
 import { type FormEvent, useId, useState } from 'react';
-import { flushSync } from 'react-dom';
 import {
   BookingDetailsFields,
   ConsentCheckbox,
@@ -67,7 +66,7 @@ export function BookingCard({
       onDone(formatSlotLabel(locale, outcome.start, zone));
       return;
     }
-    flushSync(() => setStatus(failureOf(outcome)));
+    setStatus(failureOf(outcome));
     challenge.retry();
   }
 

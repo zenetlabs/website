@@ -12,12 +12,7 @@ Node 24 and the pnpm version pinned in `package.json` are required.
 
 ### Local secrets (one time)
 
-The Worker binds two Secrets Store secrets. Locally they resolve to dummy values; this creates no remote data.
-
-```sh
-pnpm exec wrangler secrets-store secret create 5a96b366abb34e3991c881dab187adfd --name ZENETLABS_PROD_TURNSTILE_SECRET --value 1x0000000000000000000000000000000AA --scopes workers
-pnpm exec wrangler secrets-store secret create 5a96b366abb34e3991c881dab187adfd --name PROD_RESEND_API_KEY --value re_local_dummy --scopes workers
-```
+The Worker binds five Secrets Store secrets (Turnstile, Resend, the Google calendar bundle, the ElevenLabs tool secret and the ElevenLabs API key). Locally they resolve to dummy values; this creates no remote data. The commands, with the store id from `wrangler.jsonc`, are in [`.github/actions/local-secrets/action.yml`](.github/actions/local-secrets/action.yml) (the same ones CI runs); [docs/RUNBOOK.md](docs/RUNBOOK.md) section 6 explains each secret.
 
 ## Develop
 
@@ -53,3 +48,9 @@ CLOUDFLARE_ENV=production pnpm build && pnpm exec wrangler versions upload --con
 ```sh
 pnpm exec wrangler rollback --name prod-zenet-web
 ```
+
+## Operations
+
+- [docs/RUNBOOK.md](docs/RUNBOOK.md): deploy, rollback, secrets, SQL, feature flips, kill switches, incidents, retention.
+- [docs/owner-checklist.md](docs/owner-checklist.md): what only the owner can do, with every `TODO(albert)`.
+- [docs/analytics.md](docs/analytics.md) and [docs/ai-assistant.md](docs/ai-assistant.md): feature design and verification.

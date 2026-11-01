@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import {
   CALCULATOR_RESULTS,
   CASE_PAIR,
@@ -12,12 +12,19 @@ import {
   VERIFACTU_PAGE,
 } from './helpers';
 
-const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
+const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const VIEWPORTS = [
   { width: 412, height: 915 },
   { width: 1280, height: 900 },
 ];
 const URLS = [...PAGES, ...CALCULATOR_RESULTS, '/nope', '/es/nope'];
+
+function axe(page: Page) {
+  return new AxeBuilder({ page })
+    .withTags(TAGS)
+    .exclude('iframe[src*="challenges.cloudflare.com"]')
+    .analyze();
+}
 
 for (const viewport of VIEWPORTS) {
   for (const colorScheme of ['light', 'dark'] as const) {
@@ -28,11 +35,16 @@ for (const viewport of VIEWPORTS) {
         test(`${url} has no axe violations`, async ({ page }) => {
           await gotoHydrated(page, url);
           await settleAnimations(page);
-          const results = await new AxeBuilder({ page })
-            .withTags(TAGS)
-            .exclude('iframe[src*="challenges.cloudflare.com"]')
-            .analyze();
+          const results = await axe(page);
           expect(results.violations).toEqual([]);
+          if (url === '/') {
+            const ran = [...results.passes, ...results.incomplete].map(
+              (rule) => rule.id,
+            );
+            expect(ran, 'the WCAG 2.2 target-size rule must run').toContain(
+              'target-size',
+            );
+          }
         });
       }
     });
