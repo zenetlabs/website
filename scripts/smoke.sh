@@ -128,7 +128,7 @@ for path in /book /es/reservar; do
 done
 
 attempt "api health answers (prints the booking state)" health_shows
-attempt "tools manifest lists book_meeting" body_contains "${SITE}/api/tools" '"book_meeting"'
+attempt "tools manifest lists get_pricing" body_contains "${SITE}/api/tools" '"get_pricing"'
 attempt "405 GET /api/tools/get_pricing" status_is 405 "${SITE}/api/tools/get_pricing"
 attempt "get_pricing answers 200" post_json_status_is 200 "${SITE}/api/tools/get_pricing" '{}'
 attempt "check_availability answers 200 (ok or unavailable)" post_json_status_is 200 "${SITE}/api/tools/check_availability" '{}'
