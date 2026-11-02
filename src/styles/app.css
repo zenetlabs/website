@@ -113,7 +113,7 @@
 
   @media (max-width: 1023px) {
     html:has([data-sticky-cta]) {
-      scroll-padding-bottom: 5.5rem;
+      scroll-padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
     }
   }
 
@@ -191,7 +191,8 @@
     mask-image: linear-gradient(to bottom, black 30%, transparent);
   }
 
-  .icon {
+  .icon,
+  .tick-item::before {
     display: inline-block;
     flex-shrink: 0;
     width: 1em;
@@ -200,8 +201,22 @@
     mask: var(--icon) center / contain no-repeat;
   }
 
-  .icon-check {
+  .icon-check,
+  .tick-item::before {
     --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12.5l5 5L20 6.5'/%3E%3C/svg%3E");
+  }
+
+  .tick-item {
+    position: relative;
+    padding-left: 1.75rem;
+  }
+
+  .tick-item::before {
+    content: "";
+    position: absolute;
+    top: 0.3em;
+    left: 0;
+    background-color: var(--agent);
   }
 
   .icon-plus {
@@ -268,17 +283,17 @@
   }
 
   @media (min-width: 768px) {
-    .timeline {
+    .timeline:not(.timeline-stack) {
       grid-template-columns: repeat(4, 1fr);
       gap: 2rem;
     }
 
-    .timeline > li {
+    .timeline:not(.timeline-stack) > li {
       padding-left: 0;
       padding-top: 2.75rem;
     }
 
-    .timeline > li::before {
+    .timeline:not(.timeline-stack) > li::before {
       left: 2rem;
       right: -2rem;
       top: 0.8125rem;
@@ -476,6 +491,7 @@
 
 @media (forced-colors: active) {
   .icon,
+  .tick-item::before,
   .logo {
     background-color: CanvasText;
     forced-color-adjust: none;

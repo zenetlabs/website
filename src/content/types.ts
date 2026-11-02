@@ -236,7 +236,14 @@ export type PricingPageContent = {
   title: TitleParts;
   lead: string;
   taxNote: string;
-  labels: { price: string; includes: string; timeline: string; more: string };
+  labels: {
+    price: string;
+    includes: string;
+    timeline: string;
+    more: string;
+    startHere: string;
+    book: string;
+  };
   details: Record<
     ServiceId,
     { includes: readonly string[]; timeline?: string }
@@ -404,6 +411,8 @@ export type ServicesHubContent = {
   lead: string;
   cards: Record<ServicePageId, { name: string; summary: string }>;
   landing: Partial<Record<LandingPageId | 'viatsyCase', string>>;
+  startHere: string;
+  book: string;
   also: { title: string; lead: string };
   start: { title: string; text: string; button: string };
   pricing: string;

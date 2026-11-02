@@ -61,9 +61,11 @@ export const servicesHub = {
     related: 'Related services',
     allServices: 'All services',
   },
+  startHere: 'Start here',
+  book: 'Book the diagnostic',
   also: {
-    title: 'Diagnostic, maintenance and growth',
-    lead: 'Every project starts with the diagnostic. Once it is live, maintenance keeps it working, and growth work helps the right customers find you.',
+    title: 'Maintenance and growth',
+    lead: 'Once your project is live, maintenance keeps it working, and growth work helps the right customers find you.',
   },
   start: {
     title: 'Not sure which service you need?',

@@ -3,6 +3,29 @@ import { sectionFrame } from '@/components/section-frame';
 import type { HomeContent } from '@/content/types';
 import { PORTFOLIO } from '@/lib/portfolio';
 
+export function CompanyMark({
+  name,
+  logo,
+}: {
+  name: string;
+  logo: (typeof PORTFOLIO)[number]['logo'];
+}) {
+  if (!logo) return <span className="logo-wordmark">{name}</span>;
+  return (
+    <>
+      <span
+        aria-hidden="true"
+        className="logo"
+        style={{
+          '--logo': `url(${logo.src})`,
+          aspectRatio: `${logo.width} / ${logo.height}`,
+        }}
+      />
+      <span className="sr-only">{name}</span>
+    </>
+  );
+}
+
 export function CompaniesStrip({ copy }: { copy: HomeContent['companies'] }) {
   const { ground, bg } = sectionFrame('tint');
 
@@ -24,21 +47,7 @@ export function CompaniesStrip({ copy }: { copy: HomeContent['companies'] }) {
           {PORTFOLIO.map(({ key, name, href, logo }) => (
             <li key={key}>
               <a href={href} className="company-link">
-                {logo ? (
-                  <>
-                    <span
-                      aria-hidden="true"
-                      className="logo"
-                      style={{
-                        '--logo': `url(${logo.src})`,
-                        aspectRatio: `${logo.width} / ${logo.height}`,
-                      }}
-                    />
-                    <span className="sr-only">{name}</span>
-                  </>
-                ) : (
-                  <span className="logo-wordmark">{name}</span>
-                )}
+                <CompanyMark name={name} logo={logo} />
                 <span className="text-ui-s text-muted-fg max-md:sr-only">
                   {copy.items[key].category}
                 </span>

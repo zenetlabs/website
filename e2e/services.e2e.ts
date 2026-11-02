@@ -131,7 +131,7 @@ for (const locale of LOCALES) {
   const path = SERVICES_HUB[locale];
 
   test.describe(path, () => {
-    test('lists the five services in order and the other three', async ({
+    test('lists the diagnostic, the five services in order and the other two', async ({
       page,
     }) => {
       await page.setViewportSize({ width: 1280, height: 900 });
@@ -142,8 +142,9 @@ for (const locale of LOCALES) {
         .locator('main ul a')
         .evaluateAll((links) => links.map((a) => a.getAttribute('href')));
       expect(rows).toEqual([
-        ...Object.values(SERVICE_PAIRS).map((pair) => pair[locale]),
         `${PRICING[locale]}#diagnostic`,
+        CTA[locale],
+        ...Object.values(SERVICE_PAIRS).map((pair) => pair[locale]),
         `${PRICING[locale]}#maintenance`,
         `${PRICING[locale]}#growth`,
       ]);

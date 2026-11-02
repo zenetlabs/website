@@ -1,4 +1,4 @@
-import { BULLET_ITEM } from '@/components/ui';
+import { BULLET_ITEM, TICK_ITEM } from '@/components/ui';
 import type { Metric } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { isMeasured } from '@/lib/metrics';
@@ -7,14 +7,16 @@ import { formatNumber } from '@/lib/money';
 export function BulletList({
   items,
   className = '',
+  marker = 'dot',
 }: {
   items: readonly string[];
   className?: string;
+  marker?: 'dot' | 'tick';
 }) {
   return (
     <ul className={`${className} grid gap-2 md:gap-3`}>
       {items.map((item) => (
-        <li key={item} className={BULLET_ITEM}>
+        <li key={item} className={marker === 'tick' ? TICK_ITEM : BULLET_ITEM}>
           {item}
         </li>
       ))}

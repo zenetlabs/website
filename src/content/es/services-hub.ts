@@ -66,9 +66,11 @@ export const servicesHub = {
     related: 'Servicios relacionados',
     allServices: 'Todos los servicios',
   },
+  startHere: 'Empieza aquí',
+  book: 'Reserva el diagnóstico',
   also: {
-    title: 'Diagnóstico, mantenimiento y crecimiento',
-    lead: 'Todo proyecto empieza por el diagnóstico. Cuando ya funciona, el mantenimiento hace que siga funcionando y el trabajo de crecimiento ayuda a que te encuentren los clientes adecuados.',
+    title: 'Mantenimiento y crecimiento',
+    lead: 'Cuando tu proyecto ya funciona, el mantenimiento hace que siga funcionando y el trabajo de crecimiento ayuda a que te encuentren los clientes adecuados.',
   },
   start: {
     title: '¿No sabes qué servicio necesitas?',

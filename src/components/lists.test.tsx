@@ -11,6 +11,18 @@ describe('BulletList', () => {
       'mt-6 grid gap-2 md:gap-3',
     );
     expect(container.querySelectorAll('li')).toHaveLength(2);
+    expect(screen.getByRole('list')).toBe(container.querySelector('ul'));
+  });
+
+  it('can mark items with a tick instead of a dot', () => {
+    const { container } = render(
+      <BulletList items={['one', 'two']} marker="tick" />,
+    );
+    const items = container.querySelectorAll('li');
+    expect(items).toHaveLength(2);
+    for (const item of items) expect(item).toHaveClass('tick-item');
+    expect(screen.getByRole('list')).toBeInTheDocument();
+    expect(screen.getByText('one')).toBeInTheDocument();
   });
 });
 

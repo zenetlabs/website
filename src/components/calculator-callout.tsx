@@ -1,5 +1,6 @@
 import { Container } from '@/components/section';
-import { CALLOUT_CARD, TEXT_LINK } from '@/components/ui';
+import { sectionFrame } from '@/components/section-frame';
+import { TEXT_LINK } from '@/components/ui';
 import type { PricingPageContent } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { isPublished, pagePath, type SiteFlags } from '@/lib/page-registry';
@@ -15,18 +16,27 @@ export function CalculatorCallout({
   site?: SiteFlags;
 }) {
   if (!isPublished('calculator', site)) return null;
+  const { ground, bg } = sectionFrame('tint');
   return (
-    <Container className="pb-10">
-      <div className={CALLOUT_CARD}>
-        <h2 className="text-2xl md:text-3xl">{copy.title}</h2>
-        <p className="mt-3 text-fg-soft">{copy.text}</p>
+    <section
+      aria-labelledby="calculator-callout-title"
+      data-ground={ground}
+      className={bg}
+    >
+      <Container className="py-section-compact flex flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-12">
+        <div>
+          <h2 id="calculator-callout-title" className="text-h2-compact">
+            {copy.title}
+          </h2>
+          <p className="mt-3 max-w-[60ch] text-fg-soft">{copy.text}</p>
+        </div>
         <a
           href={pagePath(locale, 'calculator')}
-          className={`mt-5 inline-block font-medium ${TEXT_LINK}`}
+          className={`shrink-0 font-medium ${TEXT_LINK}`}
         >
           {copy.link} →
         </a>
-      </div>
-    </Container>
+      </Container>
+    </section>
   );
 }
