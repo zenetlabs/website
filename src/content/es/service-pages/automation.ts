@@ -63,6 +63,20 @@ export const automation = {
       },
     ],
   },
+  // TODO(albert): confirm the flow steps
+  flow: {
+    title: { before: 'Un proceso, ', emphasis: 'paso a paso', after: '' },
+    caption:
+      'Una factura de proveedor, de la bandeja de entrada a contabilidad',
+    steps: [
+      { actor: 'tool', label: 'Llega una factura por correo' },
+      {
+        actor: 'agent',
+        label: 'La automatización la lee y la compara con lo que esperabas',
+      },
+      { actor: 'human', label: 'Solo las excepciones llegan a una persona' },
+    ],
+  },
   how: {
     title: { before: 'De un proceso a ', emphasis: 'muchos', after: '' },
     steps: [

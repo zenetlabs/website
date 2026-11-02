@@ -60,6 +60,7 @@ export const servicesHub = {
     mail: 'Prefer email? Write to',
     related: 'Related services',
     allServices: 'All services',
+    actors: { tool: 'Your tools', agent: 'Agent', human: 'A person' },
   },
   startHere: 'Start here',
   book: 'Book the diagnostic',

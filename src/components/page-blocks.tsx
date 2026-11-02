@@ -3,7 +3,6 @@ import { CtaLink } from '@/components/cta-link';
 import { CtaSection } from '@/components/cta-section';
 import { Container, EmphasisTitle } from '@/components/section';
 import {
-  CARD,
   EYEBROW,
   H3,
   LEAD,
@@ -105,14 +104,17 @@ export function FactList({
     label: string;
     value: string;
     mono?: boolean;
+    highlight?: boolean;
   }[];
 }) {
   return (
-    <dl className="mt-10 grid max-w-4xl gap-6 border-t border-hairline pt-8 sm:grid-cols-2">
+    <dl className="facts">
       {facts.map((fact) => (
-        <div key={fact.id}>
+        <div key={fact.id} className={fact.highlight ? 'fact-highlight' : ''}>
           <dt className={EYEBROW}>{fact.label}</dt>
-          <dd className={`mt-2 ${fact.mono ? 'font-mono' : ''}`}>
+          <dd
+            className={`mt-1.5 text-ui-m md:text-base ${fact.mono ? 'font-mono tabular-nums' : ''}`}
+          >
             {fact.value}
           </dd>
         </div>
@@ -144,7 +146,7 @@ export function FactsHero({
 
   return (
     <section aria-labelledby="service-title">
-      <Container className="py-16 md:py-24">
+      <Container className="py-12 md:py-24">
         {breadcrumb}
         <HeroHeading {...hero} afterBreadcrumb={breadcrumb !== undefined} />
         <FactList
@@ -155,6 +157,7 @@ export function FactsHero({
               label: labels.price,
               value: `${formatPriceSummary(locale, services[serviceId].prices)} (${labels.taxNote})`,
               mono: true,
+              highlight: true,
             },
             { id: 'timeline', label: labels.timeline, value: facts.timeline },
             { id: 'start', label: labels.start, value: facts.start },
@@ -222,11 +225,11 @@ export function RelatedLinks({
       aria-labelledby="related-title"
       className="border-t border-hairline"
     >
-      <Container className="py-16 md:py-20">
+      <Container className="py-10 md:py-14">
         <h2 id="related-title" className="text-h2-compact">
           {labels.related}
         </h2>
-        <ul className="mt-6 grid gap-3 text-lg">
+        <ul className="related-links">
           {pages.map((target) => (
             <li key={target}>
               <a
@@ -251,7 +254,7 @@ export function RelatedLinks({
   );
 }
 
-export function CardGrid({
+export function UseCaseList({
   items,
   locale,
 }: {
@@ -259,9 +262,9 @@ export function CardGrid({
   locale: Locale;
 }) {
   return (
-    <ul className="grid gap-6 lg:grid-cols-2">
+    <ul className="usecase-list">
       {items.map((item) => (
-        <li key={item.id} className={`${CARD} p-8`}>
+        <li key={item.id}>
           <h3 className={H3}>
             {item.page ? (
               <a href={pagePath(locale, item.page)} className={TEXT_LINK}>
@@ -271,7 +274,9 @@ export function CardGrid({
               item.title
             )}
           </h3>
-          <p className="mt-4 text-fg-soft">{item.text}</p>
+          <p className="mt-2 text-ui-m text-fg-soft md:mt-3 md:text-base">
+            {item.text}
+          </p>
         </li>
       ))}
     </ul>
@@ -282,16 +287,17 @@ export function DataTable({
   labelledBy,
   columns,
   rows,
+  iconColumn,
+  dataColumns = [],
 }: {
   labelledBy: string;
   columns: readonly string[];
   rows: readonly { id: string; cells: readonly string[] }[];
+  iconColumn?: number;
+  dataColumns?: readonly number[];
 }) {
   return (
-    <table
-      aria-labelledby={labelledBy}
-      className="w-full text-left text-sm sm:text-base"
-    >
+    <table aria-labelledby={labelledBy} className="data-table">
       <thead>
         <tr>
           {columns.map((column) => (
@@ -307,12 +313,25 @@ export function DataTable({
       </thead>
       <tbody>
         {rows.map(({ id, cells: [first, ...rest] }) => (
-          <tr key={id} className="border-t border-hairline align-top">
-            <th scope="row" className="w-[38%] py-4 pr-4 font-normal sm:w-auto">
+          <tr key={id} className="border-t border-hairline">
+            <th
+              scope="row"
+              className="py-0.5 pr-4 text-left font-medium sm:w-[34%] sm:py-4"
+            >
               {first}
             </th>
             {rest.map((cell, index) => (
-              <td key={columns[index + 1]} className="py-4 pr-4 text-fg-soft">
+              <td
+                key={columns[index + 1]}
+                data-label={columns[index + 1]}
+                className={`py-0.5 pr-4 text-fg-soft sm:py-4 ${dataColumns.includes(index + 1) ? 'font-mono tabular-nums' : ''}`}
+              >
+                {iconColumn === index + 1 ? (
+                  <span
+                    aria-hidden="true"
+                    className="icon icon-tool mr-2 align-[-0.15em] text-tool"
+                  />
+                ) : null}
                 {cell}
               </td>
             ))}

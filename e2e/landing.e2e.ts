@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { viatsyCase } from '../src/content/en/case-pages/viatsy';
 import { verifactuDates } from '../src/content/es/verifactu';
 import { formatPriceSummary } from '../src/lib/money';
 import { jsonLdBlocks } from '../test/json-ld';
@@ -227,11 +228,9 @@ for (const [locale, path, switchTo, label, nav] of [
       await gotoHydrated(page, path);
       await expect(page.locator('h1')).toHaveCount(1);
       await expect(page.locator('main img')).toHaveCount(0);
-      await expect(page.locator('header time')).toHaveCount(1);
-      await expect(page.locator('header time')).toHaveAttribute(
-        'datetime',
-        /^\d{4}-\d{2}-\d{2}$/,
-      );
+      await expect(
+        page.locator(`header time[datetime="${viatsyCase.published}"]`),
+      ).toHaveCount(1);
       await expect(page.locator('#built h3')).toHaveCount(6);
       await expect(page.locator('#operations .timeline > li')).toHaveCount(4);
       await expect(page.locator('#results dl')).toHaveCount(0);

@@ -1,6 +1,7 @@
-import { render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { cleanup, render, screen, within } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { ServicePage } from '@/components/service-page';
+import es from '@/i18n/es.json';
 import { type Locale, locales } from '@/lib/i18n';
 import { formatPriceSummary } from '@/lib/money';
 import { CTA_TARGET, navHref } from '@/lib/nav';
@@ -10,11 +11,23 @@ import { titleText } from '@/lib/title-text';
 import { SERVICES } from '../../test/page-content';
 import { SERVICE_BODIES } from '../../test/service-bodies';
 
+const route = vi.hoisted(() => ({ locale: 'en' }));
+
+vi.mock('@tanstack/react-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@tanstack/react-router')>()),
+  useRouteContext: ({
+    select,
+  }: {
+    select: (context: { locale: string }) => unknown;
+  }) => select({ locale: route.locale }),
+}));
+
 const CASES = locales.flatMap((locale) =>
   (['automation', 'training'] as const).map((page) => [locale, page] as const),
 );
 
 function view(locale: Locale, page: ServicePageId) {
+  route.locale = locale;
   const { hub, pages } = SERVICE_BODIES[locale];
   const copy = pages[page];
   const labels = SERVICE_BODIES[locale].hub.labels;
@@ -174,5 +187,75 @@ describe('ServicePage links into R5 pages', () => {
   it('links no case page from a page without one', () => {
     const { container } = view('en', 'training');
     expect(container.querySelectorAll('#case a')).toHaveLength(0);
+  });
+});
+
+describe('ServicePage flow and approval', () => {
+  it.each(
+    locales.flatMap((locale) =>
+      (['automation', 'integrations', 'agents'] as const).map(
+        (page) => [locale, page] as const,
+      ),
+    ),
+  )('draws the three-step flow with actor names on %s %s', (locale, page) => {
+    const { container, copy, hub } = view(locale, page);
+    const steps = [...container.querySelectorAll('#flow ol.flow > li')];
+    expect(
+      steps.map((step) => step.querySelector('p:last-child')?.textContent),
+    ).toEqual(copy.flow?.steps.map((step) => step.label));
+    for (const [index, step] of steps.entries()) {
+      const actor = copy.flow?.steps[index]?.actor;
+      expect(step.textContent).toContain(actor ? hub.labels.actors[actor] : '');
+    }
+  });
+
+  it('shows the approval card on agents only', () => {
+    const agents = view('en', 'agents');
+    expect(
+      agents.container.querySelector('#flow figure:nth-of-type(2)'),
+    ).toHaveTextContent('Needs your approval');
+    cleanup();
+    for (const page of ['automation', 'integrations'] as const) {
+      const { container } = view('en', page);
+      expect(container.querySelectorAll('#flow figure')).toHaveLength(1);
+      cleanup();
+    }
+  });
+
+  it('has no flow section on a page without one', () => {
+    const { container } = view('en', 'training');
+    expect(container.querySelector('#flow')).toBeNull();
+  });
+});
+
+describe('ServicePage layout', () => {
+  it('highlights the price fact', () => {
+    const { container, labels } = view('en', 'agents');
+    const highlighted = container.querySelectorAll('.fact-highlight');
+    expect(highlighted).toHaveLength(1);
+    expect(highlighted[0]?.querySelector('dt')?.textContent).toBe(labels.price);
+  });
+
+  it('puts the sticky bar after the related links and before the closing band', () => {
+    const { container } = view('en', 'automation');
+    const bar = container.querySelector('[data-sticky-cta]');
+    const related = container.querySelector('#related-title');
+    const band = container.querySelector('section.band');
+    expect(bar).not.toBeNull();
+    expect(related?.compareDocumentPosition(bar as Node)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(bar?.compareDocumentPosition(band as Node)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+});
+
+describe('service-page sticky bar', () => {
+  it('is localised for es', () => {
+    const { container } = view('es', 'automation');
+    const link = container.querySelector('[data-sticky-cta] a');
+    expect(link?.textContent).toBe(es.nav.cta);
+    expect(link).toHaveAttribute('href', navHref('es', CTA_TARGET));
   });
 });

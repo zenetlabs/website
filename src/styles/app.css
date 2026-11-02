@@ -412,6 +412,50 @@
     @apply flex flex-col items-center gap-2 rounded-input md:items-start;
   }
 
+  .facts {
+    @apply mt-8 grid grid-cols-2 gap-x-6 gap-y-6 border-t border-hairline pt-6 md:mt-10 lg:grid-cols-4 lg:gap-x-8;
+  }
+
+  .fact-highlight {
+    @apply -m-3 rounded-input bg-highlight-soft p-3;
+  }
+
+  .usecase-list {
+    @apply grid border-t border-hairline md:grid-cols-2 md:gap-x-14;
+  }
+
+  .usecase-list > li {
+    @apply border-b border-hairline py-5 md:py-7;
+  }
+
+  .related-links {
+    @apply mt-5 flex flex-wrap gap-x-8 gap-y-3 text-ui-l;
+  }
+
+  .data-table {
+    @apply w-full text-left text-ui-m md:text-base;
+  }
+
+  .data-table th,
+  .data-table td {
+    @apply align-top;
+  }
+
+  @media (max-width: 639px) {
+    .data-table thead {
+      @apply sr-only;
+    }
+
+    .data-table tr {
+      @apply grid gap-1 border-t border-hairline py-4;
+    }
+
+    .data-table td[data-label]::before {
+      content: attr(data-label) / "";
+      @apply mr-2 font-mono text-label font-medium uppercase text-muted-fg;
+    }
+  }
+
   .case-item {
     @apply flex flex-col border-t border-hairline pt-6 md:pt-8;
   }
@@ -550,7 +594,7 @@ html:has([data-chat-launcher]) [data-sticky-cta] {
 }
 
 html:has([data-consent-banner]) [data-sticky-cta],
-html:has([data-voice-panel][open]) [data-sticky-cta],
-html:has(header details[open]) [data-sticky-cta] {
+html:has(header details[open]) [data-sticky-cta],
+html:has([data-voice-panel][open]) [data-sticky-cta] {
   visibility: hidden;
 }

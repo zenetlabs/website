@@ -63,6 +63,19 @@ export const integrations = {
       },
     ],
   },
+  // TODO(albert): confirm the flow steps
+  flow: {
+    title: { before: 'A connection, ', emphasis: 'step by step', after: '' },
+    caption: 'A won deal, from HubSpot to Xero',
+    steps: [
+      { actor: 'tool', label: 'A deal is marked as won in HubSpot' },
+      {
+        actor: 'tool',
+        label: 'The integration creates the contact and the invoice in Xero',
+      },
+      { actor: 'human', label: 'Sales can see who has paid' },
+    ],
+  },
   how: {
     title: {
       before: 'Built to ',

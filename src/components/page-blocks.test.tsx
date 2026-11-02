@@ -2,13 +2,13 @@ import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import {
   Breadcrumb,
-  CardGrid,
   DataTable,
   FactList,
   FactsHero,
   GetStarted,
   HeroHeading,
   RelatedLinks,
+  UseCaseList,
 } from '@/components/page-blocks';
 import { hubNames } from '@/lib/crumb-names';
 import type { Locale } from '@/lib/i18n';
@@ -187,10 +187,10 @@ describe('RelatedLinks', () => {
   });
 });
 
-describe('CardGrid', () => {
+describe('UseCaseList', () => {
   it('links a title only when the card names a page', () => {
     const { container } = render(
-      <CardGrid
+      <UseCaseList
         locale="es"
         items={[
           { id: 'a', title: 'Linked', text: 'x', page: 'verifactu' },

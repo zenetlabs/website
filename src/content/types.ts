@@ -105,6 +105,13 @@ export type PageLink = { page: PageId; label: string };
 export type FlowActor = 'tool' | 'agent' | 'human';
 export type FlowStep = { actor: FlowActor; label: string };
 export type CaseFlow = { caption: string; steps: readonly FlowStep[] };
+export type FlowSectionCopy = SectionCopy & CaseFlow;
+export type ApprovalCopy = {
+  title: string;
+  detail: string;
+  approve: string;
+  hold: string;
+};
 
 export type CaseStudy = {
   id: 'viatsy' | 'taplany';
@@ -147,7 +154,7 @@ export type HomeContent = {
     caption: string;
     description: string;
     lines: readonly [string, string, string];
-    approval: { title: string; detail: string; approve: string; hold: string };
+    approval: ApprovalCopy;
   };
   companies: { title: string; items: CompanyCopy };
   problems: SectionCopy & {
@@ -283,6 +290,8 @@ export type ServicePageContent = {
   useCases: SectionCopy & {
     items: readonly (Card & { page?: PageId })[];
   };
+  flow?: FlowSectionCopy;
+  approval?: ApprovalCopy & { caption: string };
   how: ProcessCopy & {
     steps: readonly [ProcessStep, ProcessStep, ProcessStep, ProcessStep];
   };
@@ -383,6 +392,7 @@ export type CasePageContent = {
   facts: readonly CaseFact[];
   problem: SectionCopy & { paragraphs: readonly string[] };
   built: SectionCopy & { items: readonly Card[] };
+  flow: FlowSectionCopy;
   operations: SectionCopy & {
     steps: readonly [CaseStep, CaseStep, CaseStep, CaseStep];
   };
@@ -402,6 +412,7 @@ export type ServicePageLabels = {
   mail: string;
   related: string;
   allServices: string;
+  actors: Record<FlowActor, string>;
 };
 
 export type ServicesHubContent = {

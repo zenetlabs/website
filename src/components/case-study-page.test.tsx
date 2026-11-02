@@ -1,9 +1,22 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { CaseStudyPage } from '@/components/case-study-page';
+import es from '@/i18n/es.json';
 import { locales } from '@/lib/i18n';
+import { CTA_TARGET, navHref } from '@/lib/nav';
 import { titleText } from '@/lib/title-text';
 import { HUB, METRICS, VIATSY } from '../../test/landing';
+
+const route = vi.hoisted(() => ({ locale: 'en' }));
+
+vi.mock('@tanstack/react-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@tanstack/react-router')>()),
+  useRouteContext: ({
+    select,
+  }: {
+    select: (context: { locale: string }) => unknown;
+  }) => select({ locale: route.locale }),
+}));
 
 const PUBLISHED = VIATSY.en.published;
 
@@ -12,6 +25,7 @@ function view(
   lastmod = PUBLISHED,
   metrics = METRICS[locale],
 ) {
+  route.locale = locale;
   return render(
     <CaseStudyPage
       locale={locale}
@@ -82,5 +96,32 @@ describe.each(locales)('CaseStudyPage (%s)', (locale) => {
     expect(container.querySelectorAll('#results ul > li')).toHaveLength(
       copy.results.points.length,
     );
+  });
+});
+
+describe.each(locales)('CaseStudyPage flow (%s)', (locale) => {
+  it('draws the supplier-confirmation flow between built and operations', () => {
+    const { container } = view(locale);
+    const copy = VIATSY[locale];
+    const steps = [...container.querySelectorAll('#flow ol.flow > li')];
+    expect(steps).toHaveLength(copy.flow.steps.length);
+    expect(steps.map((step) => step.getAttribute('data-actor'))).toEqual(
+      copy.flow.steps.map((step) => step.actor),
+    );
+    const ids = [...container.querySelectorAll('section[id]')].map(
+      (section) => section.id,
+    );
+    expect(ids.indexOf('flow')).toBe(ids.indexOf('built') + 1);
+    expect(ids.indexOf('operations')).toBe(ids.indexOf('flow') + 1);
+    expect(container.querySelectorAll('[data-sticky-cta]')).toHaveLength(1);
+  });
+});
+
+describe('case-study-page sticky bar', () => {
+  it('is localised for es', () => {
+    const { container } = view('es');
+    const link = container.querySelector('[data-sticky-cta] a');
+    expect(link?.textContent).toBe(es.nav.cta);
+    expect(link).toHaveAttribute('href', navHref('es', CTA_TARGET));
   });
 });

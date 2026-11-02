@@ -65,6 +65,7 @@ export const servicesHub = {
     mail: '¿Prefieres el correo? Escribe a',
     related: 'Servicios relacionados',
     allServices: 'Todos los servicios',
+    actors: { tool: 'Tus herramientas', agent: 'Agente', human: 'Una persona' },
   },
   startHere: 'Empieza aquí',
   book: 'Reserva el diagnóstico',

@@ -288,6 +288,13 @@ describe.each(locales)('LLMS_FULL %s', (locale) => {
       for (const [index, step] of copyOf.how.steps.entries()) {
         expect(text).toContain(`${index + 1}. ${step.label}: ${step.text}`);
       }
+      for (const [index, step] of (copyOf.flow?.steps ?? []).entries()) {
+        expect(text).toContain(`${index + 1}. ${step.label}\n`);
+      }
+      if (copyOf.approval) {
+        const { caption, title, detail } = copyOf.approval;
+        expect(text).toContain(`${caption}: ${title}. ${detail}`);
+      }
       for (const { question, answer } of copyOf.faq.items) {
         expect(text).toContain(`#### ${question}\n\n${answer}\n`);
       }
@@ -306,6 +313,9 @@ describe.each(locales)('LLMS_FULL %s', (locale) => {
     }
     for (const item of viatsy.built.items) {
       expect(text).toContain(`- ${item.title}: ${item.text}`);
+    }
+    for (const [index, step] of viatsy.flow.steps.entries()) {
+      expect(text).toContain(`${index + 1}. ${step.label}`);
     }
     for (const [index, step] of viatsy.operations.steps.entries()) {
       expect(text).toContain(`${index + 1}. ${step.label}: ${step.text}`);

@@ -43,7 +43,7 @@ export const travelAgencies = {
     },
     lead: 'Cada agencia trabaja a su manera; estas son las tareas que más horas se comen.',
     todayLabel: 'Hoy',
-    automatedLabel: 'Automatizado',
+    automatedLabel: 'Con nosotros',
     items: [
       {
         id: 'enquiries',

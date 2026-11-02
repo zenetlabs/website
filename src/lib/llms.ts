@@ -29,6 +29,7 @@ import type {
   Card,
   CasePageContent,
   FaqItem,
+  FlowSectionCopy,
   HomeContent,
   LandingContentMap,
   LlmsCopy,
@@ -445,6 +446,13 @@ function faqBlocks(items: readonly FaqItem[]): string[] {
   return items.flatMap(({ question, answer }) => [`#### ${question}`, answer]);
 }
 
+function flowBlock(flow: FlowSectionCopy): string {
+  return [
+    `${titleText(flow.title)} (${flow.caption}):`,
+    ...flow.steps.map((step, index) => `${index + 1}. ${step.label}`),
+  ].join('\n');
+}
+
 function servicePagesSection(
   locale: Locale,
   { hub, pages }: ServiceBodies,
@@ -461,6 +469,12 @@ function servicePagesSection(
           body.hero.lead,
           factsBlock(locale, serviceOf(page), body.facts, hub.labels),
           bullets(body.useCases.title, body.useCases.items),
+          ...(body.flow ? [flowBlock(body.flow)] : []),
+          ...(body.approval
+            ? [
+                `${body.approval.caption}: ${body.approval.title}. ${body.approval.detail}`,
+              ]
+            : []),
           [
             `${titleText(body.how.title)}:`,
             ...body.how.steps.map(
@@ -568,6 +582,7 @@ function caseBlocks(
     ...body.problem.paragraphs,
     `#### ${titleText(body.built.title)}`,
     body.built.items.map((item) => `- ${item.title}: ${item.text}`).join('\n'),
+    flowBlock(body.flow),
     `#### ${titleText(body.operations.title)}`,
     body.operations.steps
       .map((step, index) => `${index + 1}. ${step.label}: ${step.text}`)

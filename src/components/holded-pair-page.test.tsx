@@ -1,9 +1,18 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { HoldedPairPage } from '@/components/holded-pair-page';
 import { HOLDED_PAGE_IDS } from '@/lib/page-registry';
 import { HUB_ES, SPANISH } from '../../test/landing';
 import { SERVICES } from '../../test/page-content';
+
+vi.mock('@tanstack/react-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@tanstack/react-router')>()),
+  useRouteContext: ({
+    select,
+  }: {
+    select: (context: { locale: string }) => unknown;
+  }) => select({ locale: 'es' }),
+}));
 
 describe.each(HOLDED_PAGE_IDS)('HoldedPairPage (%s)', (page) => {
   const copy = SPANISH[page];
@@ -58,5 +67,27 @@ describe.each(HOLDED_PAGE_IDS)('HoldedPairPage (%s)', (page) => {
     );
     expect(details).toHaveLength(4);
     expect(container.querySelectorAll('script, img')).toHaveLength(0);
+  });
+});
+
+describe('HoldedPairPage table', () => {
+  it('labels each cell for the stacked mobile layout and marks the direction with an icon', () => {
+    const { container } = render(
+      <HoldedPairPage
+        page="holdedWoocommerce"
+        locale="es"
+        copy={SPANISH.holdedWoocommerce}
+        hub={HUB_ES}
+        services={SERVICES.es}
+      />,
+    );
+    const first = container.querySelector('tbody tr');
+    const cells = [...(first?.querySelectorAll('td') ?? [])];
+    expect(cells.map((cell) => cell.getAttribute('data-label'))).toEqual([
+      SPANISH.holdedWoocommerce.sync.columns.direction,
+      SPANISH.holdedWoocommerce.sync.columns.when,
+    ]);
+    expect(cells[0]?.querySelector('.icon-tool')).not.toBeNull();
+    expect(cells[1]?.querySelector('.icon-tool')).toBeNull();
   });
 });

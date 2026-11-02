@@ -55,6 +55,7 @@ const PAIRS: ReadonlyArray<
   ['human', 'human-soft', GRAPHIC, PAGE],
   ['fg', 'human-soft', TEXT, PAGE],
   ['fg', 'highlight-soft', TEXT, PAGE],
+  ['muted-fg', 'highlight-soft', TEXT, PAGE],
   ['fg-soft', 'human-soft', TEXT, PAGE],
   ['fg-soft', 'tool-soft', TEXT, PAGE],
   ['fg-soft', 'agent-soft', TEXT, PAGE],
