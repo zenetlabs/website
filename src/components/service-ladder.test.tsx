@@ -46,7 +46,9 @@ describe.each([
         locale={locale}
       />,
     );
-    return within(screen.getByRole('list')).getAllByRole('link');
+    return within(screen.getByRole('list'))
+      .getAllByRole('link')
+      .filter((link) => link.dataset.cta === undefined);
   }
 
   it('renders 7 rows linking to the service pages or the pricing cards', () => {
@@ -61,6 +63,25 @@ describe.each([
       expect(text).toContain(service.summary);
       expect(text).toContain(formatPriceSummary(locale, service.prices));
     }
+  });
+
+  it('highlights the diagnostic row with a Start here chip and a booking button', () => {
+    render(
+      <ServiceLadder
+        copy={home.services}
+        services={services}
+        locale={locale}
+      />,
+    );
+    const [first] = screen.getAllByRole('listitem');
+    if (!first) throw new Error('no ladder row');
+    expect(first).toHaveTextContent(home.services.startHere);
+    expect(
+      within(first).getByRole('link', {
+        name: home.services.book,
+      }),
+    ).toHaveAttribute('data-cta', 'start_here');
+    expect(screen.getAllByText(home.services.startHere)).toHaveLength(1);
   });
 
   it('adds one link to the full pricing page', () => {

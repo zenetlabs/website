@@ -8,6 +8,7 @@ import { Hero } from '@/components/hero';
 import { Problems } from '@/components/problems';
 import { Process } from '@/components/process';
 import { ServiceLadder } from '@/components/service-ladder';
+import { StickyZone } from '@/components/sticky-cta';
 import { VerifactuStrip } from '@/components/verifactu-strip';
 import { loadHomeContent } from '@/content/load';
 import { CONTENT } from '@/lib/content';
@@ -37,16 +38,26 @@ function Home() {
         diagnosticPrice={formatPriceSummary(locale, services.diagnostic.prices)}
         locale={locale}
       />
-      <CompaniesStrip copy={home.companies} />
-      <Problems copy={home.problems} />
-      {home.verifactu ? (
-        <VerifactuStrip copy={home.verifactu} locale={locale} />
-      ) : null}
-      <ServiceLadder copy={home.services} services={services} locale={locale} />
-      <Process copy={home.process} variant="band" />
-      <Cases copy={home.cases} locale={locale} />
-      <FounderSection copy={home.founder} founder={founder} locale={locale} />
-      <Faq copy={home.faq} items={faq} />
+      <StickyZone locale={locale}>
+        <CompaniesStrip copy={home.companies} />
+        <Problems copy={home.problems} />
+        {home.verifactu ? (
+          <VerifactuStrip copy={home.verifactu} locale={locale} />
+        ) : null}
+        <ServiceLadder
+          copy={home.services}
+          services={services}
+          locale={locale}
+        />
+        <Process
+          copy={home.process}
+          variant="band"
+          price={formatPriceSummary(locale, services.diagnostic.prices)}
+        />
+        <Cases copy={home.cases} locale={locale} />
+        <FounderSection copy={home.founder} founder={founder} locale={locale} />
+        <Faq copy={home.faq} items={faq} />
+      </StickyZone>
       <ContactSection copy={home.contact} />
     </>
   );

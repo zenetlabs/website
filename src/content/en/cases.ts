@@ -31,6 +31,15 @@ export const viatsy = {
     },
   ],
   link: { page: 'viatsyCase', label: viatsyCaseName },
+  // TODO(albert): confirm the flow steps
+  flow: {
+    caption: 'From inquiry to proposal',
+    steps: [
+      { actor: 'tool', label: 'An inquiry arrives by email or WhatsApp' },
+      { actor: 'agent', label: 'The agent drafts the reply and the proposal' },
+      { actor: 'human', label: 'A person reviews and sends them' },
+    ],
+  },
 } satisfies CaseStudy;
 
 export const taplany = {

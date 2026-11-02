@@ -159,6 +159,15 @@ test('starts a call after Turnstile: one mint, the Spanish agent, the session ha
 test.describe('on a phone', () => {
   test.use({ viewport: { width: 412, height: 915 } });
 
+  test('the sticky bar gives way while the panel is open', async ({ page }) => {
+    await gotoHydrated(page, '/');
+    await page.locator('#faq').scrollIntoViewIfNeeded();
+    await expect(page.locator('[data-sticky-cta]')).toBeVisible();
+    await page.getByRole('button', { name: BUTTON.en }).click();
+    await expect(page.locator('dialog[data-voice-panel]')).toBeVisible();
+    await expect(page.locator('[data-sticky-cta]')).toBeHidden();
+  });
+
   test('the live panel is a bottom sheet with no axe violations', async ({
     page,
   }) => {

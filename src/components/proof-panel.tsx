@@ -33,7 +33,7 @@ export function ProofPanel({ copy }: { copy: HomeContent['proof'] }) {
             style={{ '--i': lines.length + 1 }}
           >
             <p className="flex items-center gap-2 text-ui-m font-semibold">
-              <span className="icon icon-person text-human" />
+              <span className="icon icon-human text-human" />
               {approval.title}
             </p>
             <p className="mt-1.5 text-ui-s text-fg-soft">{approval.detail}</p>

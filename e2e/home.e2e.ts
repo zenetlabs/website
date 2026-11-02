@@ -66,7 +66,7 @@ for (const home of HOMES) {
     test('lists the sections in order under one h1', async ({ page }) => {
       await gotoHydrated(page, home.path);
       const ids = await page
-        .locator('main > section[id]')
+        .locator('main section[id]')
         .evaluateAll((sections) => sections.map((section) => section.id));
       expect(ids).toEqual(home.sections);
       await expect(page.locator('h1')).toHaveCount(1);
@@ -137,7 +137,7 @@ for (const home of HOMES) {
     }) => {
       await gotoHydrated(page, home.path);
       const hrefs = await page
-        .locator('#services ul a')
+        .locator('#services ul > li > a:first-of-type')
         .evaluateAll((links) => links.map((a) => a.getAttribute('href')));
       expect(hrefs).toEqual(home.ladder);
     });
@@ -252,5 +252,25 @@ test.describe('mobile menu', () => {
       'open',
       '',
     );
+  });
+});
+
+test.describe('case bullets fold on mobile only', () => {
+  test('are collapsed at 390 until the summary is opened', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await gotoHydrated(page, '/');
+    const first = page.locator('#cases li').first();
+    const bullets = first.locator('ul li').first();
+    await expect(bullets).toBeHidden();
+    await first.locator('summary').click();
+    await expect(bullets).toBeVisible();
+  });
+
+  test('are open with no toggle at 1280', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await gotoHydrated(page, '/');
+    const first = page.locator('#cases li').first();
+    await expect(first.locator('ul li').first()).toBeVisible();
+    await expect(first.locator('summary')).toBeHidden();
   });
 });

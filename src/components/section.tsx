@@ -1,18 +1,7 @@
 import type { ReactNode } from 'react';
+import { type SectionVariant, sectionFrame } from '@/components/section-frame';
 import { LEAD } from '@/components/ui';
 import type { TitleParts } from '@/content/types';
-
-export type SectionVariant = 'default' | 'tint' | 'band' | 'compact';
-
-const VARIANTS: Record<
-  SectionVariant,
-  { ground: string; bg: string; pad: string }
-> = {
-  default: { ground: 'paper', bg: '', pad: 'py-section' },
-  compact: { ground: 'paper', bg: '', pad: 'py-section-compact' },
-  tint: { ground: 'tint', bg: 'bg-tint', pad: 'py-section' },
-  band: { ground: 'band', bg: 'band', pad: 'py-section-band' },
-};
 
 export function Container({
   className = '',
@@ -60,7 +49,7 @@ export function Section({
   width?: 'content' | 'wide';
   children: ReactNode;
 }) {
-  const { ground, bg, pad } = VARIANTS[variant];
+  const { ground, bg, pad } = sectionFrame(variant);
   return (
     <section
       id={id}
@@ -72,8 +61,8 @@ export function Section({
         <h2 id={`${id}-title`} className="max-w-3xl">
           <EmphasisTitle parts={title} />
         </h2>
-        {lead ? <p className={`mt-5 ${LEAD}`}>{lead}</p> : null}
-        <div className="mt-8 md:mt-12">{children}</div>
+        {lead ? <p className={`mt-4 md:mt-5 ${LEAD}`}>{lead}</p> : null}
+        <div className="mt-6 md:mt-12">{children}</div>
       </Container>
     </section>
   );

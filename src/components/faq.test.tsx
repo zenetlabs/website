@@ -62,3 +62,26 @@ describe.each([
     }
   });
 });
+
+describe.each([
+  ['en', enHome],
+  ['es', esHome],
+] as const)('Faq groups (%s)', (locale, home) => {
+  const faq = FAQ[locale];
+
+  it('puts every question in one of the three labelled groups', () => {
+    const ids = home.faq.groups.map((group) => group.id);
+    expect(ids).toHaveLength(3);
+    for (const item of faq) expect(ids).toContain(item.group);
+  });
+
+  it('shows each group with its own heading and keeps every question visible', () => {
+    const { container } = render(<Faq copy={home.faq} items={faq} />);
+    const groups = [...container.querySelectorAll('[data-faq-group]')];
+    expect(groups).toHaveLength(3);
+    expect(
+      groups.map((group) => group.querySelector('h3')?.textContent),
+    ).toEqual(home.faq.groups.map((group) => group.label));
+    expect(container.querySelectorAll('details')).toHaveLength(faq.length);
+  });
+});

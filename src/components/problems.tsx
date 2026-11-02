@@ -1,22 +1,20 @@
+import { BeforeAfter } from '@/components/before-after';
 import { Section } from '@/components/section';
-import { CARD, EYEBROW, H3 } from '@/components/ui';
 import type { HomeContent } from '@/content/types';
 
 export function Problems({ copy }: { copy: HomeContent['problems'] }) {
   return (
     <Section id="problems" title={copy.title}>
-      <ul className="grid gap-6 lg:grid-cols-3">
-        {copy.items.map((item) => (
-          <li key={item.id} className={`${CARD} flex flex-col p-8`}>
-            <h3 className={H3}>{item.title}</h3>
-            <p className="mt-4 text-fg-soft">{item.problem}</p>
-            <div className="mt-6 border-t border-hairline pt-6">
-              <p className={EYEBROW}>{copy.fixLabel}</p>
-              <p className="mt-3">{item.fix}</p>
-            </div>
-          </li>
-        ))}
-      </ul>
+      <BeforeAfter
+        rows={copy.items.map((item) => ({
+          id: item.id,
+          title: item.title,
+          before: item.problem,
+          after: item.fix,
+        }))}
+        beforeLabel={copy.todayLabel}
+        afterLabel={copy.fixLabel}
+      />
     </Section>
   );
 }

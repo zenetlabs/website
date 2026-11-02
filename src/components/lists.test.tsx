@@ -7,7 +7,9 @@ describe('BulletList', () => {
     const { container } = render(
       <BulletList items={['one', 'two']} className="mt-6" />,
     );
-    expect(container.querySelector('ul')?.className).toBe('mt-6 grid gap-3');
+    expect(container.querySelector('ul')?.className).toBe(
+      'mt-6 grid gap-2 md:gap-3',
+    );
     expect(container.querySelectorAll('li')).toHaveLength(2);
   });
 });
