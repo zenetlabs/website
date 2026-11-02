@@ -63,6 +63,20 @@ export const automation = {
       },
     ],
   },
+  // TODO(albert): confirm the flow steps
+  flow: {
+    title: { before: 'A process, ', emphasis: 'step by step', after: '' },
+    caption: 'A supplier invoice, from inbox to ledger',
+    steps: [
+      { actor: 'tool', label: 'An invoice arrives by email' },
+      {
+        actor: 'agent',
+        label:
+          'The automation reads it and checks it against what you expected',
+      },
+      { actor: 'human', label: 'Only the exceptions reach a person' },
+    ],
+  },
   how: {
     title: { before: 'From one process to ', emphasis: 'many', after: '' },
     steps: [

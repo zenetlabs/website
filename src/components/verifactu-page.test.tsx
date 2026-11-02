@@ -1,10 +1,19 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { VerifactuPage } from '@/components/verifactu-page';
 import { verifactuDates } from '@/content/es/verifactu';
 import { formatMoney } from '@/lib/money';
 import { HUB_ES, SPANISH } from '../../test/landing';
 import { SERVICES } from '../../test/page-content';
+
+vi.mock('@tanstack/react-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@tanstack/react-router')>()),
+  useRouteContext: ({
+    select,
+  }: {
+    select: (context: { locale: string }) => unknown;
+  }) => select({ locale: 'es' }),
+}));
 
 const copy = SPANISH.verifactu;
 

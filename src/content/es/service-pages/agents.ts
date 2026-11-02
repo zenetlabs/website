@@ -64,6 +64,34 @@ export const agents = {
       },
     ],
   },
+  // TODO(albert): confirm the flow steps and the approval example
+  flow: {
+    title: {
+      before: 'Un agente trabajando, ',
+      emphasis: 'paso a paso',
+      after: '',
+    },
+    caption: 'Una consulta, de la bandeja de entrada a la respuesta',
+    steps: [
+      { actor: 'tool', label: 'Llega una consulta por correo o WhatsApp' },
+      {
+        actor: 'agent',
+        label: 'El agente busca lo que necesita y redacta la respuesta',
+      },
+      {
+        actor: 'human',
+        label: 'Una persona aprueba la respuesta antes de enviarla',
+      },
+    ],
+  },
+  approval: {
+    caption: 'Lo que ve la persona: un ejemplo ilustrativo',
+    title: 'Necesita tu aprobación',
+    detail:
+      'Una respuesta redactada para un cliente espera a que una persona decida.',
+    approve: 'Aprobar',
+    hold: 'Retener',
+  },
   how: {
     title: {
       before: 'Probado con ',

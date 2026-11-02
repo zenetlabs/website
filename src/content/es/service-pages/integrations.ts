@@ -67,6 +67,19 @@ export const integrations = {
       },
     ],
   },
+  // TODO(albert): confirm the flow steps
+  flow: {
+    title: { before: 'Una conexión, ', emphasis: 'paso a paso', after: '' },
+    caption: 'Un negocio ganado, de HubSpot a Holded',
+    steps: [
+      { actor: 'tool', label: 'Un negocio se marca como ganado en HubSpot' },
+      {
+        actor: 'tool',
+        label: 'La integración crea el contacto y la factura en Holded',
+      },
+      { actor: 'human', label: 'Ventas ve quién ha pagado' },
+    ],
+  },
   how: {
     title: {
       before: 'Hechas para ',

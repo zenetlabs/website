@@ -71,6 +71,58 @@ test('the home markdown keeps content and drops chrome', async ({
   }
 });
 
+test('the service and case markdown keep the flow steps', async ({
+  request,
+}) => {
+  for (const [path, steps] of [
+    [
+      '/services/ai-agents',
+      [
+        'An enquiry arrives by email or WhatsApp',
+        'The agent looks up what it needs and drafts the reply',
+        'A person approves the reply before it is sent',
+        'Needs your approval',
+      ],
+    ],
+    [
+      '/case-studies/viatsy',
+      ['A supplier sends a confirmation by email or as pasted text'],
+    ],
+  ] as const) {
+    const response = await request.get(path, {
+      headers: { accept: 'text/markdown' },
+    });
+    const body = await response.text();
+    for (const step of steps) expect(body).toContain(step);
+  }
+});
+
+test('the Spanish service and case markdown keep the flow steps', async ({
+  request,
+}) => {
+  for (const [path, steps] of [
+    [
+      '/es/servicios/agentes-de-ia',
+      [
+        'Llega una consulta por correo o WhatsApp',
+        'El agente busca lo que necesita y redacta la respuesta',
+        'Una persona aprueba la respuesta antes de enviarla',
+        'Necesita tu aprobación',
+      ],
+    ],
+    [
+      '/es/casos/viatsy',
+      ['Un proveedor envía una confirmación por correo o como texto pegado'],
+    ],
+  ] as const) {
+    const response = await request.get(path, {
+      headers: { accept: 'text/markdown' },
+    });
+    const body = await response.text();
+    for (const step of steps) expect(body).toContain(step);
+  }
+});
+
 test('the Spanish pricing markdown keeps the ladder and its prices', async ({
   request,
 }) => {

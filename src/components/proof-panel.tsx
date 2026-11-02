@@ -28,12 +28,13 @@ export function ProofPanel({ copy }: { copy: HomeContent['proof'] }) {
               ))}
             </ul>
           </div>
+          {/* Same markup as ApprovalCard; kept inline so home does not load a shared chunk. Parity is tested in approval-card.test.tsx. */}
           <div
             className="proof-in proof-approval m-3 rounded-input bg-human-soft p-4 md:mx-5 md:mt-0 md:mb-5"
             style={{ '--i': lines.length + 1 }}
           >
             <p className="flex items-center gap-2 text-ui-m font-semibold">
-              <span className="icon icon-human text-human" />
+              <span aria-hidden="true" className="icon icon-human text-human" />
               {approval.title}
             </p>
             <p className="mt-1.5 text-ui-s text-fg-soft">{approval.detail}</p>

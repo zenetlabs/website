@@ -1,13 +1,14 @@
 import { Faq } from '@/components/faq';
 import {
   Breadcrumb,
-  CardGrid,
   DataTable,
   FactsHero,
   GetStarted,
   RelatedLinks,
+  UseCaseList,
 } from '@/components/page-blocks';
 import { Section } from '@/components/section';
+import { StickyZone } from '@/components/sticky-cta';
 import type {
   HoldedPairContent,
   Services,
@@ -52,28 +53,31 @@ export function HoldedPairPage({
           />
         }
       />
-      <Section id="sync" title={section.title} lead={section.lead}>
-        <DataTable
-          labelledBy="sync-title"
-          columns={[columns.data, columns.direction, columns.when]}
-          rows={rows.map((row) => ({
-            id: row.id,
-            cells: [row.data, row.direction, row.when],
-          }))}
+      <StickyZone locale={locale}>
+        <Section id="sync" title={section.title} lead={section.lead}>
+          <DataTable
+            labelledBy="sync-title"
+            columns={[columns.data, columns.direction, columns.when]}
+            rows={rows.map((row) => ({
+              id: row.id,
+              cells: [row.data, row.direction, row.when],
+            }))}
+            iconColumn={1}
+          />
+          <p className="mt-6 max-w-[60ch] text-ui-s text-muted-fg">{note}</p>
+        </Section>
+        <Section id="edge-cases" title={copy.edgeCases.title} variant="tint">
+          <UseCaseList items={copy.edgeCases.items} locale={locale} />
+        </Section>
+        <Faq copy={copy.faq} items={copy.faq.items} />
+        <RelatedLinks
+          locale={locale}
+          pages={copy.related}
+          names={names}
+          labels={hub.labels}
         />
-        <p className="mt-6 max-w-[60ch] text-sm text-muted-fg">{note}</p>
-      </Section>
-      <Section id="edge-cases" title={copy.edgeCases.title}>
-        <CardGrid items={copy.edgeCases.items} locale={locale} />
-      </Section>
-      <Faq copy={copy.faq} items={copy.faq.items} />
+      </StickyZone>
       <GetStarted locale={locale} cta={copy.cta} mail={hub.labels.mail} />
-      <RelatedLinks
-        locale={locale}
-        pages={copy.related}
-        names={names}
-        labels={hub.labels}
-      />
     </>
   );
 }

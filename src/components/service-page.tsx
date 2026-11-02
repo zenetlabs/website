@@ -1,14 +1,16 @@
 import { Faq } from '@/components/faq';
+import { FlowSection } from '@/components/flow-section';
 import { BulletList } from '@/components/lists';
 import {
   Breadcrumb,
-  CardGrid,
   FactsHero,
   GetStarted,
   RelatedLinks,
+  UseCaseList,
 } from '@/components/page-blocks';
 import { Process } from '@/components/process';
 import { Section } from '@/components/section';
+import { StickyZone } from '@/components/sticky-cta';
 import { CALLOUT_CARD, TEXT_LINK } from '@/components/ui';
 import type {
   ServicePageContent,
@@ -53,36 +55,45 @@ export function ServicePage({
           />
         }
       />
-      <Section
-        id="use-cases"
-        title={copy.useCases.title}
-        lead={copy.useCases.lead}
-      >
-        <CardGrid items={copy.useCases.items} locale={locale} />
-      </Section>
-      <Process id="how" copy={copy.how} />
-      <Section id="case" title={copy.case.title}>
-        <div className={CALLOUT_CARD}>
-          <p className="text-fg-soft">{copy.case.text}</p>
-          <BulletList items={copy.case.points} className="mt-6" />
-          {copy.case.page ? (
-            <a
-              href={pagePath(locale, copy.case.page)}
-              className={`mt-6 inline-block font-medium ${TEXT_LINK}`}
-            >
-              {crumbName(names, copy.case.page)} →
-            </a>
-          ) : null}
-        </div>
-      </Section>
-      <Faq copy={copy.faq} items={copy.faq.items} />
+      <StickyZone locale={locale}>
+        <Section
+          id="use-cases"
+          title={copy.useCases.title}
+          lead={copy.useCases.lead}
+        >
+          <UseCaseList items={copy.useCases.items} locale={locale} />
+        </Section>
+        {copy.flow ? (
+          <FlowSection
+            copy={copy.flow}
+            actors={hub.labels.actors}
+            approval={copy.approval}
+          />
+        ) : null}
+        <Process id="how" copy={copy.how} />
+        <Section id="case" title={copy.case.title} variant="tint">
+          <div className={CALLOUT_CARD}>
+            <p className="text-fg-soft">{copy.case.text}</p>
+            <BulletList items={copy.case.points} className="mt-6" />
+            {copy.case.page ? (
+              <a
+                href={pagePath(locale, copy.case.page)}
+                className={`mt-6 inline-block font-medium ${TEXT_LINK}`}
+              >
+                {crumbName(names, copy.case.page)} →
+              </a>
+            ) : null}
+          </div>
+        </Section>
+        <Faq copy={copy.faq} items={copy.faq.items} />
+        <RelatedLinks
+          locale={locale}
+          pages={copy.related}
+          names={names}
+          labels={hub.labels}
+        />
+      </StickyZone>
       <GetStarted locale={locale} cta={copy.cta} mail={hub.labels.mail} />
-      <RelatedLinks
-        locale={locale}
-        pages={copy.related}
-        names={names}
-        labels={hub.labels}
-      />
     </>
   );
 }

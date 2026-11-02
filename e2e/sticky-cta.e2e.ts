@@ -37,6 +37,21 @@ test.describe('mobile', () => {
     expect(end.y + end.height).toBeLessThanOrEqual(contact.y + 1);
   });
 
+  test('runs through a service page and docks above the closing band', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/services/ai-automation');
+    await expect(page.locator(BAR)).not.toBeInViewport();
+    await page.locator('#faq').scrollIntoViewIfNeeded();
+    await expect(page.locator(BAR)).toBeInViewport({ ratio: 1 });
+    await page.evaluate(() =>
+      document.querySelector('#cta-title')?.scrollIntoView({ block: 'start' }),
+    );
+    const end = await box(page, BAR);
+    const band = await box(page, '#cta-title');
+    expect(end.y + end.height).toBeLessThanOrEqual(band.y + 1);
+  });
+
   test('never covers the focused question', async ({ page }) => {
     await gotoHydrated(page, '/');
     const summaries = page.locator('#faq summary');

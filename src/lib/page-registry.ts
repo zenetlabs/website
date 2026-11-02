@@ -85,7 +85,7 @@ export const PAGES: Record<
     kind: 'service',
     parent: 'services',
     service: 'integration',
-    lastmod: '2026-10-31',
+    lastmod: '2026-11-02',
   },
   integrations: {
     slugs: {
@@ -95,14 +95,14 @@ export const PAGES: Record<
     kind: 'service',
     parent: 'services',
     service: 'integration',
-    lastmod: '2026-10-31',
+    lastmod: '2026-11-02',
   },
   agents: {
     slugs: { en: '/services/ai-agents', es: '/servicios/agentes-de-ia' },
     kind: 'service',
     parent: 'services',
     service: 'agent',
-    lastmod: '2026-10-31',
+    lastmod: '2026-11-02',
   },
   software: {
     slugs: {
@@ -155,11 +155,11 @@ export const PAGES: Record<
     slugs: { es: '/sectores/agencias-de-viaje' },
     route: '/industries/travel-agencies',
     service: 'integration',
-    lastmod: '2026-10-31',
+    lastmod: '2026-11-02',
   },
   viatsyCase: {
     slugs: { en: '/case-studies/viatsy', es: '/casos/viatsy' },
-    lastmod: '2026-10-31',
+    lastmod: '2026-11-02',
   },
   pricing: {
     slugs: { en: '/pricing', es: '/precios' },

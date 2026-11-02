@@ -85,6 +85,27 @@ export const viatsyCase = {
       },
     ],
   },
+  // TODO(albert): confirm the flow steps
+  flow: {
+    title: {
+      before: 'A confirmation, ',
+      emphasis: 'read into the booking',
+      after: '',
+    },
+    caption: 'A supplier confirmation, from email to booking',
+    steps: [
+      {
+        actor: 'tool',
+        label: 'A supplier sends a confirmation by email or as pasted text',
+      },
+      {
+        actor: 'agent',
+        label:
+          'The agent reads it into the booking and flags what does not match',
+      },
+      { actor: 'human', label: 'A person checks only what is flagged' },
+    ],
+  },
   operations: {
     title: { before: 'How the agents ', emphasis: 'run operations', after: '' },
     steps: [

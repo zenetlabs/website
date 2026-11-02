@@ -1,13 +1,15 @@
+import { FlowSection } from '@/components/flow-section';
 import { BulletList, MetricList } from '@/components/lists';
 import {
-  CardGrid,
   FactList,
   GetStarted,
   HeroHeading,
   RelatedLinks,
+  UseCaseList,
 } from '@/components/page-blocks';
 import { Process } from '@/components/process';
 import { Container, Section } from '@/components/section';
+import { StickyZone } from '@/components/sticky-cta';
 import { PROSE } from '@/components/ui';
 import type {
   CasePageContent,
@@ -37,9 +39,9 @@ export function CaseStudyPage({
   return (
     <>
       <header>
-        <Container className="py-16 md:py-24">
+        <Container className="py-12 md:py-24">
           <HeroHeading title={copy.title} lead={copy.lead} />
-          <p className="mt-6 text-sm text-muted-fg">
+          <p className="mt-6 font-mono text-ui-s tabular-nums text-muted-fg">
             {copy.labels.published}{' '}
             <time dateTime={copy.published}>
               {dayMonthYear(copy.published)}
@@ -55,35 +57,38 @@ export function CaseStudyPage({
           <FactList facts={copy.facts} />
         </Container>
       </header>
-      <Section id="problem" title={copy.problem.title}>
-        <div className={`grid gap-4 text-lg ${PROSE}`}>
-          {copy.problem.paragraphs.map((paragraph) => (
-            <p key={paragraph}>{paragraph}</p>
-          ))}
-        </div>
-      </Section>
-      <Section id="built" title={copy.built.title}>
-        <CardGrid items={copy.built.items} locale={locale} />
-      </Section>
-      <Process id="operations" copy={copy.operations} />
-      <Section id="results" title={copy.results.title}>
-        <BulletList
-          items={copy.results.points}
-          className="max-w-[60ch] text-lg"
-        />
-        <MetricList
-          metrics={metrics}
+      <StickyZone locale={locale}>
+        <Section id="problem" title={copy.problem.title}>
+          <div className={`grid gap-4 text-lg ${PROSE}`}>
+            {copy.problem.paragraphs.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </div>
+        </Section>
+        <Section id="built" title={copy.built.title}>
+          <UseCaseList items={copy.built.items} locale={locale} />
+        </Section>
+        <FlowSection copy={copy.flow} actors={hub.labels.actors} />
+        <Process id="operations" copy={copy.operations} />
+        <Section id="results" title={copy.results.title} variant="tint">
+          <BulletList
+            items={copy.results.points}
+            className="max-w-[60ch] text-lg"
+          />
+          <MetricList
+            metrics={metrics}
+            locale={locale}
+            className="mt-10 max-w-[60ch]"
+          />
+        </Section>
+        <RelatedLinks
           locale={locale}
-          className="mt-10 max-w-[60ch]"
+          pages={copy.related}
+          names={hubNames(hub)}
+          labels={hub.labels}
         />
-      </Section>
+      </StickyZone>
       <GetStarted locale={locale} cta={copy.cta} mail={hub.labels.mail} />
-      <RelatedLinks
-        locale={locale}
-        pages={copy.related}
-        names={hubNames(hub)}
-        labels={hub.labels}
-      />
     </>
   );
 }
