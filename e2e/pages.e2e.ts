@@ -34,7 +34,7 @@ const ABOUT = [
 
 const CARD_LINKS: Record<string, (string | null)[][]> = {
   '/pricing': [
-    [],
+    [CTA.en],
     ['/services/ai-automation', '/services/integrations'],
     ['/services/ai-agents'],
     ['/services/custom-software'],
@@ -43,7 +43,7 @@ const CARD_LINKS: Record<string, (string | null)[][]> = {
     [],
   ],
   '/es/precios': [
-    [],
+    [CTA.es],
     ['/es/servicios/automatizacion-de-procesos', '/es/servicios/integraciones'],
     ['/es/servicios/agentes-de-ia'],
     ['/es/servicios/desarrollo-de-software-a-medida'],

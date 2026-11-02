@@ -16,6 +16,8 @@ export const pricingPage = {
     includes: 'Includes',
     timeline: 'Timeline',
     more: 'More about',
+    startHere: 'Start here',
+    book: 'Book the diagnostic',
   },
   // TODO(albert): confirm every list
   details: {

@@ -74,6 +74,55 @@ test.describe('mobile', () => {
   });
 });
 
+const ZONE_PAGES = ['/pricing', '/services', '/about', '/es/precios'] as const;
+
+test.describe('mobile page zones', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  for (const path of ZONE_PAGES) {
+    test(`${path} docks above the closing band`, async ({ page }) => {
+      await gotoHydrated(page, path);
+      await page.evaluate(() => window.scrollBy(0, 900));
+      await expect(page.locator(BAR)).toBeInViewport({ ratio: 1 });
+      const mid = await box(page, BAR);
+      expect(Math.round(mid.y + mid.height)).toBe(844);
+
+      await page.evaluate(() =>
+        document
+          .querySelector('[data-ground="band"]')
+          ?.scrollIntoView({ block: 'start' }),
+      );
+      const end = await box(page, BAR);
+      const band = await box(page, '[data-ground="band"]');
+      expect(end.y + end.height).toBeLessThanOrEqual(band.y + 1);
+    });
+
+    test(`${path} never covers the focused link`, async ({ page }) => {
+      await gotoHydrated(page, path);
+      const links = page.locator('main a');
+      const count = await links.count();
+      await links.first().focus();
+      for (let index = 0; index < count; index++) {
+        const inMain = await page.evaluate(
+          (bar) =>
+            Boolean(document.activeElement?.closest('main')) &&
+            !document.activeElement?.closest(bar),
+          BAR,
+        );
+        if (inMain) {
+          const focused = await box(page, ':focus');
+          const bar = await box(page, BAR);
+          const overlaps =
+            focused.y < bar.y + bar.height &&
+            focused.y + focused.height > bar.y;
+          expect(overlaps).toBe(false);
+        }
+        await page.keyboard.press('Tab');
+      }
+    });
+  }
+});
+
 test.describe('desktop', () => {
   test.use({ viewport: { width: 1280, height: 900 } });
 

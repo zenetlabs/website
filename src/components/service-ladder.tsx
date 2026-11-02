@@ -1,7 +1,12 @@
 import type { ReactNode } from 'react';
 import { CtaLink } from '@/components/cta-link';
 import { Section } from '@/components/section';
-import { H3, PILL, SECONDARY_BUTTON, TEXT_LINK } from '@/components/ui';
+import {
+  FEATURED_BADGE,
+  H3,
+  SECONDARY_BUTTON,
+  TEXT_LINK,
+} from '@/components/ui';
 import type { HomeContent, Services } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { formatPriceSummary } from '@/lib/money';
@@ -41,11 +46,7 @@ export function ServiceRow({
       >
         {featured ? (
           <span className="basis-full md:col-span-full">
-            <span
-              className={`${PILL} inline-block bg-human-soft font-mono text-label font-medium uppercase text-fg`}
-            >
-              {featured.badge}
-            </span>
+            <span className={FEATURED_BADGE}>{featured.badge}</span>
           </span>
         ) : null}
         <Heading

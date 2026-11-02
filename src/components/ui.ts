@@ -18,6 +18,10 @@ export const EYEBROW =
 
 export const PILL = 'w-fit rounded-full px-3 py-0.5';
 
+export const TICK_ITEM = 'tick-item';
+
+export const FEATURED_BADGE = `${PILL} inline-block bg-human-soft font-mono text-label font-medium uppercase text-fg`;
+
 export const LEAD = 'max-w-[60ch] text-lead text-fg-soft';
 
 export const TEXT_LINK =

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { CtaLink } from '@/components/cta-link';
 import { Container } from '@/components/section';
+import { sectionFrame } from '@/components/section-frame';
 import { LEAD, PRIMARY_BUTTON_LG, TEXT_LINK } from '@/components/ui';
 import type { Locale } from '@/lib/i18n';
 import { CTA_TARGET, navHref } from '@/lib/nav';
@@ -19,9 +20,10 @@ export function CtaSection({
   secondary?: { label: string; href: string };
   footer?: ReactNode;
 }) {
+  const { ground, bg, pad } = sectionFrame('band');
   return (
-    <section aria-labelledby="cta-title" className="border-t border-hairline">
-      <Container className="py-section">
+    <section aria-labelledby="cta-title" data-ground={ground} className={bg}>
+      <Container className={pad}>
         <h2 id="cta-title" className="max-w-3xl">
           {copy.title}
         </h2>

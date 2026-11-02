@@ -16,6 +16,8 @@ export const pricingPage = {
     includes: 'Incluye',
     timeline: 'Plazo',
     more: 'Más sobre',
+    startHere: 'Empieza aquí',
+    book: 'Reserva el diagnóstico',
   },
   // TODO(albert): confirm every list
   details: {
