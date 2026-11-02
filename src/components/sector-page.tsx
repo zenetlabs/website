@@ -1,7 +1,14 @@
 import { Faq } from '@/components/faq';
 import { FactsHero, GetStarted, RelatedLinks } from '@/components/page-blocks';
 import { Container, Section } from '@/components/section';
-import { CARD, EYEBROW, TEXT_LINK } from '@/components/ui';
+import {
+  CALLOUT_CARD,
+  CARD,
+  EYEBROW,
+  H3,
+  LEAD,
+  TEXT_LINK,
+} from '@/components/ui';
 import type {
   SectorPageContent,
   Services,
@@ -37,20 +44,13 @@ export function SectorPage({
         facts={copy.facts}
         button={copy.cta.button}
       />
-      <Section
-        id="work"
-        eyebrow={work.eyebrow}
-        title={work.title}
-        lead={work.lead}
-      >
+      <Section id="work" title={work.title} lead={work.lead}>
         <ul className="grid gap-6 lg:grid-cols-2">
           {work.items.map((item) => (
             <li key={item.id} className={`${CARD} p-8`}>
-              <h3 className="font-display text-2xl leading-tight">
-                {item.title}
-              </h3>
+              <h3 className={H3}>{item.title}</h3>
               <p className={`mt-6 ${EYEBROW}`}>{work.todayLabel}</p>
-              <p className="mt-2 text-muted-fg">{item.today}</p>
+              <p className="mt-2 text-fg-soft">{item.today}</p>
               <p className={`mt-6 ${EYEBROW}`}>{work.automatedLabel}</p>
               <p className="mt-2">{item.automated}</p>
             </li>
@@ -62,11 +62,11 @@ export function SectorPage({
         className="border-t border-hairline"
       >
         <Container className="py-16 md:py-20">
-          <div className={`${CARD} max-w-3xl p-8`}>
-            <h2 id="platform-title" className="text-2xl md:text-3xl">
+          <div className={CALLOUT_CARD}>
+            <h2 id="platform-title" className="text-h2-compact">
               {platform.title}
             </h2>
-            <p className="mt-4 text-muted-fg">{platform.text}</p>
+            <p className="mt-4 text-fg-soft">{platform.text}</p>
             <a
               href={TAPLANY_HREF}
               className={`mt-6 inline-block font-medium ${TEXT_LINK}`}
@@ -76,8 +76,8 @@ export function SectorPage({
           </div>
         </Container>
       </section>
-      <Section id="case" eyebrow={copy.case.eyebrow} title={copy.case.title}>
-        <p className="max-w-2xl text-lg text-muted-fg">{copy.case.text}</p>
+      <Section id="case" title={copy.case.title}>
+        <p className={LEAD}>{copy.case.text}</p>
         <a
           href={pagePath(locale, 'viatsyCase')}
           className={`mt-6 inline-block font-medium ${TEXT_LINK}`}

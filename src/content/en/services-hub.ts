@@ -12,7 +12,6 @@ export const servicesHub = {
     description:
       'From a fixed-price diagnostic to automations, integrations, AI agents, custom software and team training: every Zenet Labs service, with its price.',
   },
-  eyebrow: 'Services',
   title: {
     before: 'AI consulting that ends in ',
     emphasis: 'working systems',

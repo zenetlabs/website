@@ -12,7 +12,6 @@ export const training = {
       'Formación práctica en IA para equipos, sobre los procesos reales de tu empresa y no con demos genéricas, y mentoría mensual mientras el equipo la aplica.',
   },
   hero: {
-    eyebrow: 'Servicios · Formación en IA',
     title: {
       before: 'Formación en IA para equipos, sobre el ',
       emphasis: 'trabajo real',
@@ -34,7 +33,6 @@ export const training = {
     button: 'Pregunta por un taller',
   },
   useCases: {
-    eyebrow: 'Qué cubre la formación',
     title: {
       before: 'Lo que tu equipo ',
       emphasis: 'usará el lunes',
@@ -65,7 +63,6 @@ export const training = {
     ],
   },
   how: {
-    eyebrow: 'Cómo trabajamos',
     title: {
       before: 'De un taller a ',
       emphasis: 'hábitos que se quedan',
@@ -97,7 +94,6 @@ export const training = {
   },
   // TODO(albert): confirm the case
   case: {
-    eyebrow: 'Caso',
     title: {
       before: 'Cómo trabaja con IA ',
       emphasis: 'nuestro propio equipo',
@@ -110,7 +106,6 @@ export const training = {
     ],
   },
   faq: {
-    eyebrow: 'Preguntas frecuentes',
     title: {
       before: 'Preguntas sobre ',
       emphasis: 'formación en IA',

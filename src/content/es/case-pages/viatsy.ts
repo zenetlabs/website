@@ -7,7 +7,6 @@ export const viatsyCase = {
     description:
       'Cómo Viatsy, nuestra agencia de viajes en grupo, lleva consultas, propuestas, reservas con proveedores y cobros con agentes de IA y una persona al mando.',
   },
-  eyebrow: 'Caso · Viajes',
   title: {
     before: 'Viatsy, una agencia de viajes que ',
     emphasis: 'funciona con agentes de IA',
@@ -41,7 +40,6 @@ export const viatsyCase = {
     },
   ],
   problem: {
-    eyebrow: 'El problema',
     title: {
       before: 'Un equipo pequeño y ',
       emphasis: 'mucho copiar y pegar',
@@ -53,7 +51,6 @@ export const viatsyCase = {
     ],
   },
   built: {
-    eyebrow: 'Qué construimos',
     title: {
       before: 'Un solo sistema para ',
       emphasis: 'cada reserva',
@@ -93,7 +90,6 @@ export const viatsyCase = {
     ],
   },
   operations: {
-    eyebrow: 'Día a día',
     title: { before: 'Cómo trabajan ', emphasis: 'los agentes', after: '' },
     steps: [
       {
@@ -119,7 +115,6 @@ export const viatsyCase = {
     ],
   },
   results: {
-    eyebrow: 'Resultados',
     title: { before: 'Qué ', emphasis: 'ha cambiado', after: '' },
     points: [
       'Nadie copia ya a mano las confirmaciones de proveedores en las reservas; una persona solo revisa lo que el sistema marca.',

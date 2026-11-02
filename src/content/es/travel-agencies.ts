@@ -15,7 +15,6 @@ export const travelAgencies = {
       'Automatizamos el trabajo repetitivo de una agencia de viajes: consultas, propuestas, confirmaciones de proveedores, cobros y documentación del viaje.',
   },
   hero: {
-    eyebrow: 'Sectores · Agencias de viajes',
     title: {
       before: 'Automatización para agencias de viajes: menos tiempo ',
       emphasis: 'copiando reservas',
@@ -37,7 +36,6 @@ export const travelAgencies = {
     button: 'Reserva un diagnóstico',
   },
   work: {
-    eyebrow: 'Qué automatizamos',
     title: {
       before: 'Del trabajo manual ',
       emphasis: 'a lo que se hace solo',
@@ -104,7 +102,6 @@ export const travelAgencies = {
     link: 'Conoce Taplany',
   },
   case: {
-    eyebrow: 'Caso',
     title: {
       before: 'Cómo trabaja ',
       emphasis: 'Viatsy',
@@ -113,7 +110,6 @@ export const travelAgencies = {
     text: 'Viatsy organiza viajes en grupo reducido a Asia. Los agentes preparan respuestas, propuestas, confirmaciones y cobros, y el equipo aprueba cada paso. Te contamos qué construimos y cómo funciona en el día a día.',
   },
   faq: {
-    eyebrow: 'Preguntas frecuentes',
     title: {
       before: 'Preguntas de ',
       emphasis: 'agencias de viajes',

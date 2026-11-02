@@ -9,7 +9,7 @@ export function NotFound({ locale }: { locale: Locale }) {
   return (
     <Container className="py-24">
       <h1>{notFound.title}</h1>
-      <p className="mt-6 text-muted-fg">{notFound.description}</p>
+      <p className="mt-6 text-fg-soft">{notFound.description}</p>
       <a
         href={pagePath(locale, 'home')}
         className={`mt-8 inline-block ${TEXT_LINK}`}

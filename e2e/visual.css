@@ -1,0 +1,11 @@
+[data-chat-launcher],
+[data-voice-panel],
+iframe[src*="challenges.cloudflare.com"] {
+  visibility: hidden;
+}
+
+*,
+::before,
+::after {
+  caret-color: transparent;
+}

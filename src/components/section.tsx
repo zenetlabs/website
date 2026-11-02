@@ -1,18 +1,31 @@
 import type { ReactNode } from 'react';
-import { EYEBROW } from '@/components/ui';
+import { LEAD } from '@/components/ui';
 import type { TitleParts } from '@/content/types';
+
+export type SectionVariant = 'default' | 'tint' | 'band' | 'compact';
+
+const VARIANTS: Record<
+  SectionVariant,
+  { ground: string; bg: string; pad: string }
+> = {
+  default: { ground: 'paper', bg: '', pad: 'py-section' },
+  compact: { ground: 'paper', bg: '', pad: 'py-section-compact' },
+  tint: { ground: 'tint', bg: 'bg-tint', pad: 'py-section' },
+  band: { ground: 'band', bg: 'band', pad: 'py-section-band' },
+};
 
 export function Container({
   className = '',
+  width = 'content',
   children,
 }: {
   className?: string;
+  width?: 'content' | 'wide';
   children: ReactNode;
 }) {
+  const max = width === 'wide' ? 'max-w-[1360px]' : 'max-w-[1200px]';
   return (
-    <div className={`mx-auto w-full max-w-[1200px] px-6 ${className}`}>
-      {children}
-    </div>
+    <div className={`mx-auto w-full ${max} px-6 ${className}`}>{children}</div>
   );
 }
 
@@ -34,32 +47,33 @@ export function EmphasisTitle({
 
 export function Section({
   id,
-  eyebrow,
   title,
   lead,
+  variant = 'default',
+  width = 'content',
   children,
 }: {
   id: string;
-  eyebrow: string;
   title: TitleParts;
   lead?: string;
+  variant?: SectionVariant;
+  width?: 'content' | 'wide';
   children: ReactNode;
 }) {
+  const { ground, bg, pad } = VARIANTS[variant];
   return (
     <section
       id={id}
       aria-labelledby={`${id}-title`}
-      className="border-t border-hairline"
+      data-ground={ground}
+      className={bg}
     >
-      <Container className="py-20 md:py-28">
-        <p className={EYEBROW}>{eyebrow}</p>
-        <h2 id={`${id}-title`} className="mt-5 max-w-3xl text-balance">
+      <Container className={pad} width={width}>
+        <h2 id={`${id}-title`} className="max-w-3xl">
           <EmphasisTitle parts={title} />
         </h2>
-        {lead ? (
-          <p className="mt-6 max-w-2xl text-lg text-muted-fg">{lead}</p>
-        ) : null}
-        <div className="mt-14">{children}</div>
+        {lead ? <p className={`mt-5 ${LEAD}`}>{lead}</p> : null}
+        <div className="mt-8 md:mt-12">{children}</div>
       </Container>
     </section>
   );

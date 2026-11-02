@@ -1,5 +1,5 @@
 import { Section } from '@/components/section';
-import { TEXT_LINK } from '@/components/ui';
+import { H3, TEXT_LINK } from '@/components/ui';
 import type { HomeContent, Services } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { formatPriceSummary } from '@/lib/money';
@@ -30,11 +30,15 @@ export function ServiceRow({
         href={href}
         className="group grid gap-3 py-6 md:grid-cols-12 md:items-baseline md:gap-8"
       >
-        <Heading className="font-display text-2xl leading-tight underline decoration-transparent underline-offset-4 group-hover:decoration-fg md:col-span-4">
+        <Heading
+          className={`${H3} underline decoration-transparent underline-offset-4 group-hover:decoration-fg md:col-span-4`}
+        >
           {name}
         </Heading>
-        <p className="text-muted-fg md:col-span-5">{summary}</p>
-        <p className="font-mono text-sm md:col-span-3 md:text-right">{price}</p>
+        <p className="text-fg-soft md:col-span-5">{summary}</p>
+        <p className="font-mono text-ui-m tabular-nums md:col-span-3 md:text-right">
+          {price}
+        </p>
       </a>
     </li>
   );
@@ -56,9 +60,10 @@ export function ServiceLadder({
   return (
     <Section
       id="services"
-      eyebrow={copy.eyebrow}
       title={copy.title}
       lead={copy.lead}
+      variant="tint"
+      width="wide"
     >
       <ul className="grid border-t border-hairline">
         {Object.values(services).map((service) => (

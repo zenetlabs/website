@@ -108,6 +108,30 @@ for (const home of HOMES) {
       await expect(links.nth(1)).toHaveAttribute('href', home.pricing);
     });
 
+    test('fits the heading, lead, button and proof panel in the first screen', async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await gotoHydrated(page, home.path);
+      const box = async (selector: string) => {
+        const found = await page.locator(selector).first().boundingBox();
+        if (!found) throw new Error(`${selector} has no box`);
+        return found;
+      };
+      const heading = await box('main h1');
+      const button = await box('main > section:first-child a');
+      const panel = await box(
+        'main > section:first-child [aria-hidden="true"]',
+      );
+      expect(button.y + button.height).toBeLessThanOrEqual(900);
+      expect(panel.y + panel.height).toBeLessThanOrEqual(900);
+      expect(Math.abs(panel.y - heading.y)).toBeLessThanOrEqual(24);
+      await page.setViewportSize({ width: 390, height: 844 });
+      await expect(
+        page.locator('main > section:first-child a').first(),
+      ).toBeInViewport({ ratio: 1 });
+    });
+
     test('links the ladder rows to the service pages and the pricing cards', async ({
       page,
     }) => {

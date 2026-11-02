@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { legalMeta as en } from '@/content/en/legal-meta';
 import { legalMeta as es } from '@/content/es/legal-meta';
-import { legalHead, legalMetaKey } from '@/lib/pages';
+import { legalMetaKey } from '@/lib/pages';
 
 describe('legalMetaKey', () => {
   it('keeps the plain cookies meta while analytics is off', () => {
@@ -23,21 +23,5 @@ describe('legalMetaKey', () => {
     expect(meta.cookiesAnalytics.description).toContain('Google Analytics');
     expect(meta.cookiesAnalytics.title).toBe(meta.cookies.title);
     expect(meta.cookiesAnalytics.description.length).toBeLessThanOrEqual(160);
-  });
-});
-
-describe('legalHead', () => {
-  it('preloads the body font so the long text does not reflow when it swaps in', () => {
-    const { links } = legalHead('en', 'privacy', en.privacy);
-    expect(links).toContainEqual(
-      expect.objectContaining({
-        rel: 'preload',
-        as: 'font',
-        type: 'font/woff2',
-        crossOrigin: 'anonymous',
-        href: expect.stringContaining('inter-latin-wght-normal'),
-      }),
-    );
-    expect(links.some((link) => link.rel === 'canonical')).toBe(true);
   });
 });

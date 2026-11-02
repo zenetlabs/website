@@ -3,7 +3,7 @@ import { CtaLink } from '@/components/cta-link';
 import { LanguageSwitch } from '@/components/language-switch';
 import { Logo } from '@/components/logo';
 import { Container } from '@/components/section';
-import { PRIMARY_BUTTON } from '@/components/ui';
+import { PRIMARY_BUTTON, SECONDARY_BUTTON } from '@/components/ui';
 import { useCurrentPage } from '@/lib/current-page';
 import { type Locale, useMessages } from '@/lib/i18n';
 import { CTA_TARGET, isCurrent, NAV, navHref } from '@/lib/nav';
@@ -55,7 +55,7 @@ export function SiteHeader({ locale }: { locale: Locale }) {
           <CtaLink
             cta="header"
             href={cta}
-            className={`${PRIMARY_BUTTON} max-lg:hidden`}
+            className={`${SECONDARY_BUTTON} max-lg:hidden`}
           >
             {nav.cta}
           </CtaLink>

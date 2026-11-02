@@ -121,18 +121,24 @@ export type CompanyCopy = Record<
   { category: string; description: string }
 >;
 
-export type SectionCopy = { eyebrow: string; title: TitleParts; lead?: string };
+export type SectionCopy = { title: TitleParts; lead?: string };
 
 export type HomeContent = {
   hero: {
-    eyebrow: string;
     title: TitleParts;
     lead: string;
     primary: string;
     secondary: string;
     audience: string;
+    diagnostic: string;
   };
-  runlog: { title: string; description: string; lines: readonly string[] };
+  proof: {
+    title: string;
+    caption: string;
+    description: string;
+    lines: readonly [string, string, string];
+    approval: { title: string; detail: string; approve: string; hold: string };
+  };
   companies: { title: string; items: CompanyCopy };
   problems: SectionCopy & {
     fixLabel: string;
@@ -144,7 +150,6 @@ export type HomeContent = {
     }[];
   };
   verifactu?: {
-    eyebrow: string;
     title: TitleParts;
     paragraphs: readonly string[];
     cta: string;
@@ -211,7 +216,6 @@ export type VoiceCopy = {
 export type PricingPageContent = {
   meta: PageMeta;
   catalog: string;
-  eyebrow: string;
   title: TitleParts;
   lead: string;
   taxNote: string;
@@ -227,7 +231,6 @@ export type PricingPageContent = {
 
 export type AboutPageContent = {
   meta: PageMeta;
-  eyebrow: string;
   title: TitleParts;
   lead: string;
   story: readonly { id: string; parts: Rich }[];
@@ -243,7 +246,7 @@ export type AboutPageContent = {
 export type ProcessStep = { id: string; label: string; text: string };
 export type ProcessCopy = SectionCopy & { steps: readonly ProcessStep[] };
 
-export type PageHero = { eyebrow: string; title: TitleParts; lead: string };
+export type PageHero = { title: TitleParts; lead: string };
 export type PageFacts = { who: string; timeline: string; start: string };
 export type PageCta = { title: string; text: string; button: string };
 export type Card = { id: string; title: string; text: string };
@@ -349,7 +352,6 @@ export type CaseStep = { id: string; label: string; text: string };
 
 export type CasePageContent = {
   meta: LandingMeta;
-  eyebrow: string;
   title: TitleParts;
   lead: string;
   published: string;
@@ -381,7 +383,6 @@ export type ServicePageLabels = {
 export type ServicesHubContent = {
   labels: ServicePageLabels;
   meta: PageMeta;
-  eyebrow: string;
   title: TitleParts;
   lead: string;
   cards: Record<ServicePageId, { name: string; summary: string }>;

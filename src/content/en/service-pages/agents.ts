@@ -15,7 +15,6 @@ export const agents = {
       'We build AI agents that do real work for SMEs: triaging enquiries, drafting replies and reading documents, with a person approving what matters.',
   },
   hero: {
-    eyebrow: 'Services · AI agents',
     title: {
       before: 'AI agents for SMEs that do ',
       emphasis: 'real work',
@@ -37,7 +36,6 @@ export const agents = {
     button: 'Book a diagnostic',
   },
   useCases: {
-    eyebrow: 'What agents do',
     title: {
       before: 'Tasks an agent ',
       emphasis: 'can own',
@@ -67,7 +65,6 @@ export const agents = {
     ],
   },
   how: {
-    eyebrow: 'How it works',
     title: {
       before: 'Tested on ',
       emphasis: 'your cases',
@@ -99,7 +96,6 @@ export const agents = {
   // TODO(albert): confirm the case
   case: {
     page: 'viatsyCase',
-    eyebrow: 'Case',
     title: { before: 'First replies at ', emphasis: 'Viatsy', after: '' },
     text: 'Viatsy receives travel enquiries on several channels, and each one needs a tailored answer. An agent drafts the first reply and the proposal, and the team reviews them before anything is sent.',
     points: [
@@ -108,7 +104,6 @@ export const agents = {
     ],
   },
   faq: {
-    eyebrow: 'FAQ',
     title: { before: 'Questions about ', emphasis: 'AI agents', after: '' },
     items: [
       {

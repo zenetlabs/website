@@ -14,7 +14,6 @@ export const software = {
       'Desarrollo de software a medida para pymes: portales de clientes, herramientas internas y aplicaciones web conectadas a los sistemas que ya usas.',
   },
   hero: {
-    eyebrow: 'Servicios · Software a medida',
     title: {
       before: 'Desarrollo de software a medida, ',
       emphasis: 'hecho según cómo trabajas',
@@ -36,7 +35,6 @@ export const software = {
     button: 'Reserva un diagnóstico',
   },
   useCases: {
-    eyebrow: 'Qué desarrollamos',
     title: {
       before: 'Software para lo que ',
       emphasis: 'ningún producto',
@@ -66,7 +64,6 @@ export const software = {
     ],
   },
   how: {
-    eyebrow: 'Cómo trabajamos',
     title: {
       before: 'Entregas pequeñas y ',
       emphasis: 'opiniones desde el principio',
@@ -97,7 +94,6 @@ export const software = {
   },
   // TODO(albert): confirm the case
   case: {
-    eyebrow: 'Caso',
     title: {
       before: '',
       emphasis: 'Taplany',
@@ -110,7 +106,6 @@ export const software = {
     ],
   },
   faq: {
-    eyebrow: 'Preguntas frecuentes',
     title: {
       before: 'Preguntas sobre ',
       emphasis: 'software a medida',

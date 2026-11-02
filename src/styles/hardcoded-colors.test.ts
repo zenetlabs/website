@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { THEME_COLOR_DARK, THEME_COLOR_LIGHT } from '@/lib/theme-colors';
+import { scopes } from '../../test/css-scopes';
 
 const SRC = join(process.cwd(), 'src');
 const TOKENS = join(SRC, 'styles', 'tokens.css');
@@ -70,10 +71,7 @@ describe('colour guard', () => {
   });
 
   it('keeps the theme-color pair equal to the --bg tokens', () => {
-    const tokens = readFileSync(TOKENS, 'utf8');
-    const bg = [...tokens.matchAll(/--bg:\s*(#[0-9a-fA-F]{6})/g)].map(
-      (match) => match[1],
-    );
-    expect(bg).toEqual([THEME_COLOR_LIGHT, THEME_COLOR_DARK]);
+    const { light, dark } = scopes(readFileSync(TOKENS, 'utf8'));
+    expect([light.bg, dark.bg]).toEqual([THEME_COLOR_LIGHT, THEME_COLOR_DARK]);
   });
 });

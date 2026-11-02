@@ -64,7 +64,7 @@ test('the home markdown keeps content and drops chrome', async ({
     'Skip to content',
     'What should we look at?',
     'Send message',
-    'synced new Shopify orders',
+    'Matched supplier invoices to purchase orders',
     'UEN 202202371M',
   ]) {
     expect(body).not.toContain(unexpected);
@@ -223,9 +223,7 @@ test('the service page markdown keeps the answer, the FAQ and the contact', asyn
     expect(en).toContain(expected);
   }
   const [, afterFrontmatter = ''] = en.split('\n---\n');
-  expect(afterFrontmatter.split('\n# ')[0]?.trim()).toBe(
-    'Services · AI automation',
-  );
+  expect(afterFrontmatter.split('\n# ')[0]?.trim()).toBe('');
   expect(en.match(/```json/g)).toHaveLength(6);
 
   const es = await (await request.get('/es/servicios.md')).text();

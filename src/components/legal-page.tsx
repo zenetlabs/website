@@ -14,8 +14,8 @@ export function LegalPage({
   return (
     <Container className="max-w-3xl py-16 md:py-24">
       <p className={EYEBROW}>{updated}</p>
-      <h1 className="mt-5 text-5xl md:text-6xl">{title}</h1>
-      <div className="mt-12 grid gap-10 [&_li]:mt-2 [&_p]:mt-3 [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-6">
+      <h1 className="mt-5">{title}</h1>
+      <div className="mt-12 grid max-w-[60ch] gap-10 [&_li]:mt-2 [&_p]:mt-3 [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-6">
         {children}
       </div>
     </Container>
@@ -33,7 +33,7 @@ export function LegalSection({
 }) {
   return (
     <section id={id}>
-      <h2 className="text-2xl md:text-3xl">{title}</h2>
+      <h2 className="text-h2-compact">{title}</h2>
       {children}
     </section>
   );

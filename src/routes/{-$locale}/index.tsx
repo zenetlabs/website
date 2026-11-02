@@ -11,6 +11,7 @@ import { ServiceLadder } from '@/components/service-ladder';
 import { VerifactuStrip } from '@/components/verifactu-strip';
 import { loadHomeContent } from '@/content/load';
 import { CONTENT } from '@/lib/content';
+import { formatPriceSummary } from '@/lib/money';
 import { homeStructuredData } from '@/lib/page-structured-data';
 import { pageHeadFor } from '@/lib/pages';
 
@@ -30,14 +31,19 @@ function Home() {
 
   return (
     <>
-      <Hero copy={home.hero} runlog={home.runlog} locale={locale} />
+      <Hero
+        copy={home.hero}
+        proof={home.proof}
+        diagnosticPrice={formatPriceSummary(locale, services.diagnostic.prices)}
+        locale={locale}
+      />
       <CompaniesStrip copy={home.companies} />
       <Problems copy={home.problems} />
       {home.verifactu ? (
         <VerifactuStrip copy={home.verifactu} locale={locale} />
       ) : null}
       <ServiceLadder copy={home.services} services={services} locale={locale} />
-      <Process copy={home.process} />
+      <Process copy={home.process} variant="band" />
       <Cases copy={home.cases} locale={locale} />
       <FounderSection copy={home.founder} founder={founder} locale={locale} />
       <Faq copy={home.faq} items={faq} />

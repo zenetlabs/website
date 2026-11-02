@@ -15,7 +15,6 @@ export const agents = {
       'Implementamos agentes de IA que hacen trabajo real en tu empresa: clasifican consultas, redactan respuestas y leen documentos, con una persona al mando.',
   },
   hero: {
-    eyebrow: 'Servicios · Agentes de IA',
     title: {
       before: 'Implementación de agentes de IA que ',
       emphasis: 'trabajan de verdad',
@@ -37,7 +36,6 @@ export const agents = {
     button: 'Reserva un diagnóstico',
   },
   useCases: {
-    eyebrow: 'Qué hacen los agentes',
     title: {
       before: 'Tareas de las que un agente ',
       emphasis: 'puede encargarse',
@@ -67,7 +65,6 @@ export const agents = {
     ],
   },
   how: {
-    eyebrow: 'Cómo trabajamos',
     title: {
       before: 'Probado con ',
       emphasis: 'tus casos',
@@ -99,7 +96,6 @@ export const agents = {
   // TODO(albert): confirm the case
   case: {
     page: 'viatsyCase',
-    eyebrow: 'Caso',
     title: { before: 'Primeras respuestas en ', emphasis: 'Viatsy', after: '' },
     text: 'Viatsy recibe consultas de viaje por varios canales, y cada una necesita una respuesta a medida. Un agente redacta la primera respuesta y la propuesta, y el equipo las revisa antes de enviar nada.',
     points: [
@@ -108,7 +104,6 @@ export const agents = {
     ],
   },
   faq: {
-    eyebrow: 'Preguntas frecuentes',
     title: {
       before: 'Preguntas sobre ',
       emphasis: 'agentes de IA',
