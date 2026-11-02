@@ -2,19 +2,34 @@
   color-scheme: light dark;
 
   --bg: #f6f4ee;
+  --bg-tint: #eeeae0;
   --surface: #ffffff;
   --fg: #0b2027;
+  --fg-soft: #2f4248;
   --muted-fg: #4b5b61;
   --hairline: #d9d5ca;
   --border: #8c877b;
   --accent: #0b2027;
   --accent-fg: #f6f4ee;
+  --cta: #ffaa00;
+  --cta-fg: #0b2027;
+  --cta-hover: #ffb829;
   --link: #8a5a00;
   --highlight: #ffd27a;
   --on-highlight: #0b2027;
+  --highlight-soft: #fff6df;
   --agent: #007563;
+  --agent-soft: #d8f1eb;
+  --tool: #1d5fd0;
+  --tool-soft: #e3ebfa;
+  --human: #8a5a00;
+  --human-soft: #ffebbf;
   --focus: #1d5fd0;
+  --raised-shadow:
+    0 1px 2px rgb(11 32 39 / 0.08), 0 12px 32px -12px rgb(11 32 39 / 0.28);
+}
 
+:root {
   --brand-navy: #0b2027;
   --brand-amber: #ffaa00;
   --brand-teal: #00c5a7;
@@ -28,17 +43,64 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #071419;
+    --bg-tint: #0b1c22;
     --surface: #0d2128;
     --fg: #eef1ec;
+    --fg-soft: #c9d3d2;
     --muted-fg: #a3b2b4;
     --hairline: #213a41;
     --border: #4f6a71;
     --accent: #ffaa00;
     --accent-fg: #071419;
+    --cta-fg: #071419;
+    --cta-hover: #ffbb33;
     --link: #ffc461;
     --highlight: #ffaa00;
     --on-highlight: #071419;
+    --highlight-soft: #1f1c0e;
     --agent: #2fd6b8;
+    --agent-soft: #0b3631;
+    --tool: #7aa7ff;
+    --tool-soft: #11274a;
+    --human: #ffc461;
+    --human-soft: #3a2b08;
     --focus: #7aa7ff;
+    --raised-shadow: none;
+  }
+}
+
+.band {
+  --bg: #0b2027;
+  --surface: #12303a;
+  --fg: #f6f4ee;
+  --fg-soft: #d5dcda;
+  --muted-fg: #a9bcc0;
+  --hairline: #2a4952;
+  --border: #6b8a91;
+  --link: #ffc461;
+  --agent: #2fd6b8;
+  --agent-soft: #0b3631;
+  --tool: #7aa7ff;
+  --tool-soft: #11274a;
+  --human: #ffc461;
+  --human-soft: #3a2b08;
+  --focus: #7aa7ff;
+  --accent: var(--cta);
+  --accent-fg: var(--cta-fg);
+  --raised-shadow: none;
+
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+@media (prefers-color-scheme: dark) {
+  .band {
+    --bg: #10272f;
+    --surface: #163640;
+    --fg: #eef1ec;
+    --fg-soft: #c9d3d2;
+    --muted-fg: #a3b2b4;
+    --hairline: #24434c;
+    --border: #5f7e85;
   }
 }

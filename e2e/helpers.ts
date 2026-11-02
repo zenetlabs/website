@@ -105,6 +105,25 @@ export const PAIRS = [
   ...(BOOKING_PUBLISHED ? [BOOK_PAIR] : []),
 ] as const;
 
+export const PAGE_TYPE_URLS: readonly string[] = [
+  '/',
+  '/es',
+  '/pricing',
+  SERVICES_HUB.en,
+  SERVICE_PAIRS.automation.en,
+  SERVICE_PAIRS.agents.en,
+  CASE_PAIR.en,
+  '/about',
+  '/privacy',
+  HOLDED_PAGES[1],
+  VERIFACTU_PAGE,
+  SECTOR_PAGE,
+  '/es/aviso-legal',
+  ...(BOOKING_PUBLISHED ? [BOOK_PAIR.en] : []),
+  ...CALCULATOR_RESULTS.slice(0, 1),
+  '/nope',
+];
+
 export const LOCALES = ['en', 'es'] as const;
 
 export const LLMS_PATHS = [
@@ -190,7 +209,13 @@ export async function gotoHydrated(
 export async function settleAnimations(page: Page) {
   await page.evaluate(() =>
     Promise.all(
-      document.getAnimations().map((animation) => animation.finished),
+      document.getAnimations().map((animation) =>
+        animation.finished.catch((error: unknown) => {
+          if (!(error instanceof DOMException && error.name === 'AbortError')) {
+            throw error;
+          }
+        }),
+      ),
     ),
   );
 }

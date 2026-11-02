@@ -14,7 +14,6 @@ export const automation = {
       'We automate the manual steps in your processes, from documents and approvals to reminders and reports, using AI where it helps. For Singapore SMEs.',
   },
   hero: {
-    eyebrow: 'Services · AI automation',
     title: {
       before: 'AI automation for the work your team ',
       emphasis: 'still does by hand',
@@ -36,7 +35,6 @@ export const automation = {
     button: 'Book a diagnostic',
   },
   useCases: {
-    eyebrow: 'What we automate',
     title: {
       before: 'Processes that ',
       emphasis: 'run on their own',
@@ -66,7 +64,6 @@ export const automation = {
     ],
   },
   how: {
-    eyebrow: 'How it works',
     title: { before: 'From one process to ', emphasis: 'many', after: '' },
     steps: [
       {
@@ -94,7 +91,6 @@ export const automation = {
   // TODO(albert): confirm the case
   case: {
     page: 'viatsyCase',
-    eyebrow: 'Case',
     title: {
       before: 'How ',
       emphasis: 'Viatsy',
@@ -108,7 +104,6 @@ export const automation = {
     ],
   },
   faq: {
-    eyebrow: 'FAQ',
     title: {
       before: 'Questions about ',
       emphasis: 'AI automation',

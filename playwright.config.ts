@@ -1,5 +1,11 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, type PlaywrightTestProject } from '@playwright/test';
 import { rejectedConsent } from './e2e/consent-seed';
+
+const visualProject: PlaywrightTestProject = {
+  name: 'visual',
+  testMatch: '**/visual.e2e.ts',
+  use: { browserName: 'chromium' },
+};
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:4173';
 
@@ -17,9 +23,10 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      testIgnore: '**/webmcp-real.e2e.ts',
+      testIgnore: ['**/webmcp-real.e2e.ts', '**/visual.e2e.ts'],
       use: { browserName: 'chromium' },
     },
+    ...(process.env.VISUAL === '1' ? [visualProject] : []),
     {
       name: 'chromium-webmcp',
       testMatch: '**/webmcp-real.e2e.ts',

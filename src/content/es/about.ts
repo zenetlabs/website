@@ -7,7 +7,6 @@ export const aboutPage = {
     description:
       'Zenet Labs la dirige Albert Sabaté, con más de 15 años creando equipos de ingeniería, que automatiza sus propias empresas antes que las de sus clientes.',
   },
-  eyebrow: 'Sobre nosotros',
   title: {
     before: 'Automatización hecha por gente que ',
     emphasis: 'dirige negocios',

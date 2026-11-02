@@ -14,7 +14,6 @@ export const software = {
       'Custom software for Singapore SMEs: customer portals, internal tools and web apps built around how you work and connected to the systems you run.',
   },
   hero: {
-    eyebrow: 'Services · Custom software',
     title: {
       before: 'Custom software development, ',
       emphasis: 'built around how you work',
@@ -36,7 +35,6 @@ export const software = {
     button: 'Book a diagnostic',
   },
   useCases: {
-    eyebrow: 'What we build',
     title: {
       before: 'Software for the ',
       emphasis: 'parts of the business',
@@ -66,7 +64,6 @@ export const software = {
     ],
   },
   how: {
-    eyebrow: 'How it works',
     title: {
       before: 'Small releases, ',
       emphasis: 'early feedback',
@@ -97,7 +94,6 @@ export const software = {
   },
   // TODO(albert): confirm the case
   case: {
-    eyebrow: 'Case',
     title: {
       before: '',
       emphasis: 'Taplany',
@@ -110,7 +106,6 @@ export const software = {
     ],
   },
   faq: {
-    eyebrow: 'FAQ',
     title: {
       before: 'Questions about ',
       emphasis: 'custom software',

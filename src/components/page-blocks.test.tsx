@@ -121,14 +121,14 @@ describe('FactsHero', () => {
     ).toHaveAttribute('href', '/es/precios#agent');
   });
 
-  it('spaces the eyebrow only under a breadcrumb', () => {
+  it('spaces the heading only under a breadcrumb', () => {
     const { container, unmount } = view('es');
-    expect(container.querySelector('p')?.className).not.toContain('mt-10');
+    expect(container.querySelector('h1')?.className).not.toContain('mt-10');
     unmount();
     const withTrail = view('es', true);
-    expect(
-      withTrail.container.querySelector('p:not(nav p)')?.className,
-    ).toContain('mt-10');
+    expect(withTrail.container.querySelector('h1')?.className).toContain(
+      'mt-10',
+    );
   });
 });
 

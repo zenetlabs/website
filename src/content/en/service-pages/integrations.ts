@@ -14,7 +14,6 @@ export const integrations = {
       'We connect Xero, Shopify, HubSpot, WhatsApp and your spreadsheets so orders, invoices and customer records move between them without copy and paste.',
   },
   hero: {
-    eyebrow: 'Services · Integrations',
     title: {
       before: 'Xero, Shopify and HubSpot integrations that ',
       emphasis: 'keep your data in step',
@@ -35,7 +34,6 @@ export const integrations = {
     button: 'Book a diagnostic',
   },
   useCases: {
-    eyebrow: 'Common integrations',
     title: {
       before: 'The connections we ',
       emphasis: 'build most',
@@ -66,7 +64,6 @@ export const integrations = {
     ],
   },
   how: {
-    eyebrow: 'How it works',
     title: {
       before: 'Built to ',
       emphasis: 'survive real data',
@@ -97,7 +94,6 @@ export const integrations = {
   },
   // TODO(albert): confirm the case
   case: {
-    eyebrow: 'Case',
     title: {
       before: 'One timeline per booking at ',
       emphasis: 'Taplany',
@@ -110,7 +106,6 @@ export const integrations = {
     ],
   },
   faq: {
-    eyebrow: 'FAQ',
     title: {
       before: 'Questions about ',
       emphasis: 'integrations',

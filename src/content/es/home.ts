@@ -5,7 +5,6 @@ import type { HomeContent } from '@/content/types';
 
 export const home = {
   hero: {
-    eyebrow: 'Automatización · Integraciones · Agentes de IA',
     title: {
       before: 'Deja de hacer ',
       emphasis: 'a mano',
@@ -15,26 +14,30 @@ export const home = {
     primary: 'Reserva un diagnóstico',
     secondary: 'Ver precios',
     audience: 'Para pymes de 10 a 100 personas',
+    diagnostic: 'Diagnóstico',
   },
-  runlog: {
-    title: 'agents/ops — running',
+  proof: {
+    title: 'Una ejecución de un agente',
+    caption: 'Ejemplo ilustrativo',
     description:
-      'Ejemplo ilustrativo del registro de un agente: pedidos de la tienda convertidos en facturas, facturas de proveedores cuadradas, consultas de clientes respondidas y un informe semanal en preparación.',
+      'Una ejecución de un agente: cuadra las facturas de proveedores con los pedidos, responde a las consultas sobre pedidos y prepara el informe semanal de operaciones; después se detiene y pide a una persona que apruebe una devolución.',
     lines: [
-      'pasó los pedidos de PrestaShop a Holded → facturas emitidas',
-      'cuadró las facturas de proveedores con los pedidos',
-      'respondió por WhatsApp dónde está cada pedido',
-      'actualizó HubSpot con las llamadas de ayer',
-      'dejó una devolución pendiente de aprobación',
-      'preparando el informe semanal de operaciones…',
+      'Cuadró las facturas de proveedores con los pedidos',
+      'Respondió a las consultas sobre pedidos',
+      'Preparó el informe semanal de operaciones',
     ],
+    approval: {
+      title: 'Necesita tu aprobación',
+      detail: 'Una devolución espera a que una persona decida.',
+      approve: 'Aprobar',
+      hold: 'Retener',
+    },
   },
   companies: {
     title: 'Nuestras propias empresas ya funcionan con agentes',
     items: companies,
   },
   problems: {
-    eyebrow: '01 — ¿Te suena?',
     title: {
       before: 'Tres tareas que tu equipo ',
       emphasis: 'no debería',
@@ -66,7 +69,6 @@ export const home = {
     ],
   },
   verifactu: {
-    eyebrow: 'Verifactu',
     title: {
       before: 'Que cada venta genere ',
       emphasis: 'su factura',
@@ -83,7 +85,6 @@ export const home = {
     checked: `Fechas revisadas el ${verifactuDates.checkedOn}.`,
   },
   services: {
-    eyebrow: '02 — Servicios y precios',
     title: {
       before: 'Qué hacemos y ',
       emphasis: 'cuánto cuesta',
@@ -94,7 +95,6 @@ export const home = {
     calculator: 'Calcula tu proyecto',
   },
   process: {
-    eyebrow: '03 — Cómo trabajamos',
     title: {
       before: 'Empieza con poco, ',
       emphasis: 'compruébalo',
@@ -124,7 +124,6 @@ export const home = {
     ],
   },
   cases: {
-    eyebrow: '04 — Casos',
     title: {
       before: 'Lo probamos primero en ',
       emphasis: 'nuestras empresas',
@@ -135,7 +134,6 @@ export const home = {
     items: cases,
   },
   founder: {
-    eyebrow: '05 — Fundador',
     title: {
       before: 'Trabajas con ',
       emphasis: 'quien lo construye',
@@ -144,11 +142,9 @@ export const home = {
     more: 'Más sobre Albert',
   },
   faq: {
-    eyebrow: '06 — Preguntas frecuentes',
     title: { before: 'Lo que ', emphasis: 'más', after: ' nos preguntan' },
   },
   contact: {
-    eyebrow: '07 — Contacto',
     title: {
       before: 'Reserva tu ',
       emphasis: 'diagnóstico de automatización',

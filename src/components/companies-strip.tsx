@@ -8,7 +8,7 @@ export function CompaniesStrip({ copy }: { copy: HomeContent['companies'] }) {
     <section
       id="companies"
       aria-labelledby="companies-title"
-      className="border-t border-hairline"
+      data-ground="paper"
     >
       <Container className="py-10 md:py-12">
         <h2 id="companies-title" className={EYEBROW}>

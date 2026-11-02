@@ -52,12 +52,7 @@ export function HoldedPairPage({
           />
         }
       />
-      <Section
-        id="sync"
-        eyebrow={section.eyebrow}
-        title={section.title}
-        lead={section.lead}
-      >
+      <Section id="sync" title={section.title} lead={section.lead}>
         <DataTable
           labelledBy="sync-title"
           columns={[columns.data, columns.direction, columns.when]}
@@ -66,13 +61,9 @@ export function HoldedPairPage({
             cells: [row.data, row.direction, row.when],
           }))}
         />
-        <p className="mt-6 max-w-3xl text-sm text-muted-fg">{note}</p>
+        <p className="mt-6 max-w-[60ch] text-sm text-muted-fg">{note}</p>
       </Section>
-      <Section
-        id="edge-cases"
-        eyebrow={copy.edgeCases.eyebrow}
-        title={copy.edgeCases.title}
-      >
+      <Section id="edge-cases" title={copy.edgeCases.title}>
         <CardGrid items={copy.edgeCases.items} locale={locale} />
       </Section>
       <Faq copy={copy.faq} items={copy.faq.items} />

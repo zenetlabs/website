@@ -2,7 +2,14 @@ import type { ReactNode } from 'react';
 import { CtaLink } from '@/components/cta-link';
 import { CtaSection } from '@/components/cta-section';
 import { Container, EmphasisTitle } from '@/components/section';
-import { CARD, EYEBROW, PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
+import {
+  CARD,
+  EYEBROW,
+  H3,
+  LEAD,
+  PRIMARY_BUTTON_LG,
+  TEXT_LINK,
+} from '@/components/ui';
 import type {
   Card,
   PageCta,
@@ -69,20 +76,23 @@ export function HeroHeading({
   lead,
   afterBreadcrumb = false,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: TitleParts;
   lead: string;
   afterBreadcrumb?: boolean;
 }) {
+  const top = eyebrow ? 'mt-6 ' : afterBreadcrumb ? 'mt-10 ' : '';
   return (
     <>
-      <p className={`${afterBreadcrumb ? 'mt-10 ' : ''}${EYEBROW}`}>
-        {eyebrow}
-      </p>
-      <h1 id="service-title" className="mt-6 max-w-4xl text-balance">
+      {eyebrow ? (
+        <p className={`${afterBreadcrumb ? 'mt-10 ' : ''}${EYEBROW}`}>
+          {eyebrow}
+        </p>
+      ) : null}
+      <h1 id="service-title" className={`${top}max-w-4xl`}>
         <EmphasisTitle parts={title} marker />
       </h1>
-      <p className="mt-8 max-w-2xl text-lg text-muted-fg">{lead}</p>
+      <p className={`mt-6 ${LEAD}`}>{lead}</p>
     </>
   );
 }
@@ -154,7 +164,7 @@ export function FactsHero({
           <CtaLink
             cta="page_hero"
             href={navHref(locale, CTA_TARGET)}
-            className={PRIMARY_BUTTON}
+            className={PRIMARY_BUTTON_LG}
           >
             {button}
           </CtaLink>
@@ -185,7 +195,7 @@ export function GetStarted({
       copy={cta}
       locale={locale}
       footer={
-        <p className="mt-8 text-muted-fg">
+        <p className="mt-8 text-fg-soft">
           {mail}{' '}
           <a href={`mailto:${PUBLIC_EMAIL}`} className={TEXT_LINK}>
             {PUBLIC_EMAIL}
@@ -213,7 +223,7 @@ export function RelatedLinks({
       className="border-t border-hairline"
     >
       <Container className="py-16 md:py-20">
-        <h2 id="related-title" className="text-2xl md:text-3xl">
+        <h2 id="related-title" className="text-h2-compact">
           {labels.related}
         </h2>
         <ul className="mt-6 grid gap-3 text-lg">
@@ -252,7 +262,7 @@ export function CardGrid({
     <ul className="grid gap-6 lg:grid-cols-2">
       {items.map((item) => (
         <li key={item.id} className={`${CARD} p-8`}>
-          <h3 className="font-display text-2xl leading-tight">
+          <h3 className={H3}>
             {item.page ? (
               <a href={pagePath(locale, item.page)} className={TEXT_LINK}>
                 {item.title}
@@ -261,7 +271,7 @@ export function CardGrid({
               item.title
             )}
           </h3>
-          <p className="mt-4 text-muted-fg">{item.text}</p>
+          <p className="mt-4 text-fg-soft">{item.text}</p>
         </li>
       ))}
     </ul>
@@ -302,7 +312,7 @@ export function DataTable({
               {first}
             </th>
             {rest.map((cell, index) => (
-              <td key={columns[index + 1]} className="py-4 pr-4 text-muted-fg">
+              <td key={columns[index + 1]} className="py-4 pr-4 text-fg-soft">
                 {cell}
               </td>
             ))}

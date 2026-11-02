@@ -14,6 +14,7 @@ import {
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const VIEWPORTS = [
+  { width: 390, height: 844 },
   { width: 412, height: 915 },
   { width: 1280, height: 900 },
 ];
@@ -60,7 +61,7 @@ test.describe('reduced motion', () => {
       expect(await page.evaluate(() => document.getAnimations().length)).toBe(
         0,
       );
-      await expect(page.locator('.runlog-line').last()).toBeVisible();
+      await expect(page.locator('.proof-approval')).toBeVisible();
     });
   }
 });

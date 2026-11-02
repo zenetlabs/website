@@ -7,7 +7,6 @@ export const aboutPage = {
     description:
       'Zenet Labs is run by Albert Sabaté, who has spent 15+ years building engineering teams and runs his own companies with AI agents before building yours.',
   },
-  eyebrow: 'About',
   title: {
     before: 'Automation built by people who ',
     emphasis: 'run businesses',

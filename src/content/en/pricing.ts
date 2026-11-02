@@ -8,7 +8,6 @@ export const pricingPage = {
       'Published prices in SGD, excluding GST: diagnostic, integrations, AI agents in production, custom web, team training, maintenance and growth.',
   },
   catalog: 'Zenet Labs services and prices',
-  eyebrow: 'Pricing',
   title: { before: 'Clear prices, ', emphasis: 'before', after: ' we start' },
   lead: 'Every project starts with a fixed-price diagnostic, so the next quote comes from your real processes, not a guess.',
   taxNote: 'All prices are in Singapore dollars (S$) and exclude GST.',

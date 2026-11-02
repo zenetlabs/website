@@ -1,5 +1,5 @@
 import { Container, EmphasisTitle } from '@/components/section';
-import { CARD, EYEBROW, TEXT_LINK } from '@/components/ui';
+import { CARD, PROSE, TEXT_LINK } from '@/components/ui';
 import type { HomeContent } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { pagePath } from '@/lib/page-registry';
@@ -15,15 +15,14 @@ export function VerifactuStrip({
     <section
       id="verifactu"
       aria-labelledby="verifactu-title"
-      className="border-t border-hairline"
+      data-ground="paper"
     >
       <Container className="py-12 md:py-16">
         <div className={`${CARD} p-8 md:p-10`}>
-          <p className={EYEBROW}>{copy.eyebrow}</p>
-          <h2 id="verifactu-title" className="mt-4 max-w-3xl text-balance">
+          <h2 id="verifactu-title" className="max-w-3xl text-h2-compact">
             <EmphasisTitle parts={copy.title} />
           </h2>
-          <div className="mt-6 grid max-w-3xl gap-4 text-muted-fg">
+          <div className={`mt-6 grid gap-4 ${PROSE}`}>
             {copy.paragraphs.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
             ))}

@@ -12,7 +12,6 @@ export const servicesHub = {
     description:
       'Del diagnóstico a precio cerrado a automatizaciones, integraciones, agentes de IA, software a medida y formación: todos nuestros servicios, con precio.',
   },
-  eyebrow: 'Servicios',
   title: {
     before: 'Consultoría de IA que acaba en ',
     emphasis: 'sistemas funcionando',

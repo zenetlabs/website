@@ -8,6 +8,7 @@ import {
   RelatedLinks,
 } from '@/components/page-blocks';
 import { Container, Section } from '@/components/section';
+import { H3, PROSE } from '@/components/ui';
 import type {
   Services,
   ServicesHubContent,
@@ -40,11 +41,7 @@ export function VerifactuPage({
         facts={copy.facts}
         button={copy.cta.button}
       />
-      <Section
-        id="deadlines"
-        eyebrow={deadlines.eyebrow}
-        title={deadlines.title}
-      >
+      <Section id="deadlines" title={deadlines.title}>
         <DataTable
           labelledBy="deadlines-title"
           columns={[deadlines.columns.who, deadlines.columns.date]}
@@ -53,34 +50,28 @@ export function VerifactuPage({
             cells: [row.who, row.date],
           }))}
         />
-        <div className="mt-8 grid max-w-3xl gap-4 text-muted-fg">
+        <div className={`mt-8 grid gap-4 ${PROSE}`}>
           <p>{deadlines.announced}</p>
           <p>{deadlines.producers}</p>
         </div>
-        <h3 className="mt-10 font-display text-2xl leading-tight">
-          {deadlines.exclusionsTitle}
-        </h3>
-        <BulletList
-          items={deadlines.exclusions}
-          className="mt-4 max-w-3xl text-muted-fg"
-        />
+        <h3 className={`mt-10 ${H3}`}>{deadlines.exclusionsTitle}</h3>
+        <BulletList items={deadlines.exclusions} className={`mt-4 ${PROSE}`} />
         <p className="mt-8 text-sm text-muted-fg">{deadlines.checked}</p>
       </Section>
       <Section
         id="requirements"
-        eyebrow={requirements.eyebrow}
         title={requirements.title}
         lead={requirements.lead}
       >
         <CardGrid items={requirements.items} locale={locale} />
       </Section>
-      <Section id="what-we-do" eyebrow={work.eyebrow} title={work.title}>
+      <Section id="what-we-do" title={work.title}>
         <CardGrid items={work.items} locale={locale} />
-        <p className="mt-8 max-w-3xl text-muted-fg">{work.limits}</p>
+        <p className={`mt-8 ${PROSE}`}>{work.limits}</p>
       </Section>
       <Faq copy={copy.faq} items={copy.faq.items} />
       <Container className="pb-12">
-        <p className="max-w-3xl text-sm text-muted-fg">{copy.disclaimer}</p>
+        <p className="max-w-[60ch] text-sm text-muted-fg">{copy.disclaimer}</p>
       </Container>
       <GetStarted locale={locale} cta={copy.cta} mail={hub.labels.mail} />
       <RelatedLinks

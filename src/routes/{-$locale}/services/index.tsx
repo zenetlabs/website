@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { CtaSection } from '@/components/cta-section';
 import { Container, EmphasisTitle } from '@/components/section';
 import { ServiceRow } from '@/components/service-ladder';
-import { EYEBROW } from '@/components/ui';
+import { LEAD } from '@/components/ui';
 import { loadServicesHubContent } from '@/content/load';
 import { formatPriceSummary } from '@/lib/money';
 import {
@@ -39,13 +39,12 @@ function ServicesHub() {
   return (
     <>
       <Container className="py-16 md:py-24">
-        <p className={EYEBROW}>{hub.eyebrow}</p>
-        <h1 className="mt-6 max-w-4xl text-balance">
+        <h1 className="max-w-4xl">
           <EmphasisTitle parts={hub.title} marker />
         </h1>
-        <p className="mt-8 max-w-2xl text-lg text-muted-fg">{hub.lead}</p>
+        <p className={`mt-6 ${LEAD}`}>{hub.lead}</p>
       </Container>
-      <Container className="pb-20 md:pb-28">
+      <Container className="pb-section">
         <ul className="grid border-t border-hairline">
           {SERVICE_PAGE_IDS.map((page) => (
             <ServiceRow
@@ -66,13 +65,11 @@ function ServicesHub() {
         aria-labelledby="also-title"
         className="border-t border-hairline"
       >
-        <Container className="py-20 md:py-28">
-          <h2 id="also-title" className="max-w-3xl text-balance">
+        <Container className="py-section">
+          <h2 id="also-title" className="max-w-3xl">
             {hub.also.title}
           </h2>
-          <p className="mt-6 max-w-2xl text-lg text-muted-fg">
-            {hub.also.lead}
-          </p>
+          <p className={`mt-5 ${LEAD}`}>{hub.also.lead}</p>
           <ul className="mt-10 grid border-t border-hairline">
             {unpaged.map((service) => (
               <ServiceRow

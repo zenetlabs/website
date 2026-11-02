@@ -7,7 +7,6 @@ export const viatsyCase = {
     description:
       'How Viatsy, our own small-group travel company, runs enquiries, proposals, supplier bookings and payments with AI agents and a person approving each step.',
   },
-  eyebrow: 'Case study · Travel',
   title: {
     before: 'Viatsy, a travel company ',
     emphasis: 'run with AI agents',
@@ -41,7 +40,6 @@ export const viatsyCase = {
     },
   ],
   problem: {
-    eyebrow: 'The problem',
     title: {
       before: 'A small team, ',
       emphasis: 'a lot of copying',
@@ -53,7 +51,6 @@ export const viatsyCase = {
     ],
   },
   built: {
-    eyebrow: 'What we built',
     title: { before: 'One system for ', emphasis: 'every booking', after: '' },
     items: [
       {
@@ -89,7 +86,6 @@ export const viatsyCase = {
     ],
   },
   operations: {
-    eyebrow: 'Day to day',
     title: { before: 'How the agents ', emphasis: 'run operations', after: '' },
     steps: [
       {
@@ -115,7 +111,6 @@ export const viatsyCase = {
     ],
   },
   results: {
-    eyebrow: 'Results',
     title: { before: 'What has ', emphasis: 'changed', after: '' },
     points: [
       'Nobody copies supplier confirmations into bookings by hand any more; a person checks only what the system flags.',

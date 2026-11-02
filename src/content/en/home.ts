@@ -4,7 +4,6 @@ import type { HomeContent } from '@/content/types';
 
 export const home = {
   hero: {
-    eyebrow: 'Automation · Integrations · AI agents',
     title: {
       before: 'Stop doing ',
       emphasis: 'by hand',
@@ -14,26 +13,30 @@ export const home = {
     primary: 'Book a diagnostic',
     secondary: 'See pricing',
     audience: 'For companies of 10 to 100 people',
+    diagnostic: 'Diagnostic',
   },
-  runlog: {
-    title: 'agents/ops — running',
+  proof: {
+    title: 'An agent run',
+    caption: 'Illustrative example',
     description:
-      'Illustrative example of an agent run log: shop orders turned into invoices, supplier invoices matched, customer questions answered and a weekly report in preparation.',
+      'An agent run: it matches supplier invoices to purchase orders, answers order-status questions and drafts the weekly operations report, then stops and asks a person to approve a refund.',
     lines: [
-      'synced new Shopify orders → invoices in Xero',
-      'matched supplier invoices to purchase orders',
-      'answered order-status questions on WhatsApp',
-      "updated HubSpot from yesterday's calls",
-      'flagged a refund for human approval',
-      'preparing the weekly ops report…',
+      'Matched supplier invoices to purchase orders',
+      'Answered order-status questions',
+      'Drafted the weekly operations report',
     ],
+    approval: {
+      title: 'Needs your approval',
+      detail: 'A refund request is waiting for a person to decide.',
+      approve: 'Approve',
+      hold: 'Hold',
+    },
   },
   companies: {
     title: 'We run our own companies with agents',
     items: companies,
   },
   problems: {
-    eyebrow: '01 — Sound familiar?',
     title: {
       before: 'Three jobs your team ',
       emphasis: "shouldn't be doing",
@@ -65,7 +68,6 @@ export const home = {
     ],
   },
   services: {
-    eyebrow: '02 — Services and prices',
     title: {
       before: 'What we do, and ',
       emphasis: 'what it costs',
@@ -76,7 +78,6 @@ export const home = {
     calculator: 'Estimate your project',
   },
   process: {
-    eyebrow: '03 — How we work',
     title: {
       before: 'Start small, ',
       emphasis: 'prove it',
@@ -106,7 +107,6 @@ export const home = {
     ],
   },
   cases: {
-    eyebrow: '04 — Cases',
     title: {
       before: 'Tested on ',
       emphasis: 'our own companies',
@@ -117,7 +117,6 @@ export const home = {
     items: cases,
   },
   founder: {
-    eyebrow: '05 — Founder',
     // TODO(albert): confirm the founder section title
     title: {
       before: 'You work with ',
@@ -127,11 +126,9 @@ export const home = {
     more: 'More about Albert',
   },
   faq: {
-    eyebrow: '06 — FAQ',
     title: { before: 'What people ', emphasis: 'ask us', after: ' most' },
   },
   contact: {
-    eyebrow: '07 — Contact',
     title: {
       before: 'Book your ',
       emphasis: 'automation diagnostic',

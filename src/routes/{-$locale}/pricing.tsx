@@ -3,7 +3,7 @@ import { CalculatorCallout } from '@/components/calculator-callout';
 import { CtaSection } from '@/components/cta-section';
 import { BulletList } from '@/components/lists';
 import { Container, EmphasisTitle } from '@/components/section';
-import { CARD, EYEBROW, TEXT_LINK } from '@/components/ui';
+import { CARD, EYEBROW, LEAD, PROSE, TEXT_LINK } from '@/components/ui';
 import { loadPricingContent } from '@/content/load';
 import { formatPrice } from '@/lib/money';
 import { navHref } from '@/lib/nav';
@@ -36,15 +36,14 @@ function Pricing() {
   return (
     <>
       <Container className="py-16 md:py-24">
-        <p className={EYEBROW}>{page.eyebrow}</p>
-        <h1 className="mt-6 max-w-4xl text-balance">
+        <h1 className="max-w-4xl">
           <EmphasisTitle parts={page.title} marker />
         </h1>
-        <p className="mt-8 max-w-2xl text-lg text-muted-fg">{page.lead}</p>
-        <p className={`mt-6 ${EYEBROW}`}>{page.taxNote}</p>
+        <p className={`mt-6 ${LEAD}`}>{page.lead}</p>
+        <p className="mt-4 text-ui-s text-muted-fg">{page.taxNote}</p>
       </Container>
       <CalculatorCallout copy={page.calculator} locale={locale} />
-      <Container className="grid gap-6 pb-20 md:pb-28">
+      <Container className="grid gap-6 pb-section">
         {Object.values(services).map((service) => {
           const detail = page.details[service.id];
           const pages = pagesForService(service.id);
@@ -55,17 +54,15 @@ function Pricing() {
               className={`${CARD} grid gap-8 p-8 md:grid-cols-12 md:gap-10`}
             >
               <div className="md:col-span-5">
-                <h2 className="text-balance text-3xl md:text-4xl">
-                  {service.name}
-                </h2>
-                <p className="mt-4 text-muted-fg">{service.summary}</p>
+                <h2 className="text-h2-compact">{service.name}</h2>
+                <p className="mt-4 text-fg-soft">{service.summary}</p>
                 <dl className="mt-6 grid gap-3">
                   {service.prices.map((price) => (
                     <div key={price.id}>
                       <dt className={EYEBROW}>
                         {price.label ?? page.labels.price}
                       </dt>
-                      <dd className="font-mono text-lg">
+                      <dd className="font-mono text-lg tabular-nums">
                         {formatPrice(locale, price)}
                         {price.note ? (
                           <span className="block font-sans text-sm text-muted-fg">
@@ -108,9 +105,11 @@ function Pricing() {
         })}
       </Container>
       <section aria-labelledby="how-title" className="border-t border-hairline">
-        <Container className="py-20 md:py-28">
+        <Container className="py-section">
           <h2 id="how-title">{page.how.title}</h2>
-          <ol className="mt-10 grid max-w-3xl list-decimal gap-4 pl-6 text-lg text-muted-fg marker:font-mono">
+          <ol
+            className={`mt-10 grid list-decimal gap-4 pl-6 text-lg marker:font-mono ${PROSE}`}
+          >
             {page.how.items.map((item) => (
               <li key={item}>{item}</li>
             ))}

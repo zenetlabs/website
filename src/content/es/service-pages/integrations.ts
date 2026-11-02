@@ -14,7 +14,6 @@ export const integrations = {
       'Conectamos Holded, PrestaShop, WooCommerce, HubSpot, WhatsApp y Excel para que pedidos, facturas y clientes pasen solos de una herramienta a otra.',
   },
   hero: {
-    eyebrow: 'Servicios · Integraciones',
     title: {
       before: 'Integraciones para que tu ERP, tu tienda y tu CRM ',
       emphasis: 'se hablen',
@@ -36,7 +35,6 @@ export const integrations = {
     button: 'Reserva un diagnóstico',
   },
   useCases: {
-    eyebrow: 'Integraciones habituales',
     title: {
       before: 'Las conexiones que ',
       emphasis: 'más montamos',
@@ -70,7 +68,6 @@ export const integrations = {
     ],
   },
   how: {
-    eyebrow: 'Cómo trabajamos',
     title: {
       before: 'Hechas para ',
       emphasis: 'aguantar datos reales',
@@ -101,7 +98,6 @@ export const integrations = {
   },
   // TODO(albert): confirm the case
   case: {
-    eyebrow: 'Caso',
     title: {
       before: 'Una sola línea de tiempo por reserva en ',
       emphasis: 'Taplany',
@@ -114,7 +110,6 @@ export const integrations = {
     ],
   },
   faq: {
-    eyebrow: 'Preguntas frecuentes',
     title: {
       before: 'Preguntas sobre ',
       emphasis: 'integraciones',

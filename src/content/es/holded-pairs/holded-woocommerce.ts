@@ -15,7 +15,6 @@ export const holdedWoocommerce = {
       'Conectamos WooCommerce con Holded: cada pedido llega como factura con su cliente, los reembolsos como rectificativas y el stock se mantiene al día.',
   },
   hero: {
-    eyebrow: 'Integraciones · Holded y WooCommerce',
     title: {
       before: 'Integración de Holded con WooCommerce: ',
       emphasis: 'la tienda y la contabilidad, al día',
@@ -36,7 +35,6 @@ export const holdedWoocommerce = {
     button: 'Reserva un diagnóstico',
   },
   sync: {
-    eyebrow: 'Qué se sincroniza',
     title: {
       before: 'Qué pasa de ',
       emphasis: 'una herramienta a otra',
@@ -86,7 +84,6 @@ export const holdedWoocommerce = {
     note: 'WooCommerce envía un aviso (webhook) con cada pedido nuevo o cada cambio de estado, y Holded hace lo mismo cuando cambia el stock o entra un cobro. Además, una revisión cada noche compara los dos lados y recupera lo que se haya quedado por el camino.',
   },
   edgeCases: {
-    eyebrow: 'Casos límite',
     title: {
       before: 'Lo que resolvemos ',
       emphasis: 'antes de activarla',
@@ -127,7 +124,6 @@ export const holdedWoocommerce = {
     ],
   },
   faq: {
-    eyebrow: 'Preguntas frecuentes',
     title: {
       before: 'Preguntas sobre ',
       emphasis: 'Holded y WooCommerce',

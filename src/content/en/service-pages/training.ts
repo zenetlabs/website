@@ -12,7 +12,6 @@ export const training = {
       'Hands-on AI training for teams, built on your own processes rather than generic demos, with monthly mentoring while your people put AI to work.',
   },
   hero: {
-    eyebrow: 'Services · AI training',
     title: {
       before: 'AI training for teams, built on ',
       emphasis: 'your own work',
@@ -34,7 +33,6 @@ export const training = {
     button: 'Ask about a workshop',
   },
   useCases: {
-    eyebrow: 'What the training covers',
     title: {
       before: 'Skills your team ',
       emphasis: 'uses on Monday',
@@ -65,7 +63,6 @@ export const training = {
     ],
   },
   how: {
-    eyebrow: 'How it works',
     title: {
       before: 'From one workshop to ',
       emphasis: 'lasting habits',
@@ -97,7 +94,6 @@ export const training = {
   },
   // TODO(albert): confirm the case
   case: {
-    eyebrow: 'Case',
     title: {
       before: 'How our own team ',
       emphasis: 'works with AI',
@@ -110,7 +106,6 @@ export const training = {
     ],
   },
   faq: {
-    eyebrow: 'FAQ',
     title: { before: 'Questions about ', emphasis: 'AI training', after: '' },
     items: [
       {

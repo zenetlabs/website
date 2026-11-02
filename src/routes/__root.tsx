@@ -1,5 +1,6 @@
 import instrumentSerifItalic from '@fontsource/instrument-serif/files/instrument-serif-latin-400-italic.woff2?url';
 import instrumentSerifLatin from '@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff2?url';
+import interLatin from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
 import {
   createRootRoute,
   HeadContent,
@@ -18,7 +19,7 @@ import { SITE } from '@/lib/site';
 import { THEME_COLOR_DARK, THEME_COLOR_LIGHT } from '@/lib/theme-colors';
 import appCss from '@/styles/app.css?url';
 
-const FONT_PRELOADS = [instrumentSerifLatin, instrumentSerifItalic];
+const FONT_PRELOADS = [instrumentSerifLatin, instrumentSerifItalic, interLatin];
 const BEACON_SRC = 'https://static.cloudflareinsights.com/beacon.min.js';
 
 export const Route = createRootRoute({

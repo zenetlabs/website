@@ -23,7 +23,6 @@ export const verifactuPage = {
       'Qué exige Verifactu, a quién y desde cuándo, y cómo hacemos que tu tienda, tu CRM o tu ERP facturen con un programa adaptado. Con fechas revisadas.',
   },
   hero: {
-    eyebrow: 'Verifactu',
     title: {
       before: 'Integración con Verifactu: que tus ventas se facturen ',
       emphasis: 'con un programa adaptado',
@@ -45,7 +44,6 @@ export const verifactuPage = {
     button: 'Reserva un diagnóstico',
   },
   deadlines: {
-    eyebrow: 'Plazos',
     title: { before: 'Quién debe cumplir ', emphasis: 'y cuándo', after: '' },
     columns: { who: 'Quién', date: 'Fecha según la norma en vigor' },
     rows: [
@@ -72,7 +70,6 @@ export const verifactuPage = {
     checked: `Fechas revisadas el ${checkedOn}.`,
   },
   requirements: {
-    eyebrow: 'Requisitos',
     title: {
       before: 'Qué exige Verifactu a tu ',
       emphasis: 'programa de facturación',
@@ -113,7 +110,6 @@ export const verifactuPage = {
     ],
   },
   work: {
-    eyebrow: 'Qué hacemos',
     title: {
       before: 'Tu facturación, adaptada ',
       emphasis: 'sin parar de vender',
@@ -148,7 +144,6 @@ export const verifactuPage = {
   disclaimer:
     'Esta página resume la normativa para explicar nuestro trabajo; no es asesoramiento fiscal ni jurídico. Consulta tu caso con tu asesoría.',
   faq: {
-    eyebrow: 'Preguntas frecuentes',
     title: { before: 'Preguntas sobre ', emphasis: 'Verifactu', after: '' },
     items: [
       {

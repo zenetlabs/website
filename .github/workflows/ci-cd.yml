@@ -123,9 +123,13 @@ jobs:
           if-no-files-found: ignore
 
   lighthouse:
-    name: Lighthouse (mobile + desktop)
+    name: Lighthouse (${{ matrix.preset }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [mobile, desktop]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
@@ -134,12 +138,12 @@ jobs:
       - run: pnpm build
       - uses: ./.github/actions/local-secrets
       - run: pnpm db:migrate:local
-      - run: pnpm lhci
+      - run: pnpm lhci:${{ matrix.preset }}
       - name: Upload reports
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: lighthouse-reports
+          name: lighthouse-reports-${{ matrix.preset }}
           path: |
             lhci-reports
             .lighthouseci/assertion-results.json

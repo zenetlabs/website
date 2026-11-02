@@ -8,6 +8,7 @@ import {
 } from '@/components/page-blocks';
 import { Process } from '@/components/process';
 import { Container, Section } from '@/components/section';
+import { PROSE } from '@/components/ui';
 import type {
   CasePageContent,
   Metric,
@@ -37,11 +38,7 @@ export function CaseStudyPage({
     <>
       <header>
         <Container className="py-16 md:py-24">
-          <HeroHeading
-            eyebrow={copy.eyebrow}
-            title={copy.title}
-            lead={copy.lead}
-          />
+          <HeroHeading title={copy.title} lead={copy.lead} />
           <p className="mt-6 text-sm text-muted-fg">
             {copy.labels.published}{' '}
             <time dateTime={copy.published}>
@@ -58,31 +55,26 @@ export function CaseStudyPage({
           <FactList facts={copy.facts} />
         </Container>
       </header>
-      <Section
-        id="problem"
-        eyebrow={copy.problem.eyebrow}
-        title={copy.problem.title}
-      >
-        <div className="grid max-w-3xl gap-4 text-lg text-muted-fg">
+      <Section id="problem" title={copy.problem.title}>
+        <div className={`grid gap-4 text-lg ${PROSE}`}>
           {copy.problem.paragraphs.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}
         </div>
       </Section>
-      <Section id="built" eyebrow={copy.built.eyebrow} title={copy.built.title}>
+      <Section id="built" title={copy.built.title}>
         <CardGrid items={copy.built.items} locale={locale} />
       </Section>
       <Process id="operations" copy={copy.operations} />
-      <Section
-        id="results"
-        eyebrow={copy.results.eyebrow}
-        title={copy.results.title}
-      >
-        <BulletList items={copy.results.points} className="max-w-3xl text-lg" />
+      <Section id="results" title={copy.results.title}>
+        <BulletList
+          items={copy.results.points}
+          className="max-w-[60ch] text-lg"
+        />
         <MetricList
           metrics={metrics}
           locale={locale}
-          className="mt-10 max-w-3xl"
+          className="mt-10 max-w-[60ch]"
         />
       </Section>
       <GetStarted locale={locale} cta={copy.cta} mail={hub.labels.mail} />

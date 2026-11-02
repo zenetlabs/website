@@ -206,15 +206,20 @@ test('robots and sitemap are served', async ({ request }) => {
   expect(text).toContain('Disallow: /internal/');
 });
 
-test('page HTML preloads only the hero serif fonts', async ({ request }) => {
+test('page HTML preloads only the serif and body fonts', async ({
+  request,
+}) => {
   const html = await (await request.get('/')).text();
   const preloads = (html.match(/<link[^>]*>/g) ?? []).filter((tag) =>
     tag.includes('rel="preload"'),
   );
-  expect(preloads).toHaveLength(2);
-  expect(preloads.filter((tag) => !tag.includes('instrument-serif'))).toEqual(
-    [],
-  );
+  expect(preloads).toHaveLength(3);
+  expect(
+    preloads.filter(
+      (tag) =>
+        !tag.includes('instrument-serif') && !tag.includes('inter-latin'),
+    ),
+  ).toEqual([]);
 });
 
 test('every page renders a distinct title', async ({ request }) => {

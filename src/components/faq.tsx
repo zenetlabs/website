@@ -1,4 +1,5 @@
 import { Section } from '@/components/section';
+import { PROSE } from '@/components/ui';
 import type { FaqItem, HomeContent } from '@/content/types';
 
 export function Faq({
@@ -9,7 +10,7 @@ export function Faq({
   items: readonly FaqItem[];
 }) {
   return (
-    <Section id="faq" eyebrow={copy.eyebrow} title={copy.title}>
+    <Section id="faq" title={copy.title}>
       <div className="max-w-3xl border-t border-hairline">
         {items.map((item) => (
           <details
@@ -21,12 +22,14 @@ export function Faq({
               {item.question}
               <span
                 aria-hidden="true"
-                className="font-mono text-xl leading-none text-muted-fg motion-safe:transition-transform motion-safe:duration-200 group-open:rotate-45"
-              >
-                +
-              </span>
+                className="icon icon-plus text-xl text-muted-fg group-open:hidden"
+              />
+              <span
+                aria-hidden="true"
+                className="icon icon-minus hidden text-xl text-muted-fg group-open:inline-block"
+              />
             </summary>
-            <p className="max-w-2xl pb-6 text-muted-fg">{item.answer}</p>
+            <p className={`pb-6 ${PROSE}`}>{item.answer}</p>
           </details>
         ))}
       </div>

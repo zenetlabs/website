@@ -9,7 +9,7 @@ import {
 } from '@/components/page-blocks';
 import { Process } from '@/components/process';
 import { Section } from '@/components/section';
-import { CARD, TEXT_LINK } from '@/components/ui';
+import { CALLOUT_CARD, TEXT_LINK } from '@/components/ui';
 import type {
   ServicePageContent,
   Services,
@@ -55,16 +55,15 @@ export function ServicePage({
       />
       <Section
         id="use-cases"
-        eyebrow={copy.useCases.eyebrow}
         title={copy.useCases.title}
         lead={copy.useCases.lead}
       >
         <CardGrid items={copy.useCases.items} locale={locale} />
       </Section>
       <Process id="how" copy={copy.how} />
-      <Section id="case" eyebrow={copy.case.eyebrow} title={copy.case.title}>
-        <div className={`${CARD} max-w-3xl p-8`}>
-          <p className="text-muted-fg">{copy.case.text}</p>
+      <Section id="case" title={copy.case.title}>
+        <div className={CALLOUT_CARD}>
+          <p className="text-fg-soft">{copy.case.text}</p>
           <BulletList items={copy.case.points} className="mt-6" />
           {copy.case.page ? (
             <a

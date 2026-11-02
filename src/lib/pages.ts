@@ -1,6 +1,4 @@
-import interLatin from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
 import { legalNotice } from '@/content/es/legal-notice';
-import { fontPreload } from '@/lib/font-preload';
 import { type Locale, messages } from '@/lib/i18n';
 import type { PageId } from '@/lib/page-registry';
 import { pageHead } from '@/lib/seo';
@@ -23,18 +21,6 @@ export function legalMetaKey(
   analytics: boolean = __GA4_ID__ !== null,
 ): 'privacy' | 'cookies' | 'cookiesAnalytics' {
   return page === 'cookies' && analytics ? 'cookiesAnalytics' : page;
-}
-
-export function legalHead(
-  locale: Locale,
-  page: 'privacy' | 'cookies',
-  meta: { metaTitle: string; description: string },
-) {
-  const head = contentHead(locale, page, meta);
-  return {
-    ...head,
-    links: [...head.links, fontPreload(interLatin)],
-  };
 }
 
 export function pageHeadFor(locale: Locale, page: StaticPageId) {

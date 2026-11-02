@@ -15,7 +15,6 @@ export const holdedPrestashop = {
       'Conectamos PrestaShop con Holded para que pedidos, clientes, devoluciones y stock pasen solos y cada venta tenga su factura, sin teclear nada dos veces.',
   },
   hero: {
-    eyebrow: 'Integraciones · Holded y PrestaShop',
     title: {
       before: 'Integración de Holded con PrestaShop: ',
       emphasis: 'cada pedido, su factura',
@@ -36,7 +35,6 @@ export const holdedPrestashop = {
     button: 'Reserva un diagnóstico',
   },
   sync: {
-    eyebrow: 'Qué se sincroniza',
     title: {
       before: 'Qué pasa de ',
       emphasis: 'una herramienta a otra',
@@ -86,7 +84,6 @@ export const holdedPrestashop = {
     note: 'PrestaShop no envía avisos (webhooks) de serie: instalamos un módulo pequeño que avisa al momento o, si tu alojamiento no lo permite, consultamos su API cada pocos minutos. Holded sí avisa con webhooks cuando cambia el stock o se registra un cobro.',
   },
   edgeCases: {
-    eyebrow: 'Casos límite',
     title: {
       before: 'Lo que resolvemos ',
       emphasis: 'antes de activarla',
@@ -128,7 +125,6 @@ export const holdedPrestashop = {
     ],
   },
   faq: {
-    eyebrow: 'Preguntas frecuentes',
     title: {
       before: 'Preguntas sobre ',
       emphasis: 'Holded y PrestaShop',

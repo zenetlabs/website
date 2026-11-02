@@ -14,7 +14,6 @@ export const automation = {
       'Automatizamos los pasos manuales de tus procesos, de documentos y aprobaciones a recordatorios e informes, con IA donde aporta. Para pymes.',
   },
   hero: {
-    eyebrow: 'Servicios · Automatización de procesos',
     title: {
       before: 'Automatización de procesos para lo que tu equipo ',
       emphasis: 'aún hace a mano',
@@ -36,7 +35,6 @@ export const automation = {
     button: 'Reserva un diagnóstico',
   },
   useCases: {
-    eyebrow: 'Qué automatizamos',
     title: {
       before: 'Procesos que ',
       emphasis: 'funcionan solos',
@@ -66,7 +64,6 @@ export const automation = {
     ],
   },
   how: {
-    eyebrow: 'Cómo trabajamos',
     title: { before: 'De un proceso a ', emphasis: 'muchos', after: '' },
     steps: [
       {
@@ -94,7 +91,6 @@ export const automation = {
   // TODO(albert): confirm the case
   case: {
     page: 'viatsyCase',
-    eyebrow: 'Caso',
     title: {
       before: 'Cómo gestiona ',
       emphasis: 'Viatsy',
@@ -108,7 +104,6 @@ export const automation = {
     ],
   },
   faq: {
-    eyebrow: 'Preguntas frecuentes',
     title: {
       before: 'Preguntas sobre ',
       emphasis: 'automatización de procesos',

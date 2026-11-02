@@ -13,3 +13,7 @@ lhci-reports
 *.tsbuildinfo
 .DS_Store
 .playwright-mcp/
+visual-shots/
+.impeccable/
+/PRODUCT.md
+/DESIGN.md

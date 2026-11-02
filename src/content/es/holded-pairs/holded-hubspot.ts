@@ -15,7 +15,6 @@ export const holdedHubspot = {
       'Conectamos HubSpot con Holded: una oportunidad ganada crea el cliente y la factura, y el estado del cobro vuelve a HubSpot para que ventas lo vea.',
   },
   hero: {
-    eyebrow: 'Integraciones · Holded y HubSpot',
     title: {
       before: 'Integración de Holded con HubSpot: ',
       emphasis: 'de la venta cerrada a la factura',
@@ -36,7 +35,6 @@ export const holdedHubspot = {
     button: 'Reserva un diagnóstico',
   },
   sync: {
-    eyebrow: 'Qué se sincroniza',
     title: {
       before: 'Qué pasa de ',
       emphasis: 'una herramienta a otra',
@@ -80,7 +78,6 @@ export const holdedHubspot = {
     note: 'Los dos lados avisan de los cambios con webhooks, así que todo va al momento. Una revisión diaria compara clientes y facturas para detectar lo que no haya cuadrado.',
   },
   edgeCases: {
-    eyebrow: 'Casos límite',
     title: {
       before: 'Lo que resolvemos ',
       emphasis: 'antes de activarla',
@@ -121,7 +118,6 @@ export const holdedHubspot = {
     ],
   },
   faq: {
-    eyebrow: 'Preguntas frecuentes',
     title: {
       before: 'Preguntas sobre ',
       emphasis: 'Holded y HubSpot',
