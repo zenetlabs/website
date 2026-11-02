@@ -12,7 +12,7 @@ export function BulletList({
   className?: string;
 }) {
   return (
-    <ul className={`${className} grid gap-3`}>
+    <ul className={`${className} grid gap-2 md:gap-3`}>
       {items.map((item) => (
         <li key={item} className={BULLET_ITEM}>
           {item}

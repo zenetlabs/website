@@ -41,6 +41,16 @@ describe.each([
     }
   });
 
+  it('masks a logo file for each brand except Viatsy, which is set in type', () => {
+    const all = links();
+    for (const [index, { logo }] of PORTFOLIO.entries()) {
+      const mask = all[index]?.querySelector('.logo');
+      expect(mask === null).toBe(logo === null);
+      if (mask) expect(mask).toHaveAttribute('aria-hidden', 'true');
+    }
+    expect(all[0]?.querySelector('.logo-wordmark')).toHaveTextContent('Viatsy');
+  });
+
   it('names the strip with an h2', () => {
     render(<CompaniesStrip copy={home.companies} />);
     expect(

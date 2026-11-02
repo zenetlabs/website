@@ -18,7 +18,9 @@ export type CtaId =
   | 'pricing'
   | 'about'
   | 'services'
-  | 'contact_book';
+  | 'contact_book'
+  | 'start_here'
+  | 'sticky';
 
 type ParamEvents = {
   generate_lead: { method: LeadMethod };

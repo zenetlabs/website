@@ -43,7 +43,8 @@ export const home = {
       emphasis: 'no debería',
       after: ' hacer a mano',
     },
-    fixLabel: 'Qué hacemos',
+    todayLabel: 'Hoy',
+    fixLabel: 'Con nosotros',
     items: [
       {
         id: 'orders',
@@ -93,6 +94,8 @@ export const home = {
     lead: 'Todo proyecto empieza con un diagnóstico a precio cerrado. Precios en euros, IVA no incluido.',
     more: 'Ver todos los precios',
     calculator: 'Calcula tu proyecto',
+    startHere: 'Empieza aquí',
+    book: 'Reserva el diagnóstico',
   },
   process: {
     title: {
@@ -131,6 +134,7 @@ export const home = {
     },
     lead: 'Antes de montar una automatización para un cliente, la usamos en un negocio propio.',
     automatedLabel: 'Qué funciona solo',
+    actors: { tool: 'Tus herramientas', agent: 'Agente', human: 'Una persona' },
     items: cases,
   },
   founder: {
@@ -143,6 +147,11 @@ export const home = {
   },
   faq: {
     title: { before: 'Lo que ', emphasis: 'más', after: ' nos preguntan' },
+    groups: [
+      { id: 'scope', label: 'Qué hacemos y para quién' },
+      { id: 'terms', label: 'Plazos, coste y propiedad' },
+      { id: 'trust', label: 'Datos, riesgos y cómo trabajamos' },
+    ],
   },
   contact: {
     title: {

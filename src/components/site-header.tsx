@@ -10,7 +10,7 @@ import { CTA_TARGET, isCurrent, NAV, navHref } from '@/lib/nav';
 import { pagePath } from '@/lib/page-registry';
 
 const LINK =
-  'rounded-input px-3 py-2 text-sm font-medium text-muted-fg motion-safe:transition-colors motion-safe:duration-200 hover:text-fg aria-[current=page]:text-fg';
+  'rounded-input px-3 py-2 text-sm font-medium text-muted-fg motion-safe:transition-colors motion-safe:duration-200 hover:text-fg aria-[current=page]:text-fg aria-[current=page]:underline aria-[current=page]:decoration-cta aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8';
 
 function closeMenu(event: MouseEvent<HTMLElement>) {
   event.currentTarget.closest('details')?.removeAttribute('open');
@@ -65,7 +65,7 @@ export function SiteHeader({ locale }: { locale: Locale }) {
             </summary>
             <nav
               aria-label={nav.primary}
-              className="absolute inset-x-0 top-full grid gap-1 border-b border-hairline bg-bg px-6 py-4"
+              className="absolute inset-x-0 top-full grid gap-1 border-b border-hairline bg-bg px-6 py-4 shadow-raised"
             >
               {links.map((link) => (
                 <a

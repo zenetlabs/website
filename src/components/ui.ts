@@ -16,6 +16,8 @@ export const SECONDARY_BUTTON_SM = `${BUTTON} ${OUTLINED} min-h-11 px-4 py-2 tex
 export const EYEBROW =
   'font-mono text-label font-medium uppercase text-muted-fg';
 
+export const PILL = 'w-fit rounded-full px-3 py-0.5';
+
 export const LEAD = 'max-w-[60ch] text-lead text-fg-soft';
 
 export const TEXT_LINK =

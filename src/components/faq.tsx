@@ -1,38 +1,63 @@
 import { Section } from '@/components/section';
-import { PROSE } from '@/components/ui';
-import type { FaqItem, HomeContent } from '@/content/types';
+import { EYEBROW, PROSE } from '@/components/ui';
+import type { FaqGroup, FaqItem, SectionCopy } from '@/content/types';
+
+function FaqEntries({ items }: { items: readonly FaqItem[] }) {
+  return (
+    <div className="border-t border-hairline">
+      {items.map((item) => (
+        <details key={item.id} id={`faq-${item.id}`} className="faq-item group">
+          <summary className="fold-summary faq-summary">
+            {item.question}
+            <span
+              aria-hidden="true"
+              className="icon icon-plus text-xl text-muted-fg group-open:rotate-45"
+            />
+          </summary>
+          <p className={`faq-answer ${PROSE}`}>{item.answer}</p>
+        </details>
+      ))}
+    </div>
+  );
+}
 
 export function Faq({
   copy,
   items,
 }: {
-  copy: HomeContent['faq'];
+  copy: SectionCopy & { groups?: readonly FaqGroup[] };
   items: readonly FaqItem[];
 }) {
+  const { groups } = copy;
+  const sets = groups?.map((group) => ({
+    group,
+    items: items.filter((item) => item.group === group.id),
+  }));
+  const split = sets ? Math.ceil(sets.length / 2) : 0;
+
   return (
     <Section id="faq" title={copy.title}>
-      <div className="max-w-3xl border-t border-hairline">
-        {items.map((item) => (
-          <details
-            key={item.id}
-            id={`faq-${item.id}`}
-            className="group border-b border-hairline"
-          >
-            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-6 rounded-input py-5 text-lg font-medium [&::-webkit-details-marker]:hidden">
-              {item.question}
-              <span
-                aria-hidden="true"
-                className="icon icon-plus text-xl text-muted-fg group-open:hidden"
-              />
-              <span
-                aria-hidden="true"
-                className="icon icon-minus hidden text-xl text-muted-fg group-open:inline-block"
-              />
-            </summary>
-            <p className={`pb-6 ${PROSE}`}>{item.answer}</p>
-          </details>
-        ))}
-      </div>
+      {sets ? (
+        <div className="grid gap-10 lg:grid-cols-2 lg:gap-x-16">
+          {[sets.slice(0, split), sets.slice(split)].map((column) => (
+            <div
+              key={column[0]?.group.id}
+              className="grid content-start gap-10"
+            >
+              {column.map(({ group, items: groupItems }) => (
+                <div key={group.id} data-faq-group={group.id}>
+                  <h3 className={`mb-3 ${EYEBROW}`}>{group.label}</h3>
+                  <FaqEntries items={groupItems} />
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="max-w-3xl">
+          <FaqEntries items={items} />
+        </div>
+      )}
     </Section>
   );
 }

@@ -87,7 +87,12 @@ export type FaqItem = {
   id: string;
   question: string;
   answer: string;
+  group?: FaqGroupId;
 };
+
+export type FaqGroupId = 'scope' | 'terms' | 'trust';
+export type HomeFaqItem = FaqItem & { group: FaqGroupId };
+export type FaqGroup = { id: FaqGroupId; label: string };
 
 export type Metric = {
   id: string;
@@ -97,6 +102,10 @@ export type Metric = {
 };
 export type PageLink = { page: PageId; label: string };
 
+export type FlowActor = 'tool' | 'agent' | 'human';
+export type FlowStep = { actor: FlowActor; label: string };
+export type CaseFlow = { caption: string; steps: readonly FlowStep[] };
+
 export type CaseStudy = {
   id: 'viatsy' | 'taplany';
   name: string;
@@ -105,6 +114,7 @@ export type CaseStudy = {
   automated: readonly string[];
   metrics: readonly Metric[];
   link?: PageLink;
+  flow?: CaseFlow;
 };
 
 export type Photo = { src: `/${string}`; width: number; height: number };
@@ -141,6 +151,7 @@ export type HomeContent = {
   };
   companies: { title: string; items: CompanyCopy };
   problems: SectionCopy & {
+    todayLabel: string;
     fixLabel: string;
     items: readonly {
       id: 'orders' | 'invoices' | 'customers';
@@ -155,7 +166,12 @@ export type HomeContent = {
     cta: string;
     checked: string;
   };
-  services: SectionCopy & { more: string; calculator: string };
+  services: SectionCopy & {
+    more: string;
+    calculator: string;
+    startHere: string;
+    book: string;
+  };
   process: SectionCopy & {
     steps: readonly {
       id: 'diagnose' | 'pilot' | 'scale' | 'maintain';
@@ -165,10 +181,11 @@ export type HomeContent = {
   };
   cases: SectionCopy & {
     automatedLabel: string;
+    actors: Record<FlowActor, string>;
     items: readonly CaseStudy[];
   };
   founder: SectionCopy & { more: string };
-  faq: SectionCopy;
+  faq: SectionCopy & { groups: readonly FaqGroup[] };
   contact: SectionCopy & {
     mail: string;
     human: string;

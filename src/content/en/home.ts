@@ -42,7 +42,8 @@ export const home = {
       emphasis: "shouldn't be doing",
       after: ' by hand',
     },
-    fixLabel: 'What we do',
+    todayLabel: 'Today',
+    fixLabel: 'With us',
     items: [
       {
         id: 'orders',
@@ -76,6 +77,8 @@ export const home = {
     lead: 'Every project starts with a fixed-price diagnostic. Prices are in Singapore dollars and exclude GST.',
     more: 'See full pricing',
     calculator: 'Estimate your project',
+    startHere: 'Start here',
+    book: 'Book the diagnostic',
   },
   process: {
     title: {
@@ -114,6 +117,7 @@ export const home = {
     },
     lead: 'Before we build an automation for a client, we run it in a business we own.',
     automatedLabel: 'What runs on its own',
+    actors: { tool: 'Your tools', agent: 'Agent', human: 'A person' },
     items: cases,
   },
   founder: {
@@ -127,6 +131,11 @@ export const home = {
   },
   faq: {
     title: { before: 'What people ', emphasis: 'ask us', after: ' most' },
+    groups: [
+      { id: 'scope', label: 'What we do and who it is for' },
+      { id: 'terms', label: 'Time, cost and ownership' },
+      { id: 'trust', label: 'Data, risk and working together' },
+    ],
   },
   contact: {
     title: {

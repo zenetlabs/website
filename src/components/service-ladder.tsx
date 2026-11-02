@@ -1,8 +1,11 @@
+import type { ReactNode } from 'react';
+import { CtaLink } from '@/components/cta-link';
 import { Section } from '@/components/section';
-import { H3, TEXT_LINK } from '@/components/ui';
+import { H3, PILL, SECONDARY_BUTTON, TEXT_LINK } from '@/components/ui';
 import type { HomeContent, Services } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { formatPriceSummary } from '@/lib/money';
+import { CTA_TARGET, navHref } from '@/lib/nav';
 import {
   isPublished,
   pagePath,
@@ -17,29 +20,47 @@ export function ServiceRow({
   summary,
   price,
   heading: Heading = 'h3',
+  featured,
+  dense,
 }: {
   href: string;
   name: string;
   summary: string;
   price: string;
   heading?: 'h2' | 'h3';
+  featured?: { badge: string; action: ReactNode };
+  dense?: boolean;
 }) {
   return (
-    <li className="border-b border-hairline">
+    <li
+      className={`border-b border-hairline ${featured ? '-mx-4 bg-highlight-soft px-4 md:-mx-6 md:px-6' : ''}`}
+    >
       <a
         href={href}
-        className="group grid gap-3 py-6 md:grid-cols-12 md:items-baseline md:gap-8"
+        className={`service-row group ${dense ? 'service-row-dense' : ''}`}
       >
+        {featured ? (
+          <span className="basis-full md:col-span-full">
+            <span
+              className={`${PILL} inline-block bg-human-soft font-mono text-label font-medium uppercase text-fg`}
+            >
+              {featured.badge}
+            </span>
+          </span>
+        ) : null}
         <Heading
           className={`${H3} underline decoration-transparent underline-offset-4 group-hover:decoration-fg md:col-span-4`}
         >
           {name}
         </Heading>
-        <p className="text-fg-soft md:col-span-5">{summary}</p>
-        <p className="font-mono text-ui-m tabular-nums md:col-span-3 md:text-right">
+        <p className="service-summary">{summary}</p>
+        <p
+          className={`order-2 font-mono tabular-nums md:order-none md:col-span-3 md:text-right ${featured ? 'text-lg md:text-xl' : 'text-ui-s md:text-ui-m'}`}
+        >
           {price}
         </p>
       </a>
+      {featured?.action}
     </li>
   );
 }
@@ -69,14 +90,33 @@ export function ServiceLadder({
         {Object.values(services).map((service) => (
           <ServiceRow
             key={service.id}
+            dense
             href={serviceHref(locale, service.id)}
             name={service.name}
             summary={service.summary}
             price={formatPriceSummary(locale, service.prices)}
+            featured={
+              service.id === 'diagnostic'
+                ? {
+                    badge: copy.startHere,
+                    action: (
+                      <p className="pt-1 pb-5">
+                        <CtaLink
+                          cta="start_here"
+                          href={navHref(locale, CTA_TARGET)}
+                          className={`${SECONDARY_BUTTON} max-sm:w-full`}
+                        >
+                          {copy.book}
+                        </CtaLink>
+                      </p>
+                    ),
+                  }
+                : undefined
+            }
           />
         ))}
       </ul>
-      <p className="mt-10 flex flex-wrap gap-x-8 gap-y-3">
+      <p className="mt-8 flex flex-wrap gap-x-8 gap-y-3 md:mt-10">
         <a href={pricing} className={`font-medium ${TEXT_LINK}`}>
           {copy.more} →
         </a>

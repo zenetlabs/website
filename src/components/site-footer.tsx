@@ -24,8 +24,8 @@ export function SiteFooter({ locale }: { locale: Locale }) {
   const founded = foundedLine(entity, locale);
 
   return (
-    <footer className="border-t border-hairline">
-      <Container className="grid gap-10 py-12 text-sm text-muted-fg md:grid-cols-[1fr_auto]">
+    <footer className="bg-tint">
+      <Container className="grid gap-5 py-7 text-sm text-muted-fg md:grid-cols-[1fr_auto] md:py-12">
         <div className="grid gap-4">
           <a
             href={pagePath(locale, 'home')}
