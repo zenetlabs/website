@@ -1,4 +1,5 @@
-:root {
+:root,
+.scope-page {
   color-scheme: light dark;
 
   --bg: #f6f4ee;
@@ -41,7 +42,8 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root,
+  .scope-page {
     --bg: #071419;
     --bg-tint: #0b1c22;
     --surface: #0d2128;
@@ -67,6 +69,10 @@
     --focus: #7aa7ff;
     --raised-shadow: none;
   }
+}
+
+.scope-page {
+  color: var(--fg);
 }
 
 .band {

@@ -33,6 +33,9 @@ export const H3 = 'font-display text-h3';
 
 export const CARD = 'rounded-card border border-hairline bg-surface';
 
+export const BAND_CARD =
+  'scope-page rounded-card border border-border bg-surface p-6 md:p-8';
+
 export const CALLOUT_CARD = `${CARD} max-w-[calc(60ch+4rem)] p-8`;
 
 export const BULLET_ITEM =

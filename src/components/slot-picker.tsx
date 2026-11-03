@@ -5,8 +5,7 @@ import { formatDayParts, formatTimeParts } from '@/lib/slot-format';
 import { groupByDay } from '@/lib/slots';
 
 const OPEN_DAYS = 2;
-const CHIP =
-  'flex min-h-11 cursor-pointer items-center gap-2 rounded-input border border-hairline bg-surface px-3.5 py-2 text-sm has-checked:border-accent';
+const CHIP = 'choice items-center font-mono tabular-nums';
 
 function timesText(copy: BookPageContent['picker'], count: number): string {
   return count === 1
@@ -26,7 +25,7 @@ export function SlotPicker({
   copy: BookPageContent['picker'];
 }) {
   return (
-    <div className="grid gap-3">
+    <div className="grid border-b border-hairline">
       {groupByDay(slots, zone).map(({ date, entries }, index) => {
         const first = entries[0];
         if (first === undefined) return null;
@@ -35,15 +34,15 @@ export function SlotPicker({
           <details
             key={date}
             open={index < OPEN_DAYS}
-            className="rounded-card border border-hairline bg-surface px-4"
+            className="border-t border-hairline"
           >
-            <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-4 font-medium">
+            <summary className="flex min-h-12 cursor-pointer items-center justify-between gap-4 font-medium">
               <span>{name}</span>
-              <span className="text-sm font-normal text-muted-fg">
+              <span className="text-ui-s font-normal text-muted-fg">
                 {timesText(copy, entries.length)}
               </span>
             </summary>
-            <fieldset className="flex flex-wrap gap-2 pb-4">
+            <fieldset className="grid grid-cols-2 gap-2 pb-4 sm:grid-cols-3 md:grid-cols-4">
               <legend className="sr-only">{name}</legend>
               {entries.map(({ slot, parts }) => (
                 <label key={slot.start} className={CHIP}>
@@ -52,7 +51,6 @@ export function SlotPicker({
                     name="slot"
                     value={new Date(slot.start).toISOString()}
                     required
-                    className="size-4 shrink-0 accent-accent"
                   />
                   {formatTimeParts(locale, parts)}
                 </label>

@@ -519,7 +519,6 @@ export type CalculatorOption = { label: string; hint?: string };
 export type CalculatorPageContent = {
   meta: PageMeta;
   breadcrumb: { label: string; pricing: string };
-  eyebrow: string;
   title: TitleParts;
   lead: string;
   disclaimer: { title: string; text: string };
@@ -588,7 +587,6 @@ export type CalculatorPageContent = {
 export type BookPageContent = {
   meta: PageMeta;
   breadcrumb: { label: string };
-  eyebrow: string;
   title: TitleParts;
   lead: string;
   facts: readonly {

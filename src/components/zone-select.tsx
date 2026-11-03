@@ -31,7 +31,7 @@ export function ZoneSelect({
             name="tz"
             value={zone}
             onChange={(event) => onChange(event.currentTarget.value)}
-            className={`${CONTROL} min-h-11 sm:w-72`}
+            className={`${CONTROL} sm:w-72`}
           >
             {options.map((option) => (
               <option key={option} value={option}>
@@ -44,7 +44,7 @@ export function ZoneSelect({
       <noscript>
         <button
           type="submit"
-          className="min-h-11 rounded-input border border-border px-4 text-sm font-medium"
+          className="min-h-12 rounded-input border border-fg px-4 text-ui-m font-medium text-fg"
         >
           {copy.show}
         </button>

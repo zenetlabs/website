@@ -9,7 +9,6 @@ export const bookPage = {
       'Pick a time for a free 30-minute video call with Zenet Labs about the manual work in your company. No account needed.',
   },
   breadcrumb: { label: 'Breadcrumb' },
-  eyebrow: 'Book a call',
   title: {
     before: 'Thirty minutes to find the ',
     emphasis: 'right',

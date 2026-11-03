@@ -73,3 +73,25 @@ export function scopes(css: string): Record<Scope, Tokens> {
     bandDark: resolved(bandDark),
   };
 }
+
+function propertyNames(css: string, match: (block: Block) => boolean) {
+  const blocks: Block[] = [];
+  walk(css.replace(/\/\*[\s\S]*?\*\//g, ''), false, blocks);
+  return new Set(
+    blocks
+      .filter(match)
+      .flatMap((block) =>
+        [...block.body.matchAll(/(--[\w-]+)\s*:/g)].flatMap(([, name]) =>
+          name ? [name] : [],
+        ),
+      ),
+  );
+}
+
+export function bandPropertyNames(css: string): Set<string> {
+  return propertyNames(css, (block) => block.selector === '.band');
+}
+
+export function pagePropertyNames(css: string): Set<string> {
+  return propertyNames(css, (block) => block.selector.includes('.scope-page'));
+}

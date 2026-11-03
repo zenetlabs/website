@@ -1,5 +1,5 @@
 import { type FormEvent, type ReactNode, type Ref, useId } from 'react';
-import { CARD, EYEBROW, PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
+import { CARD, EYEBROW, H3, PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
 import type {
   CalculatorOption,
   CalculatorPageContent,
@@ -27,10 +27,6 @@ import type { Estimate } from '@/lib/estimate';
 import type { Locale } from '@/lib/i18n';
 import { pagePath } from '@/lib/page-registry';
 
-const OPTION =
-  'flex min-h-11 cursor-pointer items-start gap-3 rounded-input border border-hairline bg-surface px-4 py-2.5 has-checked:border-accent';
-const INPUT = 'mt-1 size-4 shrink-0 accent-accent';
-
 type OptionProps = {
   name: string;
   value: string;
@@ -51,7 +47,6 @@ function inputProps(props: OptionProps) {
     defaultChecked: checked,
     required,
     'aria-describedby': option.hint ? hintIdOf(props) : undefined,
-    className: INPUT,
   };
 }
 
@@ -66,7 +61,7 @@ function OptionText({
       {option.hint ? (
         <span
           id={hintIdOf({ name, value })}
-          className="block text-sm text-muted-fg"
+          className="block text-ui-s text-muted-fg"
         >
           {option.hint}
         </span>
@@ -77,7 +72,7 @@ function OptionText({
 
 function RadioOption(props: OptionProps) {
   return (
-    <label className={OPTION}>
+    <label className="choice">
       <input type="radio" {...inputProps(props)} />
       <OptionText {...props} />
     </label>
@@ -86,7 +81,7 @@ function RadioOption(props: OptionProps) {
 
 function CheckboxOption(props: OptionProps) {
   return (
-    <label className={OPTION}>
+    <label className="choice">
       <input type="checkbox" {...inputProps(props)} />
       <OptionText {...props} />
     </label>
@@ -106,15 +101,15 @@ function Question({
   return (
     <fieldset
       aria-describedby={hint ? hintId : undefined}
-      className="grid gap-3 border-t border-hairline pt-6"
+      className="grid gap-3"
     >
-      <legend className="font-display text-2xl leading-tight">{legend}</legend>
+      <legend className={`mb-3 ${H3}`}>{legend}</legend>
       {hint ? (
-        <p id={hintId} className="text-sm text-muted-fg">
+        <p id={hintId} className="text-ui-s text-muted-fg">
           {hint}
         </p>
       ) : null}
-      {children}
+      <div className="grid gap-3 lg:grid-cols-2">{children}</div>
     </fieldset>
   );
 }
@@ -257,7 +252,7 @@ export function EstimatePanel({
         id="estimate-title"
         ref={headingRef}
         tabIndex={-1}
-        className="text-3xl outline-hidden md:text-4xl"
+        className="text-h2-compact outline-hidden"
       >
         {result.title}
       </h2>
@@ -266,9 +261,9 @@ export function EstimatePanel({
           <dl className="mt-6 grid gap-5">
             <div>
               <dt className={EYEBROW}>{result.labels.total}</dt>
-              <dd className="mt-1 font-mono text-xl">
+              <dd className={`mt-1 tabular-nums ${H3}`}>
                 {rangeText(locale, estimate.total, estimate.currency)}
-                <span className="block font-sans text-sm text-muted-fg">
+                <span className="block font-sans text-ui-s text-muted-fg">
                   {copy.taxNote}
                 </span>
               </dd>
@@ -290,31 +285,31 @@ export function EstimatePanel({
               </dd>
             </div>
           </dl>
-          <h3 className="mt-8 font-display text-2xl">{result.breakdown}</h3>
+          <h3 className={`mt-8 ${H3}`}>{result.breakdown}</h3>
           <ul className="mt-4 grid gap-3">
             {estimate.lines.map((line) => (
               <li key={line.id} className="border-t border-hairline pt-3">
                 <span className="block">{services[line.id].name}</span>
-                <span className="block font-mono">
+                <span className="block font-mono tabular-nums">
                   {rangeText(locale, line, estimate.currency)}
                 </span>
-                <span className="block text-sm text-muted-fg">
+                <span className="block text-ui-s text-muted-fg">
                   {lineDriver(result, line)}
                 </span>
               </li>
             ))}
           </ul>
-          <p className="mt-4 font-mono text-sm">
+          <p className="mt-4 font-mono text-ui-s tabular-nums">
             {adjustmentsText(result, estimate)}
           </p>
-          <p className="mt-2 text-sm text-muted-fg">
+          <p className="mt-2 text-ui-s text-muted-fg">
             {roundingText(locale, result, estimate)}
           </p>
           {estimate.capped ? (
-            <p className="mt-4 text-sm">{result.cappedNote}</p>
+            <p className="mt-4 text-ui-s">{result.cappedNote}</p>
           ) : null}
-          <p className="mt-6 text-sm text-muted-fg">{result.short}</p>
-          <p className="mt-2 text-sm text-muted-fg">{result.share}</p>
+          <p className="mt-6 text-ui-s text-muted-fg">{result.short}</p>
+          <p className="mt-2 text-ui-s text-muted-fg">{result.share}</p>
           <p className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
             <a href="#questions" className={`font-medium ${TEXT_LINK}`}>
               {result.change}
@@ -330,7 +325,7 @@ export function EstimatePanel({
       ) : (
         <>
           <p className="mt-6 text-muted-fg">{result.empty}</p>
-          <p className="mt-4 text-sm text-muted-fg">{result.short}</p>
+          <p className="mt-4 text-ui-s text-muted-fg">{result.short}</p>
         </>
       )}
     </section>

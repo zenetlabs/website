@@ -412,6 +412,62 @@
     @apply flex flex-col items-center gap-2 rounded-input md:items-start;
   }
 
+  .choice {
+    @apply flex min-h-12 cursor-pointer items-start gap-3 rounded-input border border-border px-4 py-2.5 text-ui-m;
+  }
+
+  .choice:has(:checked) {
+    border-color: var(--fg);
+    background-color: var(--highlight-soft);
+    box-shadow: inset 0 0 0 1px var(--fg);
+  }
+
+  .choice:has(:disabled) {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .choice:has(:focus-visible) {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .choice > input {
+    @apply mt-0.5 size-5 shrink-0 accent-accent;
+  }
+
+  .choice > input:focus-visible {
+    outline: none;
+  }
+
+  .choice.items-center > input {
+    margin-top: 0;
+  }
+
+  @media (hover: hover) {
+    .choice:hover:not(:has(:checked, :disabled)) {
+      background-color: var(--bg-tint);
+      transition: background-color var(--duration-hover) ease-out;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .choice:has(:checked) {
+      outline: 2px solid Highlight;
+      outline-offset: -2px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .sticky-panel {
+      position: sticky;
+      top: calc(var(--spacing) * 24);
+      align-self: start;
+      max-height: calc(100dvh - var(--spacing) * 28);
+      overflow-y: auto;
+    }
+  }
+
   .facts {
     @apply mt-8 grid grid-cols-2 gap-x-6 gap-y-6 border-t border-hairline pt-6 md:mt-10 lg:grid-cols-4 lg:gap-x-8;
   }
