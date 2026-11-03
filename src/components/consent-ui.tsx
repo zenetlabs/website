@@ -1,6 +1,6 @@
 import { type SyntheticEvent, useId, useRef } from 'react';
 import { Container } from '@/components/section';
-import { PRIMARY_BUTTON, SECONDARY_BUTTON, TEXT_LINK } from '@/components/ui';
+import { SECONDARY_BUTTON, TEXT_LINK } from '@/components/ui';
 import type { ConsentCopy } from '@/content/types';
 import { applyConsent } from '@/lib/analytics';
 import {
@@ -14,6 +14,8 @@ import {
 import { COOKIE_SETTINGS_ID, openCookieSettings } from '@/lib/cookie-settings';
 import type { Locale } from '@/lib/i18n';
 import { pagePath } from '@/lib/page-registry';
+
+const BANNER_BUTTON = `${SECONDARY_BUTTON} hover:bg-bg-tint!`;
 
 const CHECKBOX = 'mt-1 size-6 shrink-0 accent-accent';
 
@@ -36,7 +38,7 @@ function ConsentBanner({
     <section
       data-consent-banner
       aria-label={copy.title}
-      className="fixed inset-x-0 bottom-0 z-20 border-t border-hairline bg-surface print:hidden"
+      className="fixed inset-x-0 bottom-0 z-20 border-t border-hairline bg-surface shadow-raised print:hidden"
     >
       <Container className="grid gap-2 py-2.5 md:grid-cols-[1fr_auto] md:items-center md:gap-10 md:py-4">
         <p className="max-w-3xl text-sm leading-snug text-muted-fg">
@@ -46,14 +48,14 @@ function ConsentBanner({
           <div className="grid grid-cols-2 gap-3 md:w-96">
             <button
               type="button"
-              className={PRIMARY_BUTTON}
+              className={BANNER_BUTTON}
               onClick={() => choose(gaId, REJECT_ALL)}
             >
               {copy.reject}
             </button>
             <button
               type="button"
-              className={PRIMARY_BUTTON}
+              className={BANNER_BUTTON}
               onClick={() => choose(gaId, ACCEPT_ALL)}
             >
               {copy.accept}
@@ -141,7 +143,7 @@ function ConsentSettings({
       id={COOKIE_SETTINGS_ID}
       aria-labelledby="consent-settings-title"
       onClose={reset}
-      className="m-auto max-h-[calc(100dvh-2rem)] w-[min(34rem,calc(100%-2rem))] overflow-y-auto rounded-card border border-border bg-bg p-6 text-fg backdrop:bg-bg/80"
+      className="m-auto max-h-[calc(100dvh-2rem)] w-[min(34rem,calc(100%-2rem))] overflow-y-auto rounded-card border border-border bg-bg p-6 text-fg shadow-raised backdrop:bg-bg/80"
     >
       <form
         key={consent?.at ?? 0}
@@ -188,14 +190,14 @@ function ConsentSettings({
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              className={PRIMARY_BUTTON}
+              className={SECONDARY_BUTTON}
               onClick={() => finish(REJECT_ALL)}
             >
               {copy.reject}
             </button>
             <button
               type="button"
-              className={PRIMARY_BUTTON}
+              className={SECONDARY_BUTTON}
               onClick={() => finish(ACCEPT_ALL)}
             >
               {copy.accept}

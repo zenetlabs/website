@@ -114,18 +114,24 @@ export async function startVoiceSession(
   request: APIRequestContext,
   locale: 'en' | 'es' = 'en',
 ): Promise<string> {
-  const response = await request.post('/api/voice/session', {
-    headers: { Origin: ORIGIN },
-    data: {
-      locale,
-      page: '/',
-      timeZone: 'Europe/Madrid',
-      turnstileToken: 'e2e-token',
-    },
-  });
-  const body = voiceSessionSchema.parse(await response.json());
-  if (!body.sessionId) throw new Error(`no voice session: ${body.error}`);
-  return body.sessionId;
+  let failure = '';
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const response = await request.post('/api/voice/session', {
+      headers: { Origin: ORIGIN },
+      data: {
+        locale,
+        page: '/',
+        timeZone: 'Europe/Madrid',
+        turnstileToken: 'e2e-token',
+      },
+    });
+    const text = await response.text();
+    const body = voiceSessionSchema.parse(JSON.parse(text));
+    if (body.sessionId) return body.sessionId;
+    failure = `no voice session: HTTP ${response.status()} ${text}`;
+    if (body.error !== 'turnstile' && body.error !== 'unavailable') break;
+  }
+  throw new Error(failure);
 }
 
 export function agentHeaders(sessionId: string): Record<string, string> {

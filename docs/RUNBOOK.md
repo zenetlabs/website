@@ -521,3 +521,10 @@ Erasure for one person: the SQL in section 5 across the tables; delete the Googl
 - **Lighthouse** (box, `lhci` median of 5, 14 production URLs, mobile and desktop): accessibility, best practices and SEO at 100 for every URL; performance 98 to 100 on mobile (LCP about 1.7 to 2.2 s, TBT 0 to 5 ms, CLS up to 0.029) and 100 on desktop (LCP about 0.5 to 0.6 s). Field data comes from Cloudflare Web Analytics.
 - **Up-front JavaScript, gzip** (`e2e/js-budget.e2e.ts`; budget 138,601 B on every page): production build home 131,912 B, pricing 129,585 B (recorded at the voice release).
 - **Smoke:** 151 checks. **Sitemap:** 30 URLs.
+
+### Design release baselines (2026-11-03, local build of the design-evolution head, before deploy)
+
+- **Lighthouse** (box, `pnpm lhci:mobile` and `pnpm lhci:desktop`, median of 5, 16 URLs): mobile performance 99 on every URL, accessibility, best practices and SEO 100; desktop every category 100. CLS 0 on every URL, both presets.
+- **Up-front JavaScript, gzip** (`e2e/js-budget.e2e.ts`; only the 138,601 B limit is enforced): home 135,658 B (plan target ≤136,000), `/book` 137,328 B (plan target ≤137,500), `/privacy` 136,427 B, `/pricing` 131,915 B.
+- **CLS:** 0 on every page type at 390 and 1440 (`e2e/cls.e2e.ts`).
+- **Screenshots:** `pnpm visual` runs the opt-in `visual` Playwright project (`VISUAL=1`; `e2e/visual.e2e.ts`) against the running preview and writes full-page PNGs plus `heights.json` to `visual-shots/<VISUAL_LABEL>/` (`VISUAL_LABEL` defaults to `after`); `pnpm e2e` does not run it.
