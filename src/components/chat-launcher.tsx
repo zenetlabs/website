@@ -58,7 +58,7 @@ function LoadFailed({
   return (
     <div
       role="alert"
-      className="fixed right-4 bottom-20 z-30 grid max-w-sm gap-2 rounded-card border border-border bg-bg p-4 text-sm print:hidden"
+      className="fixed right-4 bottom-20 z-30 grid max-w-sm gap-2 rounded-card border border-border bg-surface p-4 text-sm shadow-raised print:hidden"
     >
       <p>{chat.unavailable}</p>
       <p className="flex flex-wrap gap-x-4 gap-y-1">
@@ -118,7 +118,7 @@ export function LauncherButton({
         track('chat_open');
         onOpen();
       }}
-      className="fixed right-4 bottom-4 z-30 inline-flex h-14 items-center gap-2 rounded-card border border-border bg-accent px-4 text-sm font-semibold text-accent-fg motion-safe:transition-colors motion-safe:duration-200 hover:bg-accent/85 print:hidden"
+      className="fixed right-4 bottom-4 z-30 inline-flex h-14 items-center gap-2 rounded-card border border-border bg-accent px-4 text-sm shadow-raised font-semibold text-accent-fg motion-safe:transition-colors motion-safe:duration-200 hover:bg-accent/85 print:hidden"
     >
       <svg
         aria-hidden="true"

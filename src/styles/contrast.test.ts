@@ -42,6 +42,7 @@ const PAIRS: ReadonlyArray<
 > = [
   ['fg', 'bg', TEXT, PAGE],
   ['fg-soft', 'bg', TEXT, PAGE],
+  ['fg', 'surface', TEXT, PAGE],
   ['fg-soft', 'surface', TEXT, PAGE],
   ['fg-soft', 'bg-tint', TEXT, PAGE],
   ['muted-fg', 'bg', TEXT, PAGE],
@@ -51,6 +52,7 @@ const PAIRS: ReadonlyArray<
   ['on-highlight', 'highlight', TEXT, PAGE],
   ['link', 'bg', TEXT, PAGE],
   ['link', 'bg-tint', TEXT, PAGE],
+  ['link', 'surface', TEXT, PAGE],
   ['link', 'highlight-soft', TEXT, ['light']],
   ['agent', 'bg', TEXT, PAGE],
   ['agent', 'bg-tint', TEXT, PAGE],

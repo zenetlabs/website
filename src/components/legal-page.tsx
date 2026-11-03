@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { Container } from '@/components/section';
-import { EYEBROW } from '@/components/ui';
 
 export function LegalPage({
   title,
@@ -13,9 +12,9 @@ export function LegalPage({
 }) {
   return (
     <Container className="max-w-3xl py-16 md:py-24">
-      <p className={EYEBROW}>{updated}</p>
-      <h1 className="mt-5">{title}</h1>
-      <div className="mt-12 grid max-w-[60ch] gap-10 [&_li]:mt-2 [&_p]:mt-3 [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-6">
+      <h1>{title}</h1>
+      <p className="mt-5 font-mono text-ui-s text-muted-fg">{updated}</p>
+      <div className="mt-12 grid max-w-[60ch] gap-12 border-t border-hairline pt-12 [&_h2]:text-fg [&_li]:text-fg-soft [&_p]:text-fg-soft [&_li]:mt-2 [&_li]:pl-1 [&_li]:marker:text-muted-fg [&_p]:mt-3 [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-6">
         {children}
       </div>
     </Container>

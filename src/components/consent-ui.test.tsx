@@ -97,6 +97,17 @@ describe('ConsentManager', () => {
   });
 });
 
+describe('settings dialog', () => {
+  it('gives Reject and Accept the same class', async () => {
+    await mounted();
+    const buttons = Array.from(dialog().querySelectorAll('button'));
+    const reject = buttons.find((b) => b.textContent === en.reject);
+    const accept = buttons.find((b) => b.textContent === en.accept);
+    expect(reject).toBeDefined();
+    expect(reject?.className).toBe(accept?.className);
+  });
+});
+
 describe('banner', () => {
   it('gives Reject and Accept the same class', async () => {
     await mounted();
