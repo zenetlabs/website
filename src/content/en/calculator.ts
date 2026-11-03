@@ -8,7 +8,6 @@ export const calculatorPage = {
       'Answer six questions for an indicative range in Singapore dollars (excl. GST), a timeline and a suggested maintenance plan. Not a quote: the final price comes from the diagnostic.',
   },
   breadcrumb: { label: 'Breadcrumb', pricing: 'Pricing' },
-  eyebrow: 'Price calculator',
   title: { before: 'What could your project ', emphasis: 'cost', after: '?' },
   lead: "Six questions, about a minute, and an indicative range for your project. You don't need to leave an email to see it.",
   disclaimer: {

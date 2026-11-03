@@ -19,6 +19,33 @@ async function waitForToken(page: Page) {
   });
 }
 
+test('the contact card inside the band keeps the page surface', async ({
+  page,
+}) => {
+  await gotoHydrated(page, '/');
+  const form = page.getByRole('form', { name: 'Contact form' });
+  const colours = await form.evaluate((node) => {
+    const card = node.parentElement;
+    const band = node.closest('[data-ground="band"]');
+    if (!card || !band) throw new Error('no band');
+    const probe = (parent: Element) => {
+      const element = document.createElement('div');
+      element.style.backgroundColor = 'var(--surface)';
+      parent.appendChild(element);
+      const colour = getComputedStyle(element).backgroundColor;
+      element.remove();
+      return colour;
+    };
+    return {
+      card: getComputedStyle(card).backgroundColor,
+      page: probe(document.body),
+      band: probe(band),
+    };
+  });
+  expect(colours.card).toBe(colours.page);
+  expect(colours.card).not.toBe(colours.band);
+});
+
 test('required fields and consent block the submit', async ({ page }) => {
   await gotoHydrated(page, '/');
   const form = page.getByRole('form', { name: 'Contact form' });

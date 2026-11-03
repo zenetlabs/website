@@ -3,7 +3,8 @@ import { lazy, Suspense, useSyncExternalStore } from 'react';
 import { BookingForm } from '@/components/booking-form';
 import { Breadcrumb, FactList, HeroHeading } from '@/components/page-blocks';
 import { Container } from '@/components/section';
-import { TEXT_LINK } from '@/components/ui';
+import { sectionFrame } from '@/components/section-frame';
+import { BAND_CARD, LEAD, TEXT_LINK } from '@/components/ui';
 import { ZoneSelect } from '@/components/zone-select';
 import { DEFAULT_ZONE } from '@/content/booking-rules';
 import { loadBookContent } from '@/content/load';
@@ -16,6 +17,8 @@ import { breadcrumbStructuredData } from '@/lib/page-structured-data';
 import { SITE_NAME } from '@/lib/seo';
 import { PUBLIC_EMAIL } from '@/lib/site';
 import { canonicalZone } from '@/lib/slots';
+
+const BAND = sectionFrame('band');
 
 const LazyContactForm = lazy(() =>
   import('@/components/contact-form').then(({ ContactForm }) => ({
@@ -83,12 +86,7 @@ function Book() {
             names={{ home: SITE_NAME, book: copy.meta.title }}
             label={copy.breadcrumb.label}
           />
-          <HeroHeading
-            eyebrow={copy.eyebrow}
-            title={copy.title}
-            lead={copy.lead}
-            afterBreadcrumb
-          />
+          <HeroHeading title={copy.title} lead={copy.lead} afterBreadcrumb />
           <FactList
             facts={copy.facts.map((fact) => ({
               ...fact,
@@ -98,37 +96,44 @@ function Book() {
         </Container>
       </section>
       {open ? (
-        <section data-booking="open" className="border-t border-hairline">
-          <Container className="grid max-w-3xl gap-8 py-16 md:py-20">
-            <ZoneSelect
-              zone={zone}
-              action={pagePath(locale, 'book')}
-              copy={copy.zone}
-              onChange={(tz) =>
-                navigate({
-                  search: (previous) => ({ ...previous, tz }),
-                  replace: true,
-                  resetScroll: false,
-                })
-              }
-            />
-            <BookingForm
-              copy={copy}
-              locale={locale}
-              zone={zone}
-              slots={availability.slots}
-            />
+        <section
+          data-booking="open"
+          data-ground={BAND.ground}
+          className={BAND.bg}
+        >
+          <Container className={`max-w-3xl ${BAND.pad}`}>
+            <div className={`grid gap-8 ${BAND_CARD}`}>
+              <ZoneSelect
+                zone={zone}
+                action={pagePath(locale, 'book')}
+                copy={copy.zone}
+                onChange={(tz) =>
+                  navigate({
+                    search: (previous) => ({ ...previous, tz }),
+                    replace: true,
+                    resetScroll: false,
+                  })
+                }
+              />
+              <BookingForm
+                copy={copy}
+                locale={locale}
+                zone={zone}
+                slots={availability.slots}
+              />
+            </div>
           </Container>
         </section>
       ) : (
         <section
           data-booking="unavailable"
           aria-labelledby="book-fallback"
-          className="border-t border-hairline"
+          data-ground={BAND.ground}
+          className={BAND.bg}
         >
-          <Container className="grid max-w-3xl gap-6 py-16 md:py-20">
+          <Container className={`grid max-w-3xl gap-6 ${BAND.pad}`}>
             <h2 id="book-fallback">{fallback.title}</h2>
-            <p className="text-muted-fg">{fallback.text}</p>
+            <p className={LEAD}>{fallback.text}</p>
             <Suspense fallback={null}>
               <LazyContactForm />
             </Suspense>

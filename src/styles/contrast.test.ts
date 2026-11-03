@@ -1,7 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { type Scope, scopes } from '../../test/css-scopes';
+import {
+  bandPropertyNames,
+  pagePropertyNames,
+  type Scope,
+  scopes,
+} from '../../test/css-scopes';
 
 function luminance(hex: string): number {
   const [red = 0, green = 0, blue = 0] = [1, 3, 5].map((start) => {
@@ -21,9 +26,11 @@ function ratio(foreground: string, background: string): number {
   return (light + 0.05) / (dark + 0.05);
 }
 
-const SCOPES = scopes(
-  readFileSync(join(process.cwd(), 'src', 'styles', 'tokens.css'), 'utf8'),
+const TOKENS_CSS = readFileSync(
+  join(process.cwd(), 'src', 'styles', 'tokens.css'),
+  'utf8',
 );
+const SCOPES = scopes(TOKENS_CSS);
 
 const TEXT = 4.5;
 const GRAPHIC = 3;
@@ -101,5 +108,13 @@ describe('token contrast', () => {
   it('keeps the page grounds apart from the band', () => {
     expect(SCOPES.light.bg).not.toBe(SCOPES.bandLight.bg);
     expect(SCOPES.dark.bg).not.toBe(SCOPES.bandDark.bg);
+  });
+
+  it('restores in .scope-page every property .band overrides', () => {
+    const restored = pagePropertyNames(TOKENS_CSS);
+    const missing = [...bandPropertyNames(TOKENS_CSS)].filter(
+      (name) => !restored.has(name),
+    );
+    expect(missing).toEqual([]);
   });
 });

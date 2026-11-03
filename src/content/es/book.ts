@@ -9,7 +9,6 @@ export const bookPage = {
       'Elige hora para una videollamada gratuita de 30 minutos con Zenet Labs sobre el trabajo manual de tu empresa. Sin crear cuenta.',
   },
   breadcrumb: { label: 'Ruta de navegación' },
-  eyebrow: 'Reservar una llamada',
   title: {
     before: 'Treinta minutos para elegir el ',
     emphasis: 'primer',

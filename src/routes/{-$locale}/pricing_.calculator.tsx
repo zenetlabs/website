@@ -4,7 +4,8 @@ import { CalculatorForm, EstimatePanel } from '@/components/calculator';
 import { ContactFallback } from '@/components/contact-intro';
 import { Breadcrumb, HeroHeading } from '@/components/page-blocks';
 import { Container } from '@/components/section';
-import { CARD, EYEBROW, TEXT_LINK } from '@/components/ui';
+import { sectionFrame } from '@/components/section-frame';
+import { H3, PROSE, TEXT_LINK } from '@/components/ui';
 import { loadCalculatorContent } from '@/content/load';
 import {
   answersFromSearch,
@@ -19,6 +20,9 @@ import { pagePath } from '@/lib/page-registry';
 import { calculatorStructuredData } from '@/lib/page-structured-data';
 import { SITE_NAME } from '@/lib/seo';
 import { track } from '@/lib/track';
+
+const TINT = sectionFrame('tint');
+const COMPACT = sectionFrame('compact');
 
 const LazyContactSection = lazy(() =>
   import('@/components/contact-section').then(({ ContactSection }) => ({
@@ -77,18 +81,8 @@ function Calculator() {
             }}
             label={copy.breadcrumb.label}
           />
-          <HeroHeading
-            eyebrow={copy.eyebrow}
-            title={copy.title}
-            lead={copy.lead}
-            afterBreadcrumb
-          />
-          <div className={`${CARD} mt-10 max-w-3xl p-6`}>
-            <p className="font-display text-2xl">{copy.disclaimer.title}</p>
-            <p className="mt-3 text-muted-fg">{copy.disclaimer.text}</p>
-          </div>
-          <p className={`mt-6 ${EYEBROW}`}>{copy.taxNote}</p>
-          <p className="mt-2 text-sm text-muted-fg">{copy.privacy}</p>
+          <HeroHeading title={copy.title} lead={copy.lead} afterBreadcrumb />
+          <p className="mt-6 text-ui-s text-muted-fg">{copy.taxNote}</p>
           <p className="mt-4">
             <a
               href={pagePath(locale, 'pricing')}
@@ -99,7 +93,18 @@ function Calculator() {
           </p>
         </Container>
       </section>
-      <Container className="grid gap-10 pb-20 md:grid-cols-12 md:gap-12 md:pb-28">
+      <section data-ground={TINT.ground} className={TINT.bg}>
+        <Container className={COMPACT.pad}>
+          <div className="max-w-3xl">
+            <h2 className={H3}>{copy.disclaimer.title}</h2>
+            <p className={`mt-3 ${PROSE}`}>{copy.disclaimer.text}</p>
+            <p className="mt-3 max-w-[60ch] text-ui-s text-muted-fg">
+              {copy.privacy}
+            </p>
+          </div>
+        </Container>
+      </section>
+      <Container className="grid gap-10 py-section md:grid-cols-12 md:gap-12">
         <div className="md:col-span-7">
           <CalculatorForm
             key={JSON.stringify(search)}
@@ -109,7 +114,7 @@ function Calculator() {
             onAnswers={onAnswers}
           />
         </div>
-        <div className="md:col-span-5">
+        <div className="sticky-panel md:col-span-5">
           <EstimatePanel
             copy={copy}
             locale={locale}

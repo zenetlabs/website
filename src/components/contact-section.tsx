@@ -1,10 +1,10 @@
+import { BandSection } from '@/components/band-section';
 import { ContactForm, type ContactPrefill } from '@/components/contact-form';
 import {
   CONTACT_FRAME,
   type ContactCopy,
   ContactIntro,
 } from '@/components/contact-intro';
-import { Container } from '@/components/section';
 
 export function ContactSection({
   copy,
@@ -14,17 +14,15 @@ export function ContactSection({
   prefill?: ContactPrefill;
 }) {
   return (
-    <section
+    <BandSection
       id="contact"
-      aria-labelledby="contact-title"
-      className="border-t border-hairline"
+      labelledBy="contact-title"
+      containerClassName={CONTACT_FRAME}
     >
-      <Container className={CONTACT_FRAME}>
-        <ContactIntro copy={copy} id="contact-title" />
-        <div className="lg:col-span-7">
-          <ContactForm prefill={prefill} />
-        </div>
-      </Container>
-    </section>
+      <ContactIntro copy={copy} id="contact-title" />
+      <div className="lg:col-span-7">
+        <ContactForm prefill={prefill} />
+      </div>
+    </BandSection>
   );
 }

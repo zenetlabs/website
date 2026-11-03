@@ -70,24 +70,17 @@ export function Breadcrumb({
 }
 
 export function HeroHeading({
-  eyebrow,
   title,
   lead,
   afterBreadcrumb = false,
 }: {
-  eyebrow?: string;
   title: TitleParts;
   lead: string;
   afterBreadcrumb?: boolean;
 }) {
-  const top = eyebrow ? 'mt-6 ' : afterBreadcrumb ? 'mt-10 ' : '';
+  const top = afterBreadcrumb ? 'mt-10 ' : '';
   return (
     <>
-      {eyebrow ? (
-        <p className={`${afterBreadcrumb ? 'mt-10 ' : ''}${EYEBROW}`}>
-          {eyebrow}
-        </p>
-      ) : null}
       <h1 id="service-title" className={`${top}max-w-4xl`}>
         <EmphasisTitle parts={title} marker />
       </h1>
@@ -296,6 +289,7 @@ export function DataTable({
   iconColumn?: number;
   dataColumns?: readonly number[];
 }) {
+  const dataSet = new Set(dataColumns);
   return (
     <table aria-labelledby={labelledBy} className="data-table">
       <thead>
@@ -324,7 +318,7 @@ export function DataTable({
               <td
                 key={columns[index + 1]}
                 data-label={columns[index + 1]}
-                className={`py-0.5 pr-4 text-fg-soft sm:py-4 ${dataColumns.includes(index + 1) ? 'font-mono tabular-nums' : ''}`}
+                className={`py-0.5 pr-4 text-fg-soft sm:py-4 ${dataSet.has(index + 1) ? 'font-mono tabular-nums' : ''}`}
               >
                 {iconColumn === index + 1 ? (
                   <span

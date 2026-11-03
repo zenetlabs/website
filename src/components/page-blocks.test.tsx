@@ -136,7 +136,7 @@ describe('HeroHeading and FactList', () => {
   it('render the heading, the lead and the facts', () => {
     const { container } = render(
       <>
-        <HeroHeading eyebrow="E" title={pair.hero.title} lead="Lead" />
+        <HeroHeading title={pair.hero.title} lead="Lead" />
         <FactList
           facts={[
             { id: 'a', label: 'A', value: '1' },

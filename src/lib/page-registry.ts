@@ -169,7 +169,7 @@ export const PAGES: Record<
     slugs: { en: '/pricing/calculator', es: '/precios/calculadora' },
     parent: 'pricing',
     flag: 'calculator',
-    lastmod: '2026-11-01',
+    lastmod: '2026-11-03',
   },
   about: {
     slugs: { en: '/about', es: '/sobre-nosotros' },
@@ -178,7 +178,7 @@ export const PAGES: Record<
   book: {
     slugs: { en: '/book', es: '/reservar' },
     flag: 'booking',
-    lastmod: '2026-11-01',
+    lastmod: '2026-11-03',
   },
   privacy: {
     slugs: { en: '/privacy', es: '/privacidad' },

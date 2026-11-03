@@ -8,7 +8,10 @@ import { pagePath } from '@/lib/page-registry';
 import { PUBLIC_EMAIL, SITE } from '@/lib/site';
 
 export const CONTROL =
-  'w-full rounded-input border border-border bg-bg px-3.5 py-3 text-base';
+  'min-h-12 w-full rounded-input border border-border bg-bg px-3.5 py-3 text-base';
+
+const ALERT =
+  'rounded-input border-2 border-fg px-4 py-3 text-ui-m outline-hidden';
 
 export function Field({
   label,
@@ -19,8 +22,8 @@ export function Field({
 }) {
   const id = useId();
   return (
-    <div className="grid gap-2">
-      <label htmlFor={id} className="text-sm font-medium">
+    <div className="grid gap-1.5">
+      <label htmlFor={id} className="text-ui-m font-medium text-fg">
         {label}
       </label>
       {children(id)}
@@ -131,8 +134,8 @@ export function BookingSuccess({
       >
         {title}
       </h2>
-      <p>{when}</p>
-      <p className="text-muted-fg">{text}</p>
+      <p className="font-medium">{when}</p>
+      <p className="text-fg-soft">{text}</p>
       {meetUrl ? (
         <p>
           <a href={meetUrl} className={TEXT_LINK}>
@@ -175,12 +178,12 @@ export function ConsentCheckbox({
     .replace('{legalName}', legalEntity(locale).legalName)
     .split('{privacyLink}');
   return (
-    <label className="flex items-start gap-3 text-sm text-muted-fg">
+    <label className="flex items-start gap-3 text-ui-s text-fg-soft">
       <input
         type="checkbox"
         name="consent"
         required
-        className="mt-1 size-4 shrink-0 accent-accent"
+        className="mt-0.5 size-5 shrink-0 accent-accent"
       />
       <span>
         {before}
@@ -250,12 +253,7 @@ export function FormAlert({
   children: ReactNode;
 }) {
   return (
-    <p
-      ref={alertRef}
-      role="alert"
-      tabIndex={-1}
-      className="text-sm outline-hidden"
-    >
+    <p ref={alertRef} role="alert" tabIndex={-1} className={ALERT}>
       {children}{' '}
       <a href={`mailto:${PUBLIC_EMAIL}`} className={TEXT_LINK}>
         {PUBLIC_EMAIL}

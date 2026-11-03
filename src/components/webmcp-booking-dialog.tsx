@@ -8,7 +8,7 @@ import {
   Honeypot,
   LazyTurnstile,
 } from '@/components/form-parts';
-import { PRIMARY_BUTTON, SECONDARY_BUTTON } from '@/components/ui';
+import { H3, PRIMARY_BUTTON, SECONDARY_BUTTON } from '@/components/ui';
 import { useChallenge } from '@/components/use-challenge';
 import { submitBooking } from '@/lib/booking-client';
 import { type BookingFailureKind, failureOf } from '@/lib/booking-failure';
@@ -128,14 +128,14 @@ export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
       aria-labelledby={titleId}
       aria-describedby={confirmed ? undefined : introId}
       data-webmcp-dialog
-      className="fixed inset-0 m-auto h-fit max-h-[90dvh] w-[min(100%-2rem,32rem)] overflow-y-auto rounded-card border border-border bg-bg p-6 text-fg backdrop:bg-bg/60"
+      className="fixed inset-0 m-auto h-fit max-h-[90dvh] w-[min(100%-2rem,32rem)] overflow-y-auto rounded-card border border-border bg-surface p-6 text-fg shadow-raised backdrop:bg-bg/60"
     >
       {confirmed ? (
         <div className="grid gap-4">
           <BookingSuccess
             headingRef={successHeading}
             headingId={titleId}
-            headingClass="text-2xl"
+            headingClass={H3}
             title={copy.success.title}
             when={confirmed.when}
             text={copy.success.text.replace('{email}', confirmed.email)}
@@ -153,13 +153,13 @@ export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
         </div>
       ) : (
         <form onSubmit={onSubmit} className="grid gap-5">
-          <h2 id={titleId} className="text-2xl">
+          <h2 id={titleId} className={H3}>
             {copy.title}
           </h2>
-          <p id={introId} className="text-sm text-muted-fg">
+          <p id={introId} className="text-ui-s text-muted-fg">
             {copy.intro}
           </p>
-          <p className="text-sm">
+          <p className="text-ui-m">
             <span className="font-medium">{copy.when}: </span>
             {label} · {proposal.timeZone}
           </p>

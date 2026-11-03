@@ -9,7 +9,7 @@ import {
   Honeypot,
   LazyTurnstile,
 } from '@/components/form-parts';
-import { PRIMARY_BUTTON } from '@/components/ui';
+import { BAND_CARD, H3, PRIMARY_BUTTON } from '@/components/ui';
 import { useChallenge } from '@/components/use-challenge';
 import { getChatSessionId } from '@/lib/chat-session';
 import { text } from '@/lib/form-data';
@@ -84,18 +84,18 @@ export function ContactForm({ prefill }: { prefill?: ContactPrefill }) {
   }
 
   return (
-    <div className="rounded-card border border-border bg-surface p-6 md:p-8">
+    <div className={BAND_CARD}>
       <div aria-live="polite">
         {status === 'sent' ? (
           <div className="grid gap-3 py-6">
             <p
               ref={successHeading}
               tabIndex={-1}
-              className="font-display text-3xl outline-hidden"
+              className={`${H3} outline-hidden`}
             >
               {copy.successTitle}
             </p>
-            <p className="text-muted-fg">{copy.successText}</p>
+            <p className="text-fg-soft">{copy.successText}</p>
           </div>
         ) : null}
       </div>

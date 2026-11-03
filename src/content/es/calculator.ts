@@ -8,7 +8,6 @@ export const calculatorPage = {
       'Responde seis preguntas y obtén un rango orientativo en euros (sin IVA), un plazo y el plan de mantenimiento que encaja. No es un presupuesto: el precio final sale del diagnóstico.',
   },
   breadcrumb: { label: 'Ruta de navegación', pricing: 'Precios' },
-  eyebrow: 'Calculadora',
   title: {
     before: '¿Cuánto podría ',
     emphasis: 'costar',

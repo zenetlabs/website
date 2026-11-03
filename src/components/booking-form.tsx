@@ -10,7 +10,7 @@ import {
   LazyTurnstile,
 } from '@/components/form-parts';
 import { SlotPicker } from '@/components/slot-picker';
-import { PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
+import { H3, PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
 import { useChallenge } from '@/components/use-challenge';
 import type { BookPageContent } from '@/content/types';
 import {
@@ -120,10 +120,10 @@ export function BookingForm({
 
   if (confirmed) {
     return (
-      <div className="grid gap-4 rounded-card border border-border bg-surface p-6 md:p-8">
+      <div className="grid gap-4">
         <BookingSuccess
           headingRef={successHeading}
-          headingClass="text-3xl"
+          headingClass={H3}
           title={copy.success.title}
           when={copy.success.when
             .replace('{time}', confirmed.when)
@@ -145,9 +145,9 @@ export function BookingForm({
       className="grid gap-8"
     >
       <fieldset disabled={!hydrated || pending} className="grid gap-5">
-        <legend className="mb-3 text-2xl font-display leading-tight">
+        <legend className={`mb-3 ${H3}`}>
           {copy.picker.legend}
-          <span className="mt-1 block font-sans text-sm font-normal text-muted-fg">
+          <span className="mt-1 block font-sans text-ui-s font-normal text-muted-fg">
             {copy.zone.legend.replace('{zone}', zoneLabel(copy.zone, zone))}
           </span>
         </legend>
@@ -157,7 +157,9 @@ export function BookingForm({
           locale={locale}
           copy={copy.picker}
         />
-        <p className="text-sm font-medium">{form.details}</p>
+        <h2 className={`mt-2 border-t border-hairline pt-6 ${H3}`}>
+          {form.details}
+        </h2>
         <BookingDetailsFields
           labels={{
             name: form.name,
@@ -197,7 +199,7 @@ export function BookingForm({
             ref={alert}
             role="alert"
             tabIndex={-1}
-            className="text-sm outline-hidden"
+            className="rounded-input border-2 border-fg px-4 py-3 text-ui-m outline-hidden"
           >
             {copy.errors[status]}
           </p>
