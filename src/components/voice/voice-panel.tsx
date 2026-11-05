@@ -47,7 +47,7 @@ function statusText(copy: VoiceCopy, state: VoiceState): string {
   const noticeText =
     notice === null
       ? ''
-      : (notice.kind === 'booked' ? copy.booked : copy.opened).replace(
+      : (notice.kind === 'pending' ? copy.pending : copy.opened).replace(
           '{label}',
           notice.label,
         );

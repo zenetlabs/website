@@ -68,12 +68,26 @@ export function siteConfig(env: string | undefined): SiteConfig {
 
 export type AccessConfig = { teamDomain: string; aud: string };
 
+// Caps on confirmation emails (docs/ai-assistant.md "Email confirmation").
+// Per IP and site-wide count a UTC day; per address counts a rolling 24 h.
+export type BookingLimits = {
+  perIpDaily: number;
+  perAddressDaily: number;
+  siteDaily: number;
+  resendCooldownSeconds: number;
+};
+
 export type BookingServerConfig = {
   tokenUrl: string;
   calendarUrl: string;
   busyCacheMs: number;
   failureCacheMs: number;
+  limits: BookingLimits;
 };
+
+// testingKeys: accept Siteverify answers made with Cloudflare's testing keys
+// (local and CI only; production refuses them).
+export type TurnstileServerConfig = { testingKeys: boolean };
 
 export type ChatModelId =
   | '@cf/zai-org/glm-4.7-flash'
@@ -97,6 +111,7 @@ export type ServerConfig = {
   resendBaseUrl: string;
   access: AccessConfig | null;
   booking: BookingServerConfig;
+  turnstile: TurnstileServerConfig;
   assistant: AssistantServerConfig;
   voice: VoiceServerConfig;
 };
@@ -110,7 +125,14 @@ const localServer: ServerConfig = {
     calendarUrl: 'http://127.0.0.1:4175/__google/calendar/v3',
     busyCacheMs: 0,
     failureCacheMs: 0,
+    limits: {
+      perIpDaily: 10_000,
+      perAddressDaily: 10_000,
+      siteDaily: 100_000,
+      resendCooldownSeconds: 0,
+    },
   },
+  turnstile: { testingKeys: true },
   assistant: {
     model: 'fake',
     aiGatewayName: null,
@@ -136,7 +158,14 @@ const productionServer: ServerConfig = {
     calendarUrl: 'https://www.googleapis.com/calendar/v3',
     busyCacheMs: 60_000,
     failureCacheMs: 45_000,
+    limits: {
+      perIpDaily: 5,
+      perAddressDaily: 3,
+      siteDaily: 40,
+      resendCooldownSeconds: 60,
+    },
   },
+  turnstile: { testingKeys: false },
   assistant: {
     // TODO(albert): confirm the model after the bake-off (pnpm eval:chat against a preview alias)
     model: '@cf/zai-org/glm-4.7-flash',

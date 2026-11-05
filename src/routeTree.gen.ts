@@ -28,6 +28,8 @@ import { Route as Char123LocaleChar125LlmsDottxtRouteImport } from './routes/{-$
 import { Route as Char123LocaleChar125PricingRouteImport } from './routes/{-$locale}/pricing'
 import { Route as Char123LocaleChar125PrivacyRouteImport } from './routes/{-$locale}/privacy'
 import { Route as Char123LocaleChar125VerifactuRouteImport } from './routes/{-$locale}/verifactu'
+import { Route as ApiBookCancelRouteImport } from './routes/api/book.cancel'
+import { Route as ApiBookConfirmRouteImport } from './routes/api/book.confirm'
 import { Route as ApiBookSlotsRouteImport } from './routes/api/book.slots'
 import { Route as ApiToolsIndexRouteImport } from './routes/api/tools/index'
 import { Route as ApiToolsNameRouteImport } from './routes/api/tools/$name'
@@ -155,6 +157,16 @@ const Char123LocaleChar125VerifactuRoute =
     path: '/verifactu',
     getParentRoute: () => Char123LocaleChar125Route,
   } as any)
+const ApiBookCancelRoute = ApiBookCancelRouteImport.update({
+  id: '/api/book/cancel',
+  path: '/api/book/cancel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBookConfirmRoute = ApiBookConfirmRouteImport.update({
+  id: '/api/book/confirm',
+  path: '/api/book/confirm',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiBookSlotsRoute = ApiBookSlotsRouteImport.update({
   id: '/api/book/slots',
   path: '/api/book/slots',
@@ -291,6 +303,8 @@ export interface FileRoutesByFullPath {
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}/verifactu': typeof Char123LocaleChar125VerifactuRoute
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
+  '/api/book/cancel': typeof ApiBookCancelRoute
+  '/api/book/confirm': typeof ApiBookConfirmRoute
   '/api/book/slots': typeof ApiBookSlotsRoute
   '/api/tools/$name': typeof ApiToolsNameRoute
   '/api/voice/session': typeof ApiVoiceSessionRoute
@@ -331,6 +345,8 @@ export interface FileRoutesByTo {
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}/verifactu': typeof Char123LocaleChar125VerifactuRoute
   '/{-$locale}': typeof Char123LocaleChar125IndexRoute
+  '/api/book/cancel': typeof ApiBookCancelRoute
+  '/api/book/confirm': typeof ApiBookConfirmRoute
   '/api/book/slots': typeof ApiBookSlotsRoute
   '/api/tools/$name': typeof ApiToolsNameRoute
   '/api/voice/session': typeof ApiVoiceSessionRoute
@@ -373,6 +389,8 @@ export interface FileRoutesById {
   '/{-$locale}/privacy': typeof Char123LocaleChar125PrivacyRoute
   '/{-$locale}/verifactu': typeof Char123LocaleChar125VerifactuRoute
   '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
+  '/api/book/cancel': typeof ApiBookCancelRoute
+  '/api/book/confirm': typeof ApiBookConfirmRoute
   '/api/book/slots': typeof ApiBookSlotsRoute
   '/api/tools/$name': typeof ApiToolsNameRoute
   '/api/voice/session': typeof ApiVoiceSessionRoute
@@ -416,6 +434,8 @@ export interface FileRouteTypes {
     | '/{-$locale}/privacy'
     | '/{-$locale}/verifactu'
     | '/{-$locale}/'
+    | '/api/book/cancel'
+    | '/api/book/confirm'
     | '/api/book/slots'
     | '/api/tools/$name'
     | '/api/voice/session'
@@ -456,6 +476,8 @@ export interface FileRouteTypes {
     | '/{-$locale}/privacy'
     | '/{-$locale}/verifactu'
     | '/{-$locale}'
+    | '/api/book/cancel'
+    | '/api/book/confirm'
     | '/api/book/slots'
     | '/api/tools/$name'
     | '/api/voice/session'
@@ -497,6 +519,8 @@ export interface FileRouteTypes {
     | '/{-$locale}/privacy'
     | '/{-$locale}/verifactu'
     | '/{-$locale}/'
+    | '/api/book/cancel'
+    | '/api/book/confirm'
     | '/api/book/slots'
     | '/api/tools/$name'
     | '/api/voice/session'
@@ -528,6 +552,8 @@ export interface RootRouteChildren {
   ApiLeadRoute: typeof ApiLeadRoute
   InternalLeadsRoute: typeof InternalLeadsRouteWithChildren
   InternalLeadsDotcsvRoute: typeof InternalLeadsDotcsvRoute
+  ApiBookCancelRoute: typeof ApiBookCancelRoute
+  ApiBookConfirmRoute: typeof ApiBookConfirmRoute
   ApiBookSlotsRoute: typeof ApiBookSlotsRoute
   ApiToolsNameRoute: typeof ApiToolsNameRoute
   ApiVoiceSessionRoute: typeof ApiVoiceSessionRoute
@@ -668,6 +694,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/{-$locale}/verifactu'
       preLoaderRoute: typeof Char123LocaleChar125VerifactuRouteImport
       parentRoute: typeof Char123LocaleChar125Route
+    }
+    '/api/book/cancel': {
+      id: '/api/book/cancel'
+      path: '/api/book/cancel'
+      fullPath: '/api/book/cancel'
+      preLoaderRoute: typeof ApiBookCancelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/book/confirm': {
+      id: '/api/book/confirm'
+      path: '/api/book/confirm'
+      fullPath: '/api/book/confirm'
+      preLoaderRoute: typeof ApiBookConfirmRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/book/slots': {
       id: '/api/book/slots'
@@ -910,6 +950,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiLeadRoute: ApiLeadRoute,
   InternalLeadsRoute: InternalLeadsRouteWithChildren,
   InternalLeadsDotcsvRoute: InternalLeadsDotcsvRoute,
+  ApiBookCancelRoute: ApiBookCancelRoute,
+  ApiBookConfirmRoute: ApiBookConfirmRoute,
   ApiBookSlotsRoute: ApiBookSlotsRoute,
   ApiToolsNameRoute: ApiToolsNameRoute,
   ApiVoiceSessionRoute: ApiVoiceSessionRoute,

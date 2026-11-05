@@ -299,14 +299,14 @@ describe('startCall', () => {
     expect(result.current.phase).toBe('live');
   });
 
-  it('records a booking only from the booked result of book_meeting, once, with both events', async () => {
+  it('notes a held request only from the pending result of book_meeting, and tracks only the request', async () => {
     const { sdk, script } = scriptedSdk();
     const { result } = hook();
     await act(() => startCall(deps({ sdk: async () => sdk })));
     act(() => script().events.onConnect());
     const booked = JSON.stringify({
       ok: true,
-      result: { status: 'booked', label: 'Tue 3 Nov' },
+      result: { status: 'pending', label: 'Tue 3 Nov' },
     });
     act(() => {
       script().events.onToolResult('get_pricing', booked);
@@ -320,14 +320,14 @@ describe('startCall', () => {
       script().events.onToolResult('book_meeting', '{"ok":true,"result":{"sta');
     });
     expect(result.current.notice).toBeNull();
-    expect(track).not.toHaveBeenCalledWith('book_meeting');
+    expect(track).not.toHaveBeenCalledWith('book_request');
     act(() => script().events.onToolResult('book_meeting', booked));
     expect(result.current.notice).toEqual({
-      kind: 'booked',
+      kind: 'pending',
       label: 'Tue 3 Nov',
     });
-    expect(track).toHaveBeenCalledWith('book_meeting');
-    expect(track).toHaveBeenCalledWith('generate_lead', { method: 'voice' });
+    expect(track).toHaveBeenCalledWith('book_request');
+    expect(track).not.toHaveBeenCalledWith('book_meeting');
   });
 
   it('ends on a disconnect by the agent and fails on one by error', async () => {

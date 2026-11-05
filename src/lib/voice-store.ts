@@ -9,12 +9,12 @@ import {
   type VoiceEnd,
   type VoiceSdk,
 } from '@/lib/voice-sdk';
-import { bookedLabel, navigateTool } from '@/lib/voice-tools';
+import { navigateTool, pendingLabel } from '@/lib/voice-tools';
 
 type VoicePhase = 'intro' | 'connecting' | 'live' | 'ended' | 'error';
 export type VoiceFailure = VoiceError | 'mic' | 'unsupported' | 'call';
 type VoiceLine = { id: number; role: 'user' | 'agent'; text: string };
-type VoiceNotice = { kind: 'opened' | 'booked'; label: string };
+type VoiceNotice = { kind: 'opened' | 'pending'; label: string };
 
 export type VoiceState = {
   phase: VoicePhase;
@@ -197,11 +197,10 @@ export async function startCall(deps: StartDeps): Promise<void> {
         onMode: (mode) => emit({ t: 'mode', mode }),
         onMessage: (role, text) => emit({ t: 'message', role, text }),
         onToolResult: (name, result) => {
-          const label = name === 'book_meeting' ? bookedLabel(result) : null;
+          const label = name === 'book_meeting' ? pendingLabel(result) : null;
           if (!current() || label === null) return;
-          dispatch({ t: 'notice', notice: { kind: 'booked', label } });
-          track('book_meeting');
-          track('generate_lead', { method: 'voice' });
+          dispatch({ t: 'notice', notice: { kind: 'pending', label } });
+          track('book_request');
         },
         // An error ends the conversation too: the microphone and the minutes
         // must not keep running behind an error message.

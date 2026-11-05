@@ -40,10 +40,6 @@ export function estimateTokens(chars: number): number {
   return Math.ceil(chars / 3);
 }
 
-export function utcDay(now: number): string {
-  return new Date(now).toISOString().slice(0, 10);
-}
-
 // What a turn is expected to cost, set aside before it runs: two steps that
 // each send a 9,000-token prompt, and a full-length answer. Most turns cost
 // less; the day's total is corrected afterwards.

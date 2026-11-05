@@ -5,6 +5,11 @@ import {
   fetchAvailability,
   submitBooking,
 } from '@/lib/booking-client';
+import {
+  confirmViewOf,
+  fetchConfirmation,
+  outcomeOf,
+} from '@/lib/confirm-view';
 
 const REQUEST = {
   slot: '2026-11-03T09:00:00.000Z',
@@ -17,44 +22,49 @@ const REQUEST = {
   turnstileToken: 't',
   website: '',
   attribution: { landing: '/', referrer: '', page: '/book' },
+  surface: 'page',
 } as const;
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe('bookingOutcome', () => {
-  it('reads a booked result', () => {
+  it('reads a pending result', () => {
     expect(
       bookingOutcome({
         ok: true,
         result: {
-          status: 'booked',
+          status: 'pending',
           start: '2026-11-03T09:00:00.000Z',
           end: '2026-11-03T09:30:00.000Z',
-          meetUrl: 'https://meet.google.com/x',
+          label: 'Tuesday 3 November, 5:00 pm',
+          expiresAt: '2026-11-02T08:30:00.000Z',
+          resent: true,
         },
       }),
     ).toEqual({
-      kind: 'booked',
+      kind: 'pending',
       start: Date.UTC(2026, 10, 3, 9),
       end: Date.UTC(2026, 10, 3, 9, 30),
-      meetUrl: 'https://meet.google.com/x',
+      expiresAt: Date.UTC(2026, 10, 2, 8, 30),
+      resent: true,
     });
   });
 
-  it('keeps a missing Meet link as null', () => {
-    const outcome = bookingOutcome({
-      ok: true,
-      result: {
-        status: 'booked',
-        start: '2026-11-03T09:00:00Z',
-        end: '2026-11-03T09:30:00Z',
-        meetUrl: null,
-      },
-    });
-    expect(outcome).toMatchObject({ kind: 'booked', meetUrl: null });
+  it('reads a missing resent flag as false', () => {
+    expect(
+      bookingOutcome({
+        ok: true,
+        result: {
+          status: 'pending',
+          start: '2026-11-03T09:00:00Z',
+          end: '2026-11-03T09:30:00Z',
+          expiresAt: '2026-11-02T08:30:00Z',
+        },
+      }),
+    ).toMatchObject({ kind: 'pending', resent: false });
   });
 
-  it.each(['invalid_slot', 'slot_taken', 'limit'])(
+  it.each(['invalid_slot', 'slot_taken', 'limit', 'email_not_accepted'])(
     'reads the %s rejection',
     (reason) => {
       expect(
@@ -84,7 +94,15 @@ describe('bookingOutcome', () => {
     { ok: true },
     { ok: true, result: { status: 'unavailable', reason: 'not_configured' } },
     { ok: true, result: { status: 'rejected', reason: 'other' } },
-    { ok: true, result: { status: 'booked', start: 'nope', end: 'nope' } },
+    { ok: true, result: { status: 'pending', start: 'nope', end: 'nope' } },
+    {
+      ok: true,
+      result: {
+        status: 'booked',
+        start: '2026-11-03T09:00:00Z',
+        end: '2026-11-03T09:30:00Z',
+      },
+    },
     { ok: false, error: 'origin' },
   ])('treats %j as unavailable', (body) => {
     expect(bookingOutcome(body)).toEqual({
@@ -185,5 +203,51 @@ describe('availability', () => {
     await expect(fetchAvailability()).resolves.toEqual({
       status: 'unavailable',
     });
+  });
+});
+
+describe('confirmViewOf', () => {
+  const VIEW = {
+    state: 'pending',
+    start: 1,
+    end: 2,
+    timeZone: 'Asia/Singapore',
+    masked: 'a•••@example.com',
+    expiresAt: 3,
+    method: 'booking',
+  };
+
+  it('reads a view and its states', () => {
+    expect(confirmViewOf(VIEW)).toEqual(VIEW);
+    expect(
+      confirmViewOf({ ...VIEW, state: 'confirmed', timeZone: null }),
+    ).toMatchObject({
+      state: 'confirmed',
+      timeZone: null,
+    });
+  });
+
+  it.each([
+    undefined,
+    { state: 'invalid' },
+    { ...VIEW, state: 'booked' },
+    { ...VIEW, method: 'form' },
+    { ...VIEW, start: 'x' },
+    { ...VIEW, name: 'Ada' },
+  ])('treats %j as invalid or drops what it does not know', (body) => {
+    const view = confirmViewOf(body);
+    expect(JSON.stringify(view)).not.toContain('Ada');
+  });
+
+  it('asks the endpoint with the token and only a known outcome', async () => {
+    const send = vi.fn<typeof fetch>(async () => Response.json(VIEW));
+    vi.stubGlobal('fetch', send);
+    await expect(fetchConfirmation('id.secret', 'taken')).resolves.toEqual(
+      VIEW,
+    );
+    expect(String(send.mock.calls[0]?.[0])).toBe(
+      '/api/book/confirm?confirm=id.secret&outcome=taken',
+    );
+    expect(outcomeOf('nope')).toBeNull();
   });
 });

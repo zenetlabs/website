@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { BOOKING_LIMITS } from '@/lib/booking-limits';
+import { SURFACES } from '@/lib/booking-surfaces';
 import { locales } from '@/lib/i18n';
 import { attributionSchema, singleLine } from '@/lib/lead-schema';
 import { isTimeZone } from '@/lib/slots';
@@ -52,6 +53,7 @@ export const browserBookingSchema = bookingInputSchema.extend({
   website: z.string().max(200),
   attribution: attributionSchema,
   chatSessionId: z.uuid().optional(),
+  surface: z.enum(SURFACES),
 });
 
 // A voice call books only after the agent read the details back and the
@@ -63,6 +65,23 @@ export const voiceBookingSchema = bookingInputSchema.extend({
       'True only after the visitor said yes to your read-back of the time, name and email.',
     ),
 });
+
+// What a pending booking keeps until it is confirmed or lapses. Read back
+// through this schema; a row that fails it is treated as gone.
+export const pendingRequestSchema = z.object({
+  locale: z.enum(locales),
+  name: z.string(),
+  company: z.string().nullable(),
+  topic: z.string(),
+  timeZone: z.string().nullable(),
+  attribution: attributionSchema.nullable(),
+  chatSessionId: z.string().nullable(),
+  voice: voiceRefSchema.nullable(),
+  consentAt: z.number(),
+  surface: z.enum([...SURFACES, 'voice']),
+});
+
+export type PendingRequest = z.infer<typeof pendingRequestSchema>;
 
 export const bookingContextSchema = z.object({
   voice: voiceRefSchema.optional(),
@@ -76,6 +95,9 @@ export const bookingContextSchema = z.object({
     meetUrl: z.string().nullable(),
     eventLink: z.string().nullable(),
     calendar: z.enum(['main', 'test']),
+    // The origin the visitor booked on, for links; absent on older leads.
+    origin: z.string().optional(),
+    requestedAt: z.number().optional(),
   }),
 });
 

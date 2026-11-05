@@ -9,6 +9,7 @@ export type BookingRules = {
   minNoticeHours: number;
   horizonDays: number;
   holdSeconds: number;
+  confirmMinutes: number;
 };
 
 // TODO(albert): confirm the call windows (Europe/Madrid wall clock, ISO weekdays 1-7).
@@ -27,7 +28,10 @@ export const BOOKING_RULES = {
   maxPerDay: 3,
   minNoticeHours: 12,
   horizonDays: 14,
+  // The insert window after the visitor pressed Confirm.
   holdSeconds: 120,
+  // How long a requested slot waits for the click on the emailed link.
+  confirmMinutes: 30,
 } as const satisfies BookingRules;
 
 export const BOOKING_TIME_ZONES = [

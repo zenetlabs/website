@@ -39,16 +39,17 @@ export function navigateTool({
   };
 }
 
-// The label of a finished booking in the full result of book_meeting, or null
-// for anything else (a rejection, a truncated payload, malformed JSON).
-export function bookedLabel(fullToolResult: string): string | null {
+// The label of a held request in the full result of book_meeting (the visitor
+// confirms it from the email), or null for anything else (a rejection, a
+// truncated payload, malformed JSON).
+export function pendingLabel(fullToolResult: string): string | null {
   try {
     const value: unknown = JSON.parse(fullToolResult);
     if (!isRecord(value) || value.ok !== true || !isRecord(value.result)) {
       return null;
     }
     const { status, label } = value.result;
-    return status === 'booked' && typeof label === 'string' ? label : null;
+    return status === 'pending' && typeof label === 'string' ? label : null;
   } catch {
     return null;
   }

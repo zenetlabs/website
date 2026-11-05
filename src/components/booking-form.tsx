@@ -1,11 +1,10 @@
 import { useHydrated } from '@tanstack/react-router';
-import { type FormEvent, useRef, useState } from 'react';
+import { type FormEvent, lazy, Suspense, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
+import { BookingAlert } from '@/components/booking-alert';
 import {
   BookingDetailsFields,
-  BookingSuccess,
   ConsentCheckbox,
-  FormAlert,
   Honeypot,
   LazyTurnstile,
 } from '@/components/form-parts';
@@ -14,11 +13,13 @@ import { H3, PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
 import { useChallenge } from '@/components/use-challenge';
 import type { BookPageContent } from '@/content/types';
 import {
-  type BookingOutcome,
+  type BookingRequest,
   fetchAvailability,
   type PageSlot,
   submitBooking,
 } from '@/lib/booking-client';
+import { type PageFailure, pageFailureOf } from '@/lib/booking-failure';
+import { SURFACE_ACTION } from '@/lib/booking-surfaces';
 import { text } from '@/lib/form-data';
 import type { Locale } from '@/lib/i18n';
 import { attribution } from '@/lib/lead-client';
@@ -27,23 +28,14 @@ import { formatSlotLabel } from '@/lib/slot-format';
 import { track } from '@/lib/track';
 import { zoneLabel } from '@/lib/zone-label';
 
-type Failure = keyof BookPageContent['errors'];
-type Status = 'idle' | 'pending' | Failure;
-type Confirmed = {
-  when: string;
-  zone: string;
-  email: string;
-  meetUrl: string | null;
-};
+type Status = 'idle' | 'pending' | PageFailure;
+type Held = { request: BookingRequest; label: string };
 
-function failureFor(outcome: Exclude<BookingOutcome, { kind: 'booked' }>) {
-  if (outcome.kind === 'rejected') {
-    if (outcome.reason === 'limit') return 'limit';
-    return outcome.reason === 'day_full' ? 'dayFull' : 'taken';
-  }
-  if (outcome.error === 'captcha') return 'captcha';
-  return outcome.error === 'rate' ? 'rate' : 'send';
-}
+const PagePending = lazy(() =>
+  import('@/components/page-pending').then(({ PagePending }) => ({
+    default: PagePending,
+  })),
+);
 
 export function BookingForm({
   copy,
@@ -61,16 +53,14 @@ export function BookingForm({
   const challenge = useChallenge();
   const { token } = challenge;
   const [status, setStatus] = useState<Status>('idle');
-  const [confirmed, setConfirmed] = useState<Confirmed | null>(null);
-  const successHeading = useRef<HTMLHeadingElement>(null);
+  const [held, setHeld] = useState<Held | null>(null);
   const alert = useRef<HTMLParagraphElement>(null);
   const pending = status === 'pending';
   const { form } = copy;
   const [noscriptBefore, noscriptAfter] = form.noscript.split('{email}');
 
-  function fail(next: Failure) {
+  function fail(next: PageFailure) {
     flushSync(() => setStatus(next));
-    challenge.retry();
     alert.current?.focus();
   }
 
@@ -80,11 +70,10 @@ export function BookingForm({
     const slot = text(data, 'slot');
     if (slot === '') return;
     setStatus('pending');
-    const email = text(data, 'email');
-    const outcome = await submitBooking({
+    const request: BookingRequest = {
       slot,
       name: text(data, 'name'),
-      email,
+      email: text(data, 'email'),
       company: text(data, 'company') || undefined,
       topic: text(data, 'topic'),
       timeZone: zone,
@@ -93,23 +82,17 @@ export function BookingForm({
       turnstileToken: token,
       website: text(data, 'website'),
       attribution: await attribution(),
-    });
-    if (outcome.kind === 'booked') {
-      flushSync(() => {
-        setConfirmed({
-          when: formatSlotLabel(locale, outcome.start, zone),
-          zone: zoneLabel(copy.zone, zone),
-          email,
-          meetUrl: outcome.meetUrl,
-        });
-        setStatus('idle');
-      });
-      successHeading.current?.focus();
-      track('book_meeting');
-      track('generate_lead', { method: 'booking' });
+      surface: 'page',
+    };
+    const outcome = await submitBooking(request);
+    challenge.retry();
+    if (outcome.kind === 'pending') {
+      setHeld({ request, label: formatSlotLabel(locale, outcome.start, zone) });
+      setStatus('idle');
+      track('book_request');
       return;
     }
-    const failure = failureFor(outcome);
+    const failure = pageFailureOf(outcome);
     fail(failure);
     if (failure === 'taken' || failure === 'dayFull') {
       // Keep the typed details and the old list if the refresh itself fails.
@@ -118,22 +101,16 @@ export function BookingForm({
     }
   }
 
-  if (confirmed) {
+  if (held) {
     return (
-      <div className="grid gap-4">
-        <BookingSuccess
-          headingRef={successHeading}
-          headingClass={H3}
-          title={copy.success.title}
-          when={copy.success.when
-            .replace('{time}', confirmed.when)
-            .replace('{zone}', confirmed.zone)}
-          text={copy.success.text.replace('{email}', confirmed.email)}
-          meetUrl={confirmed.meetUrl}
-          meet={copy.success.meet}
-          meetLater={copy.success.meetLater}
+      <Suspense fallback={null}>
+        <PagePending
+          copy={copy}
+          locale={locale}
+          request={held.request}
+          label={held.label}
         />
-      </div>
+      </Suspense>
     );
   }
 
@@ -177,7 +154,7 @@ export function BookingForm({
         />
         <LazyTurnstile
           engaged={challenge.engaged}
-          action="book"
+          action={SURFACE_ACTION.page}
           locale={locale}
           instance={challenge.instance}
           onToken={challenge.setToken}
@@ -193,19 +170,11 @@ export function BookingForm({
         >
           {pending ? form.sending : form.submit}
         </button>
-        {status === 'idle' || status === 'pending' ? null : status ===
-          'taken' ? (
-          <p
-            ref={alert}
-            role="alert"
-            tabIndex={-1}
-            className="rounded-input border-2 border-fg px-4 py-3 text-ui-m outline-hidden"
-          >
-            {copy.errors[status]}
-          </p>
-        ) : (
-          <FormAlert alertRef={alert}>{copy.errors[status]}</FormAlert>
-        )}
+        <BookingAlert
+          copy={copy}
+          failure={status === 'idle' || status === 'pending' ? null : status}
+          alert={alert}
+        />
       </fieldset>
       <noscript>
         <p>

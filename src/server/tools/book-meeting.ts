@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DEFAULT_ZONE } from '@/content/booking-rules';
+import { BOOKING_RULES, DEFAULT_ZONE } from '@/content/booking-rules';
 import type { Locale } from '@/lib/i18n';
 import { formatSlotLabel } from '@/lib/slot-format';
 import { canonicalZone } from '@/lib/slots';
@@ -8,21 +8,25 @@ import { bookingInputSchema } from '@/server/booking-schema';
 import { contactFor, contactSchema } from '@/server/tools/contact';
 import { defineTool, isTestContext } from '@/server/tools/types';
 
-export function bookedResult({
+// The answer to a request: the slot is held until expiresAt and the visitor has
+// an email with the confirm link. Nothing is booked yet.
+export function pendingResult({
   start,
   end,
-  meetUrl,
+  expiresAt,
+  resent,
   locale,
   timeZone,
 }: {
   start: number;
   end: number;
-  meetUrl: string | null;
+  expiresAt: number;
+  resent: boolean;
   locale: Locale;
   timeZone: string | undefined;
 }) {
   return {
-    status: 'booked',
+    status: 'pending',
     start: new Date(start).toISOString(),
     end: new Date(end).toISOString(),
     label: formatSlotLabel(
@@ -30,21 +34,31 @@ export function bookedResult({
       start,
       (timeZone && canonicalZone(timeZone)) || DEFAULT_ZONE[locale],
     ),
-    meetUrl,
+    expiresAt: new Date(expiresAt).toISOString(),
+    resent,
   } as const;
 }
 
+export const CONFIRM_WINDOW_MS = BOOKING_RULES.confirmMinutes * 60_000;
+
 const output = z.discriminatedUnion('status', [
   z.object({
-    status: z.literal('booked'),
+    status: z.literal('pending'),
     start: z.string(),
     end: z.string(),
     label: z.string(),
-    meetUrl: z.string().nullable(),
+    expiresAt: z.string(),
+    resent: z.boolean(),
   }),
   z.object({
     status: z.literal('rejected'),
-    reason: z.enum(['invalid_slot', 'slot_taken', 'day_full', 'limit']),
+    reason: z.enum([
+      'invalid_slot',
+      'slot_taken',
+      'day_full',
+      'limit',
+      'email_not_accepted',
+    ]),
   }),
   z.object({
     status: z.literal('unavailable'),
@@ -56,8 +70,8 @@ const output = z.discriminatedUnion('status', [
 export const bookMeeting = defineTool({
   name: 'book_meeting',
   description: {
-    en: 'Books a free 30-minute call with Zenet Labs at a slot returned by check_availability, creates a Google Meet link and emails the visitor. Only call it after the visitor has confirmed the time, name and email.',
-    es: 'Reserva una llamada gratuita de 30 minutos con Zenet Labs en una hora devuelta por check_availability, crea un enlace de Google Meet y escribe al visitante. Llámala solo cuando el visitante haya confirmado la hora, el nombre y el correo.',
+    en: 'Asks for a free 30-minute call with Zenet Labs at a slot returned by check_availability. The slot is held for 30 minutes and the visitor gets an email with a link; the call is booked, with a Google Meet link, only when they open it and press Confirm. Only call it after the visitor has confirmed the time, name and email.',
+    es: 'Pide una llamada gratuita de 30 minutos con Zenet Labs en una hora devuelta por check_availability. La hora queda guardada 30 minutos y el visitante recibe un correo con un enlace; la llamada queda reservada, con un enlace de Google Meet, solo cuando lo abre y pulsa Confirmar. Llámala solo cuando el visitante haya confirmado la hora, el nombre y el correo.',
   },
   input: bookingInputSchema,
   output,
@@ -67,10 +81,13 @@ export const bookMeeting = defineTool({
       {
         input,
         channel: ctx.channel,
+        surface: ctx.surface ?? 'page',
         consentAt: ctx.consentAt,
         attribution: ctx.attribution,
         chatSessionId: ctx.chatSessionId,
         voice: ctx.voice,
+        origin: ctx.origin ?? ctx.deps.site.url,
+        ip: ctx.ip ?? null,
       },
       {
         deps: ctx.deps,
@@ -78,8 +95,8 @@ export const bookMeeting = defineTool({
         isTest: isTestContext(ctx),
       },
     );
-    if (result.status === 'booked') {
-      return bookedResult({
+    if (result.status === 'pending') {
+      return pendingResult({
         ...result,
         locale: input.locale,
         timeZone: input.timeZone,

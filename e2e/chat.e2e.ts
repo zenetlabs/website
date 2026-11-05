@@ -5,7 +5,14 @@ import { services as enServices } from '../src/content/en/services';
 import { chatCopy as es } from '../src/content/es/chat';
 import { services as esServices } from '../src/content/es/services';
 import { formatPrice } from '../src/lib/money';
-import { googleEvents, googleReset, sentFor, uniqueEmail } from './fakes';
+import {
+  confirmByLink,
+  confirmLinkFor,
+  googleEvents,
+  googleReset,
+  sentFor,
+  uniqueEmail,
+} from './fakes';
 import {
   ASSISTANT_PUBLISHED,
   BOOKING_PUBLISHED,
@@ -274,7 +281,7 @@ test.describe('booking from the chat', () => {
     await googleReset();
   });
 
-  test('proposes a slot, books it through the card and links the conversation in the owner email', async ({
+  test('proposes a slot, holds it through the card, and books it from the email as a chat lead', async ({
     page,
   }) => {
     const email = uniqueEmail('chat');
@@ -291,17 +298,25 @@ test.describe('booking from the chat', () => {
     const confirm = card.getByRole('button', { name: en.booking.confirm });
     await expect(confirm).toBeEnabled({ timeout: 30_000 });
     await confirm.click();
+    await expect(
+      page.getByRole('heading', { name: en.booking.pending.title }),
+    ).toBeVisible({ timeout: 30_000 });
+    expect(await googleEvents()).toEqual([]);
+    await page
+      .getByRole('button', { name: en.booking.close, exact: true })
+      .click();
     await expect(page.getByRole('log')).toContainText(
-      /^.*Booked for .*Google Meet link/s,
-      {
-        timeout: 30_000,
-      },
+      /Held for .*press Confirm within 30 minutes/s,
     );
     await expect(card).toBeHidden();
+    expect(await confirmByLink(page.request, await confirmLinkFor(email))).toBe(
+      303,
+    );
     await expect.poll(async () => (await googleEvents()).length).toBe(1);
+    // The verify, the booked and the owner email (whose reply-to is the visitor).
     await expect
       .poll(async () => (await sentFor(email)).length)
-      .toBeGreaterThan(0);
+      .toBeGreaterThanOrEqual(3);
     const owner = await (async () => {
       const response = await fetch('http://127.0.0.1:4175/__attempts');
       const all: Array<{

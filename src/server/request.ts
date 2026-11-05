@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import type { GuardError } from '@/lib/guard-error';
-import { isLimited, type Limiter } from '@/server/rate-limit';
+import { ipBucket, isLimited, type Limiter } from '@/server/rate-limit';
 import { verifyTurnstile } from '@/server/turnstile';
 
 const JSON_TYPE = /^application\/json(?:\s*;|$)/i;
@@ -51,7 +51,7 @@ export function parseJson(text: string): unknown {
 }
 
 export type BrowserPost<T> =
-  | { status: 'ok'; input: T; ip: string | null }
+  | { status: 'ok'; input: T; ip: string | null; secret: string }
   | { status: 'honeypot'; input: T }
   | { status: 'rejected'; error: GuardError; issues?: Issue[] };
 
@@ -93,7 +93,9 @@ export async function gate<T>({
   }
   if (!isJsonRequest(request)) return rejected('unsupported');
   const ip = request.headers.get('cf-connecting-ip');
-  if (await isLimited(limiter, ip ?? 'unknown', label)) return rejected('rate');
+  if (await isLimited(limiter, ip === null ? 'unknown' : ipBucket(ip), label)) {
+    return rejected('rate');
+  }
   const warmed = secret ? readSecret(secret) : Promise.resolve(null);
   const text = await readCapped(request, maxBytes);
   if (text === null) return rejected('too-large');
@@ -112,6 +114,13 @@ export async function readSecret(read: () => Promise<string>): Secret {
   }
 }
 
+export type HumanCheck = {
+  // The request's hostname: Siteverify must report exactly this one.
+  hostname: string;
+  testingKeys: boolean;
+  now: number;
+};
+
 // The Turnstile check for one action: 'unavailable' when the secret cannot be
 // read, 'captcha' when the token fails, null when it passes.
 export async function verifyHuman({
@@ -121,7 +130,10 @@ export async function verifyHuman({
   ip,
   secret,
   fetch: send,
-}: {
+  hostname,
+  testingKeys,
+  now,
+}: HumanCheck & {
   token: string;
   action: string;
   label: string;
@@ -134,21 +146,26 @@ export async function verifyHuman({
     console.error(`${label}: secret unavailable`);
     return 'unavailable';
   }
-  const human = await verifyTurnstile({
+  const rejection = await verifyTurnstile({
     token,
     action,
+    hostname,
     secret: resolved.value,
     remoteIp: ip,
     fetch: send,
+    now,
+    testingKeys,
   });
-  return human ? null : 'captcha';
+  return rejection === null ? null : 'captcha';
 }
 
-type GuardOptions<T extends Guarded> = Omit<GateOptions<T>, 'secret'> & {
-  action: string;
-  turnstileSecret: () => Promise<string>;
-  fetch: typeof fetch;
-};
+type GuardOptions<T extends Guarded> = Omit<GateOptions<T>, 'secret'> &
+  Omit<HumanCheck, 'hostname'> & {
+    // The widget action this body's surface was rendered with.
+    action: string | ((input: T) => string);
+    turnstileSecret: () => Promise<string>;
+    fetch: typeof fetch;
+  };
 
 // The shared gate for every public browser POST: the gate, the honeypot, then
 // the Turnstile check for one action.
@@ -156,6 +173,8 @@ export async function guardBrowserPost<T extends Guarded>({
   action,
   turnstileSecret,
   fetch: send,
+  testingKeys,
+  now,
   ...options
 }: GuardOptions<T>): Promise<BrowserPost<T>> {
   const gated = await gate({ ...options, secret: turnstileSecret });
@@ -164,11 +183,18 @@ export async function guardBrowserPost<T extends Guarded>({
   if (input.website !== '') return { status: 'honeypot', input };
   const failure = await verifyHuman({
     token: input.turnstileToken,
-    action,
+    action: typeof action === 'string' ? action : action(input),
     label: options.label,
     ip,
     secret,
     fetch: send,
+    hostname: new URL(options.request.url).hostname,
+    testingKeys,
+    now,
   });
-  return failure === null ? { status: 'ok', input, ip } : rejected(failure);
+  if (failure !== null) return rejected(failure);
+  const resolved = await secret;
+  return resolved === null
+    ? rejected('unavailable')
+    : { status: 'ok', input, ip, secret: resolved.value };
 }

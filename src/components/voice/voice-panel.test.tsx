@@ -196,7 +196,7 @@ describe('VoicePanel', () => {
     expect(screen.getByRole('button', { name: en.mute })).toBeInTheDocument();
   });
 
-  it('shows the booked line and tracks the booking from the full tool result', async () => {
+  it('shows the pending line and tracks the request from the full tool result', async () => {
     mount();
     await start();
     await screen.findByRole('button', { name: en.mute });
@@ -205,15 +205,14 @@ describe('VoicePanel', () => {
         'book_meeting',
         JSON.stringify({
           ok: true,
-          result: { status: 'booked', label: 'Tuesday 3 November, 5:00 pm' },
+          result: { status: 'pending', label: 'Tuesday 3 November, 5:00 pm' },
         }),
       ),
     );
     expect(screen.getByRole('status')).toHaveTextContent(
-      'Booked for Tuesday 3 November, 5:00 pm',
+      'Held for Tuesday 3 November, 5:00 pm. Check your email to confirm.',
     );
-    expect(track).toHaveBeenCalledWith('book_meeting');
-    expect(track).toHaveBeenCalledWith('generate_lead', { method: 'voice' });
+    expect(track).toHaveBeenCalledWith('book_request');
   });
 
   it('explains a blocked microphone with the fallback links and mints nothing', async () => {

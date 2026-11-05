@@ -1,3 +1,4 @@
+import { bookingPending } from '@/content/es/booking-pending';
 import type { BookPageContent } from '@/content/types';
 
 // TODO(albert): revisar el texto, incluido "gratis, sin compromiso" y que la llamada sea el paso previo al diagnóstico de pago
@@ -6,7 +7,7 @@ export const bookPage = {
     title: 'Reservar una llamada',
     metaTitle: 'Reserva una llamada de 30 minutos | Zenet Labs',
     description:
-      'Elige hora para una videollamada gratuita de 30 minutos con Zenet Labs sobre el trabajo manual de tu empresa. Sin crear cuenta.',
+      'Elige hora para una videollamada gratuita de 30 minutos con Zenet Labs sobre el trabajo manual de tu empresa. Te enviamos un enlace para confirmarla.',
   },
   breadcrumb: { label: 'Ruta de navegación' },
   title: {
@@ -72,34 +73,29 @@ export const bookPage = {
     label: 'Formulario de reserva',
     details: 'Tus datos',
     name: 'Nombre',
-    email: 'Correo electrónico (aquí llega la invitación)',
+    email: 'Correo electrónico (aquí llega el enlace para confirmar)',
     company: 'Empresa (opcional)',
     topic: '¿De qué te gustaría hablar?',
     consent:
       'He leído la {privacyLink}: {legalName} usará estos datos para reservar esta llamada, incluido un evento de Google Calendar con mi correo electrónico, y en ella se explica cómo ejercer mis derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad.',
     consentLink: 'política de privacidad',
     honeypot: 'Deja este campo vacío',
-    submit: 'Reservar esta hora',
-    sending: 'Reservando…',
+    submit: 'Pedir esta hora',
+    sending: 'Enviando…',
     noscript:
       'Reservar requiere JavaScript. Escríbenos la hora que te venga bien a {email}.',
   },
-  success: {
-    title: 'Reserva confirmada',
-    when: 'Tu llamada es el {time} ({zone}).',
-    text: 'Hemos enviado una invitación de Google Calendar y una confirmación a {email}.',
-    meet: 'Entrar con Google Meet',
-    meetLater:
-      'El enlace de Google Meet llega con la invitación del calendario. Si no lo ves, te lo enviaremos antes de la llamada.',
-  },
+  pending: bookingPending,
   errors: {
     taken:
       'Alguien acaba de reservar esa hora. La lista ya está actualizada, elige otra por favor.',
     dayFull:
       'Ese día ya está completo. La lista está actualizada, elige otro día.',
     limit:
-      'No hemos podido reservar esa hora para esa dirección. Elige otra hora o escribe a',
-    send: 'No hemos podido confirmar la reserva. Inténtalo de nuevo o escribe a',
+      'Ahora no podemos guardarte otra hora con esta dirección. Si ya pediste una, confírmala desde el correo; si no, inténtalo más tarde o escríbenos a',
+    disposable:
+      'Usa una dirección de correo permanente. No podemos reservar llamadas con buzones temporales.',
+    send: 'No hemos podido enviar la solicitud. Inténtalo de nuevo o escribe a',
     captcha:
       'La comprobación de seguridad ha fallado. Inténtalo de nuevo o escribe a',
     rate: 'Demasiados intentos desde tu conexión. Espera un minuto e inténtalo de nuevo, o escribe a',

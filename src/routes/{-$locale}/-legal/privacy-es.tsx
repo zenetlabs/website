@@ -108,12 +108,28 @@ function Collection() {
         )}
       </p>
       <p>
-        Si reservas una llamada, guardamos la reserva junto con tu consulta (la
-        hora elegida, tu zona horaria, tu nombre, tu email, tu empresa y el
-        tema), creamos un evento en nuestro calendario de Google Workspace con
-        tu dirección de correo electrónico y Google te envía una invitación de
+        Si reservas una llamada, antes de reservar nada te enviamos un enlace
+        por correo. Te guardamos la hora durante 30 minutos. La reserva, y el
+        evento del calendario, solo se hacen cuando abres el enlace y la
+        confirmas. Si no la confirmas, la solicitud caduca: tu nombre, tu
+        empresa y el tema se borran cuando caduca, y el resto a los 30 días.
+      </p>
+      <p>
+        Para que nadie pueda usar el formulario para enviar correos a otras
+        personas, contamos los correos de confirmación por dirección y por
+        conexión. De la conexión solo guardamos una huella unidireccional con
+        clave de tu dirección IP, que se borra a las 03:00 UTC dos días después.
+        No aceptamos direcciones de servicios de correo temporal.
+      </p>
+      <p>
+        Cuando la confirmas, guardamos la reserva junto con tu consulta (la hora
+        elegida, tu zona horaria, tu nombre, tu email, tu empresa y el tema),
+        creamos un evento en nuestro calendario de Google Workspace con tu
+        dirección de correo electrónico y Google te envía una invitación de
         calendario con un enlace de Google Meet. Tu nombre y el tema que
-        escribes se quedan con nosotros; no se incluyen en la invitación.
+        escribes se quedan con nosotros; no se incluyen en la invitación. Si
+        cancelamos una llamada, te escribimos, y Google te envía su propia
+        cancelación.
       </p>
       <p>
         Al enviar el formulario marcas una casilla con la que confirmas que has
@@ -275,12 +291,17 @@ function Retention({ legalEs }: Parts) {
           recibirlas.
         </li>
         <li>
-          Intentos de reserva que no llegan a confirmarse: los borramos a los 30
-          días.
+          Solicitudes de reserva que no llegan a confirmarse: el nombre, la
+          empresa y el tema se borran cuando la solicitud caduca, 30 minutos
+          después de hacerla, y el resto a los 30 días.
         </li>
         <li>
-          Eventos de las llamadas en nuestro calendario de Google Workspace: una
-          vez al mes borramos a mano los que tienen más de 24 meses.
+          Eventos de las llamadas en nuestro calendario de Google Workspace: se
+          borran automáticamente 24 meses después de la reserva.
+        </li>
+        <li>
+          Las huellas de las conexiones que han pedido una reserva: se borran a
+          las 03:00 UTC dos días después.
         </li>
         <li>
           Correos en nuestro buzón: una vez al mes borramos a mano las

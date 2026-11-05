@@ -4,9 +4,18 @@ import { formatPrice, formatPriceSummary } from '../src/lib/money';
 import { faqPairs, jsonLdBlocks } from '../test/json-ld';
 import { SERVICES } from '../test/page-content';
 import {
+  agentHeaders,
+  confirmLinkFor,
+  googleEvents,
+  startVoiceSession,
+  uniqueEmail,
+} from './fakes';
+import {
+  BOOKING_PUBLISHED,
   CASE_PAIR,
   HOLDED_PAGES,
   LOCALES,
+  lateSlot,
   normalise,
   PAIRS,
   SERVICE_PAIRS,
@@ -171,3 +180,41 @@ for (const locale of LOCALES) {
     await expect(page.locator('main')).toContainText('Viatsy');
   });
 }
+
+test.describe('the emailed confirm link', () => {
+  test.skip(!BOOKING_PUBLISHED, 'booking is not published in this build');
+
+  test('confirms with a plain form post, no script needed', async ({
+    page,
+    request,
+  }) => {
+    const slot = await lateSlot(async (name, input) =>
+      (await request.post(`/api/tools/${name}`, { data: input })).json(),
+    );
+    const email = uniqueEmail('nojs');
+    const held = await request.post('/api/tools/book_meeting', {
+      headers: agentHeaders(await startVoiceSession(request)),
+      data: {
+        confirmed: true,
+        slot,
+        name: '[TEST] No Script',
+        email,
+        topic: 'Automate our inbox triage please.',
+      },
+    });
+    expect((await held.json()).result.status).toBe('pending');
+    const link = await confirmLinkFor(email);
+    await page.goto(link.replace(/^https?:\/\/[^/]+/, ''));
+    await expect(page.locator('body[data-hydrated]')).toHaveCount(0);
+    await expect(
+      page.getByRole('heading', { name: 'Confirm your call' }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Confirm the call' }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Your call is booked' }),
+    ).toBeVisible({ timeout: 30_000 });
+    expect(
+      (await googleEvents()).filter((event) => event.start.dateTime === slot),
+    ).toHaveLength(1);
+  });
+});

@@ -42,7 +42,7 @@ type Failure = { code: 'network' | 'timeout' };
 async function call(
   access: CalendarAccess,
   path: string,
-  init: { method: 'GET' | 'POST'; json?: unknown },
+  init: { method: 'GET' | 'POST' | 'DELETE'; json?: unknown },
   timeoutMs: number,
 ): Promise<Reply | Failure> {
   try {
@@ -307,4 +307,25 @@ export async function createEvent(
     if (again.ok && again.value) latest = again.value;
   }
   return { ok: true, value: latest };
+}
+
+// Deletes an event. 204 and 200 are a deletion; 404 and 410 mean it is already
+// gone, which counts the same. sendUpdates decides whether Google tells guests.
+export async function deleteEvent(
+  access: CalendarAccess,
+  calendarId: string,
+  eventId: string,
+  sendUpdates: 'all' | 'none',
+): Promise<CalendarResult<'deleted'>> {
+  const reply = await call(
+    access,
+    `${eventPath(calendarId)}/${encodeURIComponent(eventId)}?sendUpdates=${sendUpdates}`,
+    { method: 'DELETE' },
+    EVENT_TIMEOUT_MS,
+  );
+  if (isFailure(reply)) return { ok: false, code: reply.code };
+  if ([200, 204, 404, 410].includes(reply.status)) {
+    return { ok: true, value: 'deleted' };
+  }
+  return { ok: false, code: `delete_http_${reply.status}` };
 }

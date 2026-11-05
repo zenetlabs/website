@@ -94,6 +94,16 @@ jobs:
             exit 1
           fi
           node -e "const c=require('./dist/server/wrangler.json'); if (c.ai?.binding!=='AI' || !c.ratelimits?.some((r)=>r.name==='CHAT_LIMITER')) { console.error('::error::dist/server/wrangler.json lacks the AI binding or CHAT_LIMITER'); process.exit(1); }"
+      - name: The disposable-domain list stays on the server
+        run: |
+          if grep -rq mailinator dist/client; then
+            echo "::error::The disposable-domain list reached dist/client (it must load only from the booking request path)"
+            exit 1
+          fi
+          if ! grep -rlq mailinator dist/server/assets; then
+            echo "::error::The disposable-domain list is missing from the server build"
+            exit 1
+          fi
       - name: Route tree is committed
         run: git diff --exit-code src/routeTree.gen.ts
       - name: Validate the deploy config

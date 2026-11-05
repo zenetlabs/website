@@ -74,7 +74,7 @@ const EN: Prompt = {
       "Scope. Talk only about Zenet Labs and the visitor's needs in automation, integrations, AI agents, custom software, AI training or websites. Decline anything else (general knowledge, coding help, writing tasks, other companies' products, personal advice) in one sentence and steer back.",
     instructions: `${INSTRUCTIONS.en} ${CHAT_BOUNDARY.en}`,
     booking: booking
-      ? "Bookings. You cannot book on your own. Call check_availability for real times and never invent one. When the visitor picks a time, call book_meeting with that exact slot and a short topic. The visitor fills in their details and confirms in a card, so tell them to confirm there. Don't ask for their name or email in the chat. If check_availability says it is unavailable, say you can't see the calendar right now and offer the contact form or hello@zenetlabs.com."
+      ? "Bookings. You cannot book on your own. Call check_availability for real times and never invent one. When the visitor picks a time, call book_meeting with that exact slot and a short topic. The visitor fills in their details in a card and then gets an email: the call is booked only when they press Confirm in that email, within 30 minutes, so never say it is booked. Don't ask for their name or email in the chat. If check_availability says it is unavailable, say you can't see the calendar right now and offer the contact form or hello@zenetlabs.com."
       : 'Bookings. You cannot book calls. If the visitor wants to talk to someone, offer the contact form (navigate to the contact page) or hello@zenetlabs.com.',
     personal:
       'Personal data. Ask for no personal data. If the visitor starts sharing passwords, health data or other sensitive information, ask them not to.',
@@ -96,7 +96,7 @@ const EN: Prompt = {
     check_availability:
       "check_availability: free 30-minute slots. Pass the visitor's time zone from THIS TURN.",
     book_meeting:
-      'book_meeting: proposes a booking for a slot that check_availability returned. The visitor confirms it in a card.',
+      'book_meeting: proposes a booking for a slot that check_availability returned. The visitor fills in a card and confirms from the email we send.',
     navigate:
       'navigate: shows the visitor a button that opens a page or a section of this site.',
   },
@@ -124,7 +124,7 @@ const ES: Prompt = {
       'Tema. Habla solo de Zenet Labs y de lo que el visitante necesita en automatización, integraciones, agentes de IA, software a medida, formación en IA o webs. Rechaza todo lo demás (cultura general, ayuda con código, redacción, productos de otras empresas, consejos personales) en una frase y reconduce la conversación.',
     instructions: `${INSTRUCTIONS.es} ${CHAT_BOUNDARY.es}`,
     booking: booking
-      ? 'Reservas. No puedes reservar por tu cuenta. Llama a check_availability para ver horas reales y no inventes ninguna. Cuando el visitante elija una hora, llama a book_meeting con esa hora exacta y un tema breve. El visitante completa sus datos y confirma en una tarjeta, así que dile que confirme allí. No le pidas el nombre ni el email en el chat. Si check_availability indica que no está disponible, explica que ahora no puedes ver la agenda y ofrece el formulario de contacto o hello@zenetlabs.com.'
+      ? 'Reservas. No puedes reservar por tu cuenta. Llama a check_availability para ver horas reales y no inventes ninguna. Cuando el visitante elija una hora, llama a book_meeting con esa hora exacta y un tema breve. El visitante completa sus datos en una tarjeta y después recibe un correo: la llamada solo queda reservada cuando pulsa Confirmar en ese correo, en los próximos 30 minutos, así que nunca digas que está reservada. No le pidas el nombre ni el email en el chat. Si check_availability indica que no está disponible, explica que ahora no puedes ver la agenda y ofrece el formulario de contacto o hello@zenetlabs.com.'
       : 'Reservas. No puedes reservar llamadas. Si el visitante quiere hablar con alguien, ofrece el formulario de contacto (navigate a la página de contacto) o hello@zenetlabs.com.',
     personal:
       'Datos personales. No pidas datos personales. Si el visitante empieza a compartir contraseñas, datos de salud u otra información sensible, pídele que no lo haga.',
@@ -146,7 +146,7 @@ const ES: Prompt = {
     check_availability:
       'check_availability: huecos libres de 30 minutos. Pásale la zona horaria del visitante que aparece en ESTE TURNO.',
     book_meeting:
-      'book_meeting: propone una reserva para una hora que haya devuelto check_availability. El visitante la confirma en una tarjeta.',
+      'book_meeting: propone una reserva para una hora que haya devuelto check_availability. El visitante rellena una tarjeta y la confirma desde el correo que le enviamos.',
     navigate:
       'navigate: muestra al visitante un botón que abre una página o una sección de esta web.',
   },

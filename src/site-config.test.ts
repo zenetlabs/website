@@ -71,6 +71,24 @@ describe('serverConfig', () => {
     expect(booking.busyCacheMs).toBe(60_000);
   });
 
+  it('caps confirmation emails in production and keeps local caps out of the way', () => {
+    expect(serverConfig('production').booking.limits).toEqual({
+      perIpDaily: 5,
+      perAddressDaily: 3,
+      siteDaily: 40,
+      resendCooldownSeconds: 60,
+    });
+    const local = serverConfig(undefined).booking.limits;
+    expect(local.perIpDaily).toBeGreaterThanOrEqual(1_000);
+    expect(local.perAddressDaily).toBeGreaterThanOrEqual(1_000);
+    expect(local.siteDaily).toBeGreaterThanOrEqual(1_000);
+  });
+
+  it('accepts Turnstile testing keys locally only', () => {
+    expect(serverConfig(undefined).turnstile.testingKeys).toBe(true);
+    expect(serverConfig('production').turnstile.testingKeys).toBe(false);
+  });
+
   it('points Resend and Access at the local fake services', () => {
     const local = serverConfig(undefined);
     expect(local.resendBaseUrl).toBe('http://127.0.0.1:4175');

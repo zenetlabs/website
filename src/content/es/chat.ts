@@ -1,3 +1,4 @@
+import { bookingPending } from '@/content/es/booking-pending';
 import type { ChatCopy } from '@/content/types';
 
 // TODO(albert): review the widget copy
@@ -90,11 +91,17 @@ export const chatCopy = {
     email: 'Email de trabajo',
     company: 'Empresa (opcional)',
     topic: '¿De qué quieres hablar?',
-    confirm: 'Confirmar reserva',
-    sending: 'Reservando…',
+    confirm: 'Pedir esta hora',
+    sending: 'Enviando…',
     cancel: 'Ahora no',
-    done: 'Reservada para el {when}. Te hemos enviado por email la invitación con el enlace de Google Meet.',
+    close: 'Cerrar',
+    done: 'Te guardamos {when}. Revisa tu correo y pulsa Confirmar en los próximos 30 minutos para reservarla.',
+    pending: bookingPending,
     taken: 'Esa hora se acaba de ocupar. Pídeme otra.',
+    limit:
+      'Ahora no podemos guardarte otra hora con esta dirección. Si ya pediste una, confírmala desde el correo; si no, inténtalo más tarde o escríbenos a hello@zenetlabs.com.',
+    disposable:
+      'Usa una dirección de correo permanente. No podemos reservar llamadas con buzones temporales.',
     error:
       'No hemos podido reservarla. Vuelve a intentarlo, usa la página de reservas o escribe a hello@zenetlabs.com.',
     rate: 'Demasiados intentos desde tu conexión. Espera un minuto y vuelve a intentarlo.',

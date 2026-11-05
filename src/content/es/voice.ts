@@ -21,8 +21,7 @@ export const voiceCopy = {
   you: 'Tú',
   assistant: 'Asistente (IA)',
   opened: 'Abierto: {label}',
-  booked:
-    'Reservada para el {label}. Te hemos enviado la invitación por email.',
+  pending: 'Te guardamos {label}. Revisa tu correo para confirmarla.',
   ended: 'Llamada terminada.',
   again: 'Empezar otra llamada',
   micDenied:

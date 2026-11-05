@@ -57,12 +57,13 @@ async function call(name: string, input: unknown, ctx = context()) {
 }
 
 beforeEach(async () => {
-  world = newWorld();
+  world = newWorld(NOW);
   background = [];
   secret = JSON.stringify((await signingCredentials()).credentials);
   clearTokenCache();
   clearBusyCache();
   await DB.prepare('DELETE FROM bookings').run();
+  await DB.prepare('DELETE FROM booking_ip_usage').run();
   await DB.prepare('DELETE FROM leads').run();
 });
 
@@ -302,21 +303,21 @@ describe('book_meeting', () => {
     timeZone: 'Asia/Singapore',
   };
 
-  it('books, labels the time in the visitor zone and lowercases the address', async () => {
+  it('holds the slot, labels the time in the visitor zone and emails the lowercased address', async () => {
     const outcome = await call('book_meeting', BODY);
     expect(outcome).toMatchObject({
       ok: true,
       result: {
-        status: 'booked',
+        status: 'pending',
         start: '2027-01-12T09:00:00.000Z',
         label: 'Tuesday 12 January, 5:00 pm',
-        meetUrl: 'https://meet.google.com/aaa-bbbb-ccc',
+        expiresAt: '2027-01-04T08:30:00.000Z',
+        resent: false,
       },
     });
     await Promise.allSettled(background);
-    expect(world.events[0]?.body.attendees).toEqual([
-      { email: 'ada@example.com' },
-    ]);
+    expect(world.events).toEqual([]);
+    expect(world.sent.map((mail) => mail.to)).toEqual(['ada@example.com']);
   });
 
   it('answers unavailable with the contact block while not configured', async () => {
@@ -348,25 +349,23 @@ describe('book_meeting', () => {
     expect(outcome.ok).toBe(false);
   });
 
-  it('books on the test calendar only on a non-live host, the rule availability uses', async () => {
+  it('holds on the test calendar only on a non-live host, the rule availability uses', async () => {
     await call(
       'book_meeting',
       { ...BODY, name: '[TEST] Acceptance' },
       context({ hostname: 'localhost' }),
     );
     await Promise.allSettled(background);
-    expect(world.events.map((event) => event.calendarId)).toEqual([
-      'test-calendar',
-    ]);
     expect(world.freebusyCalls).toEqual(['test-calendar']);
+    expect(await DB.prepare('SELECT is_test FROM bookings').first()).toEqual({
+      is_test: 1,
+    });
   });
 
   it('keeps a [TEST] name on the live calendar: the host decides, never the name', async () => {
     await call('book_meeting', { ...BODY, name: '[TEST] Acceptance' });
     await Promise.allSettled(background);
-    expect(world.events.map((event) => event.calendarId)).toEqual([
-      'main-calendar',
-    ]);
+    expect(world.freebusyCalls).toEqual(['main-calendar']);
     expect(await DB.prepare('SELECT is_test FROM bookings').first()).toEqual({
       is_test: 0,
     });

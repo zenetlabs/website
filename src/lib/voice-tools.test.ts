@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { voiceCopy as en } from '@/content/en/voice';
 import { voiceCopy as es } from '@/content/es/voice';
-import { bookedLabel, navigateTool } from '@/lib/voice-tools';
+import { navigateTool, pendingLabel } from '@/lib/voice-tools';
 
 function tool(locale: 'en' | 'es' = 'en') {
   const push = vi.fn();
@@ -56,14 +56,14 @@ describe('navigateTool', () => {
   });
 });
 
-describe('bookedLabel', () => {
-  const booked = {
+describe('pendingLabel', () => {
+  const pending = {
     ok: true,
-    result: { status: 'booked', label: 'Tuesday 3 November, 5:00 pm' },
+    result: { status: 'pending', label: 'Tuesday 3 November, 5:00 pm' },
   };
 
-  it('reads the label of a booked result', () => {
-    expect(bookedLabel(JSON.stringify(booked))).toBe(
+  it('reads the label of a held request', () => {
+    expect(pendingLabel(JSON.stringify(pending))).toBe(
       'Tuesday 3 November, 5:00 pm',
     );
   });
@@ -76,16 +76,20 @@ describe('bookedLabel', () => {
     ['an error envelope', { ok: false, error: 'invalid' }],
     [
       'a label that is not text',
-      { ok: true, result: { status: 'booked', label: 5 } },
+      { ok: true, result: { status: 'pending', label: 5 } },
+    ],
+    [
+      'the old booked status',
+      { ok: true, result: { status: 'booked', label: 'old' } },
     ],
     ['no result', { ok: true }],
     ['an array', []],
   ])('returns null for %s', (_label, value) => {
-    expect(bookedLabel(JSON.stringify(value))).toBeNull();
+    expect(pendingLabel(JSON.stringify(value))).toBeNull();
   });
 
   it('returns null for malformed and truncated JSON', () => {
-    expect(bookedLabel('{"ok":true,"result":{"status":"book')).toBeNull();
-    expect(bookedLabel('')).toBeNull();
+    expect(pendingLabel('{"ok":true,"result":{"status":"book')).toBeNull();
+    expect(pendingLabel('')).toBeNull();
   });
 });

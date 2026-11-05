@@ -1,7 +1,9 @@
 import { BOOKING_RULES } from '@/content/booking-rules';
 import type { PageAvailability } from '@/lib/booking-client';
+import type { Surface } from '@/lib/booking-surfaces';
 import type { Attribution } from '@/lib/lead-schema';
 import { isPublished } from '@/lib/page-registry';
+import { zonedDay } from '@/lib/slot-format';
 import {
   availableSlots,
   canonicalZone,
@@ -9,19 +11,37 @@ import {
   type Interval,
   type Slot,
 } from '@/lib/slots';
-import { DAY_MS, noop } from '@/lib/time';
+import { DAY_MS, noop, startOfUtcDay, utcDay } from '@/lib/time';
+import { addressKey } from '@/server/address-usage';
+import {
+  type BookingEmail,
+  deliverBookingEmails,
+} from '@/server/booking-outbox';
 import type {
   BookingContext,
   BookingInput,
   Channel,
+  PendingRequest,
   VoiceRef,
 } from '@/server/booking-schema';
 import {
   activeBookings,
+  type BookingRow,
+  bookingForToken,
+  type Caps,
   confirmStatement,
+  consumeConfirm,
+  expireBooking,
   failStatement,
+  findPending,
   holdFailure,
-  holdSlot,
+  holdPending,
+  isPendingRow,
+  isUniqueViolation,
+  type LimitCap,
+  type PendingMatch,
+  queueResend,
+  readRequest,
   unknownStatement,
 } from '@/server/booking-store';
 import {
@@ -29,6 +49,8 @@ import {
   calendarIdFor,
   parseCalendarSecret,
 } from '@/server/calendar-config';
+import { isDisposable } from '@/server/disposable';
+import { emailKey } from '@/server/email-key';
 import { accessToken } from '@/server/google-auth';
 import {
   type CalendarAccess,
@@ -39,6 +61,7 @@ import {
 import { attributionFields, CONSENT_VERSION } from '@/server/lead-fields';
 import { leadStatements, type NewLead } from '@/server/lead-store';
 import { deliver, type OutboxDeps } from '@/server/outbox';
+import { ipBucket } from '@/server/rate-limit';
 import { errorName } from '@/server/responses';
 
 export type BookingDeps = OutboxDeps & {
@@ -55,11 +78,13 @@ export type BookingScope = {
 
 export type UnavailableReason = 'not_configured' | 'calendar_error';
 
-type Target = { credentials: CalendarCredentials; calendarId: string };
+export type Target = { credentials: CalendarCredentials; calendarId: string };
 
 type Ready = Target & { access: CalendarAccess };
 
 type Unavailable = { ok: false; reason: UnavailableReason };
+
+export type TargetResult = ({ ok: true } & Target) | Unavailable;
 
 const busyCache = new Map<string, BusyEntry>();
 const IN_FLIGHT_MS = 10_000;
@@ -79,12 +104,13 @@ function logError(op: string, code: string): void {
 }
 
 // No network: the flag, the secret and the calendar id. Anything missing means
-// "not configured", which is a normal state and never an error.
-async function targetOf({
-  deps,
-  isTest,
-}: BookingScope): Promise<({ ok: true } & Target) | Unavailable> {
-  if (!isPublished('book', deps.site)) {
+// "not configured", which is a normal state and never an error. Resolved once
+// per request and handed on.
+export async function targetOf(
+  { deps, isTest }: Pick<BookingScope, 'deps' | 'isTest'>,
+  requirePublished = true,
+): Promise<TargetResult> {
+  if (requirePublished && !isPublished('book', deps.site)) {
     return { ok: false, reason: 'not_configured' };
   }
   const credentials = await parseCalendarSecret(await deps.calendarSecret());
@@ -95,7 +121,7 @@ async function targetOf({
 }
 
 async function connect(
-  { deps, now }: BookingScope,
+  { deps, now }: Pick<BookingScope, 'deps' | 'now'>,
   target: Target,
 ): Promise<{ ok: true; ready: Ready } | Unavailable> {
   const { booking } = deps.server;
@@ -120,6 +146,25 @@ async function connect(
         fetch: deps.fetch,
       },
     },
+  };
+}
+
+export type CalendarReady =
+  | { ok: true; access: CalendarAccess; calendarId: string }
+  | Unavailable;
+
+// The calendar of a booking that already exists (the owner's cancel, the
+// 24-month purge): those must work even while new bookings are switched off.
+export async function calendarFor(
+  scope: Pick<BookingScope, 'deps' | 'now'>,
+  target: Target,
+): Promise<CalendarReady> {
+  const connection = await connect(scope, target);
+  if (!connection.ok) return connection;
+  return {
+    ok: true,
+    access: connection.ready.access,
+    calendarId: connection.ready.calendarId,
   };
 }
 
@@ -158,19 +203,32 @@ type Snapshot =
   | { ok: true; ready: Ready; busy: Interval[]; booked: Slot[] }
   | Unavailable;
 
+// `exclude`: the booking being confirmed, which must not block its own slot.
+// `resolved`: the request's target when the caller already has it.
 async function snapshot(
   scope: BookingScope,
   fresh: boolean,
+  {
+    exclude = null,
+    resolved,
+  }: { exclude?: string | null; resolved?: Target } = {},
 ): Promise<Snapshot> {
   const { deps, now, isTest } = scope;
-  const target = await targetOf(scope);
-  if (!target.ok) return target;
+  let target: Target;
+  if (resolved) {
+    target = resolved;
+  } else {
+    const found = await targetOf(scope);
+    if (!found.ok) return found;
+    target = found;
+  }
   const horizon = now + (BOOKING_RULES.horizonDays + 1) * DAY_MS;
   const booked = activeBookings(
     deps.db,
     { from: now - DAY_MS, to: horizon },
     isTest,
     now,
+    exclude,
   );
   booked.catch(() => undefined);
   const connection = await connect(scope, target);
@@ -239,48 +297,69 @@ export async function pageSlots(
   }
 }
 
+export type Rejection =
+  | 'invalid_slot'
+  | 'slot_taken'
+  | 'day_full'
+  | 'limit'
+  | 'email_not_accepted';
+
 export type BookResult =
-  | { status: 'booked'; start: number; end: number; meetUrl: string | null }
   | {
-      status: 'rejected';
-      reason: 'invalid_slot' | 'slot_taken' | 'day_full' | 'limit';
+      status: 'pending';
+      start: number;
+      end: number;
+      expiresAt: number;
+      resent: boolean;
     }
+  | { status: 'rejected'; reason: Rejection }
   | { status: 'unavailable'; reason: UnavailableReason };
 
 export type BookRequest = {
   input: BookingInput;
   channel: Channel;
+  surface: Surface | 'voice';
   consentAt: number | null;
   attribution: Attribution | null;
   chatSessionId: string | null;
   voice?: VoiceRef;
+  // The origin the request came to: every link we email points back to it.
+  origin: string;
+  // The caller's IP and the key for its fingerprint; null skips the IP cap.
+  ip: { address: string; secret: string } | null;
 };
 
-function leadSource({
-  voice,
-  chatSessionId,
-}: BookRequest): 'voice' | 'chat' | 'booking' {
-  if (voice) return 'voice';
-  return chatSessionId === null ? 'booking' : 'chat';
+type Confirmed = {
+  input: BookingInput;
+  request: PendingRequest;
+  row: BookingRow;
+};
+
+function leadSource({ request }: Confirmed): 'voice' | 'chat' | 'booking' {
+  if (request.voice) return 'voice';
+  return request.chatSessionId === null ? 'booking' : 'chat';
 }
 
 function bookingLead(
-  request: BookRequest,
+  confirmed: Confirmed,
   scope: BookingScope,
   context: BookingContext,
 ): NewLead {
-  const { input, attribution, chatSessionId, voice } = request;
+  const { input, request } = confirmed;
   return {
     locale: input.locale,
-    source: leadSource(request),
+    source: leadSource(confirmed),
     name: input.name,
     email: input.email,
     company: input.company || null,
     message: input.topic,
     consent_version: CONSENT_VERSION,
-    ...attributionFields(attribution, scope.deps.site.url),
-    context: JSON.stringify({ booking: context, ...(voice ? { voice } : {}) }),
-    chat_session_id: chatSessionId,
+    ...attributionFields(request.attribution, scope.deps.site.url),
+    context: JSON.stringify({
+      booking: context,
+      ...(request.voice ? { voice: request.voice } : {}),
+    }),
+    chat_session_id: request.chatSessionId,
     is_test: scope.isTest ? 1 : 0,
   };
 }
@@ -288,25 +367,27 @@ function bookingLead(
 type Outcome = BookingContext['status'];
 
 type Store = {
-  request: BookRequest;
+  confirmed: Confirmed;
   scope: BookingScope;
   context: BookingContext;
   finish: (leadId: string) => D1PreparedStatement;
 };
 
 const RETRY_DELAYS_MS = [250, 1_000];
+const INLINE_EMAIL_MS = 4_000;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function writeOutcome({ request, scope, context, finish }: Store) {
+async function writeOutcome({ confirmed, scope, context, finish }: Store) {
   const { deps, now } = scope;
   const lead = leadStatements(
     deps.db,
-    bookingLead(request, scope, context),
+    bookingLead(confirmed, scope, context),
     now,
     context.status === 'confirmed' ? 'always' : 'none',
+    confirmed.request.consentAt,
   );
   const results = await deps.db.batch([
     ...lead.statements,
@@ -320,53 +401,169 @@ async function writeOutcome({ request, scope, context, finish }: Store) {
   }
 }
 
-function isUniqueConflict(error: unknown): boolean {
-  return (
-    error instanceof Error && /UNIQUE constraint failed/i.test(error.message)
-  );
+async function retryStore(args: Store): Promise<void> {
+  for (const delay of args.scope.retryDelaysMs ?? RETRY_DELAYS_MS) {
+    await sleep(delay);
+    try {
+      await writeOutcome(args);
+      return;
+    } catch (error) {
+      console.error('booking: store retry failed', {
+        bookingId: args.context.id,
+        error: errorName(error),
+      });
+      if (isUniqueViolation(error)) return;
+    }
+  }
 }
 
 // The lead is the owner's only record of the visitor, so a failed write is
 // retried in the background; the visitor's answer never waits for it.
 async function store(args: Store): Promise<void> {
-  const bookingId = args.context.id;
   try {
     await writeOutcome(args);
     return;
   } catch (error) {
     console.error('booking: store failed', {
-      bookingId,
+      bookingId: args.context.id,
       error: errorName(error),
     });
-    if (isUniqueConflict(error)) return;
+    if (isUniqueViolation(error)) return;
   }
-  args.scope.deps.waitUntil(
-    (async () => {
-      for (const delay of args.scope.retryDelaysMs ?? RETRY_DELAYS_MS) {
-        await sleep(delay);
-        try {
-          await writeOutcome(args);
-          return;
-        } catch (error) {
-          console.error('booking: store retry failed', {
-            bookingId,
-            error: errorName(error),
-          });
-          if (isUniqueConflict(error)) return;
-        }
-      }
-    })(),
-  );
+  args.scope.deps.waitUntil(retryStore(args));
 }
 
+// The verify email is tried at once, for a few seconds at most: past that the
+// visitor gets the same answer and the send finishes in the background or,
+// failing that, on the next cron tick.
+async function sendInline(scope: BookingScope, email: BookingEmail) {
+  const { deps, now } = scope;
+  const work = deliverBookingEmails(deps, [email], now).catch((error) => {
+    console.error('booking-email: delivery failed', {
+      error: errorName(error),
+    });
+  });
+  deps.waitUntil(work);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<void>((resolve) => {
+    timer = setTimeout(resolve, INLINE_EMAIL_MS);
+  });
+  try {
+    await Promise.race([work, late]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function pendingRecord(
+  request: BookRequest,
+  consentAt: number,
+): PendingRequest {
+  const { input } = request;
+  return {
+    locale: input.locale,
+    name: input.name,
+    company: input.company || null,
+    topic: input.topic,
+    timeZone: (input.timeZone && canonicalZone(input.timeZone)) || null,
+    attribution: request.attribution,
+    chatSessionId: request.chatSessionId,
+    voice: request.voice ?? null,
+    consentAt,
+    surface: request.surface,
+  };
+}
+
+// Which cap refused a request: for the owner's logs only; the visitor's answer
+// stays the generic `limit`.
+function logLimit(cap: LimitCap | null): void {
+  if (cap !== null) console.warn('booking: limit', { cap });
+}
+
+async function resend(
+  scope: BookingScope,
+  existing: PendingMatch,
+  request: { caps: Caps; email: string; day: string },
+  start: number,
+): Promise<BookResult> {
+  const { deps, now } = scope;
+  const { limits } = deps.server.booking;
+  const pending = {
+    status: 'pending',
+    start,
+    end: existing.end,
+    expiresAt: existing.expiresAt,
+  } as const;
+  const verifyId = crypto.randomUUID();
+  const queued = await queueResend(
+    deps.db,
+    { bookingId: existing.id, verifyId, caps: request.caps },
+    limits,
+    now,
+  );
+  if (queued === 'cooldown') return { ...pending, resent: false };
+  if (queued === 'limit') {
+    const { cap } = await holdFailure(
+      deps.db,
+      { email: request.email, day: request.day, ...request.caps },
+      BOOKING_RULES,
+      limits,
+      now,
+      true,
+    );
+    logLimit(cap);
+    return { status: 'rejected', reason: 'limit' };
+  }
+  await sendInline(scope, {
+    id: verifyId,
+    kind: 'verify',
+    attempts: 0,
+    bookingId: existing.id,
+  });
+  return { ...pending, resent: true };
+}
+
+// A request holds the slot and emails a link. Nothing reaches the calendar, and
+// the owner hears nothing, until the visitor confirms from that email.
 async function run(
   request: BookRequest,
+  consentAt: number,
   scope: BookingScope,
 ): Promise<BookResult> {
   const { input, channel } = request;
   const { deps, now, isTest } = scope;
+  const target = await targetOf(scope);
+  if (!target.ok) return { status: 'unavailable', reason: target.reason };
+  if (await isDisposable(input.email)) {
+    return { status: 'rejected', reason: 'email_not_accepted' };
+  }
+  const record = pendingRecord(request, consentAt);
   const start = Date.parse(input.slot);
-  const shot = await snapshot(scope, true);
+  const ipDay = utcDay(now);
+  const caps: Caps = {
+    emailKey: emailKey(input.email),
+    dayStart: startOfUtcDay(now),
+    ipKey: request.ip
+      ? await addressKey(request.ip.secret, ipDay, ipBucket(request.ip.address))
+      : null,
+    ipDay,
+    isTest,
+  };
+  const existing = await findPending(
+    deps.db,
+    { emailKey: caps.emailKey, slotStart: start, isTest },
+    now,
+  );
+  if (existing) {
+    return resend(
+      scope,
+      existing,
+      { caps, email: input.email, day: zonedDay(start, BOOKING_RULES.zone) },
+      start,
+    );
+  }
+
+  const shot = await snapshot(scope, true, { resolved: target });
   if (!shot.ok) return { status: 'unavailable', reason: shot.reason };
   const checked = checkSlot(start, {
     rules: BOOKING_RULES,
@@ -385,81 +582,166 @@ async function run(
   }
   const { slot } = checked;
   const id = crypto.randomUUID();
-  const timeZone = (input.timeZone && canonicalZone(input.timeZone)) || null;
-  const hold = await holdSlot(
+  const verifyId = crypto.randomUUID();
+  const { limits } = deps.server.booking;
+  const hold = await holdPending(
     deps.db,
-    { id, slot, email: input.email, channel, timeZone, isTest },
+    {
+      id,
+      verifyId,
+      slot,
+      email: input.email,
+      channel,
+      timeZone: record.timeZone,
+      isTest,
+      request: JSON.stringify(record),
+      origin: request.origin,
+      caps,
+    },
     BOOKING_RULES,
+    limits,
     now,
   );
   if (hold === 'lost') {
-    return {
-      status: 'rejected',
-      reason: await holdFailure(
-        deps.db,
-        { email: input.email, isTest, day: slot.day },
-        BOOKING_RULES,
-        now,
-      ),
-    };
+    const failure = await holdFailure(
+      deps.db,
+      { email: input.email, day: slot.day, ...caps },
+      BOOKING_RULES,
+      limits,
+      now,
+    );
+    logLimit(failure.cap);
+    return { status: 'rejected', reason: failure.reason };
   }
-
-  const created = await createEvent(shot.ready.access, shot.ready.calendarId, {
+  await sendInline(scope, {
+    id: verifyId,
+    kind: 'verify',
+    attempts: 0,
     bookingId: id,
+  });
+  return {
+    status: 'pending',
     start: slot.start,
     end: slot.end,
+    expiresAt: now + BOOKING_RULES.confirmMinutes * 60_000,
+    resent: false,
+  };
+}
+
+export type ConfirmResult =
+  | 'confirmed'
+  | 'failed'
+  | 'unknown'
+  | 'taken'
+  | 'unavailable'
+  | 'invalid'
+  | 'stale';
+
+function inputOf(row: BookingRow, request: PendingRequest): BookingInput {
+  return {
+    slot: new Date(row.slot_start).toISOString(),
+    name: request.name,
+    email: row.email,
+    company: request.company ?? undefined,
+    topic: request.topic,
+    timeZone: request.timeZone ?? undefined,
+    locale: request.locale,
+  };
+}
+
+// The click on Confirm: a fresh look at the calendar (the request's notice and
+// horizon were checked when it was made; only conflicts matter now), then the
+// one-time consume, the event and the lead. 'stale' means the row is no longer
+// pending, so the page just shows its state.
+async function confirmBooking(
+  token: unknown,
+  base: Omit<BookingScope, 'isTest'>,
+): Promise<ConfirmResult> {
+  const { deps, now } = base;
+  const row = await bookingForToken(deps.db, token, 'confirm');
+  if (row === null) return 'invalid';
+  if (!isPendingRow(row, now) || row.confirm_hash === null) return 'stale';
+  const request = readRequest(row);
+  if (request === null) return 'stale';
+  const scope: BookingScope = { ...base, isTest: row.is_test === 1 };
+  const shot = await snapshot(scope, true, { exclude: row.id });
+  if (!shot.ok) return 'unavailable';
+  const checked = checkSlot(row.slot_start, {
+    rules: BOOKING_RULES,
+    now: row.created_at,
+    busy: shot.busy,
+    booked: shot.booked,
+  });
+  if (checked.status !== 'ok') {
+    await expireBooking(deps.db, row.id);
+    return 'taken';
+  }
+  const consumed = await consumeConfirm(
+    deps.db,
+    { id: row.id, hash: row.confirm_hash },
+    BOOKING_RULES,
+    now,
+  );
+  if (!consumed) return 'stale';
+  const confirmed: Confirmed = {
+    input: inputOf(row, request),
+    request,
+    row,
+  };
+  const created = await createEvent(shot.ready.access, shot.ready.calendarId, {
+    bookingId: row.id,
+    start: row.slot_start,
+    end: row.slot_end,
     zone: BOOKING_RULES.zone,
-    email: input.email,
-    locale: input.locale,
+    email: row.email,
+    locale: request.locale,
   });
   const context = (
     status: Outcome,
     event: { meetUrl: string | null; htmlLink: string | null },
   ): BookingContext => ({
-    id,
-    start: slot.start,
-    end: slot.end,
-    timeZone,
-    channel,
-    calendar: isTest ? 'test' : 'main',
+    id: row.id,
+    start: row.slot_start,
+    end: row.slot_end,
+    timeZone: request.timeZone,
+    channel: row.channel,
+    calendar: scope.isTest ? 'test' : 'main',
     status,
     meetUrl: event.meetUrl,
     eventLink: event.htmlLink,
+    origin: row.link_origin ?? deps.site.url,
+    requestedAt: row.created_at,
   });
 
   if (!created.ok) {
     logError('insert', created.code);
     const none = { meetUrl: null, htmlLink: null };
+    const status = created.unknown ? 'unknown' : 'failed';
     await store({
-      request,
+      confirmed,
       scope,
-      context: context(created.unknown ? 'unknown' : 'failed', none),
+      context: context(status, none),
       finish: (leadId) =>
         created.unknown
-          ? unknownStatement(deps.db, id, leadId)
-          : failStatement(deps.db, id, leadId),
+          ? unknownStatement(deps.db, row.id, leadId)
+          : failStatement(deps.db, row.id, leadId),
     });
-    return { status: 'unavailable', reason: 'calendar_error' };
+    return status;
   }
 
   const { value: event } = created;
   await store({
-    request,
+    confirmed,
     scope,
     context: context('confirmed', event),
     finish: (leadId) =>
       confirmStatement(
         deps.db,
-        { id, eventId: event.eventId, meetUrl: event.meetUrl },
+        { id: row.id, eventId: event.eventId, meetUrl: event.meetUrl },
         leadId,
       ),
   });
-  return {
-    status: 'booked',
-    start: slot.start,
-    end: slot.end,
-    meetUrl: event.meetUrl,
-  };
+  return 'confirmed';
 }
 
 function deliverInBackground(
@@ -481,7 +763,18 @@ export function bookMeeting(
   if (request.consentAt === null) {
     throw new Error('book_meeting requires recorded consent');
   }
-  const work = run(request, scope);
+  const work = run(request, request.consentAt, scope);
+  scope.deps.waitUntil(work.then(noop, noop));
+  return work;
+}
+
+// Under waitUntil too: a visitor who closes the tab mid-click must not leave a
+// consumed booking without its event.
+export function confirmFromLink(
+  token: unknown,
+  scope: Omit<BookingScope, 'isTest'>,
+): Promise<ConfirmResult> {
+  const work = confirmBooking(token, scope);
   scope.deps.waitUntil(work.then(noop, noop));
   return work;
 }

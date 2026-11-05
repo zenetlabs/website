@@ -12,7 +12,7 @@ import { isoTime, prettyJson } from '@/server/format';
 import type { LeadRow } from '@/server/lead-store';
 import type { OutgoingEmail } from '@/server/resend';
 
-const FROM = 'Zenet Labs <noreply@zenetlabs.com>';
+export const FROM = 'Zenet Labs <noreply@zenetlabs.com>';
 
 function orDash(value: string | null): string {
   return value === null || value === '' ? '-' : value;
@@ -31,7 +31,7 @@ function contextOf(lead: LeadRow): ParsedContext | null {
   }
 }
 
-function bookingOf(lead: LeadRow): BookingContext | null {
+export function bookingOf(lead: LeadRow): BookingContext | null {
   return contextOf(lead)?.booking ?? null;
 }
 
@@ -56,11 +56,22 @@ export function ownerSubject(lead: LeadRow): string {
   return `${test}[Lead ${lead.locale.toUpperCase()}] ${lead.name}${company} — ${lead.source}${flag}`;
 }
 
-function bookingLines(booking: BookingContext, locale: Locale): string[] {
-  const visitorZone = booking.timeZone ?? DEFAULT_ZONE[locale];
+function bookingLines(
+  booking: BookingContext,
+  lead: LeadRow,
+  cancelUrl: string | null,
+): string[] {
+  const visitorZone = booking.timeZone ?? DEFAULT_ZONE[lead.locale];
   return [
     '',
     STATUS_LINES[booking.status],
+    ...(cancelUrl === null ? [] : [`Cancel this booking: ${cancelUrl}`]),
+    ...(booking.requestedAt === undefined
+      ? []
+      : [
+          `Requested: ${isoTime(booking.requestedAt)}`,
+          `Confirmed: ${isoTime(lead.created_at)}`,
+        ]),
     ...(booking.status === 'confirmed' && booking.meetUrl === null
       ? [
           'Meet link: MISSING. The invitation went out without one; add a Google Meet link to the event by hand.',
@@ -76,7 +87,11 @@ function bookingLines(booking: BookingContext, locale: Locale): string[] {
 
 export function ownerEmail(
   lead: LeadRow,
-  { notifyTo, siteUrl }: { notifyTo: string; siteUrl: string },
+  {
+    notifyTo,
+    siteUrl,
+    cancelUrl = null,
+  }: { notifyTo: string; siteUrl: string; cancelUrl?: string | null },
 ): OutgoingEmail {
   const link = `${siteUrl}/internal/leads/${lead.id}`;
   const lines = [
@@ -101,7 +116,9 @@ export function ownerEmail(
     `Lead: ${link}`,
   ];
   const context = contextOf(lead);
-  if (context) lines.push(...bookingLines(context.booking, lead.locale));
+  if (context) {
+    lines.push(...bookingLines(context.booking, lead, cancelUrl));
+  }
   if (context?.voice) {
     lines.push(
       `Voice call: ${context.voice.conversationId ?? 'unknown'} (ElevenLabs → Agents → Call history; kept 30 days)`,
@@ -180,14 +197,14 @@ const BOOKING_CONFIRMATION: Record<
       `When: ${label} (${zone})`,
       `Where: ${meet}`,
       '',
-      'You will also receive a Google Calendar invitation. To change the time or cancel, reply to this email.',
+      "You'll also receive a Google Calendar invitation. To change the time or cancel, reply to this email.",
       '',
       'Before the call, think of the two or three tasks your team repeats most and the tools involved.',
       '',
       `Zenet Labs · ${legalName}`,
       siteUrl,
       '',
-      'You are receiving this email because this address was used to book a call on zenetlabs.com. If that was not you, reply and we will cancel it.',
+      "You are receiving this email because a call was booked and confirmed from this address on zenetlabs.com. If that wasn't you, reply and we'll cancel it.",
     ],
   },
   es: {
@@ -208,7 +225,7 @@ const BOOKING_CONFIRMATION: Record<
       `Zenet Labs · ${legalName}`,
       siteUrl,
       '',
-      'Recibes este correo porque alguien ha usado esta dirección para reservar una llamada en zenetlabs.com. Si no has sido tú, responde y la cancelaremos.',
+      'Recibes este correo porque se ha reservado y confirmado una llamada con esta dirección en zenetlabs.com. Si no has sido tú, responde y la cancelaremos.',
     ],
   },
 };
@@ -225,6 +242,7 @@ function bookingConfirmation(
   siteUrl: string,
 ): OutgoingEmail {
   const copy = BOOKING_CONFIRMATION[lead.locale];
+  const origin = booking.origin ?? siteUrl;
   const zone = booking.timeZone ?? DEFAULT_ZONE[lead.locale];
   const label = formatSlotLabel(lead.locale, booking.start, zone);
   return {
@@ -240,7 +258,7 @@ function bookingConfirmation(
           ? `Google Meet, ${booking.meetUrl}`
           : MEET_LATER[lead.locale],
         legalName: legalEntity(lead.locale).legalName,
-        siteUrl: lead.locale === 'en' ? siteUrl : `${siteUrl}/${lead.locale}`,
+        siteUrl: lead.locale === 'en' ? origin : `${origin}/${lead.locale}`,
       })
       .join('\n'),
   };

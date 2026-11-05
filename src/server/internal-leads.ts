@@ -6,6 +6,7 @@ import {
   type LeadCounts,
   type LeadRow,
   type ListRow,
+  type LiveBooking,
   type OutboxRow,
 } from '@/server/lead-store';
 import { privateHeaders } from '@/server/responses';
@@ -57,7 +58,7 @@ function statusCell(status: string | null): string {
   return `<td${bad ? ' class="bad"' : ''}>${escapeHtml(status)}</td>`;
 }
 
-function page(title: string, body: string): string {
+export function page(title: string, body: string): string {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -230,10 +231,24 @@ ${lines}
 </section>`;
 }
 
+function bookingHtml(booking: LiveBooking | null): string {
+  if (booking === null) return '';
+  const cancelled =
+    booking.cancelled_at === null
+      ? ''
+      : `<dt>Cancelled at</dt><dd>${shown(isoTime(booking.cancelled_at))}</dd>`;
+  return `<h2>Booking</h2>
+<dl>
+<dt>Status now</dt><dd>${shown(booking.status)}</dd>
+${cancelled}
+</dl>`;
+}
+
 export function leadDetailHtml(
   lead: LeadRow,
   emails: readonly OutboxRow[],
   conversation?: Transcript | null,
+  booking: LiveBooking | null = null,
 ): string {
   const fields = DETAIL_FIELDS.map(
     ([label, key]) =>
@@ -251,6 +266,7 @@ ${fields}
 </dl>
 <h2>Message</h2>
 <pre>${escapeHtml(lead.message)}</pre>
+${bookingHtml(booking)}
 ${context}
 ${conversationHtml(conversation)}
 <h2>Emails</h2>

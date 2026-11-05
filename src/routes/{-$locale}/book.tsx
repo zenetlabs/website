@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { lazy, Suspense, useSyncExternalStore } from 'react';
+import { BookingConfirm } from '@/components/booking-confirm';
 import { BookingForm } from '@/components/booking-form';
 import { Breadcrumb, FactList, HeroHeading } from '@/components/page-blocks';
 import { Container } from '@/components/section';
@@ -7,8 +8,11 @@ import { sectionFrame } from '@/components/section-frame';
 import { BAND_CARD, LEAD, TEXT_LINK } from '@/components/ui';
 import { ZoneSelect } from '@/components/zone-select';
 import { DEFAULT_ZONE } from '@/content/booking-rules';
-import { loadBookContent } from '@/content/load';
-import { bookAvailability } from '@/lib/book-availability';
+import { loadBookConfirmCopy, loadBookContent } from '@/content/load';
+import type { BookingConfirmCopy } from '@/content/types';
+import { bookAvailability, bookConfirmation } from '@/lib/book-availability';
+import type { PageAvailability } from '@/lib/booking-client';
+import type { ConfirmView } from '@/lib/confirm-view';
 import { contentRouteOptions } from '@/lib/content-route';
 import type { Locale } from '@/lib/i18n';
 import { formatPrice } from '@/lib/money';
@@ -26,12 +30,49 @@ const LazyContactForm = lazy(() =>
   })),
 );
 
-async function loadBook(locale: Locale) {
+type ConfirmDeps = { confirm: string | null; outcome: string | null };
+
+const NO_CONFIRM: ConfirmDeps = { confirm: null, outcome: null };
+
+type Confirmation = {
+  token: string;
+  outcome: string | null;
+  view: ConfirmView;
+  copy: BookingConfirmCopy;
+};
+
+// An emailed link (?confirm=) shows its confirm view instead of the form, and
+// the calendar is not asked for slots at all.
+async function loadBook(
+  locale: Locale,
+  { confirm, outcome }: ConfirmDeps = NO_CONFIRM,
+): Promise<
+  Awaited<ReturnType<typeof loadBookContent>> & {
+    availability: PageAvailability;
+    confirmation: Confirmation | null;
+  }
+> {
+  if (confirm !== null) {
+    const [content, view, copy] = await Promise.all([
+      loadBookContent(locale),
+      bookConfirmation(confirm, outcome),
+      loadBookConfirmCopy(locale),
+    ]);
+    return {
+      ...content,
+      availability: { status: 'unavailable' },
+      confirmation: { token: confirm, outcome, view, copy },
+    };
+  }
   const [content, availability] = await Promise.all([
     loadBookContent(locale),
     bookAvailability(),
   ]);
-  return { ...content, availability };
+  return { ...content, availability, confirmation: null };
+}
+
+function textParam(value: unknown): string | null {
+  return typeof value === 'string' && value !== '' ? value : null;
 }
 
 export const Route = createFileRoute('/{-$locale}/book')({
@@ -39,6 +80,11 @@ export const Route = createFileRoute('/{-$locale}/book')({
     breadcrumbStructuredData(locale, 'book', copy.meta.title),
   ),
   validateSearch: (raw: Record<string, unknown>) => raw,
+  loaderDeps: ({ search }): ConfirmDeps => ({
+    confirm: textParam(search.confirm),
+    outcome: textParam(search.outcome),
+  }),
+  loader: ({ context, deps }) => loadBook(context.locale, deps),
   component: Book,
 });
 
@@ -63,7 +109,7 @@ function requestedZone(search: Record<string, unknown>): string | null {
 
 function Book() {
   const { locale } = Route.useRouteContext();
-  const { copy, services, availability } = Route.useLoaderData();
+  const { copy, services, availability, confirmation } = Route.useLoaderData();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const detected = useSyncExternalStore(
@@ -95,7 +141,26 @@ function Book() {
           />
         </Container>
       </section>
-      {open ? (
+      {confirmation ? (
+        <section
+          data-booking="confirm"
+          data-ground={BAND.ground}
+          className={BAND.bg}
+        >
+          <Container className={`max-w-3xl ${BAND.pad}`}>
+            <div className={BAND_CARD}>
+              <BookingConfirm
+                confirm={confirmation.copy}
+                zones={copy.zone}
+                locale={locale}
+                token={confirmation.token}
+                outcome={confirmation.outcome}
+                view={confirmation.view}
+              />
+            </div>
+          </Container>
+        </section>
+      ) : open ? (
         <section
           data-booking="open"
           data-ground={BAND.ground}

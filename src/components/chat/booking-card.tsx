@@ -1,14 +1,19 @@
-import { type FormEvent, useId, useState } from 'react';
+import { type FormEvent, useId, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
+import { BookingPending } from '@/components/booking-pending';
 import {
   BookingDetailsFields,
   ConsentCheckbox,
+  Honeypot,
   LazyTurnstile,
 } from '@/components/form-parts';
 import { PRIMARY_BUTTON, SECONDARY_BUTTON } from '@/components/ui';
 import { useChallenge } from '@/components/use-challenge';
+import { useResend } from '@/components/use-resend';
 import type { ChatCopy } from '@/content/types';
-import { submitBooking } from '@/lib/booking-client';
+import { type BookingRequest, submitBooking } from '@/lib/booking-client';
 import { type BookingFailureKind, failureOf } from '@/lib/booking-failure';
+import { SURFACE_ACTION } from '@/lib/booking-surfaces';
 import type { Proposal } from '@/lib/chat-events';
 import { text } from '@/lib/form-data';
 import { type Locale, useMessages } from '@/lib/i18n';
@@ -32,13 +37,17 @@ export function BookingCard({
   locale: Locale;
   zone: string;
   sessionId: string | null;
+  // The request is held and the visitor closed the card: the chat notes it.
   onDone: (when: string) => void;
   onCancel: () => void;
 }) {
   const { contact } = useMessages();
   const challenge = useChallenge();
   const [status, setStatus] = useState<Status>('idle');
+  const [held, setHeld] = useState<BookingRequest | null>(null);
+  const again = useResend(challenge);
   const titleId = useId();
+  const pendingHeading = useRef<HTMLHeadingElement>(null);
   const pending = status === 'pending';
   const when = formatSlotLabel(locale, Date.parse(proposal.slot), zone);
 
@@ -46,7 +55,7 @@ export function BookingCard({
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     setStatus('pending');
-    const outcome = await submitBooking({
+    const request: BookingRequest = {
       slot: proposal.slot,
       name: text(data, 'name'),
       email: text(data, 'email'),
@@ -56,18 +65,84 @@ export function BookingCard({
       locale,
       consent: true,
       turnstileToken: challenge.token,
-      website: '',
+      website: text(data, 'website'),
       attribution: await attribution(),
+      surface: 'chat',
       ...(sessionId === null ? {} : { chatSessionId: sessionId }),
-    });
-    if (outcome.kind === 'booked') {
-      track('book_meeting');
-      track('generate_lead', { method: 'chat' });
-      onDone(formatSlotLabel(locale, outcome.start, zone));
+    };
+    const outcome = await submitBooking(request);
+    challenge.retry();
+    if (outcome.kind === 'pending') {
+      track('book_request');
+      flushSync(() => {
+        setHeld(request);
+        setStatus('idle');
+      });
+      pendingHeading.current?.focus();
       return;
     }
     setStatus(failureOf(outcome));
-    challenge.retry();
+  }
+
+  async function onResend() {
+    if (held === null) return;
+    setStatus('idle');
+    const failed = await again.resend(held);
+    if (failed !== null) setStatus(failureOf(failed));
+  }
+
+  const turnstile = (
+    <LazyTurnstile
+      engaged={challenge.engaged || held !== null}
+      action={SURFACE_ACTION.chat}
+      locale={locale}
+      instance={challenge.instance}
+      onToken={challenge.setToken}
+      onError={() => {
+        challenge.setToken('');
+        setStatus('captcha');
+      }}
+    />
+  );
+  const alert =
+    status === 'idle' || status === 'pending' ? null : (
+      <p role="alert" className="text-sm">
+        {copy[status]}
+      </p>
+    );
+
+  if (held) {
+    return (
+      <section
+        aria-labelledby={titleId}
+        data-booking-pending
+        className="grid gap-3 rounded-card border border-border bg-surface p-4"
+      >
+        <BookingPending
+          headingRef={pendingHeading}
+          headingId={titleId}
+          headingClass="text-base font-semibold"
+          copy={copy.pending}
+          label={when}
+          email={held.email}
+          resend={again.status}
+          canResend={challenge.token !== ''}
+          onResend={onResend}
+        >
+          {turnstile}
+          {alert}
+        </BookingPending>
+        <div>
+          <button
+            type="button"
+            onClick={() => onDone(when)}
+            className={SECONDARY_BUTTON}
+          >
+            {copy.close}
+          </button>
+        </div>
+      </section>
+    );
   }
 
   return (
@@ -100,22 +175,13 @@ export function BookingCard({
           defaults={{ topic: proposal.topic }}
           topicRows={3}
         />
+        <Honeypot label={contact.form.honeypot} />
         <ConsentCheckbox
           locale={locale}
           template={contact.form.consent}
           linkText={contact.form.consentLink}
         />
-        <LazyTurnstile
-          engaged={challenge.engaged}
-          action="book"
-          locale={locale}
-          instance={challenge.instance}
-          onToken={challenge.setToken}
-          onError={() => {
-            challenge.setToken('');
-            setStatus('captcha');
-          }}
-        />
+        {turnstile}
         <div className="flex flex-wrap gap-3">
           <button
             type="submit"
@@ -129,11 +195,7 @@ export function BookingCard({
           </button>
         </div>
       </fieldset>
-      {status === 'idle' || status === 'pending' ? null : (
-        <p role="alert" className="text-sm">
-          {copy[status]}
-        </p>
-      )}
+      {alert}
     </form>
   );
 }

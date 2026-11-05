@@ -19,8 +19,8 @@ import type {
 const SLOTS_FOR_MODEL = 8;
 
 const CHAT_BOOK_DESCRIPTION: Record<Locale, string> = {
-  en: 'Proposes a free 30-minute call at a slot returned by check_availability. Nothing is booked yet: the visitor fills in their details and confirms in a card.',
-  es: 'Propone una llamada gratuita de 30 minutos en una hora devuelta por check_availability. Todavía no se reserva nada: el visitante completa sus datos y confirma en una tarjeta.',
+  en: 'Proposes a free 30-minute call at a slot returned by check_availability. Nothing is booked yet: the visitor fills in their details in a card, then gets an email and books the call only by pressing Confirm in it.',
+  es: 'Propone una llamada gratuita de 30 minutos en una hora devuelta por check_availability. Todavía no se reserva nada: el visitante completa sus datos en una tarjeta, recibe un correo y la llamada solo queda reservada cuando pulsa Confirmar en él.',
 };
 
 export type NavigateEvent = {

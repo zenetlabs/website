@@ -2,10 +2,10 @@ import { z } from 'zod';
 import { locales } from '@/lib/i18n';
 import { DAY_MS } from '@/lib/time';
 
-const RETENTION_MS = 730 * DAY_MS;
+export const RETENTION_MS = 730 * DAY_MS;
+// Kept in step with EVENT_BACKSTOP_MS in calendar-purge.ts.
+const LEAD_BACKSTOP_MS = 760 * DAY_MS;
 const ATTEMPT_RETENTION_MS = 30 * DAY_MS;
-const BACKOFF_MS = [600_000, 1_800_000, 3_600_000, 10_800_000, 21_600_000];
-const MAX_ATTEMPTS = BACKOFF_MS.length + 1;
 
 const LEAD_SOURCES = [
   'form',
@@ -102,17 +102,20 @@ export type LeadStatements = {
   emails: (results: readonly D1Result[]) => DueEmail[];
 };
 
+// consentAt: when the visitor agreed, if earlier than the write (a booking
+// confirmed from the email keeps the time it was requested).
 export function leadStatements(
   db: D1Database,
   lead: NewLead,
   now: number,
   mode: ConfirmationMode = 'capped',
+  consentAt: number = now,
 ): LeadStatements {
   const row: LeadRow = {
     ...lead,
     id: crypto.randomUUID(),
     created_at: now,
-    consent_at: now,
+    consent_at: consentAt,
   };
   const ownerId = crypto.randomUUID();
   const confirmationId = crypto.randomUUID();
@@ -124,7 +127,7 @@ export function leadStatements(
            consent_version, consent_at, utm_source, utm_medium, utm_campaign, utm_term,
            utm_content, gclid, referrer, landing_page, submit_page, context,
            chat_session_id, is_test)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?2, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21)`,
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?22, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21)`,
       )
       .bind(
         row.id,
@@ -148,6 +151,7 @@ export function leadStatements(
         row.context,
         row.chat_session_id,
         row.is_test,
+        row.consent_at,
       ),
     db
       .prepare(
@@ -249,89 +253,6 @@ export async function dueEmails(
   return { due, invalid };
 }
 
-export async function markDead(
-  db: D1Database,
-  outboxIds: readonly string[],
-  error: string,
-): Promise<void> {
-  if (outboxIds.length === 0) return;
-  await db.batch(
-    outboxIds.map((id) =>
-      db
-        .prepare(
-          "UPDATE email_outbox SET status = 'dead', last_error = ?1 WHERE id = ?2",
-        )
-        .bind(error, id),
-    ),
-  );
-}
-
-export function backoffMs(attempt: number): number {
-  return BACKOFF_MS[attempt - 1] ?? 0;
-}
-
-export async function claimEmail(
-  db: D1Database,
-  email: Pick<DueEmail, 'outboxId' | 'attempts'>,
-  now: number,
-): Promise<boolean> {
-  const result = await db
-    .prepare(
-      `UPDATE email_outbox SET attempts = attempts + 1, next_attempt_at = ?1
-       WHERE id = ?2 AND attempts = ?3 AND status IN ('pending', 'failed')`,
-    )
-    .bind(now + backoffMs(email.attempts + 1), email.outboxId, email.attempts)
-    .run();
-  return result.meta.changes === 1;
-}
-
-export async function deferEmail(
-  db: D1Database,
-  outboxId: string,
-  nextAttemptAt: number,
-  error: string,
-): Promise<void> {
-  await db
-    .prepare(
-      `UPDATE email_outbox SET attempts = max(attempts - 1, 0), next_attempt_at = ?1, last_error = ?2
-       WHERE id = ?3`,
-    )
-    .bind(nextAttemptAt, error, outboxId)
-    .run();
-}
-
-export async function markSent(
-  db: D1Database,
-  outboxId: string,
-  now: number,
-  providerId: string | null,
-): Promise<void> {
-  await db
-    .prepare(
-      `UPDATE email_outbox SET status = 'sent', sent_at = ?1, provider_id = ?2, last_error = NULL
-       WHERE id = ?3`,
-    )
-    .bind(now, providerId, outboxId)
-    .run();
-}
-
-export async function markFailed(
-  db: D1Database,
-  outboxId: string,
-  error: string,
-): Promise<'failed' | 'dead'> {
-  const row = await db
-    .prepare(
-      `UPDATE email_outbox
-       SET status = CASE WHEN attempts >= ?1 THEN 'dead' ELSE 'failed' END, last_error = ?2
-       WHERE id = ?3
-       RETURNING status`,
-    )
-    .bind(MAX_ATTEMPTS, error, outboxId)
-    .first();
-  return row?.status === 'dead' ? 'dead' : 'failed';
-}
-
 export async function deadOwnerEmails(
   db: D1Database,
   limit: number,
@@ -361,13 +282,22 @@ export async function purgeExpired(
   db: D1Database,
   now: number,
 ): Promise<number> {
+  // A lead whose booking still has a calendar event waits for the calendar
+  // purge, so the event id survives until the event is gone; past the
+  // backstop it goes anyway (the cron logs those bookings first).
   const [leads] = await db.batch([
     db
-      .prepare('DELETE FROM leads WHERE created_at < ?1 RETURNING id')
-      .bind(now - RETENTION_MS),
+      .prepare(
+        `DELETE FROM leads WHERE created_at < ?1
+           AND (created_at < ?2 OR id NOT IN (SELECT lead_id FROM bookings
+             WHERE lead_id IS NOT NULL AND status IN ('confirmed', 'unknown')
+               AND event_deleted_at IS NULL))
+         RETURNING id`,
+      )
+      .bind(now - RETENTION_MS, now - LEAD_BACKSTOP_MS),
     db
       .prepare(
-        "DELETE FROM bookings WHERE status <> 'confirmed' AND created_at < ?1",
+        "DELETE FROM bookings WHERE status NOT IN ('confirmed', 'unknown') AND created_at < ?1",
       )
       .bind(now - ATTEMPT_RETENTION_MS),
   ]);
@@ -513,22 +443,42 @@ export async function exportLeads(
   const leads = rowsMatching(results, EXPORT_SHAPE);
   return { leads: leads.slice(0, max), truncated: leads.length > max };
 }
+const liveBookingSchema = z.object({
+  status: z.string(),
+  cancelled_at: z.number().nullable(),
+});
+
+export type LiveBooking = z.infer<typeof liveBookingSchema>;
+
 export async function getLead(
   db: D1Database,
   id: string,
-): Promise<{ lead: LeadRow; emails: OutboxRow[] } | null> {
-  const [leadResult, outboxResult] = await db.batch<Record<string, unknown>>([
+): Promise<{
+  lead: LeadRow;
+  emails: OutboxRow[];
+  booking: LiveBooking | null;
+} | null> {
+  const [leadResult, outboxResult, bookingResult] = await db.batch<
+    Record<string, unknown>
+  >([
     db.prepare('SELECT * FROM leads WHERE id = ?1').bind(id),
     db
       .prepare('SELECT * FROM email_outbox WHERE lead_id = ?1 ORDER BY kind')
       .bind(id),
+    db
+      .prepare(
+        'SELECT status, cancelled_at FROM bookings WHERE lead_id = ?1 LIMIT 1',
+      )
+      .bind(id),
   ]);
   const raw = leadResult?.results[0];
   if (raw === undefined) return null;
+  const live = liveBookingSchema.safeParse(bookingResult?.results[0]);
   return {
     lead: leadRowSchema.parse(raw),
     emails: (outboxResult?.results ?? []).map((row) =>
       outboxRowSchema.parse(row),
     ),
+    booking: live.success ? live.data : null,
   };
 }

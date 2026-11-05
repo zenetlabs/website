@@ -119,20 +119,21 @@ describe('BookingCard', () => {
     ).toBeEnabled();
   });
 
-  it('posts the details with the conversation id and the book token, then reports the time', async () => {
+  it('posts the details with the conversation id and the chat surface, then shows the pending panel', async () => {
     submitBooking.mockResolvedValue({
-      kind: 'booked',
+      kind: 'pending',
       start: Date.parse(PROPOSAL.slot),
       end: Date.parse(PROPOSAL.slot) + 1_800_000,
-      meetUrl: null,
+      expiresAt: Date.parse(PROPOSAL.slot),
+      resent: false,
     });
     const user = userEvent.setup();
     const { onDone } = card();
     await fill(user);
     await user.click(screen.getByRole('button', { name: en.booking.confirm }));
-    await waitFor(() =>
-      expect(onDone).toHaveBeenCalledWith('Tuesday 5 January, 10:00 am'),
-    );
+    expect(
+      await screen.findByRole('heading', { name: en.booking.pending.title }),
+    ).toHaveFocus();
     expect(submitBooking).toHaveBeenCalledWith({
       slot: PROPOSAL.slot,
       name: 'Ada Lovelace',
@@ -145,10 +146,42 @@ describe('BookingCard', () => {
       turnstileToken: 'tok_book',
       website: '',
       attribution: ATTRIBUTION,
+      surface: 'chat',
       chatSessionId: SESSION,
     });
-    expect(track).toHaveBeenCalledWith('book_meeting');
-    expect(track).toHaveBeenCalledWith('generate_lead', { method: 'chat' });
+    expect(track).toHaveBeenCalledTimes(1);
+    expect(track).toHaveBeenCalledWith('book_request');
+    expect(onDone).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: en.booking.close }));
+    expect(onDone).toHaveBeenCalledWith('Tuesday 5 January, 10:00 am');
+  });
+
+  it('resends from the pending panel and reports the cooldown', async () => {
+    const pending = {
+      kind: 'pending',
+      start: Date.parse(PROPOSAL.slot),
+      end: Date.parse(PROPOSAL.slot) + 1_800_000,
+      expiresAt: Date.parse(PROPOSAL.slot),
+    };
+    submitBooking
+      .mockResolvedValueOnce({ ...pending, resent: false })
+      .mockResolvedValueOnce({ ...pending, resent: false });
+    const user = userEvent.setup();
+    card();
+    await fill(user);
+    await user.click(screen.getByRole('button', { name: en.booking.confirm }));
+    await user.click(await screen.findByText('solve challenge'));
+    await user.click(
+      screen.getByRole('button', { name: en.booking.pending.resend }),
+    );
+    expect(
+      await screen.findByText(en.booking.pending.cooldown),
+    ).toBeInTheDocument();
+  });
+
+  it('carries the honeypot in the card too', () => {
+    card();
+    expect(document.querySelector('input[name="website"]')).not.toBeNull();
   });
 
   it('sends no conversation id when there is none', async () => {
@@ -166,7 +199,8 @@ describe('BookingCard', () => {
   it.each([
     [{ kind: 'rejected', reason: 'slot_taken' }, en.booking.taken],
     [{ kind: 'rejected', reason: 'day_full' }, en.booking.taken],
-    [{ kind: 'rejected', reason: 'limit' }, en.booking.error],
+    [{ kind: 'rejected', reason: 'limit' }, en.booking.limit],
+    [{ kind: 'rejected', reason: 'email_not_accepted' }, en.booking.disposable],
     [{ kind: 'failed', error: 'captcha' }, en.booking.captcha],
     [{ kind: 'failed', error: 'rate' }, en.booking.rate],
     [{ kind: 'failed', error: 'unavailable' }, en.booking.error],

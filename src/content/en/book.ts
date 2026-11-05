@@ -1,3 +1,4 @@
+import { bookingPending } from '@/content/en/booking-pending';
 import type { BookPageContent } from '@/content/types';
 
 // TODO(albert): review the copy, including "free, no commitment" and the call being the step before the paid diagnostic
@@ -6,7 +7,7 @@ export const bookPage = {
     title: 'Book a call',
     metaTitle: 'Book a 30-minute call | Zenet Labs',
     description:
-      'Pick a time for a free 30-minute video call with Zenet Labs about the manual work in your company. No account needed; we email you the invitation.',
+      'Pick a time for a free 30-minute video call with Zenet Labs about the manual work in your company. No account needed; we email you a link to confirm.',
   },
   breadcrumb: { label: 'Breadcrumb' },
   title: {
@@ -72,34 +73,29 @@ export const bookPage = {
     label: 'Booking form',
     details: 'Your details',
     name: 'Name',
-    email: 'Email (the invitation goes here)',
+    email: 'Email (the confirmation link goes here)',
     company: 'Company (optional)',
     topic: 'What would you like to talk about?',
     consent:
       'I agree that {legalName} uses these details to book this call, including a Google Calendar event with my email address, as described in the {privacyLink}, which also explains how to exercise my rights over my data.',
     consentLink: 'privacy policy',
     honeypot: 'Leave this field empty',
-    submit: 'Book this time',
-    sending: 'Booking…',
+    submit: 'Request this time',
+    sending: 'Sending…',
     noscript:
       'Booking needs JavaScript. Email us the time that suits you at {email}.',
   },
-  success: {
-    title: "You're booked",
-    when: 'Your call is on {time} ({zone}).',
-    text: 'We have sent a Google Calendar invitation and a confirmation to {email}.',
-    meet: 'Join with Google Meet',
-    meetLater:
-      'The Google Meet link comes with the calendar invitation. If you do not see it, we will email it before the call.',
-  },
+  pending: bookingPending,
   errors: {
     taken:
       'Someone just took that time. The list is up to date now, please pick another.',
     dayFull:
       'That day is now fully booked. The list is up to date, please pick another day.',
     limit:
-      'We could not book this time for that address. Please pick another time or write to',
-    send: 'We could not confirm the booking. Please try again, or write to',
+      "We can't hold another time for this address right now. If you already asked for one, confirm it from the email; otherwise try again later or write to",
+    disposable:
+      "Please use a permanent email address. We can't book calls for temporary inboxes.",
+    send: 'We could not send the request. Please try again, or write to',
     captcha: 'The security check failed. Please try again, or write to',
     rate: 'Too many attempts from your connection. Wait a minute and try again, or write to',
   },

@@ -1,7 +1,7 @@
 import type { Locale } from '@/lib/i18n';
 import { isLiveHost } from '@/lib/redirects';
+import { utcDay } from '@/lib/time';
 import type { VoiceError } from '@/lib/voice-client';
-import { utcDay } from '@/server/chat/usage';
 import type { Limiter } from '@/server/rate-limit';
 import { gate, type Issue, verifyHuman } from '@/server/request';
 import { errorName, jsonError, jsonOk } from '@/server/responses';
@@ -23,6 +23,7 @@ export type VoiceDeps = {
   site: SiteConfig;
   apiOrigin: string;
   dailySessions: number;
+  testingKeys: boolean;
   limiter: Limiter;
   apiKey: () => Promise<string | null>;
   toolSecret: () => Promise<string | null>;
@@ -101,6 +102,9 @@ export async function handleVoiceSession(
     ip,
     secret,
     fetch: deps.fetch,
+    hostname: new URL(request.url).hostname,
+    testingKeys: deps.testingKeys,
+    now: deps.now(),
   });
   if (failure !== null) return reject(failure);
 

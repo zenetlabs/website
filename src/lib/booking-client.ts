@@ -1,3 +1,4 @@
+import type { Surface } from '@/lib/booking-surfaces';
 import type { Locale } from '@/lib/i18n';
 import { isRecord } from '@/lib/is-record';
 import type { Attribution } from '@/lib/lead-schema';
@@ -15,16 +16,29 @@ export type BookingRequest = {
   website: string;
   attribution: Attribution;
   chatSessionId?: string;
+  surface: Surface;
 };
 
 export type BookingFailure = 'unavailable' | 'captcha' | 'rate' | 'invalid';
 
+export type BookingRejection =
+  | 'invalid_slot'
+  | 'slot_taken'
+  | 'day_full'
+  | 'limit'
+  | 'email_not_accepted';
+
+// pending: the slot is held and the confirm link is on its way. resent says
+// whether this submit sent a new email (false inside the cooldown).
 export type BookingOutcome =
-  | { kind: 'booked'; start: number; end: number; meetUrl: string | null }
   | {
-      kind: 'rejected';
-      reason: 'invalid_slot' | 'slot_taken' | 'day_full' | 'limit';
+      kind: 'pending';
+      start: number;
+      end: number;
+      expiresAt: number;
+      resent: boolean;
     }
+  | { kind: 'rejected'; reason: BookingRejection }
   | { kind: 'failed'; error: BookingFailure };
 
 export type PageSlot = { start: number; end: number };
@@ -34,7 +48,13 @@ export type PageAvailability =
   | { status: 'unavailable' };
 
 const UNAVAILABLE: BookingOutcome = { kind: 'failed', error: 'unavailable' };
-const REJECTIONS = ['invalid_slot', 'slot_taken', 'day_full', 'limit'] as const;
+const REJECTIONS = [
+  'invalid_slot',
+  'slot_taken',
+  'day_full',
+  'limit',
+  'email_not_accepted',
+] as const;
 
 function timestamp(value: unknown): number | null {
   if (typeof value !== 'string') return null;
@@ -57,13 +77,19 @@ export function bookingOutcome(body: unknown): BookingOutcome {
   }
   const result = isRecord(body.result) ? body.result : null;
   if (body.ok !== true || result === null) return UNAVAILABLE;
-  if (result.status === 'booked') {
+  if (result.status === 'pending') {
     const start = timestamp(result.start);
     const end = timestamp(result.end);
-    const meetUrl = typeof result.meetUrl === 'string' ? result.meetUrl : null;
-    return start === null || end === null
+    const expiresAt = timestamp(result.expiresAt);
+    return start === null || end === null || expiresAt === null
       ? UNAVAILABLE
-      : { kind: 'booked', start, end, meetUrl };
+      : {
+          kind: 'pending',
+          start,
+          end,
+          expiresAt,
+          resent: result.resent === true,
+        };
   }
   const reason = result.status === 'rejected' ? reasonOf(result.reason) : null;
   return reason === null ? UNAVAILABLE : { kind: 'rejected', reason };

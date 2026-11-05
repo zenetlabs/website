@@ -140,7 +140,7 @@ Rotation: roll the value in the Cloudflare dashboard (My Profile, API Tokens), r
 
 ## 5. D1
 
-Tables: `leads`, `email_outbox` (0001); `bookings` (0002); `chat_sessions`, `chat_messages`, `ai_usage` (0003); `chat_ip_usage` (0004); `voice_sessions` (0005).
+Tables: `leads`, `email_outbox` (0001); `bookings` (0002, widened by 0006 with the confirmation columns); `chat_sessions`, `chat_messages`, `ai_usage` (0003); `chat_ip_usage` (0004); `voice_sessions` (0005); `booking_emails`, `booking_ip_usage` (0006). A pending booking is a `held` row with a `request` and no `confirmed_at`; its `booking_emails` rows (`verify`, `cancelled`) cascade with it, and it cascades with its lead.
 
 Workflow for a change:
 
@@ -193,6 +193,16 @@ SELECT slot_start, email, status, channel FROM bookings WHERE status='confirmed'
 SELECT id, datetime(slot_start/1000,'unixepoch') AS slot_utc, status, channel, is_test FROM bookings WHERE status IN ('failed','unknown') ORDER BY created_at DESC LIMIT 20;
 ```
 
+Pending requests (waiting for the click on the emailed link) and the booking emails that did not go out:
+
+```sql
+SELECT id, datetime(slot_start/1000,'unixepoch') AS slot_utc, channel, is_test, datetime(hold_expires_at/1000,'unixepoch') AS lapses FROM bookings WHERE status='held' AND confirmed_at IS NULL AND request IS NOT NULL ORDER BY created_at DESC LIMIT 20;
+SELECT e.id, e.booking_id, e.kind, e.status, e.attempts, e.last_error FROM booking_emails e WHERE e.status IN ('failed','dead') AND e.last_error NOT IN ('expired','replaced') ORDER BY e.created_at DESC LIMIT 20;
+SELECT day, count(*) AS keys, sum(sends) AS emails FROM booking_ip_usage GROUP BY day ORDER BY day DESC;
+```
+
+A `verify` row that is `dead` with `expired` or `replaced` is normal (the request lapsed, or a resend replaced it). A pending request cannot be released early; it lapses on its own after 30 minutes. A confirmed booking is cancelled from the `Cancel this booking` link in the owner email (it deletes the event with `sendUpdates=all` and emails the visitor); the SQL below is only for an `unknown` row or when the link is lost.
+
 An `unknown` row blocks its slot, its day and its address until you check the Google Calendar and set it to `confirmed` or `cancelled`. To cancel (delete the calendar event by hand too; `cancelled` frees the slot):
 
 ```sql
@@ -212,16 +222,19 @@ Clean up test data after an acceptance run (a lead delete cascades to its outbox
 ```sql
 DELETE FROM leads WHERE is_test = 1;
 DELETE FROM bookings WHERE is_test = 1;
+DELETE FROM booking_ip_usage;
 DELETE FROM chat_sessions WHERE is_test = 1;
 DELETE FROM voice_sessions WHERE is_test = 1;
 ```
+
+`booking_emails` rows go with their bookings. `booking_ip_usage` holds only keyed fingerprints and day counters (no address), so clearing it after an acceptance run just resets the caps.
 
 Erase everything held about one address. Addresses are stored in lower case, so use the lower-case form. Order matters: the chat and voice rows are found through the lead, which is deleted last.
 
 ```sql
 DELETE FROM chat_sessions WHERE id IN (SELECT chat_session_id FROM leads WHERE email='<address>' AND chat_session_id IS NOT NULL);
 DELETE FROM voice_sessions WHERE id IN (SELECT json_extract(context,'$.voice.sessionId') FROM leads WHERE email='<address>' AND context IS NOT NULL);
-DELETE FROM bookings WHERE email='<address>';
+DELETE FROM bookings WHERE email='<address>' OR email_key='<address>';
 DELETE FROM leads WHERE email='<address>';
 ```
 
@@ -275,18 +288,20 @@ Workers rate-limit bindings count per location and are eventually consistent: a 
 |---|---|---|---|---|
 | `LEAD_LIMITER` | 7301 | 5 per 60 s | 100 | `POST /api/lead` |
 | `TOOLS_LIMITER` | 7302 | 30 per 60 s | 1000 | `/api/tools/*`, `GET /api/book/slots` |
-| `BOOK_LIMITER` | 7303 | 5 per 60 s | 100 | `book_meeting` |
+| `BOOK_LIMITER` | 7303 | 5 per 60 s | 100 | `book_meeting`, the Confirm and owner-cancel POSTs |
 | `CHAT_LIMITER` | 7304 | 10 per 60 s | 100 | `POST /api/chat` |
 | `VOICE_LIMITER` | 7305 | 3 per 60 s | 100 | `POST /api/voice/session` |
 
-Namespaces 7301 to 7309 are reserved for this site; the next free id is 7306. A limiter that is unavailable fails open and logs `<label>: limiter unavailable`.
+Namespaces 7301 to 7309 are reserved for this site; the next free id is 7306 (PR5a added none). A limiter that is unavailable fails open and logs `<label>: limiter unavailable`.
+
+The booking confirmation emails have D1 caps on top (`__SERVER__.booking.limits`, pinned by `src/site-config.test.ts`): 5 per IP fingerprint per UTC day (`booking_ip_usage`; an IPv6 address counts by its /64, as it does for every limiter key; voice skips it), 3 per mailbox per rolling 24 h (requests and resends together; `+tag` and Gmail dots count as one), 40 site-wide per UTC day (the Resend quota and the sending reputation), and a 60 s resend cooldown per booking. The address and site caps count live and test (`is_test`) rows separately, so acceptance runs on a preview alias never use up production's day. All answer `limit`, which never says which cap tripped; the server logs `booking: limit { cap: 'active' | 'address' | 'site' | 'ip' }`. To raise one, change `productionServer.booking.limits` and its test (a `high` PR).
 
 ## 8. Cron
 
 One trigger, `*/10 * * * *`, in `env.production` only (a local or preview run never fires it). The schedule is not versioned: a rollback does not change it.
 
-- **Every tick:** `deliverDue` sends the due outbox emails.
-- **The tick between 03:00 and 03:10 UTC** also runs, in order (a missed tick skips that day's purge until the next day's): `purgeExpired` (leads older than 730 days; bookings that are not `confirmed` after 30 days), the daily summary log (`scheduled: daily summary`, an error if owner emails are dead), `purgeChats` (unlinked chat sessions after 30 days; `chat_ip_usage` before yesterday) and `purgeVoiceSessions` (30 days).
+- **Every tick:** `expirePendingBookings` lapses pending requests past their 30 minutes (status `expired`, `request` nulled) and drops their unsent `verify` emails (`scheduled: booking expiry { expired, dropped }`); then `deliverDueBookingEmails` retries the due `verify` and `cancelled` emails (a verify retry mints a new link); then `deliverDue` sends the due lead outbox emails.
+- **The tick between 03:00 and 03:10 UTC** also runs, in order (a missed tick skips that day's purge until the next day's): `purgeCalendarEvents` (up to 50 `confirmed` or `unknown` bookings a day whose lead is older than 730 days, the least recently tried first: the event is deleted with `sendUpdates=none`, 204, 404 and 410 set `event_deleted_at`; a row whose calendar does not exist, such as a test row without `test_calendar_id`, is skipped, and a failed or skipped row is marked `purge_tried_at` so the others go first next day; `scheduled: calendar purge { due, deleted, failed, skipped }`, an error if anything failed; `scheduled: calendar purge skipped` when no calendar secret parses at all and rows are due), then the backstop (`scheduled: calendar events past the backstop { bookingIds }`, an error: leads older than 760 days go in this run even though their events still exist; delete those events by hand), `purgeExpired` (leads older than 730 days, except those whose booking still has an event, up to the 760-day backstop; bookings that are not `confirmed` or `unknown` after 30 days), the daily summary log (`scheduled: daily summary`, an error if owner emails or booking emails are dead), the `booking_ip_usage` days before yesterday, `purgeChats` (unlinked chat sessions after 30 days; `chat_ip_usage` before yesterday) and `purgeVoiceSessions` (30 days).
 - **Quota:** 5 cron triggers per account on Free, shared with every other Worker; the account is on Workers Paid, where the limit is higher.
 - **Where to look:** Workers Logs, search `scheduled:`; the dashboard shows cron events under the Worker's Settings, Triggers.
 
@@ -312,7 +327,7 @@ Every recipe ends the same way: after the deploy run `bash scripts/smoke.sh`, ch
 ### `booking.published` (level `high`: it turns on the Turnstile-gated booking form, the Google Calendar API and D1 booking rows, even though the diff is only config, tests, `lastmod` and a regenerated JSON)
 
 1. Owner: G1 to G11 ([owner checklist](owner-checklist.md), P2), the secret `ZENETLABS_PROD_GOOGLE_CALENDAR` edited (section 6), `curl -s https://zenetlabs.com/api/health` shows `"booking":true` (booking stays dark while the flag is false).
-2. Acceptance first, on a preview alias built with the flag on (a non-live host uses the test calendar and marks rows `is_test`): `CLOUDFLARE_ENV=production pnpm build` with the flag set, `pnpm exec wrangler versions upload --config dist/server/wrangler.json --preview-alias <alias>`, make a `[TEST] Acceptance` booking, check the event, the Meet link and the emails, then clean up (section 5) and **re-upload a dark build under the same alias**.
+2. Acceptance first, on a preview alias built with the flag on (a non-live host uses the test calendar and marks rows `is_test`): `CLOUDFLARE_ENV=production pnpm build` with the flag set, `pnpm exec wrangler versions upload --config dist/server/wrangler.json --preview-alias <alias>`, then in the Orca browser (real Turnstile): a `[TEST] Acceptance` request on `/book` with a mailbox the owner reads, the pending panel, the verify email in the inbox (not spam) with a link to the **alias** origin; `curl -s` and `curl -sI` the link and check the row stays pending (`SELECT status, confirmed_at FROM bookings WHERE is_test=1`); open it, press Confirm, check the event on the test calendar with Meet, the booked email and the owner email with the cancel line; repeat on `/es/reservar` and use the owner's cancel link (event deleted, Google's and our cancellation emails); re-POST a used Turnstile token with `curl` (`captcha`); resend once for the cooldown and the rotation; a disposable address gets `email_not_accepted`. Then clean up (section 5) and **re-upload a dark build under the same alias**.
 3. The flip PR: production `booking: { published: true }`. Update the tests that pin dark: `src/site-config.test.ts`, `src/lib/{llms,markdown-response,nav,navigate-client,page-registry,seo}.test.ts`, `src/routes/{locale-layout,robots-sitemap}.test.ts`. Regenerate the voice agent file (`VITEST_MAX_WORKERS=2 pnpm exec vitest run src/server/voice/agent-config.test.ts -u`; the agents gain the booking tool).
 4. Bumps: `lastmod` for `book` and for every page whose `<main>` changes (the CTA now points to `/book`): all registry pages except privacy, cookies and the aviso legal (25 pages). No `CONSENT_VERSION` bump: the privacy text does not depend on this flag. The header changes on every page (CTA) but is not page content.
 5. After the deploy: `/book` and `/es/reservar` answer 200 and are in the sitemap and llms files; the manifest lists six tools; `check_availability` returns slots; CTAs go to `/book`; one real booking by the owner as proof, then delete the event; Lighthouse on `/book` and `/es/reservar`.
@@ -409,7 +424,7 @@ Fastest first. Config switches need a deploy (section 2); `wrangler rollback` ne
 
 On demand: `bash scripts/smoke.sh` (about 150 checks, no side effects beyond a few rejected or dark-state POSTs) and the sitemap walk (`PLAYWRIGHT_BASE_URL=https://zenetlabs.com pnpm exec playwright test e2e/sitemap.e2e.ts`).
 
-Live logs (read-only; the URLs on this site carry no personal data in query strings):
+Live logs (read-only). The URLs on this site carry no personal data in query strings, but two carry a **booking token**: the visitor's confirm link (`/book?confirm=…`, `/es/reservar?confirm=…`, and `GET /api/book/confirm?confirm=…` for client navigations) and the owner's cancel link (`/api/book/cancel?t=…`). Each is a bearer credential for one booking: whoever has a confirm link can confirm that request (until it lapses, 30 minutes), whoever has a cancel link can cancel that call (until it starts). They reach Cloudflare's request logs like any URL: `wrangler tail` and Workers Logs show them for 3 days (7 from 2026-12-01), to every member of the Cloudflare account with Workers or Observability access, and to anyone holding the deploy or an Analytics token. Treat log exports and screenshots of them as secret, keep account membership to the owner, and never paste a token into an issue or a chat. The database stores only SHA-256 hashes, and the links are derived from the Turnstile secret (`TURNSTILE_SECRET_KEY`): rotating that secret invalidates every confirm and cancel link already sent (pending visitors book again; the owner uses `/internal/leads` and the SQL in section 5 to cancel).
 
 ```sh
 pnpm exec wrangler tail prod-zenet-web --format json
@@ -446,11 +461,15 @@ Log lines (each logs error names and ids only, never message text, tool argument
 |---|---|
 | `lead: store failed`, `lead-email: delivery failed`, `lead-email: failed`, `throttled`, `dead`, `invalid row`, `bookkeeping failed` | the lead was stored or not; the email outbox state (section 12, Resend) |
 | `booking: calendar error {op, code}`, `calendar secret invalid`, `availability failed`, `store failed`, `store retry failed`, `hold lost before the outcome` | Google Calendar and the booking store; the code table is in [ai-assistant.md](ai-assistant.md) |
+| `booking: limit {cap}` | a request or resend refused by a cap: `active` (the mailbox already has a pending or active booking), `address`, `site` or `ip`. A burst of `site` or `ip` is abuse; see section 7 |
+| `booking: honeypot`, `booking: confirm failed`, `booking: confirm view failed`, `booking: cancel failed {bookingId, code}`, `booking: cancelled by the owner`, `booking: unreadable row` | the email-confirmation flow and the owner's cancel link |
+| `booking-email: failed`, `throttled`, `delivery failed`, `bookkeeping failed` | the `booking_emails` outbox (verify and cancelled) |
+| `turnstile: rejected {reason}` | a Siteverify answer refused: `action`, `hostname`, `age`, `duplicate`, `invalid` or `network` (never the token) |
 | `chat: turn {…}`, `chat: <stage> failed {session, code}` | one line per assistant turn with counts; failures by stage (`model`, `tool`, `stream`, `persist`, `reservation`, `budget check`, `address count`, `link`, `session`) |
 | `voice: session`, `voice: token failed`, `voice: not configured`, `voice: session not stored`, `voice: release failed`, `voice: conversation id not stored` | the voice mint |
 | `tools: failed`, `tools: after-run failed`, `tools: voice session rejected`, `tools: voice session lookup failed` | the tool endpoint |
 | `secret: unreadable` | a Secrets Store read failed |
-| `scheduled: delivery failed`, `daily summary`, `daily summary failed`, `chat purge`, `voice purge` (and their `failed` forms) | the cron (section 8) |
+| `scheduled: delivery failed`, `booking expiry`, `booking emails failed`, `calendar purge`, `calendar purge skipped`, `calendar delete failed`, `daily summary`, `daily summary failed`, `booking usage purge failed`, `chat purge`, `voice purge` (and their `failed` forms) | the cron (section 8) |
 | `internal: render failed` | the Access-gated lead pages |
 | `<label>: limiter unavailable` | a rate-limit binding failed open |
 
@@ -465,6 +484,12 @@ Symptom: the form says sent but nobody gets email; the lead is stored. Confirm: 
 
 **Google down, or delegation revoked.**
 Symptom: `/book` shows the contact form; the tools answer `unavailable`. Confirm: `booking: calendar error {op, code}` (codes in ai-assistant.md). A failure is cached for 45 s. Contain: if the log is noisy, set the secret to `unconfigured`. Recover: fix the delegation or key, restore the secret, check `booking:true`. Over when: `check_availability` returns slots. Afterwards reconcile `unknown` rows against the calendar (section 5).
+
+**Verify emails not arriving, or dead.**
+Symptom: visitors say the link never came; the pending query shows requests lapsing unconfirmed. Confirm: `booking-email: failed|throttled` in the logs and the booking-email query (section 5); `dead` with an error other than `expired` or `replaced`. Check Resend's Suppressions and the domain's sending reputation, and the 40-a-day site cap (`booking_ip_usage` and the `verify` count for today). Contain: nothing to re-queue (a lapsed request cannot be revived); the visitor can book again or use the contact form. Recover: fix Resend, then watch a new request reach `sent`.
+
+**The calendar purge failing.**
+Symptom: `scheduled: calendar purge { failed > 0 }` at error level, or `calendar purge skipped`. Confirm: the `booking: calendar error` codes and `scheduled: calendar delete failed {bookingId, code}`. The leads stay (they are kept until their event is gone, at most 760 days), so nothing is lost and the privacy promise only waits a day or two; failing rows rotate to the back, so they never block the others. Recover: fix the delegation or secret (the Google playbook above); the next 03:00 tick retries. Over when: the line shows `failed: 0`. If an event was deleted by hand, set `event_deleted_at` on its row so the lead can go. `skipped > 0` means rows whose calendar is not in the bundle (a test row after `test_calendar_id` was removed): delete those events by hand and set `event_deleted_at`. **`scheduled: calendar events past the backstop {bookingIds}`** means the leads of those bookings were deleted at 760 days with their events still in the calendar: delete the events by hand the same day (search the calendar for `bk<booking-id>` without dashes, or the call titles) to keep the 24-month promise.
 
 **Workers AI budget exhausted.**
 Symptom: chat answers 503 `budget`, `ai_usage.refused` climbs. The cap is the self-imposed `dailyNeuronBudget` (the account is on Workers Paid, so Cloudflare sets none) and resets at 00:00 UTC. Confirm with the `ai_usage` SQL. Contain: wait for the reset, check for abuse (sessions per address, `chat_ip_usage`); the kill switch is `assistant.published: false` or `dailyNeuronBudget: 0`. To allow more spend, raise `dailyNeuronBudget` (a `low` PR).
@@ -487,8 +512,11 @@ Symptom: lead POSTs fail and the form shows the mailto fallback. Contain: nothin
 | Data | Kept |
 |---|---|
 | Leads and their outbox rows | 730 days (purged by the 03:00 to 03:10 UTC tick) |
-| Confirmed bookings | with their lead |
+| Confirmed and `unknown` bookings | with their lead; a lead past 730 days waits until its calendar event is deleted |
 | Bookings in any other status | 30 days |
+| A pending request's name, company and topic (`bookings.request`) | until it is confirmed or lapses (30 minutes) |
+| `booking_emails` | with their booking |
+| `booking_ip_usage` | a day's rows go at the 03:00 UTC tick two days later |
 | Unlinked chat sessions and messages | 30 days from the start; a session linked to a lead goes with the lead |
 | `chat_ip_usage` | a day's rows go at the 03:00 UTC tick two days later (the purge deletes days before yesterday): about 51 hours at most |
 | `ai_usage` | kept (daily aggregates, no personal data) |
@@ -499,11 +527,13 @@ Symptom: lead POSTs fail and the form shows the mailto fallback. Contain: nothin
 | Consent record, first-touch, GA cookies | 12 months, 90 days, 13 months (browser side, [analytics.md](analytics.md)); GA4 event retention 14 months |
 | Resend (sent emails: content, metadata, delivery events and logs) | 30 days on every self-serve plan ([Resend: account quotas and limits](https://resend.com/docs/knowledge-base/account-quotas-and-limits)) |
 | Mailbox threads about a lead | deleted by hand once a month when the last message is older than 24 months, unless a client relationship started (then for its duration plus the legal record periods: 6 years in Spain, 5 in Singapore) |
-| Google Calendar call events | deleted by hand once a month when older than 24 months (no code deletes them, and `bookings.event_id` is gone once the lead purge cascades) |
+| Google Calendar call events | deleted automatically by the 03:00 tick 24 months after the booking (`purgeCalendarEvents`, `sendUpdates=none`), before the lead purge |
 
-Monthly hand routine (the privacy pages promise it): in the booking user's Google Calendar, search the call events (titles "Zenet Labs · 30-minute call" and "Zenet Labs · llamada de 30 minutos", from `src/server/google-calendar.ts`) dated more than 24 months ago and delete them; in the mailbox, search lead threads (`older_than:24m` in Gmail search) and delete those whose last message is older than 24 months and that did not turn into a client relationship. Until the booking flip there are no events.
+Monthly hand routine: in the mailbox, search lead threads (`older_than:24m` in Gmail search) and delete those whose last message is older than 24 months and that did not turn into a client relationship. Calendar events no longer need a hand routine; check the `scheduled: calendar purge` line instead.
 
-Erasure for one person: the SQL in section 5 across the tables; delete the Google Calendar event; delete the messages in the mailbox; delete the conversation in ElevenLabs (Agents, Call history) when the lead carries `context.voice`; delete the Resend log entries if requested; then reply to the person.
+Monthly list update (a `low` PR): `pnpm disposable:update <latest-commit-sha>` (the upstream repo is `disposable-email-domains/disposable-email-domains`), check the diff of `src/server/disposable-domains.generated.ts` for any real provider (`src/server/disposable.test.ts` lists the ones that must never appear; add a false positive to the script's `ALLOW` set), run `pnpm test`, and open the PR.
+
+Erasure for one person: the SQL in section 5 across the tables (bookings match `email` or `email_key`); delete the Google Calendar event (before deleting the rows, or by its `bk<booking-id>` id); delete the messages in the mailbox; delete the conversation in ElevenLabs (Agents, Call history) when the lead carries `context.voice`; delete the Resend log entries if requested; then reply to the person.
 
 ## 14. Content changes
 
