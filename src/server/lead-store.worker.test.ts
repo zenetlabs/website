@@ -3,16 +3,18 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   backoffMs,
   claimEmail,
-  deadOwnerEmails,
   deferEmail,
+  markDead,
+  markFailed,
+  markSent,
+} from '@/server/email-queue';
+import {
+  deadOwnerEmails,
   dueEmails,
   exportLeads,
   getLead,
   leadStatements,
   leadsOverview,
-  markDead,
-  markFailed,
-  markSent,
   purgeExpired,
   storeLead,
 } from '@/server/lead-store';
@@ -207,21 +209,23 @@ describe('purgeExpired and bookings', () => {
     expect(await ids()).toEqual(['young']);
   });
 
-  it('deletes failed and unknown attempts after 30 days even with a lead, and keeps the lead', async () => {
+  it('deletes failed attempts after 30 days even with a lead, and keeps the lead', async () => {
     const failed = await store(NEW_LEAD, NOW - 100 * DAY);
-    const unknown = await store(
-      { ...NEW_LEAD, email: 'u@example.com' },
-      NOW - 100 * DAY,
-    );
     await booking('failed', NOW - 31 * DAY, failed.id, 'failed');
-    await booking('unknown', NOW - 31 * DAY, unknown.id, 'unknown');
     await booking('recent-failed', NOW - 5 * DAY, failed.id, 'failed');
     await purgeExpired(DB, NOW);
     expect(await ids()).toEqual(['recent-failed']);
-    expect(await count('leads')).toBe(2);
+    expect(await count('leads')).toBe(1);
   });
 
-  it('keeps a confirmed booking until its lead goes, then deletes it with the lead', async () => {
+  it('keeps an unknown booking, which may have an event, with its lead', async () => {
+    const unknown = await store(NEW_LEAD, NOW - 100 * DAY);
+    await booking('unknown', NOW - 31 * DAY, unknown.id, 'unknown');
+    await purgeExpired(DB, NOW);
+    expect(await ids()).toEqual(['unknown']);
+  });
+
+  it('keeps an old lead while its event exists, then deletes it with its booking', async () => {
     const linked = await store(NEW_LEAD, NOW - 100 * DAY);
     await booking('linked', NOW - 100 * DAY, linked.id, 'confirmed');
     await purgeExpired(DB, NOW);
@@ -231,6 +235,13 @@ describe('purgeExpired and bookings', () => {
       NOW - 731 * DAY,
     );
     await booking('old-linked', NOW - 731 * DAY, old.id, 'confirmed');
+    expect(await purgeExpired(DB, NOW)).toBe(0);
+    expect(await ids()).toEqual(['linked', 'old-linked']);
+    await DB.prepare(
+      "UPDATE bookings SET event_deleted_at = ?1 WHERE id = 'old-linked'",
+    )
+      .bind(NOW)
+      .run();
     expect(await purgeExpired(DB, NOW)).toBe(1);
     expect(await ids()).toEqual(['linked']);
   });
@@ -271,7 +282,7 @@ describe('outbox state', () => {
     const result = await dueEmails(DB, NOW, 10);
     expect(result.due.map((e) => e.lead.id)).toEqual([good.id, good.id]);
     expect(result.invalid).toHaveLength(2);
-    await markDead(DB, result.invalid, 'invalid_row');
+    await markDead(DB, 'email_outbox', result.invalid, 'invalid_row');
     expect((await dueEmails(DB, NOW, 10)).invalid).toEqual([]);
     const { results } = await DB.prepare(
       'SELECT status, last_error FROM email_outbox WHERE lead_id = ?1',
@@ -288,8 +299,19 @@ describe('outbox state', () => {
     await store(NEW_LEAD, NOW);
     const [email] = await due(NOW, 1);
     if (!email) throw new Error('no due email');
-    await claimEmail(DB, email, NOW);
-    await deferEmail(DB, email.outboxId, NOW + 600_000, 'resend 429 x');
+    await claimEmail(
+      DB,
+      'email_outbox',
+      { id: email.outboxId, attempts: email.attempts },
+      NOW,
+    );
+    await deferEmail(
+      DB,
+      'email_outbox',
+      email.outboxId,
+      NOW + 600_000,
+      'resend 429 x',
+    );
     const row = await DB.prepare(
       'SELECT status, attempts, next_attempt_at, last_error FROM email_outbox WHERE id = ?1',
     )
@@ -307,8 +329,22 @@ describe('outbox state', () => {
     await store(NEW_LEAD, NOW);
     const [email] = await due(NOW, 1);
     if (!email) throw new Error('no due email');
-    expect(await claimEmail(DB, email, NOW)).toBe(true);
-    expect(await claimEmail(DB, email, NOW)).toBe(false);
+    expect(
+      await claimEmail(
+        DB,
+        'email_outbox',
+        { id: email.outboxId, attempts: email.attempts },
+        NOW,
+      ),
+    ).toBe(true);
+    expect(
+      await claimEmail(
+        DB,
+        'email_outbox',
+        { id: email.outboxId, attempts: email.attempts },
+        NOW,
+      ),
+    ).toBe(false);
     const row = await DB.prepare(
       'SELECT attempts, next_attempt_at FROM email_outbox WHERE id = ?1',
     )
@@ -321,8 +357,8 @@ describe('outbox state', () => {
     await store(NEW_LEAD, NOW);
     const [email] = await due(NOW, 1);
     if (!email) throw new Error('no due email');
-    await markFailed(DB, email.outboxId, 'network');
-    await markSent(DB, email.outboxId, NOW + 5, 'em_1');
+    await markFailed(DB, 'email_outbox', email.outboxId, 'network');
+    await markSent(DB, 'email_outbox', email.outboxId, NOW + 5, 'em_1');
     const row = await DB.prepare('SELECT * FROM email_outbox WHERE id = ?1')
       .bind(email.outboxId)
       .first();
@@ -341,11 +377,15 @@ describe('outbox state', () => {
     await DB.prepare('UPDATE email_outbox SET attempts = 5 WHERE id = ?1')
       .bind(email.outboxId)
       .run();
-    expect(await markFailed(DB, email.outboxId, 'x')).toBe('failed');
+    expect(await markFailed(DB, 'email_outbox', email.outboxId, 'x')).toBe(
+      'failed',
+    );
     await DB.prepare('UPDATE email_outbox SET attempts = 6 WHERE id = ?1')
       .bind(email.outboxId)
       .run();
-    expect(await markFailed(DB, email.outboxId, 'x')).toBe('dead');
+    expect(await markFailed(DB, 'email_outbox', email.outboxId, 'x')).toBe(
+      'dead',
+    );
     expect(await due(NOW + 365 * DAY, 10)).toHaveLength(1);
   });
 

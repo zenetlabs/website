@@ -1,3 +1,4 @@
+import { bookingPending } from '@/content/en/booking-pending';
 import type { ChatCopy } from '@/content/types';
 
 // TODO(albert): review the widget copy
@@ -86,11 +87,17 @@ export const chatCopy = {
     email: 'Work email',
     company: 'Company (optional)',
     topic: 'What would you like to talk about?',
-    confirm: 'Confirm booking',
-    sending: 'Booking…',
+    confirm: 'Request this time',
+    sending: 'Sending…',
     cancel: 'Not now',
-    done: "Booked for {when}. We've emailed you the invitation with the Google Meet link.",
+    close: 'Close',
+    done: 'Held for {when}. Check your email and press Confirm within 30 minutes to book it.',
+    pending: bookingPending,
     taken: 'That time has just been taken. Ask me for another one.',
+    limit:
+      "We can't hold another time for this address right now. If you already asked for one, confirm it from the email; otherwise try again later or write to hello@zenetlabs.com.",
+    disposable:
+      "Please use a permanent email address. We can't book calls for temporary inboxes.",
     error:
       "We couldn't book it. Try again, use the booking page, or write to hello@zenetlabs.com.",
     rate: 'Too many attempts from your connection. Wait a minute and try again.',

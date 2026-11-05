@@ -1,6 +1,11 @@
 import { env } from 'cloudflare:workers';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { storeLead } from '@/server/lead-store';
+import {
+  deliverBookingEmails,
+  deliverDueBookingEmails,
+  killExpiredVerifyEmails,
+} from '@/server/booking-outbox';
+import { leadStatements, storeLead } from '@/server/lead-store';
 import { deliver, deliverDue, type OutboxDeps } from '@/server/outbox';
 import type { ServerConfig, SiteConfig } from '../../site.config';
 import { NEW_LEAD } from '../../test/leads';
@@ -18,7 +23,14 @@ const SERVER: ServerConfig = {
     calendarUrl: 'https://google.test/calendar/v3',
     busyCacheMs: 0,
     failureCacheMs: 0,
+    limits: {
+      perIpDaily: 5,
+      perAddressDaily: 3,
+      siteDaily: 40,
+      resendCooldownSeconds: 60,
+    },
   },
+  turnstile: { testingKeys: false },
   assistant: {
     model: 'fake',
     aiGatewayName: null,
@@ -45,6 +57,7 @@ function deps(overrides: Partial<OutboxDeps> = {}): OutboxDeps {
   return {
     db: DB,
     resendKey: async () => 're_test',
+    linkKey: async () => 'link-key',
     fetch: fetchMock,
     server: SERVER,
     site: SITE,
@@ -399,5 +412,186 @@ describe('deliverDue', () => {
     const logged = JSON.stringify(error.mock.calls);
     expect(logged).toContain('lead-email: invalid row');
     expect(logged).not.toContain('@');
+  });
+});
+
+const PENDING = JSON.stringify({
+  locale: 'en',
+  name: 'Ada Lovelace',
+  company: null,
+  topic: 'Automate our inbox triage.',
+  timeZone: 'Asia/Singapore',
+  attribution: null,
+  chatSessionId: null,
+  voice: null,
+  consentAt: NOW,
+  surface: 'page',
+});
+
+async function heldBooking(id: string, expires = NOW + 30 * MIN) {
+  await DB.batch([
+    DB.prepare('DELETE FROM bookings'),
+    DB.prepare(
+      `INSERT INTO bookings (id, created_at, slot_start, slot_end, day, status, hold_expires_at,
+         email, channel, is_test, email_key, request, link_origin, confirm_expires_at)
+       VALUES (?1, ?2, ?2 + 604800000, ?2 + 606600000, '2026-11-07', 'held', ?3,
+         'ada@example.com', 'web', 0, 'ada@example.com', ?4, 'https://zenetlabs.com', ?3)`,
+    ).bind(id, NOW, expires, PENDING),
+    DB.prepare(
+      `INSERT INTO booking_emails (id, booking_id, kind, created_at, next_attempt_at)
+       VALUES ('verify-1', ?1, 'verify', ?2, ?2)`,
+    ).bind(id, NOW),
+  ]);
+}
+
+async function emailState() {
+  return DB.prepare(
+    "SELECT status, attempts, next_attempt_at, last_error FROM booking_emails WHERE id = 'verify-1'",
+  ).first();
+}
+
+async function confirmHash(): Promise<unknown> {
+  return (await DB.prepare('SELECT confirm_hash FROM bookings').first())
+    ?.confirm_hash;
+}
+
+describe('booking emails', () => {
+  const VERIFY = {
+    id: 'verify-1',
+    kind: 'verify',
+    attempts: 0,
+    bookingId: 'b-1',
+  } as const;
+
+  it('retries with the same link and message, and stores the link only once Resend took it', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    await heldBooking('b-1');
+    fetchMock.mockResolvedValueOnce(fail());
+    await deliverBookingEmails(deps(), [VERIFY], NOW);
+    expect(await emailState()).toEqual({
+      status: 'failed',
+      attempts: 1,
+      next_attempt_at: NOW + 10 * MIN,
+      last_error: 'resend 500 internal_server_error',
+    });
+    expect(await confirmHash()).toBeNull();
+    fetchMock.mockResolvedValueOnce(ok('em_v'));
+    await deliverDueBookingEmails(deps(), NOW + 10 * MIN);
+    expect(await emailState()).toMatchObject({ status: 'sent', attempts: 2 });
+    expect(await confirmHash()).toMatch(/^[0-9a-f]{64}$/);
+    const [one, two] = sentBodies();
+    expect(two?.key).toBe(one?.key);
+    expect(two?.body).toBe(one?.body);
+    expect(two?.key).toMatch(/^booking-email\/verify-1\//);
+    expect(JSON.parse(two?.body ?? '{}').text).toMatch(
+      /https:\/\/zenetlabs\.com\/book\?confirm=b-1\./,
+    );
+  });
+
+  it('keeps the link the visitor has when a resend fails or is throttled', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    await heldBooking('b-1');
+    fetchMock.mockResolvedValueOnce(ok('em_1'));
+    await deliverBookingEmails(deps(), [VERIFY], NOW);
+    const kept = await confirmHash();
+    await DB.prepare(
+      `INSERT INTO booking_emails (id, booking_id, kind, created_at, next_attempt_at)
+       VALUES ('verify-2', 'b-1', 'verify', ?1, ?1)`,
+    )
+      .bind(NOW + MIN)
+      .run();
+    const second = { ...VERIFY, id: 'verify-2' };
+    fetchMock.mockResolvedValueOnce(fail());
+    await deliverBookingEmails(deps(), [second], NOW + MIN);
+    expect(await confirmHash()).toBe(kept);
+    fetchMock.mockResolvedValueOnce(fail(429));
+    await deliverBookingEmails(
+      deps(),
+      [{ ...second, attempts: 1 }],
+      NOW + 12 * MIN,
+    );
+    expect(await confirmHash()).toBe(kept);
+  });
+
+  it('kills a verify email whose booking is no longer pending, and never sends it', async () => {
+    await heldBooking('b-1', NOW + 5 * MIN);
+    expect(await killExpiredVerifyEmails(DB, NOW + 6 * MIN)).toBe(1);
+    expect(await emailState()).toMatchObject({
+      status: 'dead',
+      last_error: 'expired',
+    });
+    await deliverDueBookingEmails(deps(), NOW + 6 * MIN);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('marks a due verify email dead at send time once the hold lapsed', async () => {
+    await heldBooking('b-1', NOW + 5 * MIN);
+    await deliverBookingEmails(deps(), [VERIFY], NOW + 6 * MIN);
+    expect(await emailState()).toMatchObject({
+      status: 'dead',
+      last_error: 'expired',
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(await confirmHash()).toBeNull();
+  });
+});
+
+describe('the owner cancel link', () => {
+  it('is set at send for a confirmed booking, and a retry carries the same link', async () => {
+    const context = JSON.stringify({
+      booking: {
+        id: 'b-2',
+        start: NOW + 7 * 86_400_000,
+        end: NOW + 7 * 86_400_000 + 30 * MIN,
+        timeZone: 'Asia/Singapore',
+        channel: 'web',
+        status: 'confirmed',
+        meetUrl: null,
+        eventLink: null,
+        calendar: 'main',
+        origin: 'https://pr-5-prod-zenet-web.zenetlabs.workers.dev',
+        requestedAt: NOW - 5 * MIN,
+      },
+    });
+    const lead = leadStatements(
+      DB,
+      { ...NEW_LEAD, source: 'booking', context },
+      NOW,
+      'none',
+    );
+    await DB.batch([
+      DB.prepare('DELETE FROM bookings'),
+      ...lead.statements,
+      DB.prepare(
+        `INSERT INTO bookings (id, created_at, slot_start, slot_end, day, status, email, channel, lead_id, is_test)
+         VALUES ('b-2', ?1, ?1, ?1, '2026-11-07', 'confirmed', 'ada@example.com', 'web', ?2, 0)`,
+      ).bind(NOW, lead.leadId),
+    ]);
+    const [owner] = lead.emails([]);
+    if (!owner) throw new Error('no owner email');
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    fetchMock.mockResolvedValueOnce(fail()).mockResolvedValueOnce(ok());
+    await deliver(deps(), [owner], NOW);
+    const firstHash = (
+      await DB.prepare('SELECT cancel_hash FROM bookings').first()
+    )?.cancel_hash;
+    await deliverDue(deps(), NOW + 10 * MIN);
+    const secondHash = (
+      await DB.prepare('SELECT cancel_hash FROM bookings').first()
+    )?.cancel_hash;
+    expect(firstHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(secondHash).toBe(firstHash);
+    const links = sentBodies().map(
+      ({ body }) =>
+        /Cancel this booking: (\S+)/.exec(JSON.parse(body).text)?.[1] ?? '',
+    );
+    expect(links[0]).toBe(links[1]);
+    expect(sentBodies()[0]?.key).toBe(sentBodies()[1]?.key);
+    expect(links[1]).toMatch(
+      /^https:\/\/pr-5-prod-zenet-web\.zenetlabs\.workers\.dev\/api\/book\/cancel\?t=b-2\./,
+    );
+    expect(JSON.parse(sentBodies()[1]?.body ?? '{}').text).toContain(
+      'Requested: 2026-10-31T11:55:00.000Z',
+    );
   });
 });

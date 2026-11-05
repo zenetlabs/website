@@ -24,7 +24,8 @@ export function AssistantSection() {
       <p>
         Si reservas una llamada desde el asistente, el formulario de reserva del
         chat te pide el nombre y el email; se usan para la reserva y no se
-        envían al modelo de IA.
+        envían al modelo de IA. La llamada solo queda reservada cuando después
+        la confirmas desde el enlace del correo que te enviamos.
       </p>
       <p>
         Para limitar los abusos contamos también cuántas preguntas hace cada
@@ -63,11 +64,12 @@ export function VoiceSection() {
       <p>
         Guardamos 30 días un registro técnico de la llamada (cuándo empezó, el
         idioma, tu zona horaria y la página, sin audio ni texto) para evitar
-        abusos. Si reservas una llamada durante la conversación, tu nombre,
-        email, empresa y tema se guardan con tu consulta, como en cualquier
-        reserva, junto con los identificadores de la llamada (el de nuestro
-        registro y el de la conversación en ElevenLabs). No usamos tu voz para
-        identificarte.
+        abusos. Si pides una llamada durante la conversación, te enviamos un
+        enlace por correo y la llamada solo queda reservada cuando la confirmas
+        allí; entonces tu nombre, email, empresa y tema se guardan con tu
+        consulta, como en cualquier reserva, junto con los identificadores de la
+        llamada (el de nuestro registro y el de la conversación en ElevenLabs).
+        No usamos tu voz para identificarte.
       </p>
     </LegalSection>
   );
@@ -99,10 +101,11 @@ export function WebMcpUse() {
       ofrece herramientas para consultar nuestras preguntas frecuentes, precios
       y estimaciones y para abrir páginas y, mientras la reserva de llamadas
       esté disponible, para buscar horas libres y proponer una llamada. Una
-      reserva solo se envía cuando tú confirmas tus datos en el cuadro de
-      diálogo de la página, y la tratamos como cualquier otra reserva. El agente
-      lo eliges y lo controlas tú: lo que le cuentes o lo que lea de la página
-      se rige por las condiciones de su proveedor, no por esta política.
+      reserva solo se hace cuando tú confirmas tus datos en el cuadro de diálogo
+      de la página y después el enlace del correo que te enviamos, y la tratamos
+      como cualquier otra reserva. El agente lo eliges y lo controlas tú: lo que
+      le cuentes o lo que lea de la página se rige por las condiciones de su
+      proveedor, no por esta política.
     </p>
   );
 }

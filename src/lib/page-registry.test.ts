@@ -306,6 +306,9 @@ describe('switchHref', () => {
     ['en', 'travelAgencies', '', '/'],
     ['en', 'viatsyCase', '?a=1', '/case-studies/viatsy?a=1'],
     ['es', 'viatsyCase', '?a=1', '/es/casos/viatsy?a=1'],
+    ['es', 'book', '?tz=Asia%2FTokyo', '/es/reservar?tz=Asia%2FTokyo'],
+    ['es', 'book', '?confirm=id.secret&tz=UTC', '/es/reservar?tz=UTC'],
+    ['en', 'book', '?confirm=id.secret&outcome=taken', '/book'],
   ] as const)('to %s from %s%s is %s', (target, page, search, expected) => {
     expect(switchHref(target, page, search)).toBe(expected);
   });

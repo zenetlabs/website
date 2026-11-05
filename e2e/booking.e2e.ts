@@ -17,7 +17,11 @@ import {
 } from '../src/lib/slots';
 import {
   agentHeaders,
+  cancelLinkIn,
+  confirmLinkFor,
+  confirmLinksFor,
   googleBusy,
+  googleDeletions,
   googleEvents,
   googleFail,
   googleReset,
@@ -239,7 +243,41 @@ test('busy time and its 15 minute buffer disappear from the list', async ({
   }
 });
 
-test('a visitor books by keyboard and gets the panel, the event and both emails', async ({
+async function requestOnPage(
+  page: Page,
+  {
+    slot,
+    email,
+    path = '/book',
+  }: { slot: string; email: string; path?: string },
+) {
+  const es = path.startsWith('/es');
+  await gotoHydrated(page, path);
+  const input = page.locator(`input[value="${slot}"]`);
+  await input.evaluate((el) => el.closest('details')?.setAttribute('open', ''));
+  await input.check();
+  await page.getByLabel(es ? 'Nombre' : 'Name').fill('[TEST] Ada Lovelace');
+  await page
+    .getByLabel(
+      es
+        ? 'Correo electrónico (aquí llega el enlace para confirmar)'
+        : 'Email (the confirmation link goes here)',
+    )
+    .fill(email);
+  await page
+    .getByLabel(
+      es ? '¿De qué te gustaría hablar?' : 'What would you like to talk about?',
+    )
+    .fill('We want to automate our inbox triage.');
+  await page.getByRole('checkbox').check();
+  const submit = page.getByRole('button', {
+    name: es ? 'Pedir esta hora' : 'Request this time',
+  });
+  await expect(submit).toBeEnabled({ timeout: 30_000 });
+  await submit.click();
+}
+
+test('a visitor requests by keyboard and gets the pending panel, an email and no event yet', async ({
   page,
 }) => {
   const day = dayAt(1);
@@ -259,48 +297,220 @@ test('a visitor books by keyboard and gets the panel, the event and both emails'
   await page.keyboard.type('We want to automate our inbox triage.');
   await page.keyboard.press('Tab');
   await page.keyboard.press('Space');
-  const submit = page.getByRole('button', { name: 'Book this time' });
+  const submit = page.getByRole('button', { name: 'Request this time' });
   await expect(submit).toBeEnabled({ timeout: 30_000 });
   await submit.focus();
   await page.keyboard.press('Enter');
 
-  const heading = page.getByRole('heading', { name: "You're booked" });
+  const heading = page.getByRole('heading', { name: 'Check your inbox' });
   await expect(heading).toBeVisible({ timeout: 30_000 });
   await expect(heading).toBeFocused();
-  await expect(
-    page.getByRole('link', { name: 'Join with Google Meet' }),
-  ).toHaveAttribute('href', /^https:\/\/meet\.google\.com\/fak-e\d+$/);
+  await expect(page.getByText(`have sent a link to ${email}`)).toBeVisible();
 
-  const events = (await googleEvents()).filter((event) =>
-    event.attendees.some((attendee) => attendee.email === email),
-  );
-  expect(events).toHaveLength(1);
-  expect(events[0]).toMatchObject({
-    calendarId: TEST_CALENDAR,
-    summary: 'Zenet Labs · 30-minute call',
-  });
-  expect(events[0]?.start.dateTime).toBe(slot);
-
-  await expect.poll(async () => (await sentFor(email)).length).toBe(2);
+  const link = await confirmLinkFor(email);
+  expect(new URL(link).pathname).toBe('/book');
   const sent = await sentFor(email);
-  const owner = sent.find((mail) => mail.to !== email);
-  expect(owner?.subject).toBe(
-    '[TEST] [Lead EN] [TEST] Ada Lovelace — Analytical Engines — booking',
-  );
-  expect(owner?.text).toContain('Booking: confirmed');
-  expect(owner?.text).toContain('gclid: g9');
-  const confirmation = sent.find((mail) => mail.to === email);
-  expect(confirmation?.subject).toMatch(
-    /^Booked: 30-minute call with Zenet Labs, /,
-  );
-  expect(confirmation?.text).toMatch(/https:\/\/meet\.google\.com\/fak-e\d+/);
-  expect(confirmation?.text).not.toContain('Analytical Engines');
+  expect(sent).toHaveLength(1);
+  expect(sent[0]?.text).not.toContain('Analytical Engines');
+  expect(sent[0]?.text).not.toContain('Lovelace');
+  expect(
+    (await googleEvents()).filter((event) =>
+      event.attendees.some((attendee) => attendee.email === email),
+    ),
+  ).toEqual([]);
 
   await page.reload();
   await page.waitForSelector('body[data-hydrated="true"]');
-  const values = await slotValues(page);
-  for (const gone of ['09:30', '10:00', '10:30']) {
-    expect(values, gone).not.toContain(slotValue(day, gone));
+  expect(await slotValues(page)).not.toContain(slot);
+});
+
+for (const locale of ['en', 'es'] as const) {
+  test(`${locale}: the emailed link survives a scanner, books on Confirm and the owner can cancel it`, async ({
+    page,
+    request,
+  }) => {
+    const es = locale === 'es';
+    const day = dayAt(es ? 2 : 1);
+    const slot = slotValue(day, '14:00');
+    const email = uniqueEmail(`flow-${locale}`);
+    await requestOnPage(page, {
+      slot,
+      email,
+      path: es ? '/es/reservar' : '/book',
+    });
+    await expect(
+      page.getByRole('heading', {
+        name: es ? 'Revisa tu correo' : 'Check your inbox',
+      }),
+    ).toBeVisible({ timeout: 30_000 });
+    const link = await confirmLinkFor(email);
+    expect(new URL(link).pathname).toBe(es ? '/es/reservar' : '/book');
+
+    // A mail scanner prefetches the link: nothing may change.
+    const fetched = await request.get(link, { maxRedirects: 0 });
+    expect(fetched.status()).toBe(200);
+    expect(fetched.headers()['x-robots-tag']).toBe('noindex');
+    expect(fetched.headers()['cache-control']).toBe('private, no-store');
+    expect(fetched.headers()['referrer-policy']).toBe('same-origin');
+    expect(await fetched.text()).not.toContain('Lovelace');
+    expect((await request.head(link, { maxRedirects: 0 })).status()).toBe(200);
+    const mine = async () =>
+      (await googleEvents()).filter((event) => event.start.dateTime === slot);
+    expect(await mine()).toEqual([]);
+
+    await gotoHydrated(page, link.replace(/^https?:\/\/[^/]+/, ''));
+    await expect(
+      page.getByRole('heading', {
+        name: es ? 'Confirma tu llamada' : 'Confirm your call',
+      }),
+    ).toBeVisible();
+    await expect(page.getByText(/•••@example\.com/)).toBeVisible();
+    await page
+      .getByRole('button', {
+        name: es ? 'Confirmar la llamada' : 'Confirm the call',
+      })
+      .click();
+    await expect(
+      page.getByRole('heading', {
+        name: es ? 'Tu llamada está reservada' : 'Your call is booked',
+      }),
+    ).toBeVisible({ timeout: 30_000 });
+    expect(new URL(page.url()).pathname).toBe(es ? '/es/reservar' : '/book');
+
+    const events = await mine();
+    expect(events).toHaveLength(1);
+    expect(events[0]?.id).toMatch(/^bk[0-9a-f]{32}$/);
+    expect(events[0]?.calendarId).toBe(TEST_CALENDAR);
+    await expect.poll(async () => (await sentFor(email)).length).toBe(3);
+    const sent = await sentFor(email);
+    const booked = sent.find(
+      (mail) => mail.to === email && !mail.subject?.startsWith('Confirm'),
+    );
+    expect(booked?.subject).toMatch(es ? /^Reservada: / : /^Booked: /);
+    const owner = sent.find((mail) => mail.to !== email);
+    expect(owner?.text).toContain('Booking: confirmed');
+    const cancel = cancelLinkIn(owner?.text ?? null);
+
+    // The owner opens the cancel link: a GET never cancels.
+    const ownerPage = await request.get(cancel);
+    expect(ownerPage.status()).toBe(200);
+    expect(ownerPage.headers()['x-robots-tag']).toBe('noindex');
+    expect(await mine()).toHaveLength(1);
+    await page.goto(cancel.replace(/^https?:\/\/[^/]+/, ''));
+    await page
+      .getByRole('button', { name: 'Cancel the call and email the visitor' })
+      .click();
+    await expect(
+      page.getByText(/^Cancelled\. The event is deleted/),
+    ).toBeVisible();
+    expect(await mine()).toEqual([]);
+    expect(
+      (await googleDeletions()).filter(
+        (deletion) => deletion.eventId === events[0]?.id,
+      ),
+    ).toEqual([
+      {
+        calendarId: TEST_CALENDAR,
+        eventId: events[0]?.id,
+        sendUpdates: 'all',
+        status: 204,
+      },
+    ]);
+    await expect.poll(async () => (await sentFor(email)).length).toBe(4);
+    const cancelled = (await sentFor(email)).at(-1);
+    expect(cancelled?.subject).toMatch(es ? /^Cancelada: / : /^Cancelled: /);
+
+    // The link now shows the cancelled state.
+    await gotoHydrated(page, link.replace(/^https?:\/\/[^/]+/, ''));
+    await expect(
+      page.getByRole('heading', {
+        name: es ? 'Esta llamada se ha cancelado' : 'This call was cancelled',
+      }),
+    ).toBeVisible();
+  });
+}
+
+test('a resend makes the first link invalid, and the newest one works', async ({
+  page,
+}) => {
+  const slot = slotValue(dayAt(3), '12:00');
+  const email = uniqueEmail('resend');
+  await requestOnPage(page, { slot, email });
+  const first = await confirmLinkFor(email);
+  const resend = page.getByRole('button', { name: 'Send the email again' });
+  await expect(resend).toBeEnabled({ timeout: 30_000 });
+  await resend.click();
+  await expect(
+    page.getByText('Sent again. Only the newest link works.'),
+  ).toBeVisible({ timeout: 30_000 });
+  await expect
+    .poll(async () => confirmLinksFor(await sentFor(email)).length)
+    .toBe(2);
+  const second = confirmLinksFor(await sentFor(email)).at(-1) ?? '';
+  expect(second).not.toBe(first);
+  await gotoHydrated(page, first.replace(/^https?:\/\/[^/]+/, ''));
+  await expect(
+    page.getByRole('heading', { name: "This link doesn't work" }),
+  ).toBeVisible();
+  await gotoHydrated(page, second.replace(/^https?:\/\/[^/]+/, ''));
+  await expect(
+    page.getByRole('heading', { name: 'Confirm your call' }),
+  ).toBeVisible();
+});
+
+test('a disposable address gets its message and no email', async ({ page }) => {
+  const slot = slotValue(dayAt(4), '09:00');
+  const email = `e2e-${crypto.randomUUID().slice(0, 8)}@mailinator.com`;
+  await requestOnPage(page, { slot, email });
+  await expect(page.getByRole('alert')).toContainText(
+    'Please use a permanent email address.',
+  );
+  expect(await sentFor(email)).toEqual([]);
+});
+
+test('a filled honeypot shows the same pending panel and sends nothing', async ({
+  page,
+}) => {
+  const slot = slotValue(dayAt(4), '16:00');
+  const email = uniqueEmail('bot');
+  await gotoHydrated(page, '/book');
+  await page.locator('input[name="website"]').evaluate((input) => {
+    if (input instanceof HTMLInputElement) input.value = 'http://spam.example';
+  });
+  const input = page.locator(`input[value="${slot}"]`);
+  await input.evaluate((el) => el.closest('details')?.setAttribute('open', ''));
+  await input.check();
+  await page.getByLabel('Name').fill('[TEST] Bot');
+  await page.getByLabel('Email (the confirmation link goes here)').fill(email);
+  await page
+    .getByLabel('What would you like to talk about?')
+    .fill('Spam spam spam spam spam.');
+  await page.getByRole('checkbox').check();
+  const submit = page.getByRole('button', { name: 'Request this time' });
+  await expect(submit).toBeEnabled({ timeout: 30_000 });
+  await submit.click();
+  await expect(
+    page.getByRole('heading', { name: 'Check your inbox' }),
+  ).toBeVisible({ timeout: 30_000 });
+  await page.waitForTimeout(500);
+  expect(await sentFor(email)).toEqual([]);
+});
+
+test('an expired link says so, and every confirm state passes axe', async ({
+  page,
+}) => {
+  await gotoHydrated(
+    page,
+    `/book?confirm=${crypto.randomUUID()}.${'A'.repeat(43)}`,
+  );
+  await expect(
+    page.getByRole('heading', { name: "This link doesn't work" }),
+  ).toBeVisible();
+  for (const colorScheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme });
+    await settleAnimations(page);
+    const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
+    expect(results.violations).toEqual([]);
   }
 });
 
@@ -318,14 +528,14 @@ test('a slot taken meanwhile gives the alert, one refresh and keeps what was typ
   await input.check();
   await page.getByLabel('Name').fill('[TEST] Late Visitor');
   await page
-    .getByLabel('Email (the invitation goes here)')
+    .getByLabel('Email (the confirmation link goes here)')
     .fill(uniqueEmail('late'));
   await page
     .getByLabel('What would you like to talk about?')
     .fill('Taking the slot too late.');
   await page.getByRole('checkbox').check();
-  expect((await bearerBook(request, slot)).status).toBe('booked');
-  const submit = page.getByRole('button', { name: 'Book this time' });
+  expect((await bearerBook(request, slot)).status).toBe('pending');
+  const submit = page.getByRole('button', { name: 'Request this time' });
   await expect(submit).toBeEnabled({ timeout: 30_000 });
   const refreshes: string[] = [];
   page.on('request', (call) => {
@@ -350,7 +560,7 @@ test('two parallel bookings of one slot give exactly one booked and one slot_tak
     bearerBook(request, slot),
   ]);
   expect(results.map((result) => result.status).sort()).toEqual([
-    'booked',
+    'pending',
     'rejected',
   ]);
   expect(results.find((result) => result.status === 'rejected')).toEqual({
@@ -359,7 +569,7 @@ test('two parallel bookings of one slot give exactly one booked and one slot_tak
   });
   expect(
     (await googleEvents()).filter((event) => event.start.dateTime === slot),
-  ).toHaveLength(1);
+  ).toHaveLength(0);
 });
 
 test('three bookings fill a day and the day leaves the list', async ({
@@ -369,7 +579,7 @@ test('three bookings fill a day and the day leaves the list', async ({
   const day = dayAt(5);
   for (const at of ['08:00', '12:00', '16:00']) {
     expect((await bearerBook(request, slotValue(day, at))).status).toBe(
-      'booked',
+      'pending',
     );
   }
   expect((await bearerBook(request, slotValue(day, '10:00'))).status).toBe(

@@ -51,6 +51,16 @@ describe('TOOLS', () => {
     }
   });
 
+  it('tells agents that book_meeting only holds the time until the visitor confirms from the email', () => {
+    const tool = toolByName('book_meeting');
+    expect(tool?.description.en).toContain(
+      'only when they open it and press Confirm',
+    );
+    expect(tool?.description.es).toContain(
+      'solo cuando lo abre y pulsa Confirmar',
+    );
+  });
+
   it('keeps navigate client-only and book_meeting the only mutating tool', () => {
     expect(toolByName('navigate')).toMatchObject({
       clientOnly: true,

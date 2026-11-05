@@ -1,7 +1,12 @@
 import { gzipSync } from 'node:zlib';
 import AxeBuilder from '@axe-core/playwright';
 import { type Browser, expect, type Page, test } from '@playwright/test';
-import { googleEvents, sentFor, uniqueEmail } from './fakes';
+import {
+  confirmByLink,
+  confirmLinkFor,
+  googleEvents,
+  uniqueEmail,
+} from './fakes';
 import {
   BOOKING_PUBLISHED,
   gotoHydrated,
@@ -36,12 +41,12 @@ const PAGES = [
 const DIALOG = {
   en: {
     title: 'Confirm your call',
-    confirm: 'Confirm booking',
+    confirm: 'Request this time',
     cancel: 'Cancel',
   },
   es: {
     title: 'Confirma tu llamada',
-    confirm: 'Confirmar reserva',
+    confirm: 'Pedir esta hora',
     cancel: 'Cancelar',
   },
 } as const;
@@ -192,7 +197,9 @@ test.describe('with modelContext', () => {
           consequentialHint: true,
         });
         expect(book?.description).toContain(
-          locale === 'en' ? 'Nothing is booked' : 'No se reserva nada',
+          locale === 'en'
+            ? 'only when they open it and press Confirm'
+            : 'solo cuando lo abre y pulsa Confirmar',
         );
       }
       expect(seen).toEqual([]);
@@ -382,7 +389,7 @@ test.describe('book_meeting confirmation', () => {
       expect(await ownerEvents(email)).toEqual([]);
     });
 
-    test(`${locale}: books after the visitor fills the form, ticks consent and confirms`, async ({
+    test(`${locale}: holds after the visitor fills the form, ticks consent and confirms, and books from the email`, async ({
       page,
     }) => {
       await installModelContext(page);
@@ -402,15 +409,21 @@ test.describe('book_meeting confirmation', () => {
       await expect(confirm).toBeEnabled({ timeout: 30_000 });
       await confirm.click();
 
-      expect(await call).toMatchObject({
+      const answer = await call;
+      expect(answer).toEqual({
         ok: true,
-        result: { status: 'booked' },
+        result: {
+          status: 'pending',
+          label: expect.any(String),
+          expiresAt: expect.any(String),
+        },
       });
       expect(posts).toHaveLength(1);
       const done = page.getByRole('dialog', {
-        name: locale === 'en' ? "You're booked" : 'Llamada reservada',
+        name: locale === 'en' ? 'Check your inbox' : 'Revisa tu correo',
       });
       await expect(done.getByRole('heading')).toBeFocused();
+      expect(await ownerEvents(email)).toEqual([]);
 
       // An answered dialog does not block the next proposal: it is replaced.
       const next = await offeredSlot(page);
@@ -428,10 +441,10 @@ test.describe('book_meeting confirmation', () => {
         .click();
       expect(await again).toEqual({ ok: true, result: { status: 'declined' } });
 
+      expect(
+        await confirmByLink(page.request, await confirmLinkFor(email)),
+      ).toBe(303);
       await expect.poll(async () => (await ownerEvents(email)).length).toBe(1);
-      await expect
-        .poll(async () => (await sentFor(email)).length)
-        .toBeGreaterThan(0);
     });
   }
 

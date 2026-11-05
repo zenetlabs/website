@@ -224,7 +224,7 @@ export type VoiceCopy = {
   you: string;
   assistant: string;
   opened: string;
-  booked: string;
+  pending: string;
   ended: string;
   again: string;
   micDenied: string;
@@ -614,6 +614,43 @@ export type CalculatorPageContent = {
   };
 };
 
+// The panel shown once a request is held and its confirm link sent (the
+// booking page, the chat card and the WebMCP dialog share it).
+export type BookingPendingCopy = {
+  title: string;
+  text: string;
+  spam: string;
+  resend: string;
+  resending: string;
+  resent: string;
+  cooldown: string;
+  wrongAddress: string;
+};
+
+type TitledText = { title: string; text: string };
+
+// The page behind the emailed link, one entry per state of the booking.
+export type BookingConfirmCopy = {
+  slot: string;
+  for: string;
+  button: string;
+  notYou: string;
+  pick: string;
+  states: Record<
+    | 'pending'
+    | 'confirming'
+    | 'confirmed'
+    | 'taken'
+    | 'expired'
+    | 'failed'
+    | 'unknown'
+    | 'unavailable'
+    | 'cancelled'
+    | 'invalid',
+    TitledText
+  >;
+};
+
 export type BookPageContent = {
   meta: PageMeta;
   breadcrumb: { label: string };
@@ -649,17 +686,12 @@ export type BookPageContent = {
     sending: string;
     noscript: string;
   };
-  success: {
-    title: string;
-    when: string;
-    text: string;
-    meet: string;
-    meetLater: string;
-  };
+  pending: BookingPendingCopy;
   errors: {
     taken: string;
     dayFull: string;
     limit: string;
+    disposable: string;
     send: string;
     captcha: string;
     rate: string;
@@ -724,8 +756,12 @@ export type ChatCopy = {
     confirm: string;
     sending: string;
     cancel: string;
+    close: string;
     done: string;
+    pending: BookingPendingCopy;
     taken: string;
+    limit: string;
+    disposable: string;
     error: string;
     rate: string;
     captcha: string;
@@ -743,16 +779,13 @@ export type WebMcpCopy = {
     confirming: string;
     cancel: string;
     close: string;
-    success: {
-      title: string;
-      text: string;
-      meet: string;
-      meetLater: string;
-    };
+    pending: BookingPendingCopy;
     errors: {
       captcha: string;
       rate: string;
       taken: string;
+      limit: string;
+      disposable: string;
       error: string;
     };
   };

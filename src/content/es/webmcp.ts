@@ -1,3 +1,4 @@
+import { bookingPending } from '@/content/es/booking-pending';
 import type { WebMcpCopy } from '@/content/types';
 
 // TODO(albert): review the WebMCP tool titles, the agent-facing notes and the confirmation dialog copy
@@ -12,33 +13,32 @@ export const webmcpCopy: WebMcpCopy = {
   },
   notes: {
     book_meeting:
-      'Abre un diálogo de confirmación en esta página. No se reserva nada hasta que el visitante lo confirme, y el resultado indica qué ha pasado. El visitante escribe su nombre, email y empresa en ese diálogo, así que pasa solo el horario (devuelto por check_availability) y el tema.',
+      'Abre un diálogo de confirmación en esta página. El visitante escribe allí su nombre, email y empresa, así que pasa solo el horario (devuelto por check_availability) y el tema. Cuando confirma el diálogo, la hora queda guardada 30 minutos y recibe un correo con un enlace: la llamada solo queda reservada cuando lo abre y pulsa Confirmar. Un resultado pending significa exactamente eso; no le digas nunca al visitante que la llamada está reservada.',
     navigate:
       'Abre una página de este sitio en la pestaña actual o baja hasta una sección de la página de inicio.',
   },
   dialog: {
     title: 'Confirma tu llamada',
     intro:
-      'Un agente de IA de tu navegador ha pedido reservar esta llamada por ti. Revisa los datos: no se reserva nada hasta que confirmes.',
+      'Un agente de IA de tu navegador ha pedido reservar esta llamada por ti. Revisa los datos: no se reserva nada hasta que confirmes aquí y después pulses Confirmar en el correo que te enviamos.',
     when: 'Cuándo',
-    confirm: 'Confirmar reserva',
-    confirming: 'Reservando…',
+    confirm: 'Pedir esta hora',
+    confirming: 'Enviando…',
     cancel: 'Cancelar',
     close: 'Cerrar',
-    success: {
-      title: 'Llamada reservada',
-      text: 'Hemos enviado una invitación de Google Calendar y una confirmación a {email}.',
-      meet: 'Abrir el enlace de Google Meet',
-      meetLater: 'El enlace de Google Meet está en la invitación.',
-    },
+    pending: bookingPending,
     errors: {
       captcha:
         'La comprobación de seguridad ha fallado. Inténtalo de nuevo o escribe a',
       rate: 'Demasiados intentos desde tu conexión. Espera un minuto e inténtalo de nuevo, o escribe a',
       taken:
         'Esa hora ya no está disponible. Pide otra a tu agente o escribe a',
+      limit:
+        'Ahora no podemos guardarte otra hora con esta dirección. Si ya pediste una, confírmala desde el correo; si no, inténtalo más tarde o escríbenos a',
+      disposable:
+        'Usa una dirección de correo permanente. No podemos reservar llamadas con buzones temporales.',
       error:
-        'No hemos podido reservar la llamada. Revisa los datos e inténtalo de nuevo, o escribe a',
+        'No hemos podido enviar la solicitud. Revisa los datos e inténtalo de nuevo, o escribe a',
     },
   },
 };

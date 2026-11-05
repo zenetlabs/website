@@ -1,16 +1,19 @@
 import { BOOKING_RULES } from '@/content/booking-rules';
-import { isPublished, type SiteFlags } from '@/lib/page-registry';
-import type { BookingDeps } from '@/server/booking';
-import { browserBookingSchema } from '@/server/booking-schema';
+import { SURFACE_ACTION, type Surface } from '@/lib/booking-surfaces';
+import type { SiteFlags } from '@/lib/page-registry';
+import { type BookingDeps, targetOf } from '@/server/booking';
+import { browserBookingSchema, type Channel } from '@/server/booking-schema';
 import { linkedChatSession } from '@/server/chat/store';
 import { isLimited, type Limiter } from '@/server/rate-limit';
 import {
-  guardBrowserPost,
+  gate,
   isJsonRequest,
   parseJson,
   readCapped,
+  verifyHuman,
 } from '@/server/request';
-import { bookedResult } from '@/server/tools/book-meeting';
+import { sameBytes, sha256 } from '@/server/secret-compare';
+import { CONFIRM_WINDOW_MS, pendingResult } from '@/server/tools/book-meeting';
 import { contactFor } from '@/server/tools/contact';
 import {
   execute,
@@ -19,7 +22,7 @@ import {
   succeed,
 } from '@/server/tools/execute';
 import { manifest, toolByName } from '@/server/tools/registry';
-import type { ServerTool } from '@/server/tools/types';
+import { isTestContext, type ServerTool } from '@/server/tools/types';
 import { voiceCall } from '@/server/voice/call';
 
 const SLOT_MS = BOOKING_RULES.slotMinutes * 60_000;
@@ -39,26 +42,14 @@ export function manifestResponse(site: SiteFlags): Response {
   });
 }
 
-async function digest(value: string): Promise<ArrayBuffer> {
-  return crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
-}
-
-function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
-  let difference = a.length ^ b.length;
-  for (let index = 0; index < a.length; index += 1) {
-    difference |= (a[index] ?? 0) ^ (b[index] ?? 0);
-  }
-  return difference === 0;
-}
-
 async function bearerMatches(
   header: string,
   secret: string | null,
 ): Promise<boolean> {
   const presented = BEARER.exec(header)?.[1];
   if (presented === undefined || secret === null) return false;
-  const [a, b] = await Promise.all([digest(presented), digest(secret)]);
-  return sameBytes(new Uint8Array(a), new Uint8Array(b));
+  const [a, b] = await Promise.all([sha256(presented), sha256(secret)]);
+  return sameBytes(a, b);
 }
 
 export async function handleToolRequest(
@@ -96,58 +87,86 @@ export async function handleToolRequest(
   });
 }
 
+// A chat booking keeps the chat channel only with a session it can be linked to.
+function channelFor(surface: Surface, chatLinked: boolean): Channel {
+  if (surface === 'webmcp') return 'webmcp';
+  return surface === 'chat' && chatLinked ? 'chat' : 'web';
+}
+
+// The checks run cheapest first: the gate (origin, JSON, limiter, size, schema),
+// then the flag and the calendar secret, then the honeypot, then Turnstile.
+// With booking off, a honeypot hit gets exactly the answer a real request
+// gets, so the trap cannot be used to probe whether booking is on.
 async function browserBooking(
   tool: ServerTool,
   request: Request,
   deps: ToolHttpDeps,
   now: number,
 ): Promise<Response> {
-  const guarded = await guardBrowserPost({
+  const gated = await gate({
     request,
     schema: browserBookingSchema,
-    action: 'book',
     label: 'tools',
     limiter: deps.bookLimiter,
     maxBytes: MAX_BODY_BYTES,
-    turnstileSecret: deps.turnstileSecret,
-    fetch: deps.fetch,
+    secret: deps.turnstileSecret,
   });
-  if (guarded.status === 'honeypot') {
-    const { slot, locale, timeZone } = guarded.input;
-    if (!isPublished('book', deps.site)) {
-      return succeed({
-        status: 'unavailable',
-        reason: 'not_configured',
-        contact: contactFor(locale, deps.site),
-      });
-    }
-    const start = Date.parse(slot);
+  if (gated.status === 'rejected') return reject(gated.error, gated.issues);
+  const { input, ip, secret } = gated;
+  const url = new URL(request.url);
+  const target = await targetOf({
+    deps,
+    isTest: isTestContext({ hostname: url.hostname }),
+  });
+  if (!target.ok) {
+    return succeed({
+      status: 'unavailable',
+      reason: target.reason,
+      contact: contactFor(input.locale, deps.site),
+    });
+  }
+  if (input.website !== '') {
+    // The same shape a real request gets, so a bot learns nothing; no row, no email.
+    console.warn('booking: honeypot');
+    const start = Date.parse(input.slot);
     return succeed(
-      bookedResult({
+      pendingResult({
         start,
         end: start + SLOT_MS,
-        meetUrl: null,
-        locale,
-        timeZone,
+        expiresAt: now + CONFIRM_WINDOW_MS,
+        resent: false,
+        locale: input.locale,
+        timeZone: input.timeZone,
       }),
     );
   }
-  if (guarded.status === 'rejected') {
-    return reject(guarded.error, guarded.issues);
-  }
-  const { input } = guarded;
-  const chatSessionId = await linkedChatSession(
-    deps.db,
-    deps.site,
-    input.chatSessionId,
+  const failure = await verifyHuman({
+    token: input.turnstileToken,
+    action: SURFACE_ACTION[input.surface],
+    label: 'tools',
+    ip,
+    secret,
+    fetch: deps.fetch,
+    hostname: url.hostname,
+    testingKeys: deps.server.turnstile.testingKeys,
     now,
-  );
+  });
+  if (failure !== null) return reject(failure);
+  const resolved = await secret;
+  if (resolved === null) return reject('unavailable');
+  const chatSessionId =
+    input.surface === 'chat'
+      ? await linkedChatSession(deps.db, deps.site, input.chatSessionId, now)
+      : null;
   return execute(tool, input, deps, {
-    channel: chatSessionId === null ? 'web' : 'chat',
+    channel: channelFor(input.surface, chatSessionId !== null),
+    surface: input.surface,
     consentAt: now,
     attribution: input.attribution,
     chatSessionId,
-    hostname: new URL(request.url).hostname,
+    hostname: url.hostname,
+    origin: url.origin,
+    ip: { address: ip ?? 'unknown', secret: resolved.value },
     now,
   });
 }

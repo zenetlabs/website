@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { HEADERS } from '@/lib/security-headers';
+import { HEADERS, withSecurityHeaders } from '@/lib/security-headers';
 
 function starBlock(file: string): Array<[string, string]> {
   const lines: Array<[string, string]> = [];
@@ -50,5 +50,23 @@ describe('Permissions-Policy', () => {
     expect(await policy(true)).toBe(
       'camera=(), microphone=(self), geolocation=()',
     );
+  });
+});
+
+describe('withSecurityHeaders', () => {
+  it('keeps a stricter Referrer-Policy the response set, never a looser one, and overrides the rest', () => {
+    const own = withSecurityHeaders(
+      new Response('x', {
+        headers: {
+          'Referrer-Policy': 'no-referrer',
+          'X-Frame-Options': 'ALLOW',
+        },
+      }),
+    );
+    expect(own.headers.get('Referrer-Policy')).toBe('no-referrer');
+    expect(own.headers.get('X-Frame-Options')).toBe('DENY');
+    expect(
+      withSecurityHeaders(new Response('x')).headers.get('Referrer-Policy'),
+    ).toBe('strict-origin-when-cross-origin');
   });
 });

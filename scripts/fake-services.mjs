@@ -113,6 +113,8 @@ const SCOPES = [
 ];
 
 const googleEvents = new Map();
+const googleDeleted = new Set();
+const googleDeletions = [];
 const googleBusy = new Map();
 const googleFailures = [];
 const google = { tokens: 0, meets: 0, conference: 'success' };
@@ -265,6 +267,26 @@ function googleGet(request, response, calendarId, eventId) {
   return send(response, 200, eventResponse(event));
 }
 
+// 204 for a deletion, 410 once it is gone, 404 for an id never seen.
+function googleDelete(request, response, calendarId, eventId, url) {
+  if (!isAuthorised(request)) return googleError(response, 401, 'authError');
+  const failure = takeGoogleFailure('delete');
+  if (failure) return googleError(response, failure.status, 'backendError');
+  const key = `${calendarId}/${eventId}`;
+  const sendUpdates = url.searchParams.get('sendUpdates');
+  const calendar = googleEvents.get(calendarId);
+  if (calendar?.has(eventId)) {
+    calendar.delete(eventId);
+    googleDeleted.add(key);
+    googleDeletions.push({ calendarId, eventId, sendUpdates, status: 204 });
+    response.writeHead(204);
+    return response.end();
+  }
+  const status = googleDeleted.has(key) ? 410 : 404;
+  googleDeletions.push({ calendarId, eventId, sendUpdates, status });
+  return googleError(response, status, status === 410 ? 'deleted' : 'notFound');
+}
+
 async function handleGoogle(request, response, url) {
   const { pathname } = url;
   const route = `${request.method} ${pathname}`;
@@ -281,6 +303,15 @@ async function handleGoogle(request, response, url) {
   const one = pathname.match(
     /^\/__google\/calendar\/v3\/calendars\/([^/]+)\/events\/([^/]+)$/,
   );
+  if (one && request.method === 'DELETE') {
+    return googleDelete(
+      request,
+      response,
+      decodeURIComponent(one[1]),
+      decodeURIComponent(one[2]),
+      url,
+    );
+  }
   if (one && request.method === 'GET') {
     return googleGet(
       request,
@@ -295,6 +326,9 @@ async function handleGoogle(request, response, url) {
       200,
       [...googleEvents.values()].flatMap((calendar) => [...calendar.values()]),
     );
+  }
+  if (route === `GET ${GOOGLE}/__deletions`) {
+    return send(response, 200, googleDeletions);
   }
   if (route === `POST ${GOOGLE}/__busy`) {
     const options = parse(await readBody(request)) ?? {};
@@ -320,6 +354,8 @@ async function handleGoogle(request, response, url) {
   }
   if (route === `DELETE ${GOOGLE}/__state`) {
     googleEvents.clear();
+    googleDeleted.clear();
+    googleDeletions.length = 0;
     googleBusy.clear();
     googleFailures.length = 0;
     google.conference = 'success';

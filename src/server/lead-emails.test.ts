@@ -264,14 +264,14 @@ describe('booking emails', () => {
         'When: Tuesday 3 November, 5:00 pm (Asia/Singapore)',
         'Where: Google Meet, https://meet.google.com/abc-defg-hij',
         '',
-        'You will also receive a Google Calendar invitation. To change the time or cancel, reply to this email.',
+        "You'll also receive a Google Calendar invitation. To change the time or cancel, reply to this email.",
         '',
         'Before the call, think of the two or three tasks your team repeats most and the tools involved.',
         '',
         `Zenet Labs · ${legalEntity('en').legalName}`,
         'https://zenetlabs.com',
         '',
-        'You are receiving this email because this address was used to book a call on zenetlabs.com. If that was not you, reply and we will cancel it.',
+        "You are receiving this email because a call was booked and confirmed from this address on zenetlabs.com. If that wasn't you, reply and we'll cancel it.",
       ].join('\n'),
     );
     for (const text of [

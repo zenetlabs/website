@@ -5,11 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import type { ChatEvent } from '@/lib/chat-events';
 import { isChatEvent } from '@/lib/chat-events';
+import { utcDay } from '@/lib/time';
 import { clearBusyCache } from '@/server/booking';
 import { fakeChatModel } from '@/server/chat/fake-model';
 import { PRICE_FALLBACK, REFUSAL } from '@/server/chat/guard';
 import { type ChatDeps, handleChatPost } from '@/server/chat/handler';
-import { utcDay } from '@/server/chat/usage';
 import { clearTokenCache } from '@/server/google-auth';
 import {
   bookingDeps,
@@ -173,7 +173,7 @@ async function rows<T extends z.ZodType>(
 }
 
 beforeEach(async () => {
-  world = newWorld();
+  world = newWorld(NOW);
   world.turnstile = {
     success: true,
     action: 'chat',
@@ -197,6 +197,7 @@ beforeEach(async () => {
     DB.prepare('DELETE FROM ai_usage'),
     DB.prepare('DELETE FROM chat_ip_usage'),
     DB.prepare('DELETE FROM bookings'),
+    DB.prepare('DELETE FROM booking_ip_usage'),
     DB.prepare('DELETE FROM leads'),
   ]);
 });
@@ -421,6 +422,7 @@ describe('a new session', () => {
   });
 
   it('marks every session from a non-live host as a test', async () => {
+    world.turnstile.hostname = 'preview-abc.workers.dev';
     await events(
       await post(
         FIRST,

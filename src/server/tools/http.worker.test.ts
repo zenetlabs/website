@@ -1,7 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { clearBusyCache } from '@/server/booking';
+import { clearBusyCache, confirmFromLink } from '@/server/booking';
 import { clearTokenCache } from '@/server/google-auth';
 import { assistantLive, getHealth } from '@/server/health';
 import {
@@ -40,6 +40,7 @@ const BROWSER = {
     referrer: '',
     page: '/book',
   },
+  surface: 'page',
 };
 
 const BODY = z.object({
@@ -130,6 +131,19 @@ const agent = (session: string): Record<string, string> => ({
   'X-Voice-Session': session,
 });
 
+// The visitor opens the newest emailed link and presses Confirm.
+async function confirmLatest(email = 'ada@example.com'): Promise<string> {
+  await Promise.allSettled(background);
+  const mail = world.sent.filter((sent) => sent.to === email).at(-1);
+  const token = /\?confirm=([\w.-]+)/.exec(mail?.text ?? '')?.[1] ?? '';
+  const result = await confirmFromLink(token, {
+    deps: deps(),
+    now: NOW + 60_000,
+  });
+  await Promise.allSettled(background);
+  return result;
+}
+
 async function count(table: string): Promise<number> {
   const row = await DB.prepare(`SELECT count(*) AS n FROM ${table}`).first<{
     n: number;
@@ -138,7 +152,7 @@ async function count(table: string): Promise<number> {
 }
 
 beforeEach(async () => {
-  world = newWorld();
+  world = newWorld(NOW);
   background = [];
   limiter = { tools: false, book: false };
   bearer = BEARER;
@@ -147,6 +161,7 @@ beforeEach(async () => {
   clearTokenCache();
   clearBusyCache();
   await DB.prepare('DELETE FROM bookings').run();
+  await DB.prepare('DELETE FROM booking_ip_usage').run();
   await DB.prepare('DELETE FROM leads').run();
   await DB.prepare('DELETE FROM voice_sessions').run();
 });
@@ -194,7 +209,7 @@ describe('routing and auth', () => {
     expect(response.status).toBe(200);
     expect(await json(response)).toMatchObject({
       ok: true,
-      result: { status: 'booked' },
+      result: { status: 'pending' },
     });
     await Promise.allSettled(background);
     expect(world.turnstileCalls).toBe(0);
@@ -338,9 +353,9 @@ describe('a bearer call needs a live voice session', () => {
       agent(id),
     );
     expect(await json(response)).toMatchObject({
-      result: { status: 'booked' },
+      result: { status: 'pending' },
     });
-    await Promise.allSettled(background);
+    expect(await confirmLatest()).toBe('confirmed');
     const lead = await DB.prepare(
       'SELECT source, is_test, context FROM leads',
     ).first<{ source: string; is_test: number; context: string }>();
@@ -385,7 +400,7 @@ describe('a bearer call needs a live voice session', () => {
       { ...BOOKING, confirmed: true },
       agent(id),
     );
-    expect(await json(first)).toMatchObject({ result: { status: 'booked' } });
+    expect(await json(first)).toMatchObject({ result: { status: 'pending' } });
     await Promise.allSettled(background);
     const second = await post(
       'book_meeting',
@@ -419,7 +434,7 @@ describe('a bearer call needs a live voice session', () => {
     const statuses = answers.map(
       (answer) => z.object({ status: z.string() }).parse(answer.result).status,
     );
-    expect(statuses.filter((status) => status === 'booked')).toHaveLength(1);
+    expect(statuses.filter((status) => status === 'pending')).toHaveLength(1);
     expect(statuses.filter((status) => status === 'rejected')).toHaveLength(2);
     expect(await count('bookings')).toBe(1);
     const row = await DB.prepare(
@@ -488,7 +503,7 @@ describe('a bearer call needs a live voice session', () => {
       { ...BOOKING, confirmed: true },
       { ...agent(id), 'X-Voice-Conversation': 'conv_first1' },
     );
-    await Promise.allSettled(background);
+    expect(await confirmLatest()).toBe('confirmed');
     const lead = await DB.prepare('SELECT context FROM leads').first<{
       context: string;
     }>();
@@ -593,12 +608,20 @@ describe('the browser booking path', () => {
     expect(response.status).toBe(200);
     expect(await json(response)).toMatchObject({
       ok: true,
-      result: { status: 'booked', meetUrl: null },
+      result: {
+        status: 'pending',
+        label: 'Tuesday 12 January, 5:00 pm',
+        expiresAt: new Date(NOW + 30 * 60_000).toISOString(),
+        resent: false,
+      },
     });
+    await Promise.allSettled(background);
     expect(world.turnstileCalls).toBe(0);
     expect(world.events).toEqual([]);
     expect(world.freebusyCalls).toEqual([]);
+    expect(world.sent).toEqual([]);
     expect(await count('bookings')).toBe(0);
+    expect(await count('booking_emails')).toBe(0);
     expect(await count('leads')).toBe(0);
   });
 
@@ -617,15 +640,27 @@ describe('the browser booking path', () => {
   it.each([
     [
       'a failed check',
-      { success: false, action: 'book', hostname: 'zenetlabs.com' },
+      { success: false, action: 'book-page', hostname: 'zenetlabs.com' },
     ],
     [
       'the lead action',
       { success: true, action: 'lead', hostname: 'zenetlabs.com' },
     ],
     [
+      'a token minted for the chat card',
+      { success: true, action: 'book-chat', hostname: 'zenetlabs.com' },
+    ],
+    [
+      'the old shared action',
+      { success: true, action: 'book', hostname: 'zenetlabs.com' },
+    ],
+    [
       'a foreign hostname',
-      { success: true, action: 'book', hostname: 'evil.example' },
+      { success: true, action: 'book-page', hostname: 'evil.example' },
+    ],
+    [
+      'another host of ours',
+      { success: true, action: 'book-page', hostname: 'www.zenetlabs.com' },
     ],
   ])('answers 403 captcha for %s', async (_label, verdict) => {
     world.turnstile = verdict;
@@ -639,7 +674,7 @@ describe('the browser booking path', () => {
   describe('from the chat card', () => {
     const SESSION = '5f0c2a52-6f4e-4a6c-9d4e-0b1d7b3b0a11';
     const LIVE_SITE = { ...TEST_SITE, assistant: { published: true } };
-    const withChat = { ...BROWSER, chatSessionId: SESSION };
+    const withChat = { ...BROWSER, chatSessionId: SESSION, surface: 'chat' };
 
     async function session(createdAt: number) {
       await DB.prepare(
@@ -654,7 +689,7 @@ describe('the browser booking path', () => {
       await DB.prepare('DELETE FROM chat_sessions').run();
       world.turnstile = {
         success: true,
-        action: 'book',
+        action: 'book-chat',
         hostname: 'zenetlabs.com',
       };
     });
@@ -672,10 +707,10 @@ describe('the browser booking path', () => {
       );
       expect(await json(response)).toMatchObject({
         ok: true,
-        result: { status: 'booked' },
+        result: { status: 'pending' },
       });
-      await Promise.allSettled(background);
       expect(world.turnstileCalls).toBe(1);
+      expect(await confirmLatest()).toBe('confirmed');
       expect(
         await DB.prepare('SELECT source, chat_session_id FROM leads').first(),
       ).toEqual({
@@ -707,7 +742,7 @@ describe('the browser booking path', () => {
       await session(NOW - 60_000);
       world.turnstile = {
         success: false,
-        action: 'book',
+        action: 'book-chat',
         hostname: 'zenetlabs.com',
       };
       const response = await post(
@@ -734,9 +769,9 @@ describe('the browser booking path', () => {
         { site: LIVE_SITE },
       );
       expect(await json(response)).toMatchObject({
-        result: { status: 'booked' },
+        result: { status: 'pending' },
       });
-      await Promise.allSettled(background);
+      expect(await confirmLatest()).toBe('confirmed');
       expect(
         await DB.prepare('SELECT source, chat_session_id FROM leads').first(),
       ).toEqual({
@@ -753,7 +788,7 @@ describe('the browser booking path', () => {
       await post('book_meeting', withChat, { Origin: ORIGIN }, undefined, {
         site: { ...TEST_SITE, assistant: { published: false } },
       });
-      await Promise.allSettled(background);
+      expect(await confirmLatest()).toBe('confirmed');
       expect(
         await DB.prepare('SELECT source, chat_session_id FROM leads').first(),
       ).toEqual({
@@ -779,10 +814,14 @@ describe('the browser booking path', () => {
     expect(response.headers.get('access-control-allow-origin')).toBeNull();
     expect(await json(response)).toMatchObject({
       ok: true,
-      result: { status: 'booked', label: 'Tuesday 12 January, 5:00 pm' },
+      result: { status: 'pending', label: 'Tuesday 12 January, 5:00 pm' },
     });
     await Promise.allSettled(background);
     expect(world.turnstileCalls).toBe(1);
+    expect(world.turnstileBodies[0]?.idempotency_key).toEqual(
+      expect.any(String),
+    );
+    expect(await confirmLatest()).toBe('confirmed');
     const lead = await DB.prepare(
       'SELECT source, utm_source, gclid, submit_page FROM leads',
     ).first();
@@ -797,7 +836,50 @@ describe('the browser booking path', () => {
     });
   });
 
+  it('records the webmcp channel for the WebMCP dialog, with its own action', async () => {
+    world.turnstile = {
+      success: true,
+      action: 'book-webmcp',
+      hostname: 'zenetlabs.com',
+    };
+    const response = await browser({ ...BROWSER, surface: 'webmcp' });
+    expect(await json(response)).toMatchObject({
+      result: { status: 'pending' },
+    });
+    expect(await DB.prepare('SELECT channel FROM bookings').first()).toEqual({
+      channel: 'webmcp',
+    });
+    expect(await confirmLatest()).toBe('confirmed');
+    expect(await DB.prepare('SELECT source FROM leads').first()).toEqual({
+      source: 'booking',
+    });
+  });
+
+  it('refuses a page token on the chat surface', async () => {
+    world.turnstile = {
+      success: true,
+      action: 'book-page',
+      hostname: 'zenetlabs.com',
+    };
+    const response = await browser({ ...BROWSER, surface: 'chat' });
+    expect(response.status).toBe(403);
+    expect(await count('bookings')).toBe(0);
+  });
+
+  it('answers email_not_accepted for a disposable address, after Turnstile', async () => {
+    const response = await browser({
+      ...BROWSER,
+      email: 'someone@mailinator.com',
+    });
+    expect(await json(response)).toMatchObject({
+      result: { status: 'rejected', reason: 'email_not_accepted' },
+    });
+    expect(world.turnstileCalls).toBe(1);
+    expect(await count('bookings')).toBe(0);
+  });
+
   it('marks the booking as a test on a non-live host', async () => {
+    world.turnstile = { ...world.turnstile, hostname: 'localhost' };
     const response = await post(
       'book_meeting',
       BROWSER,
@@ -805,7 +887,7 @@ describe('the browser booking path', () => {
       'http://localhost:4173/api/tools/book_meeting',
     );
     expect(response.status).toBe(200);
-    await Promise.allSettled(background);
+    expect(await confirmLatest()).toBe('confirmed');
     expect(world.events.map((event) => event.calendarId)).toEqual([
       'test-calendar',
     ]);
@@ -971,6 +1053,19 @@ describe('while the booking flag is off', () => {
       ok: true,
       result: { status: 'unavailable', reason: 'not_configured' },
     });
+  });
+
+  it('answers a honeypot hit exactly like a real request while the calendar is unconfigured, before Turnstile', async () => {
+    secret = 'unconfigured';
+    const real = await json(await browser());
+    const trap = await json(
+      await browser({ ...BROWSER, website: 'http://spam.example' }),
+    );
+    expect(trap).toEqual(real);
+    expect(real).toMatchObject({
+      result: { status: 'unavailable', reason: 'not_configured' },
+    });
+    expect(world.turnstileCalls).toBe(0);
   });
 
   it('keeps the booking tools out of the manifest', async () => {

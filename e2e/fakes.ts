@@ -68,6 +68,59 @@ export async function googleEvents(): Promise<GoogleEvent[]> {
   return z.array(googleEventSchema).parse(await response.json());
 }
 
+const deletionSchema = z.object({
+  calendarId: z.string(),
+  eventId: z.string(),
+  sendUpdates: z.string().nullable(),
+  status: z.number(),
+});
+
+export async function googleDeletions(): Promise<
+  z.infer<typeof deletionSchema>[]
+> {
+  const response = await fetch(`${FAKES}/__google/__deletions`);
+  return z.array(deletionSchema).parse(await response.json());
+}
+
+// The newest confirm link emailed to this address, once it has arrived.
+async function linkState(link: string): Promise<string> {
+  const token = new URL(link).searchParams.get('confirm') ?? '';
+  const response = await fetch(
+    `${ORIGIN}/api/book/confirm?confirm=${encodeURIComponent(token)}`,
+  );
+  const body: unknown = await response.json().catch(() => null);
+  const parsed = z.object({ state: z.string() }).safeParse(body);
+  return parsed.success ? parsed.data.state : '';
+}
+
+export async function confirmLinkFor(email: string): Promise<string> {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    const mail = (await sentFor(email))
+      .filter((entry) => entry.subject?.startsWith('Confirm'))
+      .at(-1);
+    const link = /(https?:\/\/\S+\?confirm=[\w.-]+)/.exec(
+      mail?.text ?? '',
+    )?.[1];
+    // The link counts once its hash is stored, a moment after Resend took the email.
+    if (link && (await linkState(link)) !== 'invalid') return link;
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+  throw new Error(`no confirm link for ${email}`);
+}
+
+export function confirmLinksFor(mails: readonly FakeEmail[]): string[] {
+  return mails.flatMap((mail) => {
+    const link = /(https?:\/\/\S+\?confirm=[\w.-]+)/.exec(mail.text ?? '')?.[1];
+    return link ? [link] : [];
+  });
+}
+
+export function cancelLinkIn(text: string | null): string {
+  const link = /Cancel this booking: (\S+)/.exec(text ?? '')?.[1];
+  if (!link) throw new Error('no cancel link');
+  return link;
+}
+
 export async function googleBusy(
   calendarId: string,
   intervals: ReadonlyArray<{ start: string; end: string }>,
@@ -79,7 +132,7 @@ export async function googleBusy(
 }
 
 export async function googleFail(
-  op: 'token' | 'freebusy' | 'insert',
+  op: 'token' | 'freebusy' | 'insert' | 'delete',
   count: number,
   status = 500,
 ): Promise<void> {
@@ -165,3 +218,20 @@ export async function elevenLabsFail(
 }
 
 export const TEST_CALENDAR = 'local-test';
+
+// What the Confirm button on the emailed link posts, as a same-origin form.
+export async function confirmByLink(
+  request: APIRequestContext,
+  link: string,
+): Promise<number> {
+  const url = new URL(link);
+  const response = await request.post('/api/book/confirm', {
+    headers: { Origin: ORIGIN },
+    form: {
+      token: url.searchParams.get('confirm') ?? '',
+      locale: url.pathname.startsWith('/es') ? 'es' : 'en',
+    },
+    maxRedirects: 0,
+  });
+  return response.status();
+}

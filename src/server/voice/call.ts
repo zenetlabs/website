@@ -49,8 +49,10 @@ function conversationOf(request: Request): string | null {
   return CONVERSATION_ID.test(value) ? value : null;
 }
 
-function isBooked(result: unknown): boolean {
-  return isRecord(result) && result.status === 'booked';
+// A held request counts as the session's one booking: the visitor confirms it
+// from the email, and the call cannot ask for a second one meanwhile.
+function isRequested(result: unknown): boolean {
+  return isRecord(result) && result.status === 'pending';
 }
 
 // A tool call from an ElevenLabs agent, after the bearer secret matched: it also
@@ -103,12 +105,16 @@ export async function voiceCall(
   }
 
   const { session } = claim;
+  const url = new URL(request.url);
   const transport: Transport = {
     channel: 'voice',
+    surface: 'voice',
     consentAt: books ? now : null,
     attribution: null,
     chatSessionId: null,
-    hostname: new URL(request.url).hostname,
+    hostname: url.hostname,
+    origin: url.origin,
+    ip: null,
     now,
     voice: { sessionId: id, conversationId: session.conversationId },
     testSession: session.isTest,
@@ -118,10 +124,10 @@ export async function voiceCall(
     withSession(raw, session),
     deps,
     transport,
-    // The one booking of a session: marked done when it happened, freed when not.
+    // The one booking of a session: marked once requested, freed when not.
     books
       ? async (result) => {
-          if (isBooked(result)) await markVoiceBooked(deps.db, id, now);
+          if (isRequested(result)) await markVoiceBooked(deps.db, id, now);
           else await releaseVoiceBooking(deps.db, id);
         }
       : undefined,

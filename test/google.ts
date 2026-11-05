@@ -33,7 +33,14 @@ export const TEST_SERVER: ServerConfig = {
     calendarUrl: 'https://google.test/calendar/v3',
     busyCacheMs: 0,
     failureCacheMs: 0,
+    limits: {
+      perIpDaily: 5,
+      perAddressDaily: 3,
+      siteDaily: 40,
+      resendCooldownSeconds: 60,
+    },
   },
+  turnstile: { testingKeys: false },
   assistant: {
     model: 'fake',
     aiGatewayName: null,
@@ -80,11 +87,22 @@ export type World = {
   tokenCalls: number;
   insertMode: InsertMode;
   sent: Array<{ to: string; subject: string; text: string }>;
-  turnstile: { success: boolean; action: string; hostname: string };
+  // What Siteverify answers; challenge_ts defaults to the world's clock.
+  turnstile: {
+    success: boolean;
+    action: string;
+    hostname: string;
+    challenge_ts?: string;
+    'error-codes'?: string[];
+  };
   turnstileCalls: number;
+  turnstileBodies: Record<string, unknown>[];
+  deletes: Array<{ calendarId: string; eventId: string; sendUpdates: string }>;
+  deleteStatus: number;
+  clock: number;
 };
 
-export function newWorld(): World {
+export function newWorld(clock: number): World {
   return {
     busy: new Map(),
     events: [],
@@ -96,8 +114,16 @@ export function newWorld(): World {
     tokenCalls: 0,
     insertMode: 'ok',
     sent: [],
-    turnstile: { success: true, action: 'book', hostname: 'zenetlabs.com' },
+    turnstile: {
+      success: true,
+      action: 'book-page',
+      hostname: 'zenetlabs.com',
+    },
     turnstileCalls: 0,
+    turnstileBodies: [],
+    deletes: [],
+    deleteStatus: 204,
+    clock,
   };
 }
 
@@ -171,6 +197,23 @@ export function fakeFetch(world: World): typeof fetch {
       );
     if (url.origin === 'https://google.test' && events) {
       const calendarId = decodeURIComponent(events[1] ?? '');
+      if (method === 'DELETE') {
+        const eventId = decodeURIComponent(events[2] ?? '');
+        world.deletes.push({
+          calendarId,
+          eventId,
+          sendUpdates: url.searchParams.get('sendUpdates') ?? '',
+        });
+        if (world.deleteStatus === 204) {
+          world.events = world.events.filter(
+            (event) =>
+              !(event.calendarId === calendarId && event.body.id === eventId),
+          );
+        }
+        return new Response(world.deleteStatus === 204 ? null : '{}', {
+          status: world.deleteStatus,
+        });
+      }
       if (method === 'POST') {
         const stored: StoredEvent = { calendarId, body: readJson(init) };
         if (world.insertMode === 'http500') {
@@ -217,7 +260,11 @@ export function fakeFetch(world: World): typeof fetch {
     }
     if (path === 'https://challenges.cloudflare.com/turnstile/v0/siteverify') {
       world.turnstileCalls += 1;
-      return Response.json(world.turnstile);
+      world.turnstileBodies.push(readJson(init));
+      return Response.json({
+        challenge_ts: new Date(world.clock).toISOString(),
+        ...world.turnstile,
+      });
     }
     throw new TypeError(`unexpected fetch ${method} ${path}`);
   };
@@ -232,6 +279,7 @@ export function bookingDeps(
   return {
     db,
     resendKey: async () => 're_test',
+    linkKey: async () => 'link-key',
     fetch: fakeFetch(world),
     server: TEST_SERVER,
     site: TEST_SITE,

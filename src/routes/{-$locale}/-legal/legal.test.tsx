@@ -51,7 +51,7 @@ const STORAGE_ES = [
   'calendario de Google Workspace',
   'no se incluyen en la invitación',
   'Google Workspace Calendar y Meet',
-  'que no llegan a confirmarse: los borramos a los 30 días',
+  'el resto a los 30 días',
   'Unión Europea',
   '24 meses',
   'acuse de recibo',
@@ -66,7 +66,7 @@ const STORAGE_EN = [
   'Google Workspace calendar',
   'they are not put in the invitation',
   'Google Workspace Calendar and Meet',
-  'Booking attempts that are never confirmed: deleted after 30 days',
+  'the rest after 30 days',
   'European Union',
   '24 months',
   'acknowledgement email',
@@ -179,7 +179,7 @@ const STATES: ReadonlyArray<
       PRIVACY_EMAIL,
       'Google Asia Pacific Pte. Ltd.',
       'single legal basis under the GDPR',
-      'once a month we delete by hand',
+      'deleted automatically 24 months after the booking',
       'kept by Resend',
       'Cloudflare D1 Time Travel',
       'section 26',
@@ -236,7 +236,7 @@ const STATES: ReadonlyArray<
       'no es una base jurídica adicional',
       'contrata directamente como encargados del tratamiento',
       'Google Cloud EMEA Limited',
-      'una vez al mes borramos a mano',
+      'se borran automáticamente 24 meses después de la reserva',
       'en Resend (contenido, datos de envío y eventos de entrega): 30 días',
       'Time Travel de Cloudflare D1',
       'art. 12.3 del RGPD',
@@ -393,7 +393,8 @@ describe('consent version', () => {
   ])('%s is dated like CONSENT_VERSION', (_name, Page, date) => {
     const body = text(<Page title="t" entity={SINGAPORE} />);
     expect(body).toContain(date);
-    expect(CONSENT_VERSION).toBe('2026-11-05');
+    // The date of the policy, then a revision for a second change that day.
+    expect(CONSENT_VERSION).toBe('2026-11-05.2');
   });
 });
 

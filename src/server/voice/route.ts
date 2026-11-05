@@ -10,6 +10,7 @@ export function postVoiceSession(request: Request): Promise<Response> {
     site: SITE,
     apiOrigin: __SERVER__.voice.apiOrigin,
     dailySessions: __SERVER__.voice.dailySessions,
+    testingKeys: __SERVER__.turnstile.testingKeys,
     limiter: env.VOICE_LIMITER,
     apiKey: () => readSecret(env.ELEVENLABS_API_KEY),
     toolSecret: () => readSecret(env.TOOLS_BEARER_SECRET),

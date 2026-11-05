@@ -10,7 +10,8 @@
   },
   "scripts": {
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
-    "db:clear-bookings:local": "wrangler d1 execute DB --local --command \"DELETE FROM bookings\"",
+    "db:clear-bookings:local": "wrangler d1 execute DB --local --command \"DELETE FROM bookings; DELETE FROM booking_ip_usage\"",
+    "disposable:update": "node scripts/update-disposable-domains.mjs",
     "dev": "vite dev --port 3000",
     "build": "vite build",
     "preview": "vite preview --port 4173 --strictPort",

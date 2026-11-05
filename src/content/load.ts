@@ -1,5 +1,6 @@
 import type {
   AboutPageContent,
+  BookingConfirmCopy,
   BookPageContent,
   CalculatorPageContent,
   CasePageContent,
@@ -247,6 +248,17 @@ export async function loadBookContent(locale: Locale): Promise<{
 }> {
   const [{ bookPage }, { services }] = await BOOK[locale]();
   return { copy: bookPage, services };
+}
+
+const BOOK_CONFIRM = {
+  en: () => import('@/content/en/book-confirm'),
+  es: () => import('@/content/es/book-confirm'),
+};
+
+export async function loadBookConfirmCopy(
+  locale: Locale,
+): Promise<BookingConfirmCopy> {
+  return (await BOOK_CONFIRM[locale]()).bookConfirm;
 }
 
 export async function loadAboutContent(locale: Locale): Promise<{

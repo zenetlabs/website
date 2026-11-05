@@ -38,7 +38,9 @@ export function leadPage(id: string): Promise<Response> {
     const chat = found.lead.chat_session_id;
     const conversation =
       chat === null ? undefined : await transcript(env.DB, chat);
-    return htmlResponse(leadDetailHtml(found.lead, found.emails, conversation));
+    return htmlResponse(
+      leadDetailHtml(found.lead, found.emails, conversation, found.booking),
+    );
   });
 }
 

@@ -29,6 +29,7 @@ type ParamEvents = {
   calculator_complete: { project_type: ProjectType };
 };
 type PlainEvent =
+  | 'book_request'
   | 'book_meeting'
   | 'chat_open'
   | 'chat_message'
@@ -84,4 +85,13 @@ export function track<E extends keyof ParamEvents>(
 export function track(event: string, params?: Record<string, string>): void {
   if (__GA4_ID__ === null || !window.zenetTracking) return;
   window.gtag?.('event', event, params);
+}
+
+// The click on Confirm in the emailed link: a native form post leaves the page
+// at once, so both conversions go with beacon transport. The method is the
+// channel the request came from.
+export function trackBookingConfirm(method: LeadMethod): void {
+  if (__GA4_ID__ === null || !window.zenetTracking) return;
+  window.gtag?.('event', 'book_meeting', { transport_type: 'beacon' });
+  window.gtag?.('event', 'generate_lead', { method, transport_type: 'beacon' });
 }

@@ -102,53 +102,6 @@ export function BookingDetailsFields({
   );
 }
 
-// The confirmation shown once a booking is made. The caller owns the wrapper.
-export function BookingSuccess({
-  headingRef,
-  headingId,
-  headingClass,
-  title,
-  when,
-  text,
-  meetUrl,
-  meet,
-  meetLater,
-}: {
-  headingRef: Ref<HTMLHeadingElement>;
-  headingId?: string;
-  headingClass: string;
-  title: string;
-  when: string;
-  text: string;
-  meetUrl: string | null;
-  meet: string;
-  meetLater: string;
-}) {
-  return (
-    <>
-      <h2
-        ref={headingRef}
-        id={headingId}
-        tabIndex={-1}
-        className={`${headingClass} outline-hidden`}
-      >
-        {title}
-      </h2>
-      <p className="font-medium">{when}</p>
-      <p className="text-fg-soft">{text}</p>
-      {meetUrl ? (
-        <p>
-          <a href={meetUrl} className={TEXT_LINK}>
-            {meet}
-          </a>
-        </p>
-      ) : (
-        <p className="text-muted-fg">{meetLater}</p>
-      )}
-    </>
-  );
-}
-
 export function Honeypot({ label }: { label: string }) {
   return (
     <div aria-hidden="true" className="sr-only">

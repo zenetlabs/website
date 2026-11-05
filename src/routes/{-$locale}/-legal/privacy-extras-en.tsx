@@ -24,7 +24,8 @@ export function AssistantSection() {
       <p>
         If you book a call from the assistant, the booking form in the chat asks
         for your name and email; they are used for the booking, not sent to the
-        AI model.
+        AI model. The call is booked only when you then confirm it from the link
+        in the email we send you.
       </p>
       <p>
         To limit abuse we also count how many questions each connection asks in
@@ -63,10 +64,12 @@ export function VoiceSection() {
       <p>
         We keep a technical record of the call (when it started, its language,
         your time zone and the page, with no audio and no text) for 30 days to
-        prevent abuse. If you book a call during the conversation, your name,
-        email, company and topic are stored with your enquiry, as for any
-        booking, together with the identifiers of the call (our record's id and
-        ElevenLabs' conversation id). We don't use your voice to identify you.
+        prevent abuse. If you ask for a call during the conversation, we email
+        you a link and the call is booked only when you confirm it there; your
+        name, email, company and topic are then stored with your enquiry, as for
+        any booking, together with the identifiers of the call (our record's id
+        and ElevenLabs' conversation id). We don't use your voice to identify
+        you.
       </p>
     </LegalSection>
   );
@@ -96,10 +99,11 @@ export function WebMcpUse() {
       If your browser has an AI agent that supports WebMCP, the site offers it
       tools to look up our FAQ, prices and estimates and to open pages and,
       while booking is available, to find free times and propose a call. A
-      booking is only sent when you confirm your details in the dialog on the
-      page, and we handle it like any other booking. You choose and control the
-      agent: what you tell it, or what it reads from the page, is governed by
-      its provider's terms, not by this policy.
+      booking is only made when you confirm your details in the dialog on the
+      page and then the link in the email we send you, and we handle it like any
+      other booking. You choose and control the agent: what you tell it, or what
+      it reads from the page, is governed by its provider's terms, not by this
+      policy.
     </p>
   );
 }

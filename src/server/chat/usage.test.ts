@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { estimateTokens, neuronsFor, utcDay } from '@/server/chat/usage';
+import { utcDay } from '@/lib/time';
+import { estimateTokens, neuronsFor } from '@/server/chat/usage';
 
 describe('neuronsFor', () => {
   it('prices glm input and output per million tokens, rounded up', () => {

@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { HOUR_MS as HOUR } from '@/lib/time';
+import { HOUR_MS as HOUR, utcDay } from '@/lib/time';
 import {
   claimTurn,
   countAddressTurn,
@@ -14,7 +14,6 @@ import {
   todayNeurons,
   transcript,
 } from '@/server/chat/store';
-import { utcDay } from '@/server/chat/usage';
 import { storeLead } from '@/server/lead-store';
 import { DAY, NEW_LEAD } from '../../../test/leads';
 

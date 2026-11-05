@@ -8,7 +8,12 @@ import {
   vi,
 } from 'vitest';
 import type { ProjectType } from '@/lib/calculator-answers';
-import { type CtaId, type LeadMethod, track } from '@/lib/track';
+import {
+  type CtaId,
+  type LeadMethod,
+  track,
+  trackBookingConfirm,
+} from '@/lib/track';
 
 let calls: unknown[][];
 
@@ -45,6 +50,17 @@ describe('track', () => {
     window.zenetTracking = true;
     window.gtag = undefined;
     expect(() => track('language_switch')).not.toThrow();
+  });
+
+  it('sends both conversions of a confirm click with beacon transport, only with consent', () => {
+    trackBookingConfirm('chat');
+    expect(calls).toEqual([]);
+    window.zenetTracking = true;
+    trackBookingConfirm('chat');
+    expect(calls).toEqual([
+      ['event', 'book_meeting', { transport_type: 'beacon' }],
+      ['event', 'generate_lead', { method: 'chat', transport_type: 'beacon' }],
+    ]);
   });
 
   it('pushes the event with its params once tracking is on', () => {

@@ -2,8 +2,9 @@ import type { ModelMessage } from 'ai';
 import { z } from 'zod';
 import { CHAT_LIMITS } from '@/lib/chat-events';
 import { locales } from '@/lib/i18n';
-import { DAY_MS, HOUR_MS } from '@/lib/time';
-import { type TurnUsage, utcDay } from '@/server/chat/usage';
+import { DAY_MS, HOUR_MS, utcDay } from '@/lib/time';
+import { countAddressUse, purgeAddressUsage } from '@/server/address-usage';
+import type { TurnUsage } from '@/server/chat/usage';
 import { errorName } from '@/server/responses';
 
 const RETENTION_MS = 30 * DAY_MS;
@@ -498,9 +499,7 @@ export async function purgeChats(db: D1Database, now: number): Promise<number> {
          RETURNING id`,
       )
       .bind(now - RETENTION_MS),
-    db
-      .prepare('DELETE FROM chat_ip_usage WHERE day < ?1')
-      .bind(utcDay(now - DAY_MS)),
+    purgeAddressUsage(db, 'chat_ip_usage', utcDay(now - DAY_MS)),
   ]);
   return sessions?.results.length ?? 0;
 }
@@ -526,49 +525,11 @@ export async function reserveNeurons(
   return row !== null;
 }
 
-const encoder = new TextEncoder();
-
-async function addressKey(secret: string, day: string, address: string) {
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-  const mac = await crypto.subtle.sign(
-    'HMAC',
-    key,
-    encoder.encode(`${day}|${address}`),
-  );
-  return [...new Uint8Array(mac).slice(0, 16)]
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('');
-}
-
 // Counts one turn for this address today, unless it already used its share.
 // The address is never stored: only a keyed fingerprint that cannot be reversed.
-export async function countAddressTurn(
+export function countAddressTurn(
   db: D1Database,
-  {
-    secret,
-    address,
-    day,
-    limit,
-  }: {
-    secret: string;
-    address: string;
-    day: string;
-    limit: number;
-  },
+  usage: { secret: string; address: string; day: string; limit: number },
 ): Promise<boolean> {
-  const row = await db
-    .prepare(
-      `INSERT INTO chat_ip_usage (day, key, turns) VALUES (?1, ?2, 1)
-       ON CONFLICT (day, key) DO UPDATE SET turns = turns + 1 WHERE turns < ?3
-       RETURNING turns`,
-    )
-    .bind(day, await addressKey(secret, day, address), limit)
-    .first();
-  return row !== null;
+  return countAddressUse(db, 'chat_ip_usage', usage);
 }

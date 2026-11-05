@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import type { Surface } from '@/lib/booking-surfaces';
 import type { Locale } from '@/lib/i18n';
 import type { Attribution } from '@/lib/lead-schema';
 import { isLiveHost } from '@/lib/redirects';
@@ -17,6 +18,11 @@ export type ToolContext = {
   voice?: VoiceRef;
   // The session was minted on a preview or local host.
   testSession?: boolean;
+  // A booking's own: where it came from, the origin its links point to, and the
+  // caller's IP for the per-IP cap (none for voice, whose IP is ElevenLabs').
+  surface?: Surface | 'voice';
+  origin?: string;
+  ip?: { address: string; secret: string } | null;
   deps: BookingDeps;
 };
 

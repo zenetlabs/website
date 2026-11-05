@@ -19,7 +19,14 @@ const SERVER: ServerConfig = {
     calendarUrl: 'https://google.test/calendar/v3',
     busyCacheMs: 0,
     failureCacheMs: 0,
+    limits: {
+      perIpDaily: 5,
+      perAddressDaily: 3,
+      siteDaily: 40,
+      resendCooldownSeconds: 60,
+    },
   },
+  turnstile: { testingKeys: false },
   assistant: {
     model: 'fake',
     aiGatewayName: null,
@@ -71,6 +78,7 @@ function deps(overrides: Partial<LeadDeps> = {}): LeadDeps {
     limiter: { limit },
     turnstileSecret,
     resendKey: async () => 're_test',
+    linkKey: async () => 'link-key',
     fetch: fetchMock,
     waitUntil,
     now: () => NOW,
@@ -100,13 +108,14 @@ function post(
   });
 }
 
-function turnstileOk() {
+function turnstileOk(hostname = 'zenetlabs.com') {
   fetchMock.mockImplementation(async (input) =>
     String(input).includes('siteverify')
       ? Response.json({
           success: true,
           action: 'lead',
-          hostname: 'zenetlabs.com',
+          hostname,
+          challenge_ts: new Date(NOW - 5_000).toISOString(),
         })
       : Response.json({ id: 'em_1' }),
   );
@@ -401,6 +410,7 @@ describe('success', () => {
       secret: 'ts_secret',
       response: 'token',
       remoteip: '203.0.113.7',
+      idempotency_key: expect.any(String),
     });
   });
 
@@ -454,7 +464,7 @@ describe('success', () => {
     ['https://abc-prod-zenet-web.zenetlabs.workers.dev', 'Ada', 1],
     ['http://localhost:4173', 'Ada', 1],
   ])('marks %s with name %s as is_test %i', async (origin, name, isTest) => {
-    turnstileOk();
+    turnstileOk(new URL(origin).hostname);
     await handleLeadPost(
       post({ ...BODY, name }, { url: `${origin}/api/lead` }),
       deps(),

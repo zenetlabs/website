@@ -116,12 +116,27 @@ function Collection() {
         )}
       </p>
       <p>
-        If you book a call, we keep the booking with your enquiry (the time you
+        If you book a call, before anything is booked we email you a link. The
+        time is kept for you for 30 minutes. The booking, and the calendar
+        event, are made only when you open the link and confirm. If you don't
+        confirm, the request lapses: your name, company and topic are deleted
+        when it expires, and the rest after 30 days.
+      </p>
+      <p>
+        So that the form can't be used to email other people, we count
+        confirmation emails per address and per connection. For the connection
+        we keep only a keyed one-way fingerprint of your IP address, deleted at
+        03:00 UTC two days later. We don't accept addresses from temporary email
+        services.
+      </p>
+      <p>
+        Once you confirm, we keep the booking with your enquiry (the time you
         chose, your time zone, your name, email, company and topic), we create
         an event in our Google Workspace calendar with your email address, and
         Google sends you a calendar invitation with a Google Meet link. Your
         name and the topic you write stay with us; they are not put in the
-        invitation.
+        invitation. If we cancel a call, we email you, and Google sends its own
+        cancellation.
       </p>
       <p>
         When you send the form you tick a box confirming that you have read this
@@ -286,11 +301,17 @@ function Retention() {
           from the site database automatically 24 months after we receive them.
         </li>
         <li>
-          Booking attempts that are never confirmed: deleted after 30 days.
+          Booking requests that are never confirmed: the name, company and topic
+          are deleted when the request expires, 30 minutes after it is made, and
+          the rest after 30 days.
         </li>
         <li>
-          Call events in our Google Workspace calendar: once a month we delete
-          by hand those older than 24 months.
+          Call events in our Google Workspace calendar: deleted automatically 24
+          months after the booking.
+        </li>
+        <li>
+          The fingerprints of the connections that asked for a booking: deleted
+          at 03:00 UTC two days later.
         </li>
         <li>
           Emails in our mailbox: once a month we delete by hand the threads

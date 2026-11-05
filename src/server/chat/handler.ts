@@ -16,7 +16,7 @@ import type { Locale } from '@/lib/i18n';
 import { pagePath } from '@/lib/page-registry';
 import { isLiveHost } from '@/lib/redirects';
 import { canonicalZone } from '@/lib/slots';
-import { noop } from '@/lib/time';
+import { noop, utcDay } from '@/lib/time';
 import type { BookingDeps } from '@/server/booking';
 import {
   guardSentence,
@@ -48,7 +48,6 @@ import {
   neuronsFor,
   reservationFor,
   type TurnUsage,
-  utcDay,
 } from '@/server/chat/usage';
 import type { Limiter } from '@/server/rate-limit';
 import { gate, verifyHuman } from '@/server/request';
@@ -491,6 +490,9 @@ export async function handleChatPost(
       ip,
       secret: gated.secret,
       fetch: deps.fetch,
+      hostname,
+      testingKeys: deps.server.turnstile.testingKeys,
+      now,
     });
     if (failure !== null) return reject(failure);
   }

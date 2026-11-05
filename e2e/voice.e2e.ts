@@ -7,6 +7,8 @@ import { home as esHome } from '../src/content/es/home';
 import { voiceCopy as es } from '../src/content/es/voice';
 import {
   agentHeaders,
+  confirmByLink,
+  confirmLinkFor,
   elevenLabsCalls,
   elevenLabsFail,
   elevenLabsReset,
@@ -294,11 +296,12 @@ test.describe('the tools an agent calls', () => {
       data: { ...body, confirmed: true },
     });
     expect(toolEnvelope.parse(await booked.json()).result?.status).toBe(
-      'booked',
+      'pending',
     );
+    expect(await confirmByLink(request, await confirmLinkFor(email))).toBe(303);
     await expect
       .poll(async () => (await sentFor(email)).length, { timeout: 15_000 })
-      .toBeGreaterThanOrEqual(2);
+      .toBeGreaterThanOrEqual(3);
     const owner = (await sentFor(email)).find(
       (entry) => entry.to === NOTIFY_TO,
     );
@@ -319,12 +322,12 @@ test.describe('the tools an agent calls', () => {
         'book_meeting',
         JSON.stringify({
           ok: true,
-          result: { status: 'booked', label: 'Tuesday 3 November, 5:00 pm' },
+          result: { status: 'pending', label: 'Tuesday 3 November, 5:00 pm' },
         }),
       ),
     );
     await expect(page.getByRole('status')).toContainText(
-      'Booked for Tuesday 3 November, 5:00 pm',
+      'Held for Tuesday 3 November, 5:00 pm. Check your email to confirm.',
     );
   });
 });

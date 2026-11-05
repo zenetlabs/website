@@ -19,9 +19,10 @@ GA4 events (`src/lib/track.ts`, typed, no free-text params):
 | `cta_click` | `cta_id`: `header`, `header_menu`, `hero`, `hero_pricing`, `page_hero`, `page_cta`, `pricing`, `about`, `services`, `contact_book` | `CtaLink` |
 | `language_switch` | none | the non-current link of the language switch |
 | `pricing_view` | none | once per pricing page load, when GA starts |
-| `generate_lead` | `method`: `form`, `chat`, `voice`, `calculator`, `booking` | the contact form after a successful submit (`form`; `calculator` when it was sent from the price calculator page), the `/book` form (`booking`), the chat booking card (`chat`) and a call whose `book_meeting` came back booked (`voice`) |
+| `generate_lead` | `method`: `form`, `chat`, `voice`, `calculator`, `booking`, `webmcp` | the contact form after a successful submit (`form`; `calculator` when it was sent from the price calculator page), and the page behind the emailed booking link once it shows the booked call after the Confirm post (once per booking: the `outcome=booked` hint is dropped from the address), with the channel the request came from (`booking` for `/book`, `chat`, `webmcp`, `voice`) |
 | `calculator_complete` | `project_type`: `automation`, `agent`, `web` | the price calculator, when the form is submitted with JavaScript. Not on a direct visit to a result link |
-| `book_meeting` | none | the `/book` form, the chat booking card and a voice call, after the booking succeeded |
+| `book_request` | none | a booking request was held and its confirm link emailed: the `/book` form, the chat card, the WebMCP dialog and a voice call |
+| `book_meeting` | none | the page behind the emailed link, once, when the booking is confirmed (every channel). Failed confirms (`taken`, `failed`, `unknown`) do not count; D1 stays the source of truth |
 | `chat_open` | none | the chat launcher, on every open |
 | `chat_message` | none | the chat panel, for each visitor message actually sent (never its text) |
 | `voice_call_start` | none | the voice panel, each time a call connects |

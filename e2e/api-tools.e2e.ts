@@ -140,9 +140,12 @@ test('a bearer caller books on the test calendar', async ({ request }) => {
     },
   });
   expect(response.status()).toBe(200);
-  expect(toolEnvelope.parse(await response.json()).result?.status).toBe(
-    'booked',
-  );
+  expect(toolEnvelope.parse(await response.json()).result).toMatchObject({
+    status: 'pending',
+    label: expect.any(String),
+    expiresAt: expect.any(String),
+    resent: false,
+  });
 });
 
 test('/api/health reports booleans only', async ({ request }) => {

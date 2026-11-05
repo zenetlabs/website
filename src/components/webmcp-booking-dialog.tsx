@@ -1,8 +1,15 @@
-import { type FormEvent, useCallback, useId, useRef, useState } from 'react';
+import {
+  type FormEvent,
+  type Ref,
+  useCallback,
+  useId,
+  useRef,
+  useState,
+} from 'react';
 import { flushSync } from 'react-dom';
+import { BookingPending } from '@/components/booking-pending';
 import {
   BookingDetailsFields,
-  BookingSuccess,
   ConsentCheckbox,
   FormAlert,
   Honeypot,
@@ -10,8 +17,13 @@ import {
 } from '@/components/form-parts';
 import { H3, PRIMARY_BUTTON, SECONDARY_BUTTON } from '@/components/ui';
 import { useChallenge } from '@/components/use-challenge';
-import { submitBooking } from '@/lib/booking-client';
+import { useResend } from '@/components/use-resend';
+import {
+  type BookingRequest as Submitted,
+  submitBooking,
+} from '@/lib/booking-client';
 import { type BookingFailureKind, failureOf } from '@/lib/booking-failure';
+import { SURFACE_ACTION } from '@/lib/booking-surfaces';
 import { text } from '@/lib/form-data';
 import { messages } from '@/lib/i18n';
 import { attribution } from '@/lib/lead-client';
@@ -24,9 +36,46 @@ import {
 } from '@/lib/webmcp/confirmation';
 
 type Status = 'idle' | 'pending' | BookingFailureKind;
-type Confirmed = { when: string; email: string; meetUrl: string | null };
+type Held = { when: string; request: Submitted };
 
 const UNAVAILABLE: ToolEnvelope = { ok: false, error: 'unavailable' };
+
+// The agent learns that the time is held and until when, nothing else: the
+// visitor books it from the email.
+function pendingEnvelope(label: string, expiresAt: number): ToolEnvelope {
+  return {
+    ok: true,
+    result: {
+      status: 'pending',
+      label,
+      expiresAt: new Date(expiresAt).toISOString(),
+    },
+  };
+}
+
+function DialogAlert({
+  copy,
+  failure,
+  alertRef,
+}: {
+  copy: BookingRequest['copy'];
+  failure: BookingFailureKind;
+  alertRef: Ref<HTMLParagraphElement>;
+}) {
+  if (failure === 'disposable') {
+    return (
+      <p
+        ref={alertRef}
+        role="alert"
+        tabIndex={-1}
+        className="rounded-input border-2 border-fg px-4 py-3 text-ui-m outline-hidden"
+      >
+        {copy.errors.disposable}
+      </p>
+    );
+  }
+  return <FormAlert alertRef={alertRef}>{copy.errors[failure]}</FormAlert>;
+}
 
 export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
   const { proposal, locale, label, copy } = request;
@@ -34,7 +83,8 @@ export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
   const challenge = useChallenge();
   const [status, setStatus] = useState<Status>('idle');
   const [answered, setAnswered] = useState(false);
-  const [confirmed, setConfirmed] = useState<Confirmed | null>(null);
+  const [held, setHeld] = useState<Held | null>(null);
+  const again = useResend(challenge);
   const element = useRef<HTMLDialogElement | null>(null);
   // Stable, so a re-render does not close and reopen the dialog. Cleanup also
   // runs when the confirmation is taken down, and restores the page's focus.
@@ -50,7 +100,7 @@ export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
       }
     };
   }, []);
-  const successHeading = useRef<HTMLHeadingElement>(null);
+  const pendingHeading = useRef<HTMLHeadingElement>(null);
   const alert = useRef<HTMLParagraphElement>(null);
   const titleId = useId();
   const introId = useId();
@@ -74,7 +124,7 @@ export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
     if (data.get('consent') !== 'on') return;
     if (!request.begin()) return;
     setStatus('pending');
-    const result = await submitBooking({
+    const submitted: Submitted = {
       slot: proposal.slot,
       name: text(data, 'name'),
       email: text(data, 'email'),
@@ -86,30 +136,28 @@ export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
       turnstileToken: challenge.token,
       website: text(data, 'website'),
       attribution: await attribution(),
-    });
-    const envelope = isEnvelope(result.envelope)
-      ? result.envelope
-      : UNAVAILABLE;
-    if (result.kind === 'booked') {
+      surface: 'webmcp',
+    };
+    const result = await submitBooking(submitted);
+    challenge.retry();
+    if (result.kind === 'pending') {
+      const when = formatSlotLabel(locale, result.start, proposal.timeZone);
       flushSync(() => {
-        setConfirmed({
-          when: formatSlotLabel(locale, result.start, proposal.timeZone),
-          email: text(data, 'email'),
-          meetUrl: result.meetUrl,
-        });
+        setHeld({ when, request: submitted });
         setStatus('idle');
         setAnswered(true);
       });
-      successHeading.current?.focus();
-      request.finish(envelope, true);
-      track('book_meeting');
-      track('generate_lead', { method: 'webmcp' });
+      pendingHeading.current?.focus();
+      request.finish(pendingEnvelope(when, result.expiresAt), true);
+      track('book_request');
       return;
     }
+    const envelope = isEnvelope(result.envelope)
+      ? result.envelope
+      : UNAVAILABLE;
     const next = failureOf(result);
     if (next === 'captcha') {
       request.retry();
-      challenge.retry();
     } else {
       setAnswered(true);
       request.finish(envelope, false);
@@ -117,6 +165,32 @@ export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
     flushSync(() => setStatus(next));
     alert.current?.focus();
   }
+
+  async function onResend() {
+    if (held === null) return;
+    setStatus('idle');
+    const failed = await again.resend(held.request);
+    if (failed === null) return;
+    flushSync(() => setStatus(failureOf(failed)));
+    alert.current?.focus();
+  }
+
+  const alertNode = failure ? (
+    <DialogAlert copy={copy} failure={failure} alertRef={alert} />
+  ) : null;
+  const turnstile = (
+    <LazyTurnstile
+      engaged
+      action={SURFACE_ACTION.webmcp}
+      locale={locale}
+      instance={challenge.instance}
+      onToken={challenge.setToken}
+      onError={() => {
+        challenge.setToken('');
+        setStatus('captcha');
+      }}
+    />
+  );
 
   return (
     <dialog
@@ -126,23 +200,26 @@ export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
         if (request.isHeld()) event.preventDefault();
       }}
       aria-labelledby={titleId}
-      aria-describedby={confirmed ? undefined : introId}
+      aria-describedby={held ? undefined : introId}
       data-webmcp-dialog
       className="fixed inset-0 m-auto h-fit max-h-[90dvh] w-[min(100%-2rem,32rem)] overflow-y-auto rounded-card border border-border bg-surface p-6 text-fg shadow-raised backdrop:bg-bg/60"
     >
-      {confirmed ? (
-        <div className="grid gap-4">
-          <BookingSuccess
-            headingRef={successHeading}
+      {held ? (
+        <div className="grid gap-4" data-booking-pending>
+          <BookingPending
+            headingRef={pendingHeading}
             headingId={titleId}
             headingClass={H3}
-            title={copy.success.title}
-            when={confirmed.when}
-            text={copy.success.text.replace('{email}', confirmed.email)}
-            meetUrl={confirmed.meetUrl}
-            meet={copy.success.meet}
-            meetLater={copy.success.meetLater}
-          />
+            copy={copy.pending}
+            label={held.when}
+            email={held.request.email}
+            resend={again.status}
+            canResend={challenge.token !== ''}
+            onResend={onResend}
+          >
+            {turnstile}
+            {alertNode}
+          </BookingPending>
           <button
             type="button"
             onClick={() => element.current?.close()}
@@ -180,21 +257,9 @@ export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
               template={form.consent}
               linkText={form.consentLink}
             />
-            <LazyTurnstile
-              engaged
-              action="book"
-              locale={locale}
-              instance={challenge.instance}
-              onToken={challenge.setToken}
-              onError={() => {
-                challenge.setToken('');
-                setStatus('captcha');
-              }}
-            />
+            {turnstile}
           </fieldset>
-          {failure ? (
-            <FormAlert alertRef={alert}>{copy.errors[failure]}</FormAlert>
-          ) : null}
+          {alertNode}
           <div className="flex flex-wrap gap-3">
             {answered ? null : (
               <button

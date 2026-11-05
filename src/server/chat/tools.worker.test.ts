@@ -79,7 +79,7 @@ const offered = (...starts: string[]): ModelMessage[] => [
 ];
 
 beforeEach(async () => {
-  world = newWorld();
+  world = newWorld(NOW);
   background = [];
   navigated = [];
   proposals = [];
@@ -87,6 +87,7 @@ beforeEach(async () => {
   clearTokenCache();
   clearBusyCache();
   await DB.prepare('DELETE FROM bookings').run();
+  await DB.prepare('DELETE FROM booking_ip_usage').run();
 });
 
 describe('chatToolNames', () => {

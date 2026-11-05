@@ -51,6 +51,7 @@ function deps(): VoiceDeps {
     site,
     apiOrigin: API,
     dailySessions: cap,
+    testingKeys: false,
     limiter: { limit: async () => ({ success: !limited }) },
     apiKey: () => readSecret(apiKey),
     toolSecret: () => readSecret(toolSecret),
@@ -63,7 +64,10 @@ function deps(): VoiceDeps {
       const url = String(input);
       if (url.startsWith('https://challenges.cloudflare.com/')) {
         calls.siteverify.push(url);
-        return Response.json(turnstile);
+        return Response.json({
+          challenge_ts: new Date(NOW - 5_000).toISOString(),
+          ...turnstile,
+        });
       }
       calls.tokens.push(
         `${url} ${new Headers(init?.headers).get('xi-api-key')}`,
@@ -148,6 +152,10 @@ describe('POST /api/voice/session', () => {
   });
 
   it('marks a session minted on a preview host as a test', async () => {
+    turnstile = {
+      ...turnstile,
+      hostname: 'pr-1-prod-zenet-web.example.workers.dev',
+    };
     const { response } = await call(
       request(
         BODY,
@@ -327,10 +335,13 @@ describe('POST /api/voice/session', () => {
   });
 
   it('counts a preview session against the same daily cap as a live one', async () => {
-    const preview =
-      'https://pr-1-prod-zenet-web.example.workers.dev/api/voice/session';
+    const host = 'pr-1-prod-zenet-web.example.workers.dev';
+    const preview = `https://${host}/api/voice/session`;
+    turnstile = { ...turnstile, hostname: host };
     expect((await call(request(BODY, {}, preview))).response.status).toBe(200);
+    turnstile = { ...turnstile, hostname: 'zenetlabs.com' };
     expect((await call()).response.status).toBe(200);
+    turnstile = { ...turnstile, hostname: host };
     const { response, body } = await call(request(BODY, {}, preview));
     expect(response.status).toBe(503);
     expect(body.error).toBe('budget');

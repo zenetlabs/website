@@ -72,6 +72,8 @@ export async function handleLeadPost(
     maxBytes: MAX_BODY_BYTES,
     turnstileSecret: deps.turnstileSecret,
     fetch: deps.fetch,
+    testingKeys: deps.server.turnstile.testingKeys,
+    now: deps.now(),
   });
   if (guarded.status === 'honeypot') return jsonOk();
   if (guarded.status === 'rejected') return reject(guarded.error);

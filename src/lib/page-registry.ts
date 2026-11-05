@@ -313,13 +313,21 @@ export function markdownPath(locale: Locale, page: PageId): string {
   return `${path === '/' ? '/index' : path}.md`;
 }
 
+// The booking page reads only ?tz; anything else in its query (an emailed
+// confirm token above all) stays behind when the visitor switches language.
+function searchFor(page: PageId, search: string): string {
+  if (page !== 'book') return search;
+  const tz = new URLSearchParams(search).get('tz');
+  return tz === null ? '' : `?${new URLSearchParams({ tz })}`;
+}
+
 export function switchHref(
   target: Locale,
   page: PageId | undefined,
   search: string,
 ): string {
   if (page && hasLocale(page, target))
-    return `${pagePath(target, page)}${search}`;
+    return `${pagePath(target, page)}${searchFor(page, search)}`;
   const parent = page ? PAGES[page].parent : undefined;
   return pagePath(
     target,

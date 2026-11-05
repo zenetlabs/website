@@ -16,14 +16,31 @@ import { mountDialog } from '@/lib/webmcp/mount';
 const submitBooking = vi.hoisted(() => vi.fn());
 const attribution = vi.hoisted(() => vi.fn());
 const track = vi.hoisted(() => vi.fn());
-const BOOKED: ToolEnvelope = {
+// What the agent is told: the time is held until expiresAt, nothing else.
+const HELD: ToolEnvelope = {
   ok: true,
   result: {
-    status: 'booked',
-    start: '2027-01-05T09:00:00.000Z',
-    end: '2027-01-05T09:30:00.000Z',
+    status: 'pending',
     label: 'Tuesday 5 January, 10:00 am',
-    meetUrl: 'https://meet.example/abc',
+    expiresAt: '2027-01-04T08:30:00.000Z',
+  },
+};
+const PENDING = {
+  kind: 'pending',
+  start: Date.parse('2027-01-05T09:00:00.000Z'),
+  end: Date.parse('2027-01-05T09:30:00.000Z'),
+  expiresAt: Date.parse('2027-01-04T08:30:00.000Z'),
+  resent: false,
+  envelope: {
+    ok: true,
+    result: {
+      status: 'pending',
+      start: '2027-01-05T09:00:00.000Z',
+      end: '2027-01-05T09:30:00.000Z',
+      label: 'Tuesday 5 January, 10:00 am',
+      expiresAt: '2027-01-04T08:30:00.000Z',
+      resent: false,
+    },
   },
 };
 const CANCELLED: ToolEnvelope = { ok: true, result: { status: 'cancelled' } };
@@ -162,13 +179,7 @@ describe('WebMcpBookingDialog', () => {
 
   it('submits the edited details with consent, token, honeypot, attribution, zone and locale', async () => {
     const user = userEvent.setup();
-    submitBooking.mockResolvedValue({
-      kind: 'booked',
-      start: Date.parse(SLOT),
-      end: Date.parse(SLOT) + 1_800_000,
-      meetUrl: 'https://meet.example/abc',
-      envelope: BOOKED,
-    });
+    submitBooking.mockResolvedValue(PENDING);
     const { answers } = open();
     await fill(user, 'en');
     await user.click(screen.getByRole('button', { name: en.dialog.confirm }));
@@ -185,18 +196,18 @@ describe('WebMcpBookingDialog', () => {
       turnstileToken: 'tok_book',
       website: '',
       attribution: ATTRIBUTION,
+      surface: 'webmcp',
     });
     const heading = await screen.findByRole('heading', {
-      name: en.dialog.success.title,
+      name: en.dialog.pending.title,
     });
     expect(heading).toHaveFocus();
-    expect(screen.getByRole('link', { name: /Google Meet/ })).toHaveAttribute(
-      'href',
-      'https://meet.example/abc',
-    );
-    expect(answers).toEqual([BOOKED]);
-    expect(track).toHaveBeenCalledWith('book_meeting');
-    expect(track).toHaveBeenCalledWith('generate_lead', { method: 'webmcp' });
+    expect(
+      screen.getByText(/have sent a link to ada@example.com/),
+    ).toBeInTheDocument();
+    expect(answers).toEqual([HELD]);
+    expect(track).toHaveBeenCalledTimes(1);
+    expect(track).toHaveBeenCalledWith('book_request');
   });
 
   it('shows the alert with the mailto and tells the agent when the slot is taken', async () => {
@@ -270,18 +281,12 @@ describe('WebMcpBookingDialog', () => {
 
   it('describes the dialog by its intro only while the form is shown', async () => {
     const user = userEvent.setup();
-    submitBooking.mockResolvedValue({
-      kind: 'booked',
-      start: Date.parse(SLOT),
-      end: Date.parse(SLOT) + 1_800_000,
-      meetUrl: null,
-      envelope: BOOKED,
-    });
+    submitBooking.mockResolvedValue(PENDING);
     open();
     expect(screen.getByRole('dialog')).toHaveAttribute('aria-describedby');
     await fill(user, 'en');
     await user.click(screen.getByRole('button', { name: en.dialog.confirm }));
-    await screen.findByRole('heading', { name: en.dialog.success.title });
+    await screen.findByRole('heading', { name: en.dialog.pending.title });
     expect(screen.getByRole('dialog')).not.toHaveAttribute('aria-describedby');
   });
 
@@ -319,16 +324,10 @@ describe('WebMcpBookingDialog', () => {
     expect(element?.open).toBe(true);
     expect(answers).toEqual([]);
     await act(async () => {
-      finish({
-        kind: 'booked',
-        start: Date.parse(SLOT),
-        end: Date.parse(SLOT) + 1_800_000,
-        meetUrl: null,
-        envelope: BOOKED,
-      });
+      finish(PENDING);
     });
-    await screen.findByRole('heading', { name: en.dialog.success.title });
-    await waitFor(() => expect(answers).toEqual([BOOKED]));
+    await screen.findByRole('heading', { name: en.dialog.pending.title });
+    await waitFor(() => expect(answers).toEqual([HELD]));
   });
 
   it('answers cancelled and closes when the agent aborted during a failed submit, and never posts again', async () => {
