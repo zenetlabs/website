@@ -128,8 +128,10 @@ const productionServer: ServerConfig = {
   // TODO(albert): confirm the lead notification address
   leads: { notifyTo: 'admin@zenetlabs.com' },
   resendBaseUrl: 'https://api.resend.com',
-  // TODO(albert): set { teamDomain: 'https://<team>.cloudflareaccess.com', aud } once the Access app exists
-  access: null,
+  access: {
+    teamDomain: 'https://odd-bush-dcff.cloudflareaccess.com',
+    aud: '96c32a6cc61c8b596d3ae2e8a1b72f8a1649f83007db00ce4127796c168ea612',
+  },
   booking: {
     tokenUrl: 'https://oauth2.googleapis.com/token',
     calendarUrl: 'https://www.googleapis.com/calendar/v3',
@@ -141,7 +143,7 @@ const productionServer: ServerConfig = {
     model: '@cf/zai-org/glm-4.7-flash',
     // TODO(albert): AI Gateway name (docs/ai-assistant.md "AI Gateway"); null calls Workers AI directly
     aiGatewayName: null,
-    // TODO(albert): raise on Workers Paid; the Free plan stops at 10,000 neurons a day for the whole account
+    // TODO(albert): set the daily neuron budget to the spend you want (Workers Paid)
     dailyNeuronBudget: 8_000,
     // Two full 20-message sessions a day from one address; the same limit for every visitor behind a shared one.
     perAddressDailyTurns: 40,

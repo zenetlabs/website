@@ -17,9 +17,9 @@ Conventions: `<store-id>`, `<secret-id>`, `<version-id>`, `<alias>`, `<booking-i
 | Cron | One trigger, `*/10 * * * *`, production only (section 8). |
 | Config | Public per-env values in `site.config.ts` (build time, by `CLOUDFLARE_ENV`); secrets in the Secrets Store, read per request. |
 
-**The account's Workers plan is not confirmed.** The limits below apply *if* the account is on Workers Free (the design stays inside them); on Workers Paid most of them are much higher. Production CPU readings (section 16) are inconsistent with the Free CPU limit, so the owner check "Workers plan" in the [owner checklist](owner-checklist.md) (P3) settles which column applies. Cloudflare docs, checked 2026-11-01:
+**The account is on Workers Paid** (confirmed in the account's subscriptions on 2026-11-05). The limits below are the Free ones the design was built to stay inside; on Paid most of them are much higher, which matches the production CPU readings in section 16. Cloudflare docs, checked 2026-11-01:
 
-| Limit | If on Workers Free |
+| Limit | Workers Free (reference; the account is on Paid) |
 |---|---|
 | CPU per request and per cron | 10 ms on Free (Error 1102, outcome `exceededCpu`) |
 | Worker startup | 1 s |
@@ -287,7 +287,7 @@ One trigger, `*/10 * * * *`, in `env.production` only (a local or preview run ne
 
 - **Every tick:** `deliverDue` sends the due outbox emails.
 - **The tick between 03:00 and 03:10 UTC** also runs, in order (a missed tick skips that day's purge until the next day's): `purgeExpired` (leads older than 730 days; bookings that are not `confirmed` after 30 days), the daily summary log (`scheduled: daily summary`, an error if owner emails are dead), `purgeChats` (unlinked chat sessions after 30 days; `chat_ip_usage` before yesterday) and `purgeVoiceSessions` (30 days).
-- **Quota:** on the Free plan, 5 cron triggers per account, shared with every other Worker (the limit is higher on Paid; the owner check "Workers plan" in the [owner checklist](owner-checklist.md) confirms which applies).
+- **Quota:** 5 cron triggers per account on Free, shared with every other Worker; the account is on Workers Paid, where the limit is higher.
 - **Where to look:** Workers Logs, search `scheduled:`; the dashboard shows cron events under the Worker's Settings, Triggers.
 
 ## 9. Feature flags and activation
@@ -302,7 +302,7 @@ Every recipe below was dry-run on 2026-11-01: the flag was set in the production
 | `assistant.published` | `site.config.ts` | `false` | the launcher, the panel, `POST /api/chat`, the privacy section | the flag or the budget |
 | `voice.published` and `voice.agents` | `site.config.ts` | `false`, ids `null` | the voice callout, the mint, the bearer tools, `microphone=(self)` | ElevenLabs, or the flag |
 | `webmcp.published`, `webmcp.originTrialToken` | `site.config.ts` | `true`, `null` | the WebMCP chunk, the origin-trial meta tag | the flag |
-| `access` | `site.config.ts` (`productionServer`) | `null` | `/internal/*` (404 without it) | set it back to `null` |
+| `access` | `site.config.ts` (`productionServer`) | set (team domain and AUD) | `/internal/*` (404 without it) | set it back to `null` |
 | Spanish entity `address` | `src/content/es/entity.ts` | `null` | which entity every `es` page names | none (a legal fact) |
 
 Every recipe ends the same way: after the deploy run `bash scripts/smoke.sh`, check `curl -s https://zenetlabs.com/api/health`, resubmit `sitemap.xml` in Search Console and Bing, and (when pages appeared or changed) run Lighthouse on them.
@@ -335,7 +335,7 @@ Every recipe ends the same way: after the deploy run `bash scripts/smoke.sh`, ch
 
 ### `assistant.published` (level `high`)
 
-1. Owner: confirm the Workers plan, optional AI Gateway name, review the prompt and copy ([owner checklist](owner-checklist.md), P2). If a deploy with the `AI` binding fails naming AI, add Account, Workers AI, Read to the deploy token.
+1. Owner: raise `dailyNeuronBudget` to the spend wanted (the account is on Workers Paid), optional AI Gateway name, review the prompt and copy ([owner checklist](owner-checklist.md), P2). If a deploy with the `AI` binding fails naming AI, add Account, Workers AI, Read to the deploy token.
 2. Preview check with the flag on (`--preview-alias <alias>`), the 11 EN and 11 ES question set by hand, read the transcripts, delete the test sessions, **re-upload dark**.
 3. The flip PR: production `assistant: { published: true }`; update `src/site-config.test.ts` (the only failing test in the dry run). Set `dailyNeuronBudget` and `aiGatewayName` if decided.
 4. Bumps: the assistant privacy section now renders, so `CONSENT_VERSION`, the `updated` date of both privacy pages, `PAGES.privacy.lastmod` and the `legal.test.tsx` date.
@@ -355,11 +355,11 @@ Every recipe ends the same way: after the deploy run `bash scripts/smoke.sh`, ch
 2. The PR: production `originTrialToken`, and `src/site-config.test.ts`. No page changes.
 3. After the deploy: `<meta http-equiv="origin-trial">` is in the production HTML, stable Chrome exposes `document.modelContext`, record the expiry date.
 
-### `access` (level `high` by the `CLAUDE.md` table, which names Access)
+### `access` (level `high` by the `CLAUDE.md` table, which names Access). Done on 2026-11-05
 
-1. Owner creates the Access application (path `internal*`) and sends the team domain and AUD.
+1. Owner creates the Access application `zenetlabs-internal` with destinations `zenetlabs.com/internal` and `zenetlabs.com/internal/*` (reusable policy `operators`: one email, 24 h session) and sends the team domain and AUD.
 2. The PR: `productionServer.access: { teamDomain, aud }` only; no test fails (the dry run was green).
-3. After the deploy: `/internal/leads` and `/internal/leads.csv` answer 302 to the team domain (locally the dry run answered 403 without a JWT); a browser login lists the leads; a preview alias answers 403.
+3. After the deploy: `/internal/leads` and `/internal/leads.csv` answer 302 to the team domain (locally the dry run answered 403 without a JWT); a browser login lists the leads. `/internal%2Fleads` is not fronted by Access; only the Worker blocks it, with a 403. Preview aliases uploaded after this deploy answer 403 on `/internal`; older dark aliases answer 404.
 
 ### Spanish entity address (level `high`: the consent sentence names the entity). Done on 2026-11-05
 
@@ -461,19 +461,19 @@ Other dashboards: Cloudflare Web Analytics (Core Web Vitals field data is the tr
 Each one: symptom, confirm, contain, recover, proof it is over.
 
 **Resend down, or key or domain trouble.**
-Symptom: the form says sent but nobody gets email; the lead is stored. Confirm: `lead-email: delivery failed|throttled|dead` in the logs; the failed and dead outbox query (section 5). Backoff runs 10 min, 30 min, 1 h, 3 h, 6 h, then the row is `dead` after the sixth attempt (about 11 hours in total). Check Resend's Suppressions first (a suppressed recipient looks like a failure). Contain: nothing is lost, read leads with the "recent leads" SQL or `/internal/leads` once Access is set. Recover: fix the key or domain, then re-queue the `dead` rows (section 5). Over when: an outbox row reaches `sent`.
+Symptom: the form says sent but nobody gets email; the lead is stored. Confirm: `lead-email: delivery failed|throttled|dead` in the logs; the failed and dead outbox query (section 5). Backoff runs 10 min, 30 min, 1 h, 3 h, 6 h, then the row is `dead` after the sixth attempt (about 11 hours in total). Check Resend's Suppressions first (a suppressed recipient looks like a failure). Contain: nothing is lost, read leads with the "recent leads" SQL or `/internal/leads`. Recover: fix the key or domain, then re-queue the `dead` rows (section 5). Over when: an outbox row reaches `sent`.
 
 **Google down, or delegation revoked.**
 Symptom: `/book` shows the contact form; the tools answer `unavailable`. Confirm: `booking: calendar error {op, code}` (codes in ai-assistant.md). A failure is cached for 45 s. Contain: if the log is noisy, set the secret to `unconfigured`. Recover: fix the delegation or key, restore the secret, check `booking:true`. Over when: `check_availability` returns slots. Afterwards reconcile `unknown` rows against the calendar (section 5).
 
 **Workers AI budget exhausted.**
-Symptom: chat answers 503 `budget`, `ai_usage.refused` climbs. The 10,000-neuron cap is shared by every Worker on the account and resets at 00:00 UTC. Confirm with the `ai_usage` SQL. Contain: wait for the reset, check for abuse (sessions per address, `chat_ip_usage`); the kill switch is `assistant.published: false` or `dailyNeuronBudget: 0`. On Workers Paid, raise `dailyNeuronBudget` (a `low` PR).
+Symptom: chat answers 503 `budget`, `ai_usage.refused` climbs. The cap is the self-imposed `dailyNeuronBudget` (the account is on Workers Paid, so Cloudflare sets none) and resets at 00:00 UTC. Confirm with the `ai_usage` SQL. Contain: wait for the reset, check for abuse (sessions per address, `chat_ip_usage`); the kill switch is `assistant.published: false` or `dailyNeuronBudget: 0`. To allow more spend, raise `dailyNeuronBudget` (a `low` PR).
 
 **Turnstile failing.**
 Symptom: forms answer 403 `captcha` (the visitor gets the mailto fallback); `secret: unreadable` means 503. Confirm: Cloudflare status, the widget's analytics (solve rate), the widget hostnames (`zenetlabs.com` and `zenetlabs.workers.dev`), and that the site key in `site.config.ts` matches the widget. Never bypass the check; rotate the secret only if it leaked (section 6).
 
 **CPU limit exceeded.**
-Symptom: Error 1102, status `exceededCpu` or `exceededResources` in GraphQL. The cold-isolate baseline is about 7.5 to 8 ms of framework startup, the same on every route (warm requests take about 1.3 ms); on Free that leaves little room under the 10 ms limit. Contain: if it started after a deploy, roll back. If it is a burst of cold traffic nothing quick helps; the decision is Workers Paid. Deploy-time code 10021 is retried by the action.
+Symptom: Error 1102, status `exceededCpu` or `exceededResources` in GraphQL. The cold-isolate baseline is about 7.5 to 8 ms of framework startup, the same on every route (warm requests take about 1.3 ms); on Workers Paid the CPU limit is much higher than Free's 10 ms. Contain: if it started after a deploy, roll back. If it is a burst of cold traffic nothing quick helps. Deploy-time code 10021 is retried by the action.
 
 **D1 daily limit or outage.**
 Symptom: lead POSTs fail and the form shows the mailto fallback. Contain: nothing to do server-side; check the Free daily row limits (since 2026-09-01) and Cloudflare status. Recover when the limit resets or D1 returns.
@@ -523,7 +523,7 @@ Erasure for one person: the SQL in section 5 across the tables; delete the Googl
 
 ## 16. Baseline numbers (2026-11-01, production serving the R12 release)
 
-- **CPU** (GraphQL `workersInvocationsAdaptive`, 7 days, microseconds): all `success` invocations 51,776, p50 0.64 ms, p99 71.3 ms; 0 errors; no `exceededCpu` or `exceededResources` status. Current version: 2,287 requests, p50 7.7 ms, p99 92.6 ms (cold starts dominate a version with little traffic); the cold-isolate baseline is about 7.5 to 8 ms, warm requests about 0.3 to 1.3 ms. `wrangler tail`, 17 requests: cpu median 9 ms, max 32 ms, all `ok`. The p90 and p99 values would exceed a Free plan's 10 ms limit, yet no CPU-limit status appears, so the plan is unconfirmed: see the owner check "Workers plan" (owner checklist, P3).
+- **CPU** (GraphQL `workersInvocationsAdaptive`, 7 days, microseconds): all `success` invocations 51,776, p50 0.64 ms, p99 71.3 ms; 0 errors; no `exceededCpu` or `exceededResources` status. Current version: 2,287 requests, p50 7.7 ms, p99 92.6 ms (cold starts dominate a version with little traffic); the cold-isolate baseline is about 7.5 to 8 ms, warm requests about 0.3 to 1.3 ms. `wrangler tail`, 17 requests: cpu median 9 ms, max 32 ms, all `ok`. The p90 and p99 values would exceed Free's 10 ms limit; no CPU-limit status appears because the account is on Workers Paid.
 - **Lighthouse** (box, `lhci` median of 5, 14 production URLs, mobile and desktop): accessibility, best practices and SEO at 100 for every URL; performance 98 to 100 on mobile (LCP about 1.7 to 2.2 s, TBT 0 to 5 ms, CLS up to 0.029) and 100 on desktop (LCP about 0.5 to 0.6 s). Field data comes from Cloudflare Web Analytics.
 - **Up-front JavaScript, gzip** (`e2e/js-budget.e2e.ts`; budget 138,601 B on every page): production build home 131,912 B, pricing 129,585 B (recorded at the voice release).
 - **Smoke:** 151 checks. **Sitemap:** 30 URLs.

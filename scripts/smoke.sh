@@ -27,12 +27,6 @@ status_is() {
   [ "$got" = "$expected" ]
 }
 
-status_is_not() {
-  local unexpected="$1" url="$2" got
-  got=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$url") || return 1
-  [ "$got" != "$unexpected" ]
-}
-
 post_status_is() {
   local expected="$1" url="$2" got
   got=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -X POST \
@@ -72,6 +66,14 @@ redirects_to() {
   code="${out%% *}"
   location="${out#* }"
   [ "$code" = "301" ] && [ "$location" = "$expected" ]
+}
+
+redirects_to_login() {
+  local url="$1" out code location
+  out=$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' --max-time 20 "$url") || return 1
+  code="${out%% *}"
+  location="${out#* }"
+  [ "$code" = "302" ] && [[ "$location" == https://odd-bush-dcff.cloudflareaccess.com/* ]]
 }
 
 content_type_is() {
@@ -239,8 +241,8 @@ if grep -qF '"assistant":true' <<<"$(curl -s --max-time 20 "${SITE}/api/health")
 else
   attempt "503 POST /api/chat while the assistant is dark" post_status_is 503 "${SITE}/api/chat"
 fi
-attempt "internal leads not public" status_is_not 200 "${SITE}/internal/leads"
-attempt "internal leads csv not public" status_is_not 200 "${SITE}/internal/leads.csv"
+attempt "internal leads redirect to the Access login" redirects_to_login "${SITE}/internal/leads"
+attempt "internal leads csv redirect to the Access login" redirects_to_login "${SITE}/internal/leads.csv"
 attempt "canonical link ${SITE}/es" header_matches 'text/markdown' "${SITE}/es" '^link: <https://zenetlabs\.com/es>; rel="canonical"$'
 
 for path in / /es; do

@@ -18,7 +18,7 @@ Everything below needs the owner (a login, a decision or a value only you hold).
 1. **Spanish fiscal address: done (2026-11-05).** `src/content/es/entity.ts` holds the fiscal address, so every `es` page (footer, legal pages, form consent, JSON-LD, llms files, the Spanish voice agent) now names the sole trader, under Spanish law, the Barcelona courts and the AEPD; no GDPR art. 27 representative is needed for the `es` side. The RB 9 bumps were applied in the same PR (`CONSENT_VERSION` 2026-11-05, 18 `lastmod` values, the legal `updated` dates, the smoke footer line). After the deploy: a Rich Results Test on `/es` and `bash scripts/smoke.sh`.
 2. **Legal review: first draft done (2026-11-05), pending your or counsel's sign-off.** Drafted: privacy (en, es), cookies (en, es), the aviso legal (LSSI art. 10 data, both entity variants, the "Precios" clause), the legal clauses (en, es), the retention periods as the code applies them (24 months for leads, confirmed bookings and the email log; 30 days for unconfirmed bookings, transcripts and voice records; about 51 hours for the chat IP fingerprints; 7 days at most for server logs, up to 30 days in D1 Time Travel backups; 30 days at Resend; a monthly hand routine for mailbox threads and Calendar events older than 24 months (RB 13); 90 days for first-touch; 12, 13 and 14 months for consent, GA cookies and GA4 data), the GA4, assistant, voice, calculator and WebMCP sections behind their flags, the AI Act art. 50 notices for the chat and the voice assistant, the AI Act art. 4 sentence on the training pages and the travel-agency REAV and registration wording. Settled by you on 2026-11-05: the accounts and processors follow the market (es data: the sole trader and his direct processors; en data: Zenet Technology Pte. Ltd.), the professional registration (no Registro Mercantil, no licence), and the Singapore DPO (Dan Lu, privacy@zenetlabs.com). Still open: the counsel sign-off line at the top of each legal file, the specific `TODO(albert)` markers in appendix group "Legal and consent" (GDPR art. 3(2) and 27 for the English pages, the GA4 retention setting, the `_gcl_*` cookie check, ElevenLabs' DPA and DPF status), the asesoría's confirmation of the REAV wording (`travel-agencies.ts`) and the Verifactu page (group "Es landing pages").
 3. **Confirm the lead notification address** (`site.config.ts`, `productionServer.leads.notifyTo`; the `TODO(albert)` there). Check that Resend's Suppressions does not contain it. Production holds no lead at all so far, so this has never been proven end to end: see the optional acceptance lead in P1.
-4. **Access app for `/internal*`** (Zero Trust, self-hosted application on `zenetlabs.com`, path `internal*`, one-time PIN, policy allowing your identity). Send the team domain and the AUD (public values, keep them out of the vault); they go into `productionServer.access` in a one-file `high` PR (RB 9). Until then the lead pages answer 404 and leads are readable only through D1 SQL (RB 5). Optional in the same step: Access on previews only (see "Preview aliases" in P3).
+4. **Access app for `/internal*`: done 2026-11-05.** Self-hosted application `zenetlabs-internal` on `zenetlabs.com/internal` (covers every path under it), with the reusable `operators` policy (your address only, 24 h session); its team domain and AUD are in `productionServer.access`. Optional: Access on previews (see "Preview aliases" in P3).
 5. **Search Console and Bing Webmaster Tools** ([analytics.md](analytics.md) sections 7 and 8): verify the domain, submit `sitemap.xml`, inspect the key URLs, and resubmit after every flip.
 6. **Rich Results Test** on `/`, `/es`, `/about`, `/services/ai-automation`, `/case-studies/viatsy`, `/es/servicios/integraciones/holded-prestashop`, `/es/precios`, `/es/casos/viatsy`, `/es/aviso-legal`, `/pricing` and `/es/servicios/agentes-de-ia`. Expected: Breadcrumb on inner pages, Organization, Article on case pages. FAQ shows "not eligible" by design (Google stopped FAQ rich results on 2026-05-07; the markup stays valid).
 7. **Deploy token.** Confirm in the dashboard that the permission set matches RB 4.
@@ -43,13 +43,13 @@ Each one: do the prerequisites, then the flip PR in RB 9 (one flag per PR, one a
 - **GA4.** Create the property per [analytics.md](analytics.md) section 5 (time zone Europe/Madrid, currency EUR, enhanced measurement without form interactions and video, 14-month retention, Google signals off, data processing terms, the `method` and `cta_id` dimensions, `generate_lead` and `book_meeting` as key events, the Search Console link). Hand over the measurement ID. After the flip: the Tag Assistant and `_gcl_*` cookie checks, and keep Cloudflare Zaraz and the Google tag gateway off. Review the consent copy (`consent.ts`).
 - **Booking.** G1 to G11: Google Cloud project, Calendar API, service account with a JSON key, domain-wide delegation for `calendar.events.owned` and `calendar.freebusy` on the booking user, Meet enabled, a test calendar, the key bundle (with `subject`, `calendar_id` and `test_calendar_id`) pasted into `ZENETLABS_PROD_GOOGLE_CALENDAR` (RB 6), then `/api/health` shows `booking:true`. Review `book.ts`, the call windows and the 14-day horizon (`booking-rules.ts`), the "free, no commitment" wording, and do the `[TEST]` acceptance booking on a preview alias built with the flag on. Before the booking flip, automate Calendar event deletion in the 03:00 tick (events older than 24 months; until then it is the monthly hand routine in RB 13). Key hygiene: rotate by creating a new key, updating the secret and deleting the old key; revoke by deleting the key or the delegation entry.
 - **Calculator.** Review every coefficient, cap, the discount and uplift rules, the maintenance thresholds, the "Request a call" wording and the privacy sentence (`pricing-rules.ts`). Flip in RB 9.
-- **Assistant.** Confirm the Workers plan (Free: 10,000 neurons a day account-wide; Paid: raise `dailyNeuronBudget`); optionally create an AI Gateway (logs off, cache off; send the name); review the prompt, widget copy, notice, retention and budget; run the question set on a preview alias; then flip. If the first deploy with the `AI` binding fails with an authentication error naming AI, add Account, Workers AI, Read to the deploy token.
+- **Assistant.** The account is on Workers Paid: raise `dailyNeuronBudget` to the spend you want; optionally create an AI Gateway (logs off, cache off; send the name); review the prompt, widget copy, notice, retention and budget; run the question set on a preview alias; then flip. If the first deploy with the `AI` binding fails with an authentication error naming AI, add Account, Workers AI, Read to the deploy token.
 - **Voice** (needs booking first). ElevenLabs account on a plan with enough minutes, DPA accepted and training opt-outs checked; an API key restricted to Agents with a credit limit into `ZENETLABS_PROD_ELEVENLABS_API_KEY`; a tool secret into `ZENETLABS_PROD_ELEVENLABS_TOOL_SECRET`; `pnpm voice:plan` then `pnpm voice:apply` (prints the two agent ids); optionally the GitHub `production` environment secret `ELEVENLABS_API_KEY` so every deploy re-syncs the agents; Bot Fight Mode off for `zenetlabs.com`; review the spoken messages, caps (30 calls a day, 5 minutes each, up to about US$360 a month at the cap) and the model; confirm the ElevenLabs DPA and EU-US data transfer wording on the privacy pages; then flip.
 - **WebMCP origin-trial token** (optional): register at the Chrome Origin Trials console for `https://zenetlabs.com`, put the token in `webmcp.originTrialToken` (`low` PR), record the expiry.
 
 ## P3: platform and housekeeping
 
-- **Workers plan** (the check the runbook points to from sections 1 and 8). Confirm in the dashboard (Workers & Pages, Plans) whether the account is on Free or Paid. If it is Free: about 2 ms of CPU headroom on a cold start, a shared 10,000-neuron cap, 5 crons per account, 3-day logs and D1 daily limits, and Paid is recommended before the assistant or voice go live. The CPU figures on 2026-11-01 (RB 16) show p99 values far above 10 ms with no `exceededCpu` status, which a Free account should not allow, so it may already be Paid.
+- **Workers plan: done 2026-11-05.** The account is on Workers Paid, so the CPU, cron and log limits are the Paid ones; for the assistant, raise `dailyNeuronBudget` to what you want to spend.
 - **Deploy token:** move it from a user token to an account-owned token and rotate it (the GitHub secret dates from 2024).
 - **Preview aliases.** The public preview aliases serve production secrets and D1, and cannot be deleted (names in the owner's vault notes; RB 2). Choose: Access on previews, `preview_urls: false`, or keep re-uploading dark after every probe.
 - **Security headers.** Decide on HSTS `includeSubDomains` and `preload` (a one-way commitment for the zone and its subdomains) and on a Content-Security-Policy (the deferred-entry inline loader and the consent snippet need a nonce or a hash; the voice SDK needs `connect-src` entries, see ai-assistant.md).
@@ -62,13 +62,13 @@ Each one: do the prerequisites, then the flip PR in RB 9 (one flag per PR, one a
 
 ## Appendix: every `TODO(albert)` in the repo
 
-211 markers in 60 files. Regenerate before each review session with:
+210 markers in 60 files. Regenerate before each review session with:
 
 ```sh
 git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'
 ```
 
-### Site config (13)
+### Site config (12)
 
 - `site.config.ts:41` GA4 web-stream measurement ID (G-XXXXXXXXXX); follow docs/analytics.md "Activation"
 - `site.config.ts:43` set true after reviewing src/content/pricing-rules.ts
@@ -78,11 +78,10 @@ git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'
 - `site.config.ts:56` set true once the ElevenLabs agents exist and /api/health reports voice:true (docs/ai-assistant.md "Voice activation"); needs booking.published first
 - `site.config.ts:58` the agent ids printed by pnpm voice:apply
 - `site.config.ts:128` confirm the lead notification address
-- `site.config.ts:131` set { teamDomain: 'https://<team>.cloudflareaccess.com', aud } once the Access app exists
-- `site.config.ts:140` confirm the model after the bake-off (pnpm eval:chat against a preview alias)
-- `site.config.ts:142` AI Gateway name (docs/ai-assistant.md "AI Gateway"); null calls Workers AI directly
-- `site.config.ts:144` raise on Workers Paid; the Free plan stops at 10,000 neurons a day for the whole account
-- `site.config.ts:151` the most voice calls a UTC day can start, previews included, across both locales. At most 30 x 5 minutes = 150 minutes a day: about US$12 a day at US$...
+- `site.config.ts:142` confirm the model after the bake-off (pnpm eval:chat against a preview alias)
+- `site.config.ts:144` AI Gateway name (docs/ai-assistant.md "AI Gateway"); null calls Workers AI directly
+- `site.config.ts:146` set the daily neuron budget to the spend you want (Workers Paid)
+- `site.config.ts:153` the most voice calls a UTC day can start, previews included, across both locales. At most 30 x 5 minutes = 150 minutes a day: about US$12 a day at US$...
 
 ### Calculator pricing rules (43)
 
