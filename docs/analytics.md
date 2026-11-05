@@ -2,7 +2,7 @@
 
 What the site measures, where to see it, how consent works, and the steps the owner does outside the repo.
 
-Status: **GA4 is off in production** (`ga4Id` is `null` in `site.config.ts`). With no id there is no banner, no footer "Cookie settings" button, no inline consent snippet and no Google request. Cloudflare Web Analytics (cookieless) runs either way.
+Status: **GA4 is on in production** (`ga4Id` is set in `site.config.ts`; the measurement ID is public). Nothing optional is stored or requested until a visitor accepts. With `ga4Id` set to `null` there is no banner, no footer "Cookie settings" button, no inline consent snippet and no Google request. Cloudflare Web Analytics (cookieless) runs either way.
 
 ## 1. What we measure and where
 
@@ -26,22 +26,23 @@ GA4 events (`src/lib/track.ts`, typed, no free-text params):
 | `chat_message` | none | the chat panel, for each visitor message actually sent (never its text) |
 | `voice_call_start` | none | the voice panel, each time a call connects |
 
-Lead attribution: with **marketing** consent the first landing page, referrer and campaign tags are kept in `localStorage` for 90 days and sent with each lead instead of the current page load. Without it a lead carries only the page load it was sent from. The request shape and the server do not change.
+Lead attribution: with **attribution** consent the first landing page, referrer and campaign tags are kept in `localStorage` for 90 days and sent with each lead instead of the current page load. Without it a lead carries only the page load it was sent from. The request shape and the server do not change.
 
 ## 2. Consent model
 
 | Category | Stored | Duration | Gates |
 |---|---|---|---|
-| Strictly necessary | `zenet-consent` in `localStorage` (`{ analytics, marketing, revision, at }`) | 12 months | nothing (it records the choice) |
+| Strictly necessary | `zenet-consent` in `localStorage` (`{ analytics, attribution, revision, at }`) | 12 months | nothing (it records the choice) |
 | Analytics | GA4 cookies `_ga` and `_ga_<ID>` | `cookie_expires` 13 months | loading `gtag.js` |
-| Marketing | `zenet-first-touch` in `localStorage` (`{ landing, referrer, at }`) | 90 days | first-touch attribution, `ad_*` Consent Mode signals |
+| Attribution | `zenet-first-touch` in `localStorage` (`{ landing, referrer, at }`) | 90 days | first-touch attribution sent with a lead. It never reaches Google |
 
 Consent Mode v2, **basic** mode:
 
 - An inline snippet in the root route `scripts()` (only when `ga4Id` is set) defines `dataLayer` and `gtag` and sets `ad_storage`, `ad_user_data`, `ad_personalization` and `analytics_storage` to `denied`.
-- On every choice `consent update` is pushed: analytics maps to `analytics_storage`, marketing to the three `ad_*` signals.
-- `gtag.js` is requested only when analytics is granted: after the window `load` event for returning visitors, at once on an Accept click. It is never proxied. Marketing alone loads no Google tag.
-- Withdrawal on the same page: `window['ga-disable-<id>'] = true`, a denied update, and `_ga`, `_ga_*` and `_gcl_*` deleted through the Cookie Store API where the browser has it. Withdrawing marketing removes the first-touch record.
+- On every choice `consent update` is pushed: analytics maps to `analytics_storage`. The three `ad_*` signals are **always `denied`** while there is no ads tag, so no `_gcl_*` cookie can appear.
+- `config` sets `send_page_view: false`. `page_view` is sent by `src/lib/analytics.ts` on the first load and on every client-side navigation (history `pushState`/`replaceState`/`popstate`, de-duplicated by the sanitised URL), after a `gtag('set', …)` of `page_location`, `page_referrer` and `page_title`, so every later event carries the current clean URL. `analyticsLocation()` keeps only `utm_*` and drops the hash and every other parameter (no `gclid`, no calculator answers). `analyticsReferrer()` applies the same rule to a same-site referrer and keeps only the origin of a cross-site one.
+- `gtag.js` is requested only when analytics is granted: after the window `load` event for returning visitors, at once on an Accept click. It is never proxied. Attribution alone loads no Google tag.
+- Withdrawal on the same page: `window['ga-disable-<id>'] = true`, a denied update, and the analytics cookies (`_ga`, `_ga_*`, `_gid`, `_gat*`) deleted through the Cookie Store API where the browser has it. The advertising cookies (`_gcl_*`, `_gac_*`, `FPAU`, `FPGCL`) are deleted on every update, whatever the choice. Withdrawing attribution removes the first-touch record.
 - `ga4Id` becomes the build-time constant `__GA4_ID__` (`vite.config.ts`, `vitest.config.ts`). With `null`, the bundler drops every analytics module, chunk, the inline snippet and the legal-page variants.
 - When configured, the only eager code is `src/lib/track.ts` (a few lines: `track()` returns unless `window.zenetTracking` is set), `src/client.tsx` (a dynamic `import('@/lib/analytics')` after the window `load` event, which replays a stored choice) and `ConsentManager`. The store, `useConsent`, the banner and the dialog are lazy chunks that load after hydration. Copy lives in `src/content/{en,es}/consent.ts`.
 - Lead attribution reads the store through a dynamic import at submit time.
@@ -54,9 +55,9 @@ Cookie banners are not shown when `ga4Id` is `null`, because nothing optional wo
 
 - `track()` drops CTA clicks made before the analytics boot. The boot runs after the window `load` event for performance, and `track()` does nothing until it has switched tracking on.
 - First touch is captured only when consent is given on the entry page (an empty or cross-origin referrer). We do not store campaign data before consent, so a choice made after navigating inside the site records nothing; the lead then carries the page load it was sent from.
-- Withdrawing in one tab applies to every open tab (the consent record's `storage` event re-runs the consent update, the `ga-disable` flag and the cookie deletion). Cookies (`_ga`, `_ga_*`, `_gcl_*`) are deleted through the Cookie Store API (Chromium, Firefox 140+, Safari 18.4+). On a browser without it, the `ga-disable-<id>` flag and the denied consent update still stop Google Analytics from reading or writing, and the cookies expire on their own.
+- Withdrawing in one tab applies to every open tab (the consent record's `storage` event re-runs the consent update, the `ga-disable` flag and the cookie deletion). Cookies (`_ga`, `_ga_*`, `_gid`, `_gat*`; the advertising ones always) are deleted through the Cookie Store API (Chromium, Firefox 140+, Safari 18.4+). On a browser without it, the `ga-disable-<id>` flag and the denied consent update still stop Google Analytics from reading or writing, and the cookies expire on their own.
 - The footer "Cookie settings" control is a link to the cookies policy (`#manage`). Once the dialog exists it opens the dialog instead; without JavaScript it navigates.
-- The banner has no visible title: it is named by `aria-label` (a deviation from plan D10), to keep it short on mobile.
+- The banner has a visible title (`h2`) and, below `sm`, the short copy with a "More info" toggle. Reject all, Settings and Accept all are three buttons with the same class (nothing nudges the choice). Closing the settings dialog without a choice returns focus to Settings; after a choice focus goes to `#main`.
 
 ## 3. Adding an event
 
@@ -83,13 +84,16 @@ Extend `ParamEvents` or `PlainEvent` in `src/lib/track.ts`, then call `track()`.
 6. **Key events:** create `generate_lead` and `book_meeting` (Admin, Key events, New key event). In Google Ads these are called conversions.
 7. **Search Console link:** Admin, Product links, Search Console links.
 8. **Internal traffic (optional):** define your IP.
+9. **Page views:** turn off "Page changes based on browser history events" (we send `page_view` ourselves) and site search.
+10. **Data sharing:** turn off every account-level data sharing setting (Admin, Account, Data collection and modification, Data sharing settings).
+11. **Data redaction:** turn on email and query-parameter redaction (Admin, Data stream, Configure tag settings, Redact data).
 
 ## 6. Activation
 
 The ordered recipe (the PR contents, the bumps, the CI guards to change and the review level) is in [RUNBOOK.md](RUNBOOK.md) section 9, `ga4Id`. What stays here is the feature-specific verification after the deploy:
 
-- **Tag Assistant and DebugView** on production (section 4), plus `bash scripts/smoke.sh` once its "no consent defaults" lines have been removed. Keep the "no Google tag" lines: the SSR HTML never carries the tag before consent.
-- **Owner step, cookie check:** open `https://zenetlabs.com/?gclid=x` in a fresh browser profile, click Accept all, then list the cookies (DevTools, Application, Cookies). Expect only `zenet-consent`'s storage entry plus `_ga` and `_ga_<ID>`. If any `_gcl_*` cookie (for example `_gcl_au` or `_gcl_aw`) appears, either disclose it on the cookies page (name, purpose, duration, in both locales) and bump `COOKIE_CONSENT_REVISION`, or stop granting `ad_storage`, `ad_user_data` and `ad_personalization` while there is no ads tag. Withdrawal already deletes `_gcl_*` along with `_ga*`.
+- **Tag Assistant and DebugView** on production (section 4), plus `bash scripts/smoke.sh` (it expects the consent defaults in the HTML and no Google tag, which only loads after consent).
+- **Owner step, cookie check:** open `https://zenetlabs.com/?gclid=x` in a fresh browser profile, click Accept all, then list the cookies (DevTools, Application, Cookies). Expect only `_ga` and `_ga_<ID>`, and no `_gcl_*` or `_gac_*` cookie (the ad signals are always denied and any such cookie is deleted).
 - Keep the Cloudflare **Google tag gateway** and **Zaraz** off for the zone. Both inject tags before consent.
 
 `CONSENT_VERSION` lives in `src/server/lead-fields.ts`, so the flip PR touches the lead path and is reviewed at `high` (`CLAUDE.md`).

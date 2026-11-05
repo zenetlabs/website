@@ -37,7 +37,7 @@ describe('attribution', () => {
     navigationEntry('http://localhost:4173/pricing?utm_source=later');
   });
 
-  it('describes the current page load without marketing consent', async () => {
+  it('describes the current page load without attribution consent', async () => {
     saveConsent(REJECT_ALL, NOW);
     expect(await attribution(NOW)).toEqual({
       landing: '/pricing?utm_source=later',
@@ -46,7 +46,7 @@ describe('attribution', () => {
     });
   });
 
-  it('keeps the first touch for later page loads once marketing is accepted', async () => {
+  it('keeps the first touch for later page loads once attribution is accepted', async () => {
     saveConsent(ACCEPT_ALL, NOW);
     captureFirstTouch(NOW, {
       landing: '/?utm_source=first&gclid=g1',
@@ -60,8 +60,8 @@ describe('attribution', () => {
     });
   });
 
-  it('ignores a stored first touch when marketing is not accepted', async () => {
-    saveConsent({ analytics: true, marketing: false }, NOW);
+  it('ignores a stored first touch when attribution is not accepted', async () => {
+    saveConsent({ analytics: true, attribution: false }, NOW);
     localStorage.setItem(
       'zenet-first-touch',
       JSON.stringify({ landing: '/old', referrer: '', at: NOW }),

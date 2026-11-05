@@ -81,7 +81,7 @@ export function CalculatorUse() {
       of the results page, so you can bookmark or share it. Like any address you
       visit, it reaches Cloudflare
       {__GA4_ID__ !== null
-        ? ' and, if you accept analytics cookies, Google Analytics'
+        ? '; if you accept analytics cookies, the address we send to Google Analytics leaves them out'
         : null}
       . We do not keep those answers unless you send us an enquiry from the
       result: they are then added to your message, with the estimate.

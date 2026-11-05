@@ -45,7 +45,7 @@ function stubModal() {
 
 async function mounted(locale = 'en', record = false) {
   state.locale = locale;
-  if (record) saveConsent({ analytics: true, marketing: false }, NOW);
+  if (record) saveConsent({ analytics: true, attribution: false }, NOW);
   await act(async () => {
     render(<ConsentManager />);
   });
@@ -66,7 +66,7 @@ afterEach(() => {
 describe('ConsentManager', () => {
   it('renders nothing on the server, whatever is stored', () => {
     state.hydrated = false;
-    saveConsent({ analytics: true, marketing: true }, NOW);
+    saveConsent({ analytics: true, attribution: true }, NOW);
     expect(renderToString(<ConsentManager />)).toBe('');
   });
 
@@ -109,26 +109,18 @@ describe('settings dialog', () => {
 });
 
 describe('banner', () => {
-  it('gives Reject and Accept the same class', async () => {
-    await mounted();
-    const banner = document.querySelector('[data-consent-banner]');
-    const [reject, accept] = Array.from(
-      banner?.querySelectorAll('button') ?? [],
-    );
-    expect(reject?.textContent).toBe(en.reject);
-    expect(accept?.textContent).toBe(en.accept);
-    expect(reject?.className).toBe(accept?.className);
-  });
-
   it('rejects: saves, applies and unmounts the banner', async () => {
     await mounted();
     await userEvent
       .setup()
       .click(screen.getByRole('button', { name: en.reject }));
-    expect(readConsent()).toMatchObject({ analytics: false, marketing: false });
+    expect(readConsent()).toMatchObject({
+      analytics: false,
+      attribution: false,
+    });
     expect(applyConsent).toHaveBeenCalledWith(
       GA,
-      expect.objectContaining({ analytics: false, marketing: false }),
+      expect.objectContaining({ analytics: false, attribution: false }),
       expect.any(Number),
     );
     await waitFor(() =>
@@ -141,8 +133,31 @@ describe('banner', () => {
     await userEvent
       .setup()
       .click(screen.getByRole('button', { name: en.accept }));
-    expect(readConsent()).toMatchObject({ analytics: true, marketing: true });
+    expect(readConsent()).toMatchObject({ analytics: true, attribution: true });
     expect(applyConsent).toHaveBeenCalledOnce();
+  });
+
+  it('shows a visible title and gives Reject, Settings and Accept the same class', async () => {
+    await mounted();
+    expect(
+      screen.getByRole('heading', { name: en.title, level: 2 }),
+    ).toBeVisible();
+    const reject = screen.getByRole('button', { name: en.reject });
+    const settings = screen.getByRole('button', { name: en.settings });
+    const accept = screen.getByRole('button', { name: en.accept });
+    expect(settings.className).toBe(reject.className);
+    expect(accept.className).toBe(reject.className);
+  });
+
+  it('expands the short copy with More info', async () => {
+    await mounted();
+    const toggle = screen.getByRole('button', { name: en.more });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.setup().click(toggle);
+    expect(screen.getByRole('button', { name: en.less })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
   });
 
   it('opens the dialog from Settings', async () => {
@@ -193,27 +208,27 @@ describe('settings dialog', () => {
   it('starts unchecked and lists the necessary row as always on', async () => {
     await mounted();
     expect(checkbox(en.dialog.analytics)).not.toBeChecked();
-    expect(checkbox(en.dialog.marketing)).not.toBeChecked();
+    expect(checkbox(en.dialog.attribution)).not.toBeChecked();
     expect(screen.getByText(en.dialog.alwaysOn)).toBeInTheDocument();
   });
 
   it('reflects the stored choice', async () => {
     await mounted('en', true);
     expect(checkbox(en.dialog.analytics)).toBeChecked();
-    expect(checkbox(en.dialog.marketing)).not.toBeChecked();
+    expect(checkbox(en.dialog.attribution)).not.toBeChecked();
   });
 
   it('saves a granular choice and passes the previous one on', async () => {
     await mounted('en', true);
     const user = userEvent.setup();
-    await user.click(checkbox(en.dialog.marketing));
+    await user.click(checkbox(en.dialog.attribution));
     await user.click(
       screen.getByRole('button', { name: en.dialog.save, hidden: true }),
     );
-    expect(readConsent()).toMatchObject({ analytics: true, marketing: true });
+    expect(readConsent()).toMatchObject({ analytics: true, attribution: true });
     expect(applyConsent).toHaveBeenCalledWith(
       GA,
-      expect.objectContaining({ analytics: true, marketing: true }),
+      expect.objectContaining({ analytics: true, attribution: true }),
       expect.any(Number),
     );
   });
@@ -235,19 +250,22 @@ describe('settings dialog', () => {
     await user.click(
       screen.getByRole('button', { name: en.dialog.save, hidden: true }),
     );
-    expect(readConsent()).toMatchObject({ analytics: false, marketing: false });
+    expect(readConsent()).toMatchObject({
+      analytics: false,
+      attribution: false,
+    });
   });
 
   it('drops unsaved toggles when closed', async () => {
     await mounted('en', true);
     const user = userEvent.setup();
-    await user.click(checkbox(en.dialog.marketing));
-    expect(checkbox(en.dialog.marketing)).toBeChecked();
+    await user.click(checkbox(en.dialog.attribution));
+    expect(checkbox(en.dialog.attribution)).toBeChecked();
     await user.click(
       screen.getByRole('button', { name: en.dialog.close, hidden: true }),
     );
-    expect(checkbox(en.dialog.marketing)).not.toBeChecked();
-    expect(localStorage.getItem(CONSENT_KEY)).toContain('"marketing":false');
+    expect(checkbox(en.dialog.attribution)).not.toBeChecked();
+    expect(localStorage.getItem(CONSENT_KEY)).toContain('"attribution":false');
   });
 
   it('rejects and accepts from the dialog too', async () => {
@@ -256,10 +274,13 @@ describe('settings dialog', () => {
     await user.click(
       screen.getByRole('button', { name: en.accept, hidden: true }),
     );
-    expect(readConsent()).toMatchObject({ analytics: true, marketing: true });
+    expect(readConsent()).toMatchObject({ analytics: true, attribution: true });
     await user.click(
       screen.getByRole('button', { name: en.reject, hidden: true }),
     );
-    expect(readConsent()).toMatchObject({ analytics: false, marketing: false });
+    expect(readConsent()).toMatchObject({
+      analytics: false,
+      attribution: false,
+    });
   });
 });

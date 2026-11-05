@@ -50,7 +50,19 @@ export type Gtag = {
     signals: ConsentSignals,
   ): void;
   (command: 'js', date: Date): void;
-  (command: 'config', id: string, params: { cookie_expires: number }): void;
+  (
+    command: 'config',
+    id: string,
+    params: { cookie_expires: number; send_page_view: false },
+  ): void;
+  (
+    command: 'set',
+    params: {
+      page_location: string;
+      page_referrer: string;
+      page_title: string;
+    },
+  ): void;
   (command: 'event', name: string, params?: Record<string, string>): void;
 };
 

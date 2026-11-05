@@ -38,8 +38,7 @@ const production: SiteConfig = {
   url: 'https://zenetlabs.com',
   turnstileSiteKey: '0x4AAAAAAFZQKfItYauQvdOW',
   cfBeaconToken: '7a7e520c91144021814e8063da778c05',
-  // TODO(albert): GA4 web-stream measurement ID (G-XXXXXXXXXX); follow docs/analytics.md "Activation"
-  ga4Id: null,
+  ga4Id: 'G-EEX9THLNQ9',
   // TODO(albert): set true after reviewing src/content/pricing-rules.ts
   calculator: { published: false },
   // TODO(albert): set true once the Google Calendar secret exists and /api/health reports booking:true (docs/ai-assistant.md "Booking activation")

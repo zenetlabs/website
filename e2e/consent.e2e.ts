@@ -7,6 +7,7 @@ import {
   test,
 } from '@playwright/test';
 import { siteConfig } from '../site.config';
+import { COOKIE_CONSENT_REVISION } from '../src/lib/consent';
 import { NOTIFY_TO, sentFor, uniqueEmail } from './fakes';
 import {
   BOOKING_PUBLISHED,
@@ -36,12 +37,7 @@ const DENIED = {
   ad_personalization: 'denied',
   analytics_storage: 'denied',
 };
-const GRANTED = {
-  ad_storage: 'granted',
-  ad_user_data: 'granted',
-  ad_personalization: 'granted',
-  analytics_storage: 'granted',
-};
+const ANALYTICS_GRANTED = { ...DENIED, analytics_storage: 'granted' };
 
 const LABELS = {
   en: {
@@ -52,7 +48,7 @@ const LABELS = {
     cookieSettings: 'Cookie settings',
     save: 'Save choices',
     analytics: 'Analytics',
-    marketing: 'Marketing',
+    attribution: 'Attribution',
   },
   es: {
     title: 'Cookies en Zenet Labs',
@@ -62,7 +58,7 @@ const LABELS = {
     cookieSettings: 'Configuración de cookies',
     save: 'Guardar selección',
     analytics: 'Analíticas',
-    marketing: 'Marketing',
+    attribution: 'Atribución',
   },
 } as const;
 
@@ -100,7 +96,7 @@ async function watch(page: Page) {
 
 function commands(entries: unknown[][]) {
   return entries.map((entry) =>
-    entry[0] === 'js' ? ['js'] : entry.slice(0, 2),
+    entry[0] === 'js' || entry[0] === 'set' ? [entry[0]] : entry.slice(0, 2),
   );
 }
 
@@ -185,7 +181,11 @@ test.describe('choices', () => {
     await clickBanner(page, 'reject');
     expect(
       JSON.parse((await stored(page, 'zenet-consent')) ?? '{}'),
-    ).toMatchObject({ analytics: false, marketing: false, revision: 1 });
+    ).toMatchObject({
+      analytics: false,
+      attribution: false,
+      revision: COOKIE_CONSENT_REVISION,
+    });
     await page.reload();
     await page.waitForSelector('body[data-hydrated="true"]');
     await settled(page);
@@ -197,11 +197,11 @@ test.describe('choices', () => {
       dialog.getByRole('checkbox', { name: LABELS.en.analytics }),
     ).not.toBeChecked();
     await expect(
-      dialog.getByRole('checkbox', { name: LABELS.en.marketing }),
+      dialog.getByRole('checkbox', { name: LABELS.en.attribution }),
     ).not.toBeChecked();
   });
 
-  test('accept: grants every signal, queues the tag in order, loads gtag.js once and records the first touch', async ({
+  test('accept: grants analytics only (ad signals stay denied), queues the tag in order, loads gtag.js once and records the first touch', async ({
     page,
   }) => {
     const { requests, entries } = await watch(page);
@@ -218,14 +218,51 @@ test.describe('choices', () => {
       ['consent', 'update'],
       ['js'],
       ['config', GA_ID],
+      ['set'],
+      ['event', 'page_view'],
       ['event', 'pricing_view'],
     ]);
-    expect(entries[1]?.[2]).toEqual(GRANTED);
+    expect(entries[1]?.[2]).toEqual(ANALYTICS_GRANTED);
+    expect(entries[3]?.[2]).toEqual({
+      cookie_expires: 34_128_000,
+      send_page_view: false,
+    });
+    expect(entries[4]?.[1]).toEqual({
+      page_location: expect.stringMatching(/\/pricing\?utm_source=e2e$/),
+      page_referrer: 'https://example.com/',
+      page_title: expect.any(String),
+    });
     expect(
       JSON.parse((await stored(page, 'zenet-first-touch')) ?? '{}'),
     ).toMatchObject({
       landing: '/pricing?utm_source=e2e&gclid=g1',
       referrer: 'https://example.com/',
+    });
+  });
+
+  test('accept: a client-side navigation sends a page_view with a clean location and referrer', async ({
+    page,
+  }) => {
+    const { requests, entries } = await watch(page);
+    await gotoHydrated(page, '/pricing?utm_source=e2e&email=a%40b.c#faq', {
+      referer: 'https://example.com/path?token=secret',
+    });
+    await clickBanner(page, 'accept');
+    await gtagLoaded(requests);
+    await page.evaluate(() =>
+      history.pushState({}, '', '/about?gclid=g1&q=secret&utm_medium=m#top'),
+    );
+    await expect
+      .poll(() => entries.filter((entry) => entry[1] === 'page_view').length)
+      .toBe(2);
+    const sets = entries.filter((entry) => entry[0] === 'set');
+    expect(sets[0]?.[1]).toMatchObject({
+      page_location: expect.stringMatching(/\/pricing\?utm_source=e2e$/),
+      page_referrer: 'https://example.com/',
+    });
+    expect(sets[1]?.[1]).toMatchObject({
+      page_location: expect.stringMatching(/\/about\?utm_medium=m$/),
+      page_referrer: expect.stringMatching(/\/pricing\?utm_source=e2e$/),
     });
   });
 
@@ -247,6 +284,8 @@ test.describe('choices', () => {
       ['consent', 'update'],
       ['js'],
       ['config', GA_ID],
+      ['set'],
+      ['event', 'page_view'],
     ]);
     expect(gtagRequests(requests)).toHaveLength(1);
   });
@@ -264,21 +303,18 @@ test.describe('choices', () => {
     expect(gtagRequests(requests)).toHaveLength(1);
     expect(
       entries.filter((entry) => entry[1] === 'update').at(-1)?.[2],
-    ).toEqual({
-      ...DENIED,
-      analytics_storage: 'granted',
-    });
+    ).toEqual(ANALYTICS_GRANTED);
     expect(await stored(page, 'zenet-first-touch')).toBeNull();
   });
 
-  test('marketing only: loads no Google request but stores the first touch', async ({
+  test('attribution only: loads no Google request but stores the first touch', async ({
     page,
   }) => {
     const { requests } = await watch(page);
     await gotoHydrated(page, '/?utm_source=ads', EXTERNAL);
     await clickBanner(page, 'reject');
     const dialog = await openSettings(page);
-    await dialog.getByRole('checkbox', { name: LABELS.en.marketing }).check();
+    await dialog.getByRole('checkbox', { name: LABELS.en.attribution }).check();
     await saveChoices(dialog);
     await settled(page);
     expect(requests).toEqual([]);
@@ -296,7 +332,7 @@ test.describe('choices', () => {
     await page.getByRole('link', { name: 'Pricing' }).first().click();
     await page.waitForSelector('body[data-hydrated="true"]');
     const dialog = await openSettings(page);
-    await dialog.getByRole('checkbox', { name: LABELS.en.marketing }).check();
+    await dialog.getByRole('checkbox', { name: LABELS.en.attribution }).check();
     await saveChoices(dialog);
     expect(await stored(page, 'zenet-first-touch')).toBeNull();
   });
@@ -325,7 +361,9 @@ test.describe('choices', () => {
 
     const dialog = await openSettings(first);
     await dialog.getByRole('checkbox', { name: LABELS.en.analytics }).uncheck();
-    await dialog.getByRole('checkbox', { name: LABELS.en.marketing }).uncheck();
+    await dialog
+      .getByRole('checkbox', { name: LABELS.en.attribution })
+      .uncheck();
     await saveChoices(dialog);
 
     await expect
@@ -358,7 +396,9 @@ test.describe('choices', () => {
 
     const dialog = await openSettings(page);
     await dialog.getByRole('checkbox', { name: LABELS.en.analytics }).uncheck();
-    await dialog.getByRole('checkbox', { name: LABELS.en.marketing }).uncheck();
+    await dialog
+      .getByRole('checkbox', { name: LABELS.en.attribution })
+      .uncheck();
     await saveChoices(dialog);
 
     expect(
@@ -449,7 +489,7 @@ test.describe('leads', () => {
     });
   }
 
-  test('with marketing consent the lead carries the first touch, not the submit page load', async ({
+  test('with attribution consent the lead carries the first touch, not the submit page load', async ({
     page,
   }) => {
     await watch(page);

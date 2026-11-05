@@ -85,6 +85,8 @@ const CONFIGURED_EN = [
   'zenet-first-touch',
   '13 months',
   '90 days',
+  'Attribution (only if you accept)',
+  'we set no advertising cookies',
   'Cookie settings',
 ];
 const CONFIGURED_ES = [
@@ -93,6 +95,8 @@ const CONFIGURED_ES = [
   'zenet-first-touch',
   '13 meses',
   '90 días',
+  'Atribución (solo si la aceptas)',
+  'no instalamos cookies publicitarias',
   'Configuración de cookies',
 ];
 const UNCONFIGURED_COOKIES = [
@@ -540,15 +544,15 @@ describe('calculator disclosure', () => {
     [
       'PrivacyEn',
       PrivacyEn,
-      'if you accept analytics cookies, Google Analytics',
+      'the address we send to Google Analytics leaves them out',
     ],
     [
       'PrivacyEs',
       PrivacyEs,
-      'si aceptas las cookies analíticas, a Google Analytics',
+      'la dirección que enviamos a Google Analytics las omite',
     ],
   ])(
-    '%s says the answers reach Google Analytics only when it is configured',
+    '%s says the analytics address drops the answers only when GA is configured',
     (_name, Page, snippet) => {
       vi.stubGlobal('__CALCULATOR__', true);
       vi.stubGlobal('__GA4_ID__', null);

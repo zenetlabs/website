@@ -17,7 +17,7 @@ const NOW = Date.UTC(2026, 10, 1);
 const valid = (overrides: object = {}) =>
   JSON.stringify({
     analytics: true,
-    marketing: false,
+    attribution: false,
     revision: COOKIE_CONSENT_REVISION,
     at: NOW,
     ...overrides,
@@ -32,7 +32,7 @@ describe('parseConsent', () => {
   it('accepts a valid record', () => {
     expect(parseConsent(valid())).toEqual({
       analytics: true,
-      marketing: false,
+      attribution: false,
       revision: COOKIE_CONSENT_REVISION,
       at: NOW,
     });
@@ -46,7 +46,7 @@ describe('parseConsent', () => {
     ['a wrong type', valid({ analytics: 'yes' })],
     [
       'a non-finite time',
-      '{"analytics":true,"marketing":true,"revision":1,"at":null}',
+      '{"analytics":true,"attribution":true,"revision":2,"at":null}',
     ],
     ['another revision', valid({ revision: 99 })],
   ])('rejects %s', (_label, raw) => {
@@ -61,7 +61,10 @@ describe('store', () => {
     expect(readConsent()).toBe(first);
     saveConsent(REJECT_ALL, NOW + 1);
     expect(readConsent()).not.toBe(first);
-    expect(readConsent()).toMatchObject({ analytics: false, marketing: false });
+    expect(readConsent()).toMatchObject({
+      analytics: false,
+      attribution: false,
+    });
   });
 
   it('returns null with no choice', () => {
@@ -103,7 +106,10 @@ describe('useConsent', () => {
     act(() => {
       saveConsent(ACCEPT_ALL, NOW);
     });
-    expect(result.current).toMatchObject({ analytics: true, marketing: true });
+    expect(result.current).toMatchObject({
+      analytics: true,
+      attribution: true,
+    });
 
     act(() => {
       localStorage.setItem(CONSENT_KEY, valid({ analytics: false }));

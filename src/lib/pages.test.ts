@@ -6,7 +6,10 @@ import { legalMetaKey } from '@/lib/pages';
 describe('legalMetaKey', () => {
   it('keeps the plain cookies meta while analytics is off', () => {
     expect(legalMetaKey('cookies', false)).toBe('cookies');
-    expect(legalMetaKey('cookies')).toBe('cookies');
+  });
+
+  it('follows the build constant by default', () => {
+    expect(legalMetaKey('cookies')).toBe('cookiesAnalytics');
   });
 
   it('switches to the analytics description only for the cookies page', () => {

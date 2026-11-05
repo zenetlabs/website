@@ -106,8 +106,8 @@ function Collection() {
         We use this to understand which channels bring enquiries.{' '}
         {analytics ? (
           <>
-            Unless you accept marketing cookies, we store nothing on your device
-            for this. If you accept them, your browser keeps the first page you
+            Unless you accept attribution, we store nothing on your device for
+            this. If you accept it, your browser keeps the first page you
             arrived on, the referring site and the campaign tags for up to 90
             days, and they are sent with your enquiry.
           </>
@@ -197,10 +197,10 @@ function Bases() {
         <VoiceBasis />
         {analytics ? (
           <li>
-            Analytics and marketing cookies: your consent (GDPR Art. 6(1)(a),
-            the ePrivacy rules and the PDPA), which you can withdraw at any time
-            with "Cookie settings" at the bottom of every page, without
-            affecting what was done before.
+            Analytics cookies and the attribution record: your consent (GDPR
+            Art. 6(1)(a), the ePrivacy rules and the PDPA), which you can
+            withdraw at any time with "Cookie settings" at the bottom of every
+            page, without affecting what was done before.
           </li>
         ) : null}
       </ul>
@@ -310,13 +310,9 @@ function Retention() {
           <>
             <li>
               Your cookie choice: 12 months, in your browser. The first page you
-              arrived on, if you accept marketing cookies: 90 days, in your
-              browser.
+              arrived on, if you accept attribution: 90 days, in your browser.
             </li>
-            <li>
-              {/* TODO(albert): confirm the GA4 property's data retention is set to 14 months (docs/analytics.md section 5) */}
-              Google Analytics keeps event data for 14 months.
-            </li>
+            <li>Google Analytics keeps event data for 14 months.</li>
           </>
         ) : null}
       </ul>

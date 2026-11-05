@@ -31,7 +31,7 @@ export async function attribution(
       import('@/lib/consent'),
       import('@/lib/first-touch'),
     ]);
-    if (!readConsent()?.marketing) return visit;
+    if (!readConsent()?.attribution) return visit;
     const touch = readFirstTouch(now);
     return touch
       ? { ...visit, landing: touch.landing, referrer: touch.referrer }

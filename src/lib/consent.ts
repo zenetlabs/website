@@ -7,14 +7,17 @@ import {
 } from '@/lib/local-store';
 
 export const CONSENT_KEY = 'zenet-consent';
-export const COOKIE_CONSENT_REVISION = 1;
+export const COOKIE_CONSENT_REVISION = 2;
 export const CONSENT_MAX_AGE_MS = 365 * 24 * 60 * 60 * 1000;
 
-export type ConsentChoice = { analytics: boolean; marketing: boolean };
+export type ConsentChoice = { analytics: boolean; attribution: boolean };
 export type ConsentRecord = ConsentChoice & { revision: number; at: number };
 
-export const ACCEPT_ALL: ConsentChoice = { analytics: true, marketing: true };
-export const REJECT_ALL: ConsentChoice = { analytics: false, marketing: false };
+export const ACCEPT_ALL: ConsentChoice = { analytics: true, attribution: true };
+export const REJECT_ALL: ConsentChoice = {
+  analytics: false,
+  attribution: false,
+};
 
 export function parseConsent(raw: string): ConsentRecord | null {
   const value = parseJsonObject(raw);
@@ -22,8 +25,8 @@ export function parseConsent(raw: string): ConsentRecord | null {
     value !== null &&
     'analytics' in value &&
     typeof value.analytics === 'boolean' &&
-    'marketing' in value &&
-    typeof value.marketing === 'boolean' &&
+    'attribution' in value &&
+    typeof value.attribution === 'boolean' &&
     'revision' in value &&
     value.revision === COOKIE_CONSENT_REVISION &&
     'at' in value &&
@@ -32,7 +35,7 @@ export function parseConsent(raw: string): ConsentRecord | null {
   ) {
     return {
       analytics: value.analytics,
-      marketing: value.marketing,
+      attribution: value.attribution,
       revision: value.revision,
       at: value.at,
     };
@@ -61,7 +64,7 @@ function notify(): void {
 export function saveConsent(choice: ConsentChoice, now: number): ConsentRecord {
   const record: ConsentRecord = {
     analytics: choice.analytics,
-    marketing: choice.marketing,
+    attribution: choice.attribution,
     revision: COOKIE_CONSENT_REVISION,
     at: now,
   };

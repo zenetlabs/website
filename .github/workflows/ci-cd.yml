@@ -69,10 +69,22 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/pnpm-install-hosted
       - run: CLOUDFLARE_ENV=production pnpm build
-      - name: The production build ships no analytics code
+      - name: Analytics loads only lazily
         run: |
-          if grep -rEl "zenet-consent|googletagmanager|consent','default'" dist/client; then
-            echo "::error::Analytics or consent code reached the production client bundle (ga4Id must be null)"
+          hits=$(grep -rl googletagmanager dist/client || true)
+          if [ -z "$hits" ]; then
+            echo "::error::No client chunk loads the Google tag (ga4Id must be set in production)"
+            exit 1
+          fi
+          if grep -qv '/assets/analytics-' <<<"$hits"; then
+            echo "::error::The Google tag URL reached a client chunk other than the lazy analytics chunk"
+            grep -v '/assets/analytics-' <<<"$hits"
+            exit 1
+          fi
+          static=$(grep -rlE "(from|import) ?[\"\`']\./analytics-" dist/client | grep -v '/assets/consent-ui-' || true)
+          if [ -n "$static" ]; then
+            echo "::error::A client chunk other than the lazy consent-ui chunk statically imports the analytics chunk"
+            echo "$static"
             exit 1
           fi
       - name: The production build ships the assistant binding and no scripted model

@@ -4,7 +4,7 @@ As of 2026-11-01 (R13 final QA). The canonical copy of this list; `~/vault/proje
 
 The `TODO(albert)` appendix is a snapshot: its line numbers go stale as files change. Regenerate it with `git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'`.
 
-Everything below needs the owner (a login, a decision or a value only you hold). Ordered by priority. "RB" is a section of the [runbook](RUNBOOK.md). Placeholders such as `<store-id>` are never replaced with real values in a document. Production state on the date above: every optional feature is dark (booking, calculator, assistant, voice, GA4), WebMCP is on, and Cloudflare Web Analytics is the only measurement.
+Everything below needs the owner (a login, a decision or a value only you hold). Ordered by priority. "RB" is a section of the [runbook](RUNBOOK.md). Placeholders such as `<store-id>` are never replaced with real values in a document. Production state on the date above: every optional feature but GA4 is dark (booking, calculator, assistant, voice), WebMCP is on, GA4 measures consenting visitors only, and Cloudflare Web Analytics is the cookieless traffic source of truth.
 
 ## Already done (no action)
 
@@ -16,7 +16,7 @@ Everything below needs the owner (a login, a decision or a value only you hold).
 ## P0: legal and compliance on the live site
 
 1. **Spanish fiscal address: done (2026-11-05).** `src/content/es/entity.ts` holds the fiscal address, so every `es` page (footer, legal pages, form consent, JSON-LD, llms files, the Spanish voice agent) now names the sole trader, under Spanish law, the Barcelona courts and the AEPD; no GDPR art. 27 representative is needed for the `es` side. The RB 9 bumps were applied in the same PR (`CONSENT_VERSION` 2026-11-05, 18 `lastmod` values, the legal `updated` dates, the smoke footer line). After the deploy: a Rich Results Test on `/es` and `bash scripts/smoke.sh`.
-2. **Legal review: first draft done (2026-11-05), pending your or counsel's sign-off.** Drafted: privacy (en, es), cookies (en, es), the aviso legal (LSSI art. 10 data, both entity variants, the "Precios" clause), the legal clauses (en, es), the retention periods as the code applies them (24 months for leads, confirmed bookings and the email log; 30 days for unconfirmed bookings, transcripts and voice records; about 51 hours for the chat IP fingerprints; 7 days at most for server logs, up to 30 days in D1 Time Travel backups; 30 days at Resend; a monthly hand routine for mailbox threads and Calendar events older than 24 months (RB 13); 90 days for first-touch; 12, 13 and 14 months for consent, GA cookies and GA4 data), the GA4, assistant, voice, calculator and WebMCP sections behind their flags, the AI Act art. 50 notices for the chat and the voice assistant, the AI Act art. 4 sentence on the training pages and the travel-agency REAV and registration wording. Settled by you on 2026-11-05: the accounts and processors follow the market (es data: the sole trader and his direct processors; en data: Zenet Technology Pte. Ltd.), the professional registration (no Registro Mercantil, no licence), and the Singapore DPO (Dan Lu, privacy@zenetlabs.com). Still open: the counsel sign-off line at the top of each legal file, the specific `TODO(albert)` markers in appendix group "Legal and consent" (GDPR art. 3(2) and 27 for the English pages, the GA4 retention setting, the `_gcl_*` cookie check, ElevenLabs' DPA and DPF status), the asesoría's confirmation of the REAV wording (`travel-agencies.ts`) and the Verifactu page (group "Es landing pages").
+2. **Legal review: first draft done (2026-11-05), pending your or counsel's sign-off.** Drafted: privacy (en, es), cookies (en, es), the aviso legal (LSSI art. 10 data, both entity variants, the "Precios" clause), the legal clauses (en, es), the retention periods as the code applies them (24 months for leads, confirmed bookings and the email log; 30 days for unconfirmed bookings, transcripts and voice records; about 51 hours for the chat IP fingerprints; 7 days at most for server logs, up to 30 days in D1 Time Travel backups; 30 days at Resend; a monthly hand routine for mailbox threads and Calendar events older than 24 months (RB 13); 90 days for first-touch; 12, 13 and 14 months for consent, GA cookies and GA4 data), the GA4, assistant, voice, calculator and WebMCP sections behind their flags, the AI Act art. 50 notices for the chat and the voice assistant, the AI Act art. 4 sentence on the training pages and the travel-agency REAV and registration wording. Settled by you on 2026-11-05: the accounts and processors follow the market (es data: the sole trader and his direct processors; en data: Zenet Technology Pte. Ltd.), the professional registration (no Registro Mercantil, no licence), and the Singapore DPO (Dan Lu, privacy@zenetlabs.com). Still open: the counsel sign-off line at the top of each legal file, the specific `TODO(albert)` markers in appendix group "Legal and consent" (GDPR art. 3(2) and 27 for the English pages, ElevenLabs' DPA and DPF status), the asesoría's confirmation of the REAV wording (`travel-agencies.ts`) and the Verifactu page (group "Es landing pages").
 3. **Confirm the lead notification address** (`site.config.ts`, `productionServer.leads.notifyTo`; the `TODO(albert)` there). Check that Resend's Suppressions does not contain it. Production holds no lead at all so far, so this has never been proven end to end: see the optional acceptance lead in P1.
 4. **Access app for `/internal*`: done 2026-11-05.** Self-hosted application `zenetlabs-internal` on `zenetlabs.com/internal` (covers every path under it), with the reusable `operators` policy (your address only, 24 h session); its team domain and AUD are in `productionServer.access`. Optional: Access on previews (see "Preview aliases" in P3).
 5. **Search Console and Bing Webmaster Tools** ([analytics.md](analytics.md) sections 7 and 8): verify the domain, submit `sitemap.xml`, inspect the key URLs, and resubmit after every flip.
@@ -40,7 +40,7 @@ All items are `TODO(albert)` markers listed in the appendix. Groups:
 
 Each one: do the prerequisites, then the flip PR in RB 9 (one flag per PR, one at a time). Suggested order: Access, entity address and legal review first; then GA4 (so launches are measured); booking; calculator; assistant; voice. The WebMCP origin-trial token can go in at any time.
 
-- **GA4.** Create the property per [analytics.md](analytics.md) section 5 (time zone Europe/Madrid, currency EUR, enhanced measurement without form interactions and video, 14-month retention, Google signals off, data processing terms, the `method` and `cta_id` dimensions, `generate_lead` and `book_meeting` as key events, the Search Console link). Hand over the measurement ID. After the flip: the Tag Assistant and `_gcl_*` cookie checks, and keep Cloudflare Zaraz and the Google tag gateway off. Review the consent copy (`consent.ts`).
+- **GA4.** The code is live with the measurement ID. Property settings per [analytics.md](analytics.md) section 5 (14-month retention, Google signals off, enhanced measurement without form interactions and video, data processing terms, the `method` and `cta_id` dimensions, `generate_lead` and `book_meeting` as key events, the Search Console link, history-change page views and site search off, account-level data sharing off, data redaction for email and query parameters). After the deploy: the Tag Assistant and cookie checks, and keep Cloudflare Zaraz and the Google tag gateway off. Review the consent copy (`consent.ts`).
 - **Booking.** G1 to G11: Google Cloud project, Calendar API, service account with a JSON key, domain-wide delegation for `calendar.events.owned` and `calendar.freebusy` on the booking user, Meet enabled, a test calendar, the key bundle (with `subject`, `calendar_id` and `test_calendar_id`) pasted into `ZENETLABS_PROD_GOOGLE_CALENDAR` (RB 6), then `/api/health` shows `booking:true`. Review `book.ts`, the call windows and the 14-day horizon (`booking-rules.ts`), the "free, no commitment" wording, and do the `[TEST]` acceptance booking on a preview alias built with the flag on. Before the booking flip, automate Calendar event deletion in the 03:00 tick (events older than 24 months; until then it is the monthly hand routine in RB 13). Key hygiene: rotate by creating a new key, updating the secret and deleting the old key; revoke by deleting the key or the delegation entry.
 - **Calculator.** Review every coefficient, cap, the discount and uplift rules, the maintenance thresholds, the "Request a call" wording and the privacy sentence (`pricing-rules.ts`). Flip in RB 9.
 - **Assistant.** The account is on Workers Paid: raise `dailyNeuronBudget` to the spend you want; optionally create an AI Gateway (logs off, cache off; send the name); review the prompt, widget copy, notice, retention and budget; run the question set on a preview alias; then flip. If the first deploy with the `AI` binding fails with an authentication error naming AI, add Account, Workers AI, Read to the deploy token.
@@ -68,9 +68,8 @@ Each one: do the prerequisites, then the flip PR in RB 9 (one flag per PR, one a
 git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'
 ```
 
-### Site config (12)
+### Site config (11)
 
-- `site.config.ts:41` GA4 web-stream measurement ID (G-XXXXXXXXXX); follow docs/analytics.md "Activation"
 - `site.config.ts:43` set true after reviewing src/content/pricing-rules.ts
 - `site.config.ts:45` set true once the Google Calendar secret exists and /api/health reports booking:true (docs/ai-assistant.md "Booking activation")
 - `site.config.ts:47` set true after the model bake-off passes (docs/ai-assistant.md "Activation")
@@ -244,22 +243,18 @@ git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'
 - `src/content/es/cases.ts:62` [X]
 - `src/content/es/cases.ts:69` [X]
 
-### Legal and consent (18)
+### Legal and consent (14)
 
 - `src/content/en/consent.ts:3` review the banner and settings copy
 - `src/content/en/legal-clauses.ts:1` counsel sign-off of the 2026-11-05 draft
 - `src/content/es/consent.ts:3` review the banner and settings copy
 - `src/content/es/legal-clauses.ts:1` counsel sign-off of the 2026-11-05 draft
 - `src/routes/{-$locale}/-legal/cookies-en.tsx:1` counsel sign-off of the 2026-11-05 draft
-- `src/routes/{-$locale}/-legal/cookies-en.tsx:48` run the _gcl_* cookie check (docs/analytics.md section 6) and list here any _gcl_* cookie it finds, with its purpose and duration
 - `src/routes/{-$locale}/-legal/cookies-es.tsx:1` counsel sign-off of the 2026-11-05 draft
-- `src/routes/{-$locale}/-legal/cookies-es.tsx:55` run the _gcl_* cookie check (docs/analytics.md section 6) and list here any _gcl_* cookie it finds, with its purpose and duration
 - `src/routes/{-$locale}/-legal/legal-notice-es.tsx:1` counsel sign-off of the 2026-11-05 draft
 - `src/routes/{-$locale}/-legal/privacy-en.tsx:1` counsel sign-off of the 2026-11-05 draft
-- `src/routes/{-$locale}/-legal/privacy-en.tsx:317` confirm the GA4 property's data retention is set to 14 months (docs/analytics.md section 5)
 - `src/routes/{-$locale}/-legal/privacy-en.tsx:343` counsel to confirm whether GDPR Art. 3(2) reaches the English pages and, if it does, whether the Art. 27(2) exemption applies or an EU representative...
 - `src/routes/{-$locale}/-legal/privacy-es.tsx:1` counsel sign-off of the 2026-11-05 draft
-- `src/routes/{-$locale}/-legal/privacy-es.tsx:306` confirm the GA4 property's data retention is set to 14 months (docs/analytics.md section 5)
 - `src/routes/{-$locale}/-legal/privacy-extras-en.tsx:1` counsel sign-off of the 2026-11-05 draft
 - `src/routes/{-$locale}/-legal/privacy-extras-en.tsx:178` confirm ElevenLabs' DPA covers the plan you are on and whether ElevenLabs Inc. is certified under the EU–US Data Privacy Framework; if it is, add it h...
 - `src/routes/{-$locale}/-legal/privacy-extras-es.tsx:1` counsel sign-off of the 2026-11-05 draft

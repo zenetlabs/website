@@ -45,7 +45,6 @@ export function CookiesEn({
             {CLOUDFLARE}
           </LegalSection>
           <LegalSection title="Analytics (only if you accept)">
-            {/* TODO(albert): run the _gcl_* cookie check (docs/analytics.md section 6) and list here any _gcl_* cookie it finds, with its purpose and duration */}
             <p>
               Google Analytics 4, provided by Google, measures visits and the
               actions people take, such as clicking our buttons or sending an
@@ -54,18 +53,20 @@ export function CookiesEn({
               state) on zenetlabs.com, each for up to 13 months. They are
               third-party cookies: they are set on our domain but managed by
               Google. Google may process this data in the United States, under
-              the EU–US Data Privacy Framework.
+              the EU–US Data Privacy Framework. We keep Google's advertising
+              features off, so we set no advertising cookies (such as{' '}
+              <code>_gcl_*</code>) and share no data with Google for
+              advertising.
             </p>
           </LegalSection>
-          <LegalSection title="Marketing (only if you accept)">
+          <LegalSection title="Attribution (only if you accept)">
             <p>
               <code>zenet-first-touch</code> (local storage, first party, up to
               90 days) keeps the first page you arrived on, the site that linked
               to it and any campaign tags in the link, such as utm_source or
               gclid. If you send an enquiry, it goes with it so we know which
-              channel brought you. This choice also tells Google, through
-              Consent Mode, that it may use analytics data to measure
-              advertising; we run no advertising tags today.
+              channel brought you. It stays with us and Google does not receive
+              it.
             </p>
           </LegalSection>
           <LegalSection title="Without cookies">
@@ -74,11 +75,11 @@ export function CookiesEn({
               works without cookies and runs whatever you choose.
             </p>
             <p>
-              We use analytics and marketing cookies only with your consent
-              (under the PDPA and, for visitors in the European Union, the
-              ePrivacy rules and GDPR Art. 6(1)(a)). Rejecting them is as easy
-              as accepting them, and the site works the same. We do not track
-              you across sites.
+              We use analytics cookies and the attribution record only with your
+              consent (under the PDPA and, for visitors in the European Union,
+              the ePrivacy rules and GDPR Art. 6(1)(a)). Rejecting them is as
+              easy as accepting them, and the site works the same. We do not
+              track you across sites.
             </p>
           </LegalSection>
         </>
@@ -107,10 +108,10 @@ export function CookiesEn({
         {analytics ? (
           <p>
             Change or withdraw your choice at any time with "Cookie settings" at
-            the bottom of every page. Withdrawing stops Google Analytics from
-            the next page and deletes its cookies where your browser allows it.
-            You can also block or delete cookies in your browser settings; the
-            site keeps working.
+            the bottom of every page. Withdrawing stops Google Analytics at once
+            and deletes its cookies where your browser allows it. You can also
+            block or delete cookies in your browser settings; the site keeps
+            working.
           </p>
         ) : (
           <p>

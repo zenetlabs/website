@@ -107,6 +107,12 @@
       font-size: 17px;
       line-height: 1.6;
       --logo-h: 2rem;
+      --consent-reserve: 11rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    html {
       --consent-reserve: 9.5rem;
     }
   }
