@@ -88,6 +88,12 @@ body_contains() {
   grep -qF "$2" <<<"$body"
 }
 
+body_has_html() {
+  local body
+  body=$(curl -fs --compressed -H 'Accept: text/html' --max-time 20 "$1") || return 1
+  grep -qF "$2" <<<"$body"
+}
+
 body_lacks_html() {
   local body
   body=$(curl -fs --compressed -H 'Accept: text/html' --max-time 20 "$1") || return 1
@@ -247,8 +253,7 @@ attempt "canonical link ${SITE}/es" header_matches 'text/markdown' "${SITE}/es" 
 
 for path in / /es; do
   attempt "no Google tag in ${SITE}${path}" body_lacks_html "${SITE}${path}" 'gtag/js|googletagmanager|zaraz'
-  # Remove the consent-default check in the activation PR that sets production ga4Id.
-  attempt "no consent defaults in ${SITE}${path}" body_lacks_html "${SITE}${path}" "'consent','default'"
+  attempt "consent defaults in ${SITE}${path}" body_has_html "${SITE}${path}" "'consent','default'"
 done
 
 attempt "200 https://albert.sabatemartinez.com/" status_is 200 "https://albert.sabatemartinez.com/"

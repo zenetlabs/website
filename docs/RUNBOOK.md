@@ -11,7 +11,7 @@ Conventions: `<store-id>`, `<secret-id>`, `<version-id>`, `<alias>`, `<booking-i
 | App | TanStack Start SSR on the Worker `prod-zenet-web` (`src/server.ts` is the entry: host and legacy-path 301s first, then the app). English at `/`, Spanish at `/es`. |
 | Domains | 8 custom domains: apex and `www` of `zenetlabs.com`, `zenettech.com`, `zenettechnology.com` and `sabatemartinez.com`. Every host but `zenetlabs.com` answers a 301 to it. |
 | Database | D1 `prod-zenet-web` (EU jurisdiction), binding `DB`, migrations in `migrations/` (0001 to 0005). |
-| Analytics | Cloudflare Web Analytics (cookieless, always on). GA4 is off (`ga4Id: null`). |
+| Analytics | Cloudflare Web Analytics (cookieless, always on). GA4 is on, consent only (`ga4Id` set; `docs/analytics.md`). |
 | Email | Outbound through Resend on `send.zenetlabs.com`; inbound is Google Workspace. |
 | Third parties | Workers AI (binding `AI`, assistant), Google Calendar (booking), ElevenLabs (voice). All three are dark in production. |
 | Cron | One trigger, `*/10 * * * *`, production only (section 8). |
@@ -53,7 +53,7 @@ bash scripts/smoke.sh
    7. The sitemap walk: `PLAYWRIGHT_BASE_URL=https://zenetlabs.com pnpm exec playwright test e2e/sitemap.e2e.ts`. It checks every sitemap page (canonical, hreflang, markdown twin, JSON-LD, placeholders, fragments), every internal link and every link in the llms files.
    8. On failure, the job summary prints the rollback command.
 
-`ci-cd.yml` (every push and PR) holds the rest of the gate: lint, `knip`, react-doctor (`--blocking error`), typecheck, tests, a production build with its guards (including **"The production build ships no analytics code"**, which greps `dist/client` for `zenet-consent|googletagmanager|consent','default'`), `wrangler deploy --dry-run`, the e2e suite and Lighthouse (mobile and desktop).
+`ci-cd.yml` (every push and PR) holds the rest of the gate: lint, `knip`, react-doctor (`--blocking error`), typecheck, tests, a production build with its guards (including **"Analytics loads only lazily"**, which fails unless `googletagmanager` appears in the `analytics-*` client chunk and nowhere else in `dist/client`), `wrangler deploy --dry-run`, the e2e suite and Lighthouse (mobile and desktop).
 
 What a failure means:
 
@@ -298,7 +298,7 @@ Every recipe below was dry-run on 2026-11-01: the flag was set in the production
 |---|---|---|---|---|
 | `booking.published` | `site.config.ts` | `false` | `/book` and `/es/reservar`, the booking tools, `CTA_TARGET` | secret to `unconfigured`, or the flag |
 | `calculator.published` | `site.config.ts` | `false` | both calculator URLs, links to them, `estimate_project` | the flag |
-| `ga4Id` | `site.config.ts` | `null` | banner, consent, GA4, the legal-page variants | the flag |
+| `ga4Id` | `site.config.ts` | set (`null` turns GA4 off) | banner, consent, GA4, the legal-page variants | the flag |
 | `assistant.published` | `site.config.ts` | `false` | the launcher, the panel, `POST /api/chat`, the privacy section | the flag or the budget |
 | `voice.published` and `voice.agents` | `site.config.ts` | `false`, ids `null` | the voice callout, the mint, the bearer tools, `microphone=(self)` | ElevenLabs, or the flag |
 | `webmcp.published`, `webmcp.originTrialToken` | `site.config.ts` | `true`, `null` | the WebMCP chunk, the origin-trial meta tag | the flag |
@@ -321,7 +321,7 @@ Every recipe ends the same way: after the deploy run `bash scripts/smoke.sh`, ch
 
 1. Owner reviews every coefficient in `src/content/pricing-rules.ts` (the `TODO(albert)` markers there).
 2. The flip PR: production `calculator: { published: true }`; update `src/site-config.test.ts`, `src/components/service-ladder.test.tsx`, `src/lib/{calculator-flag,llms,markdown-response,page-registry,seo,structured-data}.test.ts`, `src/routes/{locale-layout,robots-sitemap}.test.ts`; regenerate the voice agent file (the estimate tool changes). Bump `PRICING_RULES.version` and the goldens if any coefficient changed.
-3. The legal sentences already exist behind the build-time constant `__CALCULATOR__` (derived from the same flag): `CalculatorUse` in `privacy-extras-{en,es}.tsx` (the answers travel in the page URL and reach GA `page_location` after consent) and the estimate line in the aviso legal's "Precios" section. The flip makes them render, so only the bumps remain: `CONSENT_VERSION` (`src/server/lead-fields.ts`), the `updated` date of both privacy pages and of the aviso legal, `PAGES.privacy.lastmod`, `PAGES.legalNotice.lastmod` and the date assertion in `legal.test.tsx`.
+3. The legal sentences already exist behind the build-time constant `__CALCULATOR__` (derived from the same flag): `CalculatorUse` in `privacy-extras-{en,es}.tsx` (the answers travel in the page URL; the address sent to GA drops them) and the estimate line in the aviso legal's "Precios" section. The flip makes them render, so only the bumps remain: `CONSENT_VERSION` (`src/server/lead-fields.ts`), the `updated` date of both privacy pages and of the aviso legal, `PAGES.privacy.lastmod`, `PAGES.legalNotice.lastmod` and the date assertion in `legal.test.tsx`.
 4. `lastmod` for `calculator`, `pricing` and `home` (the `<main>` of `/`, `/pricing`, `/es` and `/es/precios` change; no JSON-LD changes).
 5. After the deploy: both URLs 200 and listed in the sitemap and llms; a result URL renders; `estimate_project` returns an estimate; Lighthouse on a result URL.
 
@@ -329,7 +329,7 @@ Every recipe ends the same way: after the deploy run `bash scripts/smoke.sh`, ch
 
 1. Owner creates the property ([analytics.md](analytics.md) section 5) and hands over the measurement ID.
 2. The flip PR: production `ga4Id: 'G-XXXXXXXXXX'`.
-3. **Change the CI guard:** `.github/workflows/ci-cd.yml`, job `build-prod`, step "The production build ships no analytics code" greps `dist/client` for `zenet-consent|googletagmanager|consent','default'` and fails once `ga4Id` is set (it matched 4 files in the dry run). Remove it or invert it into a positive check. In `scripts/smoke.sh` remove the two "no consent defaults" lines (the inline snippet now exists on purpose); the "no Google tag" lines still hold (the HTML carries no tag before consent; verified).
+3. **CI guard (done 2026-11-05):** `.github/workflows/ci-cd.yml`, job `build-prod`, step "Analytics loads only lazily" replaced the old "ships no analytics code" grep: it fails if no client chunk contains `googletagmanager` or if one outside `assets/analytics-*` does. `scripts/smoke.sh` now expects `'consent','default'` in the HTML of `/` and `/es` and keeps "no Google tag" (the HTML carries no tag before consent). To turn GA4 off again, set `ga4Id: null` and revert both.
 4. Update `src/components/consent-manager.test.tsx` and `src/lib/pages.test.ts`. Set `updated` in `cookies-{en,es}.tsx` and `privacy-{en,es}.tsx`, `PAGES.cookies.lastmod` and `PAGES.privacy.lastmod`, `CONSENT_VERSION` and the date assertion in `legal.test.tsx`. The `<main>` of `/privacy`, `/cookies`, `/es/privacidad` and `/es/cookies` changes; nothing else does.
 5. After the deploy: Tag Assistant, DebugView and the `_gcl_*` cookie check (analytics.md section 6), `bash scripts/smoke.sh`.
 

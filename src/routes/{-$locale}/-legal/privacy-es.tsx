@@ -98,11 +98,10 @@ function Collection() {
         traen consultas.{' '}
         {analytics ? (
           <>
-            Salvo que aceptes las cookies de marketing, no guardamos nada en tu
-            dispositivo para ello. Si las aceptas, tu navegador conserva durante
-            un máximo de 90 días la primera página a la que llegaste, el sitio
-            que te enlazó y las etiquetas de campaña, que se envían con tu
-            consulta.
+            Salvo que aceptes la atribución, no guardamos nada en tu dispositivo
+            para ello. Si la aceptas, tu navegador conserva durante un máximo de
+            90 días la primera página a la que llegaste, el sitio que te enlazó
+            y las etiquetas de campaña, que se envían con tu consulta.
           </>
         ) : (
           <>Para ello no guardamos nada en tu dispositivo.</>
@@ -189,10 +188,11 @@ function Bases({ legalEs }: Parts) {
         <VoiceBasis />
         {analytics ? (
           <li>
-            Las cookies analíticas y de marketing: tu consentimiento (art. 6.1.a
-            del RGPD y art. 22.2 de la LSSI), que puedes retirar cuando quieras
-            desde «Configuración de cookies», al pie de cada página, sin que
-            ello afecte a la licitud del tratamiento anterior.
+            Las cookies analíticas y el registro de atribución: tu
+            consentimiento (art. 6.1.a del RGPD y art. 22.2 de la LSSI), que
+            puedes retirar cuando quieras desde «Configuración de cookies», al
+            pie de cada página, sin que ello afecte a la licitud del tratamiento
+            anterior.
           </li>
         ) : null}
       </ul>
@@ -299,11 +299,10 @@ function Retention({ legalEs }: Parts) {
           <>
             <li>
               Tu elección sobre las cookies: 12 meses, en tu navegador. La
-              primera página por la que llegaste, si aceptas las cookies de
-              marketing: 90 días, en tu navegador.
+              primera página por la que llegaste, si aceptas la atribución: 90
+              días, en tu navegador.
             </li>
             <li>
-              {/* TODO(albert): confirm the GA4 property's data retention is set to 14 months (docs/analytics.md section 5) */}
               Google Analytics conserva los datos de eventos durante 14 meses.
             </li>
           </>

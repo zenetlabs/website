@@ -463,6 +463,9 @@ export type SiteContent = {
 export type ConsentCopy = {
   title: string;
   text: string;
+  textShort: string;
+  more: string;
+  less: string;
   policy: string;
   reject: string;
   accept: string;
@@ -475,8 +478,8 @@ export type ConsentCopy = {
     alwaysOn: string;
     analytics: string;
     analyticsText: string;
-    marketing: string;
-    marketingText: string;
+    attribution: string;
+    attributionText: string;
     save: string;
     close: string;
   };

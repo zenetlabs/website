@@ -83,7 +83,7 @@ export function CalculatorUse() {
       guardarla o compartirla. Como cualquier dirección que visitas, llega a
       Cloudflare
       {__GA4_ID__ !== null
-        ? ' y, si aceptas las cookies analíticas, a Google Analytics'
+        ? '; si aceptas las cookies analíticas, la dirección que enviamos a Google Analytics las omite'
         : null}
       . No guardamos esas respuestas salvo que nos envíes una consulta desde el
       resultado: entonces se añaden a tu mensaje, junto con la estimación.

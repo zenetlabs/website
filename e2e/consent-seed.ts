@@ -11,7 +11,7 @@ export function rejectedConsent(baseURL: string) {
             name: CONSENT_KEY,
             value: JSON.stringify({
               analytics: false,
-              marketing: false,
+              attribution: false,
               revision: COOKIE_CONSENT_REVISION,
               at: Date.now(),
             }),

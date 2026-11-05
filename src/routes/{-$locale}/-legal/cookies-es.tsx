@@ -52,7 +52,6 @@ export function CookiesEs({
             {CLOUDFLARE}
           </LegalSection>
           <LegalSection title="Analíticas (solo si las aceptas)">
-            {/* TODO(albert): run the _gcl_* cookie check (docs/analytics.md section 6) and list here any _gcl_* cookie it finds, with its purpose and duration */}
             <p>
               Google Analytics 4, un servicio de Google, mide las visitas y lo
               que se hace en la web, como pulsar nuestros botones o enviar una
@@ -62,19 +61,20 @@ export function CookiesEs({
               de 13 meses. Son cookies de terceros: aunque se instalan en
               nuestro dominio, las gestiona Google. Google puede tratar estos
               datos en Estados Unidos, al amparo del Marco de Privacidad de
-              Datos UE-EE. UU.
+              Datos UE-EE. UU. Mantenemos desactivadas las funciones
+              publicitarias de Google, así que no instalamos cookies
+              publicitarias (como <code>_gcl_*</code>) ni compartimos datos con
+              Google para publicidad.
             </p>
           </LegalSection>
-          <LegalSection title="Marketing (solo si las aceptas)">
+          <LegalSection title="Atribución (solo si la aceptas)">
             <p>
               <code>zenet-first-touch</code> (almacenamiento local, propio,
               máximo 90 días) guarda la primera página a la que llegaste, el
               sitio que te enlazó y las etiquetas de campaña del enlace, como
               utm_source o gclid. Si nos envías una consulta, se envía con ella
-              para saber qué canal te trajo. Esta opción también indica a
-              Google, mediante el modo de consentimiento, que puede usar los
-              datos analíticos para medir publicidad; hoy no usamos etiquetas
-              publicitarias.
+              para saber qué canal te trajo. Se queda con nosotros y Google no
+              lo recibe.
             </p>
           </LegalSection>
           <LegalSection title="Sin cookies">
@@ -83,8 +83,8 @@ export function CookiesEs({
               funciona sin cookies y se usa elijas lo que elijas.
             </p>
             <p>
-              Usamos cookies analíticas y de marketing solo con tu
-              consentimiento (art. 22.2 de la LSSI y art. 6.1.a del RGPD).
+              Usamos las cookies analíticas y el registro de atribución solo con
+              tu consentimiento (art. 22.2 de la LSSI y art. 6.1.a del RGPD).
               Rechazarlas es tan fácil como aceptarlas, y el sitio funciona
               igual. No te seguimos entre sitios.
             </p>
@@ -118,10 +118,10 @@ export function CookiesEs({
           <p>
             Puedes cambiar o retirar tu elección cuando quieras desde
             «Configuración de cookies», al pie de cada página. Si la retiras,
-            Google Analytics deja de funcionar desde la página siguiente y
-            borramos sus cookies cuando tu navegador lo permite. También puedes
-            bloquear o borrar las cookies en los ajustes de tu navegador; el
-            sitio seguirá funcionando.
+            Google Analytics se detiene al instante y borramos sus cookies
+            cuando tu navegador lo permite. También puedes bloquear o borrar las
+            cookies en los ajustes de tu navegador; el sitio seguirá
+            funcionando.
           </p>
         ) : (
           <p>

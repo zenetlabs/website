@@ -1,6 +1,10 @@
-import { type SyntheticEvent, useId, useRef } from 'react';
+import { type SyntheticEvent, useId, useRef, useState } from 'react';
 import { Container } from '@/components/section';
-import { SECONDARY_BUTTON, TEXT_LINK } from '@/components/ui';
+import {
+  SECONDARY_BUTTON,
+  SECONDARY_BUTTON_SM,
+  TEXT_LINK,
+} from '@/components/ui';
 import type { ConsentCopy } from '@/content/types';
 import { applyConsent } from '@/lib/analytics';
 import {
@@ -15,9 +19,26 @@ import { COOKIE_SETTINGS_ID, openCookieSettings } from '@/lib/cookie-settings';
 import type { Locale } from '@/lib/i18n';
 import { pagePath } from '@/lib/page-registry';
 
-const BANNER_BUTTON = `${SECONDARY_BUTTON} hover:bg-bg-tint!`;
+const BANNER_BUTTON = `${SECONDARY_BUTTON_SM} hover:bg-bg-tint!`;
 
 const CHECKBOX = 'mt-1 size-6 shrink-0 accent-accent';
+
+function trackBannerHeight(node: HTMLElement): () => void {
+  const root = document.documentElement;
+  const publish = () => {
+    root.style.setProperty(
+      '--consent-reserve',
+      `${Math.ceil(node.getBoundingClientRect().height)}px`,
+    );
+  };
+  publish();
+  const observer = new ResizeObserver(publish);
+  observer.observe(node);
+  return () => {
+    observer.disconnect();
+    root.style.removeProperty('--consent-reserve');
+  };
+}
 
 function choose(gaId: string, choice: ConsentChoice): void {
   const now = Date.now();
@@ -34,48 +55,68 @@ function ConsentBanner({
   copy: ConsentCopy;
   locale: Locale;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const id = useId();
+  const titleId = `${id}-title`;
+  const textId = `${id}-text`;
   return (
     <section
+      ref={trackBannerHeight}
       data-consent-banner
-      aria-label={copy.title}
-      className="fixed inset-x-0 bottom-0 z-20 border-t border-hairline bg-surface shadow-raised print:hidden"
+      aria-labelledby={titleId}
+      aria-describedby={textId}
+      className="fixed inset-x-0 bottom-0 z-20 max-h-[70dvh] overflow-y-auto border-t border-hairline bg-surface shadow-raised print:hidden"
     >
-      <Container className="grid gap-2 py-2.5 md:grid-cols-[1fr_auto] md:items-center md:gap-10 md:py-4">
-        <p className="max-w-3xl text-sm leading-snug text-muted-fg">
-          {copy.text}
-        </p>
-        <div className="grid gap-1 md:justify-items-end">
-          <div className="grid grid-cols-2 gap-3 md:w-96">
+      <Container className="grid gap-3 py-3 md:grid-cols-[1fr_auto] md:items-center md:gap-10 md:py-4">
+        <div>
+          <h2 id={titleId} className="font-sans text-base font-semibold">
+            {copy.title}
+          </h2>
+          <p className="mt-1 max-w-3xl text-sm leading-snug text-muted-fg">
+            <span id={textId}>
+              <span className={expanded ? 'hidden' : 'sm:hidden'}>
+                {copy.textShort}
+              </span>
+              <span className={expanded ? undefined : 'hidden sm:inline'}>
+                {copy.text}
+              </span>
+            </span>{' '}
             <button
               type="button"
-              className={BANNER_BUTTON}
-              onClick={() => choose(gaId, REJECT_ALL)}
+              aria-expanded={expanded}
+              aria-controls={textId}
+              onClick={() => setExpanded((value) => !value)}
+              className={`${TEXT_LINK} sm:hidden`}
             >
-              {copy.reject}
-            </button>
-            <button
-              type="button"
-              className={BANNER_BUTTON}
-              onClick={() => choose(gaId, ACCEPT_ALL)}
-            >
-              {copy.accept}
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-x-5 text-sm">
-            <button
-              type="button"
-              className={`${TEXT_LINK} py-1`}
-              onClick={openCookieSettings}
-            >
-              {copy.settings}
-            </button>
-            <a
-              href={pagePath(locale, 'cookies')}
-              className={`${TEXT_LINK} py-1`}
-            >
+              {expanded ? copy.less : copy.more}
+            </button>{' '}
+            <a href={pagePath(locale, 'cookies')} className={TEXT_LINK}>
               {copy.policy}
             </a>
-          </div>
+          </p>
+        </div>
+        <div className="grid grid-cols-3 gap-2 md:w-[28rem] md:gap-3">
+          <button
+            type="button"
+            className={BANNER_BUTTON}
+            onClick={() => choose(gaId, REJECT_ALL)}
+          >
+            {copy.reject}
+          </button>
+          <button
+            type="button"
+            className={BANNER_BUTTON}
+            onClick={openCookieSettings}
+          >
+            {copy.settings}
+          </button>
+          <button
+            type="button"
+            className={BANNER_BUTTON}
+            onClick={() => choose(gaId, ACCEPT_ALL)}
+          >
+            {copy.accept}
+          </button>
         </div>
       </Container>
     </section>
@@ -150,7 +191,7 @@ function ConsentSettings({
         action={(data) => {
           finish({
             analytics: data.get('analytics') !== null,
-            marketing: data.get('marketing') !== null,
+            attribution: data.get('attribution') !== null,
           });
         }}
       >
@@ -180,10 +221,10 @@ function ConsentSettings({
             checked={consent?.analytics ?? false}
           />
           <ToggleRow
-            name="marketing"
-            label={dialog.marketing}
-            text={dialog.marketingText}
-            checked={consent?.marketing ?? false}
+            name="attribution"
+            label={dialog.attribution}
+            text={dialog.attributionText}
+            checked={consent?.attribution ?? false}
           />
         </div>
         <div className="grid gap-3 border-t border-hairline pt-4">

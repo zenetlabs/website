@@ -249,7 +249,7 @@ test.describe('analytics', () => {
                 name: CONSENT_KEY,
                 value: JSON.stringify({
                   analytics: true,
-                  marketing: false,
+                  attribution: false,
                   revision: COOKIE_CONSENT_REVISION,
                   at: Date.now(),
                 }),
