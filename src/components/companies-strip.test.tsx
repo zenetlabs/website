@@ -41,14 +41,17 @@ describe.each([
     }
   });
 
-  it('masks a logo file for each brand except Viatsy, which is set in type', () => {
+  it('masks a logo file for each brand', () => {
     const all = links();
     for (const [index, { logo }] of PORTFOLIO.entries()) {
       const mask = all[index]?.querySelector('.logo');
-      expect(mask === null).toBe(logo === null);
-      if (mask) expect(mask).toHaveAttribute('aria-hidden', 'true');
+      expect(mask).not.toBeNull();
+      expect(mask).toHaveAttribute('aria-hidden', 'true');
+      expect(mask).toHaveAttribute(
+        'style',
+        expect.stringContaining(`--logo: url(${logo.src})`),
+      );
     }
-    expect(all[0]?.querySelector('.logo-wordmark')).toHaveTextContent('Viatsy');
   });
 
   it('names the strip with an h2', () => {
