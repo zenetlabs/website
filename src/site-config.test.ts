@@ -85,14 +85,11 @@ describe('serverConfig', () => {
     expect(production.leads.notifyTo).not.toMatch(/example\./);
   });
 
-  it('keeps Access closed until the app exists', () => {
-    const { access } = serverConfig('production');
-    if (access === null) return;
-    expect(new URL(access.teamDomain).protocol).toBe('https:');
-    expect(new URL(access.teamDomain).hostname).toMatch(
-      /\.cloudflareaccess\.com$/,
-    );
-    expect(access.aud).not.toBe('');
+  it('gates /internal with the production Access app', () => {
+    expect(serverConfig('production').access).toEqual({
+      teamDomain: 'https://odd-bush-dcff.cloudflareaccess.com',
+      aud: '96c32a6cc61c8b596d3ae2e8a1b72f8a1649f83007db00ce4127796c168ea612',
+    });
   });
 
   it('rejects unknown environments', () => {

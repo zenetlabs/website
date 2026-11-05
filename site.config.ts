@@ -143,7 +143,7 @@ const productionServer: ServerConfig = {
     model: '@cf/zai-org/glm-4.7-flash',
     // TODO(albert): AI Gateway name (docs/ai-assistant.md "AI Gateway"); null calls Workers AI directly
     aiGatewayName: null,
-    // TODO(albert): raise on Workers Paid; the Free plan stops at 10,000 neurons a day for the whole account
+    // TODO(albert): set the daily neuron budget to the spend you want (Workers Paid)
     dailyNeuronBudget: 8_000,
     // Two full 20-message sessions a day from one address; the same limit for every visitor behind a shared one.
     perAddressDailyTurns: 40,

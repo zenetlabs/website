@@ -201,7 +201,7 @@ The ordered recipe (owner steps, the flip PR with its `CONSENT_VERSION`, privacy
 
 ### Owner steps
 
-1. Confirm the Workers plan (Free: 10,000 neurons a day account-wide, hard cap; Paid: raise `dailyNeuronBudget`).
+1. The account is on Workers Paid: raise `dailyNeuronBudget` to the spend you want.
 2. Optional AI Gateway: Dashboard, AI, AI Gateway, Create (for example `zenetlabs-chat`), logs off, cache off, an optional rate limit and spend alert; send the name.
 3. If the first deploy with the `AI` binding fails with an authentication error naming AI, add Account, Workers AI, Read to the deploy token (see the vault note).
 4. Review the `TODO(albert)` items: the rules and tone in `prompt.ts`, the widget copy and notice, the privacy text and the 30-day retention, the budget.
