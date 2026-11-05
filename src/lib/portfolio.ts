@@ -11,8 +11,7 @@ export const PORTFOLIO = [
     key: 'viatsy',
     name: 'Viatsy',
     href: 'https://viatsy.com',
-    // TODO(albert): send the current Viatsy SVG; until then the strip sets the name in type
-    logo: null,
+    logo: { src: '/logos/viatsy.svg', width: 600, height: 136.5 },
   },
   {
     key: 'mexica',
@@ -42,7 +41,7 @@ export const PORTFOLIO = [
   key: string;
   name: string;
   href: string;
-  logo: PortfolioLogo | null;
+  logo: PortfolioLogo;
 }[];
 
 export type PortfolioKey = (typeof PORTFOLIO)[number]['key'];

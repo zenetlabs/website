@@ -10,7 +10,6 @@ export function CompanyMark({
   name: string;
   logo: (typeof PORTFOLIO)[number]['logo'];
 }) {
-  if (!logo) return <span className="logo-wordmark">{name}</span>;
   return (
     <>
       <span

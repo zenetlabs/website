@@ -33,18 +33,28 @@ test.describe.configure({ mode: 'serial' });
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
-// Owner-zone days that currently have bookable slots. Each test uses its own
-// index so that the tests never share a slot, and none sits near the notice edge.
+// Owner-zone days that currently have bookable slots, earlier than the late
+// window (11+ days out) that api-tools, voice and webmcp book in. Each test uses
+// its own index so that the tests never share a slot, and none sits near the
+// notice edge (index 0 is skipped). Any 11 days hold at least six such days.
+const LATE_WINDOW_DAYS = 11;
+
 function ownerDays(): Slot[][] {
+  const now = Date.now();
+  const lateFrom = new Date(now + LATE_WINDOW_DAYS * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
   const slots = availableSlots({
     rules: BOOKING_RULES,
-    now: Date.now(),
+    now,
     busy: [],
     booked: [],
   });
   const days = new Map<string, Slot[]>();
-  for (const slot of slots)
+  for (const slot of slots) {
+    if (slot.day >= lateFrom) continue;
     days.set(slot.day, [...(days.get(slot.day) ?? []), slot]);
+  }
   return [...days.values()];
 }
 
@@ -210,7 +220,7 @@ test.describe('in a Singapore browser', () => {
 test('busy time and its 15 minute buffer disappear from the list', async ({
   page,
 }) => {
-  const day = dayAt(3);
+  const day = dayAt(2);
   const first = day[0];
   if (!first) throw new Error('empty day');
   await googleBusy(TEST_CALENDAR, [
@@ -298,7 +308,7 @@ test('a slot taken meanwhile gives the alert, one refresh and keeps what was typ
   page,
   request,
 }) => {
-  const day = dayAt(4);
+  const day = dayAt(3);
   const slot = slotValue(day, '15:00');
   await gotoHydrated(page, '/book');
   const radios = page.locator('input[name="slot"]');
@@ -334,7 +344,7 @@ test('a slot taken meanwhile gives the alert, one refresh and keeps what was typ
 test('two parallel bookings of one slot give exactly one booked and one slot_taken', async ({
   request,
 }) => {
-  const slot = slotValue(dayAt(5), '14:00');
+  const slot = slotValue(dayAt(4), '14:00');
   const results = await Promise.all([
     bearerBook(request, slot),
     bearerBook(request, slot),
@@ -356,7 +366,7 @@ test('three bookings fill a day and the day leaves the list', async ({
   page,
   request,
 }) => {
-  const day = dayAt(6);
+  const day = dayAt(5);
   for (const at of ['08:00', '12:00', '16:00']) {
     expect((await bearerBook(request, slotValue(day, at))).status).toBe(
       'booked',
