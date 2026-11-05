@@ -53,29 +53,37 @@ describe('sitemapXml', () => {
     expect(parseSitemap(xml).map((entry) => entry.loc)).toEqual([
       'https://zenetlabs.com/',
       'https://zenetlabs.com/services',
+      'https://zenetlabs.com/services/automation-diagnostic',
       'https://zenetlabs.com/services/ai-automation',
       'https://zenetlabs.com/services/integrations',
       'https://zenetlabs.com/services/ai-agents',
       'https://zenetlabs.com/services/custom-software',
       'https://zenetlabs.com/services/ai-training',
+      'https://zenetlabs.com/services/maintenance',
       'https://zenetlabs.com/case-studies/viatsy',
+      'https://zenetlabs.com/case-studies',
+      'https://zenetlabs.com/contact',
       'https://zenetlabs.com/pricing',
       'https://zenetlabs.com/about',
       'https://zenetlabs.com/privacy',
       'https://zenetlabs.com/cookies',
       'https://zenetlabs.com/es',
       'https://zenetlabs.com/es/servicios',
+      'https://zenetlabs.com/es/servicios/diagnostico-de-automatizacion',
       'https://zenetlabs.com/es/servicios/automatizacion-de-procesos',
       'https://zenetlabs.com/es/servicios/integraciones',
       'https://zenetlabs.com/es/servicios/agentes-de-ia',
       'https://zenetlabs.com/es/servicios/desarrollo-de-software-a-medida',
       'https://zenetlabs.com/es/servicios/formacion-ia-equipos',
+      'https://zenetlabs.com/es/servicios/mantenimiento',
       'https://zenetlabs.com/es/servicios/integraciones/holded-prestashop',
       'https://zenetlabs.com/es/servicios/integraciones/holded-woocommerce',
       'https://zenetlabs.com/es/servicios/integraciones/holded-hubspot',
       'https://zenetlabs.com/es/verifactu-integracion',
       'https://zenetlabs.com/es/sectores/agencias-de-viaje',
       'https://zenetlabs.com/es/casos/viatsy',
+      'https://zenetlabs.com/es/casos',
+      'https://zenetlabs.com/es/contacto',
       'https://zenetlabs.com/es/precios',
       'https://zenetlabs.com/es/sobre-nosotros',
       'https://zenetlabs.com/es/privacidad',
@@ -94,7 +102,7 @@ describe('sitemapXml', () => {
 
   it('gives every url its alternates', () => {
     const entries = parseSitemap(xml);
-    expect(entries).toHaveLength(30);
+    expect(entries).toHaveLength(38);
     for (const { loc, alternates } of entries) {
       const page = PAGE_IDS.find((id) =>
         locales.some((locale) => pageUrl(locale, id) === loc),

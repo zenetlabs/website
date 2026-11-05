@@ -18,6 +18,7 @@ const LEGACY_PAGES: ReadonlyMap<string, PageId> = new Map([
   ['/privacy-policy', 'privacy'],
   ['/cookies-policy', 'cookies'],
   ['/about-us', 'about'],
+  ['/contact-us', 'contact'],
 ]);
 
 function collapseLeadingSlashes(pathname: string): string {

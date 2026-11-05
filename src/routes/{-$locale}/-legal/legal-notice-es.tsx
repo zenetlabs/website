@@ -34,7 +34,7 @@ export function LegalNoticeEs({
             {PUBLIC_EMAIL}
           </a>{' '}
           o mediante el{' '}
-          <a href={`${pagePath('es', 'home')}#contact`} className={TEXT_LINK}>
+          <a href={pagePath('es', 'contact')} className={TEXT_LINK}>
             formulario de contacto
           </a>
           .

@@ -53,7 +53,7 @@ for (const path of ES_PAGES) {
       );
       await expect(hero.getByRole('link').last()).toHaveAttribute(
         'href',
-        '/es/precios#integration',
+        '/es/precios',
       );
       await expect(page.locator('#cta-title ~ div a').first()).toHaveAttribute(
         'href',
@@ -270,14 +270,12 @@ for (const [locale, path, switchTo, label, nav] of [
       ]);
     });
 
-    test('keeps the header cases link on the home section', async ({
-      page,
-    }) => {
+    test('links the header cases link to the cases hub', async ({ page }) => {
       await page.setViewportSize({ width: 1280, height: 900 });
       await gotoHydrated(page, path);
       await expect(navLinks(page).nth(2)).toHaveAttribute(
         'href',
-        locale === 'en' ? '/#cases' : '/es#cases',
+        locale === 'en' ? '/case-studies' : '/es/casos',
       );
     });
   });
@@ -293,8 +291,11 @@ test('the automation and agents pages link the case in both languages', async ({
     ['/es/servicios/agentes-de-ia', CASE_PAIR.es],
   ] as const) {
     await gotoHydrated(page, path);
-    await expect(
-      page.locator('#case').getByRole('link', { name: /→$/ }),
-    ).toHaveAttribute('href', href);
+    const links = page.locator('#case').getByRole('link', { name: /→$/ });
+    await expect(links.first()).toHaveAttribute('href', href);
+    await expect(links.last()).toHaveAttribute(
+      'href',
+      path.startsWith('/es') ? '/es/casos' : '/case-studies',
+    );
   }
 });

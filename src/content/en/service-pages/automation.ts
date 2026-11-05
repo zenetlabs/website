@@ -151,5 +151,5 @@ export const automation = {
       },
     ],
   },
-  related: ['integrations', 'agents'],
+  related: ['diagnostic', 'integrations', 'agents'],
 } satisfies ServicePageContent;

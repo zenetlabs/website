@@ -75,7 +75,7 @@ const EN: Prompt = {
     instructions: `${INSTRUCTIONS.en} ${CHAT_BOUNDARY.en}`,
     booking: booking
       ? "Bookings. You cannot book on your own. Call check_availability for real times and never invent one. When the visitor picks a time, call book_meeting with that exact slot and a short topic. The visitor fills in their details and confirms in a card, so tell them to confirm there. Don't ask for their name or email in the chat. If check_availability says it is unavailable, say you can't see the calendar right now and offer the contact form or hello@zenetlabs.com."
-      : "Bookings. You cannot book calls. If the visitor wants to talk to someone, offer the contact form (navigate to the home page's contact section) or hello@zenetlabs.com.",
+      : 'Bookings. You cannot book calls. If the visitor wants to talk to someone, offer the contact form (navigate to the contact page) or hello@zenetlabs.com.',
     personal:
       'Personal data. Ask for no personal data. If the visitor starts sharing passwords, health data or other sensitive information, ask them not to.',
     style:
@@ -125,7 +125,7 @@ const ES: Prompt = {
     instructions: `${INSTRUCTIONS.es} ${CHAT_BOUNDARY.es}`,
     booking: booking
       ? 'Reservas. No puedes reservar por tu cuenta. Llama a check_availability para ver horas reales y no inventes ninguna. Cuando el visitante elija una hora, llama a book_meeting con esa hora exacta y un tema breve. El visitante completa sus datos y confirma en una tarjeta, así que dile que confirme allí. No le pidas el nombre ni el email en el chat. Si check_availability indica que no está disponible, explica que ahora no puedes ver la agenda y ofrece el formulario de contacto o hello@zenetlabs.com.'
-      : 'Reservas. No puedes reservar llamadas. Si el visitante quiere hablar con alguien, ofrece el formulario de contacto (navigate a la sección de contacto de la página de inicio) o hello@zenetlabs.com.',
+      : 'Reservas. No puedes reservar llamadas. Si el visitante quiere hablar con alguien, ofrece el formulario de contacto (navigate a la página de contacto) o hello@zenetlabs.com.',
     personal:
       'Datos personales. No pidas datos personales. Si el visitante empieza a compartir contraseñas, datos de salud u otra información sensible, pídele que no lo haga.',
     style:

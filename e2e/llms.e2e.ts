@@ -1,5 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { LLMS_PATHS } from './helpers';
+import {
+  CASES_HUB,
+  CONTACT_PAIR,
+  LLMS_PATHS,
+  markdownPathOf,
+  SERVICE_PAIRS,
+} from './helpers';
 
 for (const path of LLMS_PATHS) {
   test(`${path} is plain text, cacheable and noindex`, async ({ request }) => {
@@ -48,3 +54,26 @@ for (const path of LLMS_PATHS) {
     }
   });
 }
+
+test('the llms files list the new pages and the contact page', async ({
+  request,
+}) => {
+  for (const locale of ['en', 'es'] as const) {
+    const prefix = locale === 'en' ? '' : '/es';
+    const index = await (await request.get(`${prefix}/llms.txt`)).text();
+    const full = await (await request.get(`${prefix}/llms-full.txt`)).text();
+    for (const path of [
+      CONTACT_PAIR[locale],
+      CASES_HUB[locale],
+      SERVICE_PAIRS.diagnostic[locale],
+      SERVICE_PAIRS.maintenance[locale],
+    ]) {
+      expect(index, path).toContain(`${markdownPathOf(path)})`);
+    }
+    expect(index).toContain(`${CONTACT_PAIR[locale]}):`);
+    expect(index).not.toMatch(/\)#contact|\/pricing#|\/precios#/);
+    expect(full).toContain(
+      locale === 'en' ? '1. We reply:' : '1. Te respondemos:',
+    );
+  }
+});

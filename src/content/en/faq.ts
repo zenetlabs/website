@@ -46,7 +46,7 @@ export const faq = [
     id: 'prices',
     group: 'terms',
     question: 'How much does it cost?',
-    answer: `The diagnostic costs ${price('diagnostic')}, credited to the project if you continue within 60 days. An integration or automation costs ${price('integration')}, an AI agent in production ${price('agent')} and a custom web or app ${price('web')}. Prices exclude GST. Training, maintenance and growth are on the pricing page.`,
+    answer: `The diagnostic costs ${price('diagnostic')}, credited to the project if you continue within 60 days. An integration or automation costs ${price('integration')}, an AI agent in production ${price('agent')} and a custom web or app ${price('web')}. Prices exclude GST. Maintenance is ${price('maintenance')}, in three plans described on the maintenance page; training is ${price('training')} and growth ${price('growth')}.`,
   },
   {
     id: 'maintenance',

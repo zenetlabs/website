@@ -120,14 +120,14 @@ for (const { path, locale } of PRICING) {
   }) => {
     await page.goto(path);
     for (const service of Object.values(SERVICES[locale])) {
-      const card = page.locator(`article#${service.id}`);
+      const card = page.locator(`article[data-service="${service.id}"]`);
       await expect(card).toBeVisible();
       const text = normalise(await card.innerText());
       for (const price of service.prices) {
         expect(text).toContain(normalise(formatPrice(locale, price)));
       }
     }
-    await expect(page.getByText(TAX_NOTE[locale])).toBeVisible();
+    await expect(page.getByText(TAX_NOTE[locale]).first()).toBeVisible();
   });
 }
 

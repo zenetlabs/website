@@ -54,8 +54,12 @@ describe('landing page registry and names', () => {
     }
   });
 
-  it('lists the English hub with the case name only', () => {
-    expect(Object.keys(HUB.en.landing)).toEqual(['viatsyCase']);
+  it('lists the English hub with the case and site page names only', () => {
+    expect(Object.keys(HUB.en.landing)).toEqual([
+      'viatsyCase',
+      'cases',
+      'contact',
+    ]);
   });
 });
 

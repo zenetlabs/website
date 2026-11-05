@@ -18,6 +18,8 @@ const LEGAL_LINKS = [
   'cookies',
 ] as const satisfies readonly PageId[];
 
+const EXPLORE_LINKS = ['contact', 'cases'] as const satisfies readonly PageId[];
+
 export function SiteFooter({ locale }: { locale: Locale }) {
   const { footer, nav } = useMessages();
   const entity = legalEntity(locale);
@@ -43,6 +45,16 @@ export function SiteFooter({ locale }: { locale: Locale }) {
         </div>
         <div className="grid content-between justify-items-start gap-6 md:justify-items-end">
           <nav
+            aria-label={nav.explore}
+            className="flex flex-wrap gap-x-6 gap-y-2"
+          >
+            {EXPLORE_LINKS.map((page) => (
+              <a key={page} href={pagePath(locale, page)} className={TEXT_LINK}>
+                {nav[page]}
+              </a>
+            ))}
+          </nav>
+          <nav
             aria-label={nav.legal}
             className="flex flex-wrap gap-x-6 gap-y-2"
           >
@@ -59,7 +71,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             )}
             {__GA4_ID__ === null ? null : (
               <a
-                href={`${pagePath(locale, 'cookies')}#manage`}
+                href={pagePath(locale, 'cookies')}
                 onClick={(event) => {
                   if (openCookieSettings()) event.preventDefault();
                 }}

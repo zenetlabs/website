@@ -45,6 +45,10 @@ function entityNode(
   };
 }
 
+export function websiteId(locale: Locale): string {
+  return `${SITE.url}${localePath(locale, '/')}#website`;
+}
+
 function websiteNode(
   locale: Locale,
   entity: PublishedEntity,
@@ -52,7 +56,7 @@ function websiteNode(
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    '@id': `${SITE.url}${localePath(locale, '/')}#website`,
+    '@id': websiteId(locale),
     name: SITE_NAME,
     description: messages[locale].meta.description,
     url: pageUrl(locale, 'home'),

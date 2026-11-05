@@ -6,7 +6,7 @@ export const bookPage = {
     title: 'Book a call',
     metaTitle: 'Book a 30-minute call | Zenet Labs',
     description:
-      'Pick a time for a free 30-minute video call with Zenet Labs about the manual work in your company. No account needed.',
+      'Pick a time for a free 30-minute video call with Zenet Labs about the manual work in your company. No account needed; we email you the invitation.',
   },
   breadcrumb: { label: 'Breadcrumb' },
   title: {

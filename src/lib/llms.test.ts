@@ -22,6 +22,7 @@ import {
   LANDING_PAGE_IDS,
   pagesIn,
   SERVICE_PAGE_IDS,
+  serviceHref,
   serviceOf,
 } from '@/lib/page-registry';
 import { PORTFOLIO } from '@/lib/portfolio';
@@ -127,8 +128,7 @@ describe.each(locales)('LLMS_TXT %s', (locale) => {
     const services = Object.values(SERVICES[locale]);
     expect(hrefs(items)).toEqual(
       services.map(
-        ({ id }) =>
-          `https://zenetlabs.com${locale === 'en' ? '/pricing' : '/es/precios'}#${id}`,
+        ({ id }) => `https://zenetlabs.com${serviceHref(locale, id)}`,
       ),
     );
     for (const [index, service] of services.entries()) {
@@ -154,7 +154,7 @@ describe.each(locales)('LLMS_TXT %s', (locale) => {
       ),
       ...landingFaqOf(locale),
     ];
-    expect(items).toHaveLength(locale === 'en' ? 35 : 57);
+    expect(items).toHaveLength(locale === 'en' ? 43 : 65);
     expect(hrefs(items)).toEqual(
       entries.map(({ item, page }) => `${page}#faq-${item.id}`),
     );
@@ -165,12 +165,12 @@ describe.each(locales)('LLMS_TXT %s', (locale) => {
 
   it('links the service pages first among the commercial pages', () => {
     const pages = hrefs(section(text, headings.pages));
-    expect(pages).toHaveLength(locale === 'en' ? 12 : 18);
-    expect(pages.slice(1, 7)).toEqual([
+    expect(pages).toHaveLength(locale === 'en' ? 16 : 22);
+    expect(pages.slice(1, 9)).toEqual([
       markdownUrl(locale, 'services'),
       ...SERVICE_PAGE_IDS.map((page) => markdownUrl(locale, page)),
     ]);
-    expect(pages.slice(7, 7 + (locale === 'en' ? 1 : 6))).toEqual(
+    expect(pages.slice(9, 9 + (locale === 'en' ? 1 : 6))).toEqual(
       [...LANDING_PAGE_IDS, 'viatsyCase' as const]
         .filter((page) => hasLocale(page, locale))
         .map((page) => markdownUrl(locale, page)),
@@ -273,7 +273,7 @@ describe.each(locales)('LLMS_FULL %s', (locale) => {
         (page) => `### [${hub.cards[page].name}](${pageUrl(locale, page)})`,
       ),
     );
-    expect(body.filter((line) => line.startsWith('#### '))).toHaveLength(20);
+    expect(body.filter((line) => line.startsWith('#### '))).toHaveLength(28);
     for (const page of SERVICE_PAGE_IDS) {
       const copyOf = SERVICE_BODIES[locale].pages[page];
       const prices = SERVICES[locale][serviceOf(page)].prices;

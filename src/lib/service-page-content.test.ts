@@ -39,11 +39,9 @@ describe('service page content parity', () => {
     expect(Object.keys(SERVICES_HUB_CONTENT[locale].cards)).toEqual([
       ...SERVICE_PAGE_IDS,
     ]);
-    for (const { name, summary } of Object.values(
-      SERVICES_HUB_CONTENT[locale].cards,
-    )) {
-      expect(name).not.toBe('');
-      expect(summary).not.toBe('');
+    for (const card of Object.values(SERVICES_HUB_CONTENT[locale].cards)) {
+      expect(card.name).not.toBe('');
+      if ('summary' in card) expect(card.summary).not.toBe('');
     }
   });
 
@@ -159,6 +157,8 @@ describe.each(locales)('service page FAQs (%s)', (locale) => {
 const KEYWORDS: Record<Locale, Record<ServicePageId | 'services', string>> = {
   en: {
     services: 'AI consulting',
+    diagnostic: 'Automation diagnostic',
+    maintenance: 'Maintenance',
     automation: 'AI automation',
     integrations: 'Xero, Shopify and HubSpot integrations',
     agents: 'AI agent',
@@ -167,6 +167,8 @@ const KEYWORDS: Record<Locale, Record<ServicePageId | 'services', string>> = {
   },
   es: {
     services: 'Consultoría de IA',
+    diagnostic: 'Diagnóstico de automatización',
+    maintenance: 'Mantenimiento',
     automation: 'Automatización de procesos',
     integrations: 'Integraciones',
     agents: 'agentes de IA',

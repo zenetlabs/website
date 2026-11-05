@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
+import { NAVIGATE_SECTIONS } from '@/lib/navigate';
 import { sharedRules } from '@/server/chat/prompt';
 import { voicePrompt } from '@/server/voice/prompt';
 import { siteConfig } from '../../../site.config';
@@ -9,6 +10,20 @@ const SITE = {
   calculator: production.calculator,
   booking: { published: true },
 };
+
+const KNOWN_SECTIONS = ['services', 'cases', 'faq', 'contact'] as const;
+
+function namedMissingSections(prompt: string): string[] {
+  return KNOWN_SECTIONS.filter(
+    (name) =>
+      !NAVIGATE_SECTIONS.some((section) => section === name) &&
+      new RegExp(
+        `${name} section|sección de ${name}|sección de contacto`,
+        'i',
+      ).test(prompt),
+  );
+}
+
 const NAMES = [
   'get_faq',
   'get_pricing',
@@ -19,6 +34,18 @@ const NAMES = [
 ];
 
 describe.each(['en', 'es'] as const)('voicePrompt (%s)', (locale) => {
+  it.each([true, false])(
+    'names no navigate section that does not exist (booking %s)',
+    async (published) => {
+      const prompt = await voicePrompt(
+        locale,
+        { ...SITE, booking: { published } },
+        NAMES,
+      );
+      expect(namedMissingSections(prompt)).toEqual([]);
+    },
+  );
+
   it('carries the shared rules word for word', async () => {
     const prompt = await voicePrompt(locale, SITE, NAMES);
     const features = { booking: true, estimate: false };

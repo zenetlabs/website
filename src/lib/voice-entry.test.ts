@@ -42,14 +42,14 @@ describe('voice-entry', () => {
     vi.unstubAllGlobals();
   });
 
-  it('opens the contact section, without a reload, when the panel itself fails', async () => {
+  it('sends the visitor to the contact page, not a reload, when the panel itself fails', async () => {
     const reload = vi.fn();
     const assign = vi.fn();
     const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     vi.stubGlobal('location', { ...window.location, reload, assign });
     mountVoice.mockRejectedValueOnce(new Error('render failed'));
     openVoice('es', vi.fn());
-    await vi.waitFor(() => expect(assign).toHaveBeenCalledWith('/es#contact'));
+    await vi.waitFor(() => expect(assign).toHaveBeenCalledWith('/es/contacto'));
     expect(reload).not.toHaveBeenCalled();
     log.mockRestore();
     vi.unstubAllGlobals();

@@ -13,7 +13,7 @@ export const contactSchema = z.object({
 export function contactFor(locale: Locale, site: SiteFlags) {
   return {
     email: PUBLIC_EMAIL,
-    contactUrl: `${pageUrl(locale, 'home')}#contact`,
+    contactUrl: pageUrl(locale, 'contact'),
     bookUrl: isPublished('book', site) ? pageUrl(locale, 'book') : null,
   } as const;
 }

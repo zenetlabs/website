@@ -1,6 +1,14 @@
 import { expect, test } from '@playwright/test';
 import { jsonLdBlocks } from '../test/json-ld';
-import { CTA, gotoHydrated, typesOf } from './helpers';
+import {
+  CASE_PAIR,
+  CASES_HUB,
+  CONTACT_PAIR,
+  CTA,
+  gotoHydrated,
+  markdownPathOf,
+  typesOf,
+} from './helpers';
 
 const SERVICE_IDS = [
   'diagnostic',
@@ -17,13 +25,11 @@ const PRICING = [
     path: '/pricing',
     tax: 'exclude GST',
     cta: CTA.en,
-    faq: '/#faq',
   },
   {
     path: '/es/precios',
     tax: 'no incluyen el IVA',
     cta: CTA.es,
-    faq: '/es#faq',
   },
 ] as const;
 
@@ -34,32 +40,34 @@ const ABOUT = [
 
 const CARD_LINKS: Record<string, (string | null)[][]> = {
   '/pricing': [
-    [CTA.en],
+    [CTA.en, '/services/automation-diagnostic'],
     ['/services/ai-automation', '/services/integrations'],
     ['/services/ai-agents'],
     ['/services/custom-software'],
     ['/services/ai-training'],
-    [],
+    ['/services/maintenance'],
     [],
   ],
   '/es/precios': [
-    [CTA.es],
+    [CTA.es, '/es/servicios/diagnostico-de-automatizacion'],
     ['/es/servicios/automatizacion-de-procesos', '/es/servicios/integraciones'],
     ['/es/servicios/agentes-de-ia'],
     ['/es/servicios/desarrollo-de-software-a-medida'],
     ['/es/servicios/formacion-ia-equipos'],
-    [],
+    ['/es/servicios/mantenimiento'],
     [],
   ],
 };
 
-for (const { path, tax, cta, faq } of PRICING) {
+for (const { path, tax, cta } of PRICING) {
   test.describe(path, () => {
     test('lists the seven services with their cards', async ({ page }) => {
       await gotoHydrated(page, path);
       const ids = await page
-        .locator('main article[id]')
-        .evaluateAll((cards) => cards.map((card) => card.id));
+        .locator('main article[data-service]')
+        .evaluateAll((cards) =>
+          cards.map((card) => card.getAttribute('data-service')),
+        );
       expect(ids).toEqual(SERVICE_IDS);
       await expect(page.locator('main article > div h2')).toHaveCount(7);
       await expect(page.locator('h1')).toHaveCount(1);
@@ -78,11 +86,14 @@ for (const { path, tax, cta, faq } of PRICING) {
       expect(hrefs).toEqual(CARD_LINKS[path]);
     });
 
-    test('links the CTA and the FAQ', async ({ page }) => {
+    test('links the CTA and answers the pricing questions inline', async ({
+      page,
+    }) => {
       await gotoHydrated(page, path);
       const links = page.locator('main section').last().getByRole('link');
+      await expect(links).toHaveCount(1);
       await expect(links.first()).toHaveAttribute('href', cta);
-      await expect(links.nth(1)).toHaveAttribute('href', faq);
+      await expect(page.locator('#faq details')).not.toHaveCount(0);
     });
 
     test('describes the ladder in JSON-LD', async ({ request }) => {
@@ -131,3 +142,71 @@ for (const { path, cta } of ABOUT) {
     });
   });
 }
+
+test.describe('the contact page', () => {
+  for (const [locale, path] of [
+    ['en', CONTACT_PAIR.en],
+    ['es', CONTACT_PAIR.es],
+  ] as const) {
+    test(`${path} puts the form and the address on a page of its own`, async ({
+      page,
+    }) => {
+      await gotoHydrated(page, path);
+      await expect(page.locator('h1')).toHaveCount(1);
+      await expect(page.locator('#contact form')).toHaveCount(1);
+      await expect(
+        page.locator('#contact a[href="mailto:hello@zenetlabs.com"]'),
+      ).toHaveCount(1);
+      await expect(page.locator('html')).toHaveAttribute('lang', locale);
+    });
+
+    test(`${path} describes a contact page and a breadcrumb`, async ({
+      request,
+    }) => {
+      const html = await (await request.get(path)).text();
+      expect(typesOf(jsonLdBlocks(html))).toEqual([
+        expect.stringMatching(/^(Organization|ProfessionalService)$/),
+        'WebSite',
+        'Person',
+        'ContactPage',
+        'BreadcrumbList',
+      ]);
+    });
+
+    test(`${path} answers in markdown with the form copy`, async ({
+      request,
+    }) => {
+      const body = await (await request.get(markdownPathOf(path))).text();
+      expect(body).toContain('hello@zenetlabs.com');
+    });
+  }
+});
+
+test.describe('the cases hub', () => {
+  for (const [path, viatsy] of [
+    [CASES_HUB.en, CASE_PAIR.en],
+    [CASES_HUB.es, CASE_PAIR.es],
+  ] as const) {
+    test(`${path} lists the cases and links the Viatsy page`, async ({
+      page,
+    }) => {
+      await gotoHydrated(page, path);
+      await expect(page.locator('h1')).toHaveCount(1);
+      await expect(page.locator('#cases li.case-item')).toHaveCount(2);
+      await expect(page.locator(`#cases a[href="${viatsy}"]`)).toHaveCount(1);
+    });
+
+    test(`${path} describes a collection and a breadcrumb`, async ({
+      request,
+    }) => {
+      const html = await (await request.get(path)).text();
+      expect(typesOf(jsonLdBlocks(html))).toEqual([
+        expect.stringMatching(/^(Organization|ProfessionalService)$/),
+        'WebSite',
+        'Person',
+        'CollectionPage',
+        'BreadcrumbList',
+      ]);
+    });
+  }
+});

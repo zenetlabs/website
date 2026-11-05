@@ -133,6 +133,7 @@ export const home = {
       after: '',
     },
     lead: 'Antes de montar una automatización para un cliente, la usamos en un negocio propio.',
+    more: 'Todos los casos',
     automatedLabel: 'Qué funciona solo',
     actors: { tool: 'Tus herramientas', agent: 'Agente', human: 'Una persona' },
     items: cases,

@@ -57,6 +57,7 @@ export const aboutPage = {
   companies: {
     title: 'Las empresas que dirigimos',
     lead: 'Productos que construimos y operamos con automatizaciones y agentes. Ahí aprendemos qué funciona.',
+    cases: 'Lee los casos',
   },
   vision: {
     title: 'Hacia dónde vamos',

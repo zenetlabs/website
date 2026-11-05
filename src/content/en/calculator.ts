@@ -5,7 +5,7 @@ export const calculatorPage = {
     title: 'Price calculator',
     metaTitle: 'Price calculator for automation and AI projects | Zenet Labs',
     description:
-      'Answer six questions for an indicative range in Singapore dollars (excl. GST), a timeline and a suggested maintenance plan. Not a quote: the final price comes from the diagnostic.',
+      'Answer six questions for an indicative range in Singapore dollars (excl. GST) and a timeline. Not a quote: the final price comes from the diagnostic.',
   },
   breadcrumb: { label: 'Breadcrumb', pricing: 'Pricing' },
   title: { before: 'What could your project ', emphasis: 'cost', after: '?' },

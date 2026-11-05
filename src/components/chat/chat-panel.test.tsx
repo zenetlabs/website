@@ -318,7 +318,7 @@ describe('when the assistant cannot answer', () => {
       ).toHaveAttribute('href', '/book');
       expect(
         within(alert).getByRole('link', { name: en.fallback.form }),
-      ).toHaveAttribute('href', '/#contact');
+      ).toHaveAttribute('href', '/contact');
       expect(
         within(alert).getByRole('link', { name: 'hello@zenetlabs.com' }),
       ).toHaveAttribute('href', 'mailto:hello@zenetlabs.com');

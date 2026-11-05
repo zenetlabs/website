@@ -110,7 +110,7 @@ describe('FactsHero', () => {
     },
   );
 
-  it('sends the button to the booking CTA and the link to its pricing card', () => {
+  it('sends the button to the booking CTA and the link to the pricing page', () => {
     const { body } = view('es');
     expect(screen.getByRole('link', { name: body.cta.button })).toHaveAttribute(
       'href',
@@ -118,7 +118,7 @@ describe('FactsHero', () => {
     );
     expect(
       screen.getByRole('link', { name: `${labels.pricing} →` }),
-    ).toHaveAttribute('href', '/es/precios#agent');
+    ).toHaveAttribute('href', '/es/precios');
   });
 
   it('spaces the heading only under a breadcrumb', () => {

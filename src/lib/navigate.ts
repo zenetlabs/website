@@ -7,12 +7,7 @@ import {
   type SiteFlags,
 } from '@/lib/page-registry';
 
-export const NAVIGATE_SECTIONS = [
-  'services',
-  'cases',
-  'faq',
-  'contact',
-] as const;
+export const NAVIGATE_SECTIONS = ['services', 'cases', 'faq'] as const;
 export type NavigateSection = (typeof NAVIGATE_SECTIONS)[number];
 
 export function resolveNavigation(

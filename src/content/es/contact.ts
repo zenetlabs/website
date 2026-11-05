@@ -1,0 +1,51 @@
+import type { ContactPageContent } from '@/content/types';
+
+export const contactPage = {
+  meta: {
+    title: 'Contacto',
+    metaTitle: 'Contacta con Zenet Labs: reserva un diagnóstico',
+    description:
+      'Cuéntanos qué usas y qué hace tu equipo a mano. Te respondemos personalmente y acordamos el siguiente paso, empezando por un diagnóstico a precio cerrado.',
+  },
+  title: {
+    before: 'Cuéntanos qué sigue haciendo tu equipo ',
+    emphasis: 'a mano',
+    after: '',
+  },
+  lead: 'Envía el formulario o escríbenos. Una persona lee cada mensaje, te responde personalmente y acuerda contigo el siguiente paso.',
+  form: {
+    title: {
+      before: 'Reserva tu ',
+      emphasis: 'diagnóstico de automatización',
+      after: '.',
+    },
+    lead: 'Cuéntanos qué herramientas usas y qué sigue haciendo tu equipo a mano.',
+    mail: '¿Prefieres el correo? Escribe a',
+    human: 'Te responde una persona, personalmente.',
+    book: '¿Prefieres una llamada? Elige una hora',
+    voice: {
+      text: '¿Prefieres hablar? Nuestro asistente de voz es una IA, no una persona: responde tus dudas y te reserva una llamada.',
+      button: 'Habla con el asistente',
+    },
+  },
+  next: {
+    title: { before: 'Qué pasa ', emphasis: 'después', after: '' },
+    steps: [
+      {
+        id: 'reply',
+        label: 'Te respondemos',
+        text: 'Te respondemos personalmente y acordamos el alcance en una llamada breve.',
+      },
+      {
+        id: 'diagnostic',
+        label: 'El diagnóstico',
+        text: 'En una o dos semanas analizamos tus herramientas y el trabajo manual y te damos un plan con precio.',
+      },
+      {
+        id: 'decide',
+        label: 'Decides tú',
+        text: 'Si sigues adelante en 60 días, el importe del diagnóstico se descuenta del proyecto.',
+      },
+    ],
+  },
+} satisfies ContactPageContent;

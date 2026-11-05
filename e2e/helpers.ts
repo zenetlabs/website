@@ -10,6 +10,11 @@ import { G5 } from '../test/calculator-fixtures';
 export const SERVICES_HUB = { en: '/services', es: '/es/servicios' } as const;
 
 export const SERVICE_PAIRS = {
+  diagnostic: {
+    en: '/services/automation-diagnostic',
+    es: '/es/servicios/diagnostico-de-automatizacion',
+    service: 'diagnostic',
+  },
   automation: {
     en: '/services/ai-automation',
     es: '/es/servicios/automatizacion-de-procesos',
@@ -35,6 +40,11 @@ export const SERVICE_PAIRS = {
     es: '/es/servicios/formacion-ia-equipos',
     service: 'training',
   },
+  maintenance: {
+    en: '/services/maintenance',
+    es: '/es/servicios/mantenimiento',
+    service: 'maintenance',
+  },
 } as const satisfies Record<
   ServicePageId,
   { en: string; es: string; service: ServiceId }
@@ -49,6 +59,8 @@ export const HOLDED_PAGES = [
 export const VERIFACTU_PAGE = '/es/verifactu-integracion';
 export const SECTOR_PAGE = '/es/sectores/agencias-de-viaje';
 export const CASE_PAIR = { en: '/case-studies/viatsy', es: '/es/casos/viatsy' };
+export const CASES_HUB = { en: '/case-studies', es: '/es/casos' } as const;
+export const CONTACT_PAIR = { en: '/contact', es: '/es/contacto' } as const;
 
 export const ES_ONLY_PAGES = [
   ...HOLDED_PAGES,
@@ -84,9 +96,7 @@ export const BOOK_PAIR = { en: '/book', es: '/es/reservar' } as const;
 
 export const BOOKING_PUBLISHED = SITE_FLAGS.booking.published;
 
-export const CTA = BOOKING_PUBLISHED
-  ? BOOK_PAIR
-  : { en: '/#contact', es: '/es#contact' };
+export const CTA = BOOKING_PUBLISHED ? BOOK_PAIR : CONTACT_PAIR;
 
 export const PAIRS = [
   { en: '/', es: '/es' },
@@ -95,12 +105,16 @@ export const PAIRS = [
   { en: '/privacy', es: '/es/privacidad' },
   { en: '/cookies', es: '/es/cookies' },
   SERVICES_HUB,
+  SERVICE_PAIRS.diagnostic,
   SERVICE_PAIRS.automation,
   SERVICE_PAIRS.integrations,
   SERVICE_PAIRS.agents,
   SERVICE_PAIRS.software,
   SERVICE_PAIRS.training,
+  SERVICE_PAIRS.maintenance,
   CASE_PAIR,
+  CASES_HUB,
+  CONTACT_PAIR,
   ...(CALCULATOR_PUBLISHED ? [CALCULATOR_PAIR] : []),
   ...(BOOKING_PUBLISHED ? [BOOK_PAIR] : []),
 ] as const;
@@ -112,7 +126,11 @@ export const PAGE_TYPE_URLS: readonly string[] = [
   SERVICES_HUB.en,
   SERVICE_PAIRS.automation.en,
   SERVICE_PAIRS.agents.en,
+  SERVICE_PAIRS.diagnostic.en,
+  SERVICE_PAIRS.maintenance.en,
   CASE_PAIR.en,
+  CASES_HUB.en,
+  CONTACT_PAIR.en,
   '/about',
   '/privacy',
   HOLDED_PAGES[1],

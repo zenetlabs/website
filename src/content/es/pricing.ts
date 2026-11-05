@@ -90,10 +90,16 @@ export const pricingPage = {
     text: 'Responde seis preguntas y verás un rango orientativo para tu proyecto, sin dejar tu correo.',
     link: 'Abrir la calculadora de precio',
   },
+  faq: {
+    title: {
+      before: 'Preguntas sobre ',
+      emphasis: 'plazos, coste y propiedad',
+      after: '',
+    },
+  },
   cta: {
     title: 'Empieza por el diagnóstico',
     text: 'Cuéntanos qué hace tu equipo a mano y te responderemos personalmente.',
     button: 'Reserva un diagnóstico',
-    faq: 'Leer las preguntas frecuentes',
   },
 } satisfies PricingPageContent;

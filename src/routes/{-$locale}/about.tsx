@@ -6,9 +6,10 @@ import { RichText } from '@/components/rich-text';
 import { Container, EmphasisTitle } from '@/components/section';
 import { sectionFrame } from '@/components/section-frame';
 import { StickyZone } from '@/components/sticky-cta';
-import { CARD, H3, LEAD, PROSE } from '@/components/ui';
+import { CARD, H3, LEAD, PROSE, TEXT_LINK } from '@/components/ui';
 import { loadAboutContent } from '@/content/load';
 import { CONTENT } from '@/lib/content';
+import { pagePath } from '@/lib/page-registry';
 import { breadcrumbStructuredData } from '@/lib/page-structured-data';
 import { contentHead } from '@/lib/pages';
 import { PORTFOLIO } from '@/lib/portfolio';
@@ -99,6 +100,14 @@ function About() {
                 </li>
               ))}
             </ul>
+            <p className="mt-8 md:mt-10">
+              <a
+                href={pagePath(locale, 'cases')}
+                className={`font-medium ${TEXT_LINK}`}
+              >
+                {page.companies.cases} →
+              </a>
+            </p>
           </Container>
         </section>
         <section

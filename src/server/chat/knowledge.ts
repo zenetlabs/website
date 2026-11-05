@@ -63,7 +63,7 @@ const LABELS: Record<Locale, Labels> = {
     market:
       "Prices on this site are in Singapore dollars (S$) and exclude GST. The Spanish site, for clients in Spain, lists its own prices in euros; don't quote them here.",
     contact: (booking) =>
-      `Contact: ${PUBLIC_EMAIL}, the contact form at the end of the home page${booking ? ', or a 30-minute call' : ''}.`,
+      `Contact: ${PUBLIC_EMAIL}, the contact page${booking ? ', or a 30-minute call' : ''}.`,
     operator: (name, country) => `Operated by ${name}, ${country}.`,
   },
   es: {
@@ -84,7 +84,7 @@ const LABELS: Record<Locale, Labels> = {
     market:
       'Los precios de esta web son en euros y no incluyen el IVA. La web en inglés, para Singapur, tiene sus propios precios en dólares de Singapur; no los cites aquí.',
     contact: (booking) =>
-      `Contacto: ${PUBLIC_EMAIL}, el formulario de contacto al final de la página de inicio${booking ? ' o una llamada de 30 minutos' : ''}.`,
+      `Contacto: ${PUBLIC_EMAIL}, la página de contacto${booking ? ' o una llamada de 30 minutos' : ''}.`,
     operator: (name, country) => `Opera ${name}, ${country}.`,
   },
 };

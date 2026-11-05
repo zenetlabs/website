@@ -75,14 +75,22 @@ export function ServicePage({
           <div className={CALLOUT_CARD}>
             <p className="text-fg-soft">{copy.case.text}</p>
             <BulletList items={copy.case.points} className="mt-6" />
-            {copy.case.page ? (
+            <p className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
+              {copy.case.page ? (
+                <a
+                  href={pagePath(locale, copy.case.page)}
+                  className={`font-medium ${TEXT_LINK}`}
+                >
+                  {crumbName(names, copy.case.page)} →
+                </a>
+              ) : null}
               <a
-                href={pagePath(locale, copy.case.page)}
-                className={`mt-6 inline-block font-medium ${TEXT_LINK}`}
+                href={pagePath(locale, 'cases')}
+                className={`font-medium ${TEXT_LINK}`}
               >
-                {crumbName(names, copy.case.page)} →
+                {crumbName(names, 'cases')} →
               </a>
-            ) : null}
+            </p>
           </div>
         </Section>
         <Faq copy={copy.faq} items={copy.faq.items} />

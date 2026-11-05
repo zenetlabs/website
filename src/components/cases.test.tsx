@@ -19,9 +19,19 @@ describe.each([
     }
   });
 
+  it('links the hub after the cards', () => {
+    const { container } = render(<Cases copy={home.cases} locale={locale} />);
+    const link = container.querySelector('section > div > div > p a');
+    expect(link).toHaveAttribute(
+      'href',
+      locale === 'en' ? '/case-studies' : '/es/casos',
+    );
+    expect(link?.textContent).toBe(`${home.cases.more} →`);
+  });
+
   it('links only the Viatsy card, to its case page by name', () => {
     const { container } = render(<Cases copy={home.cases} locale={locale} />);
-    const links = [...container.querySelectorAll('a')];
+    const links = [...container.querySelectorAll('li a')];
     expect(links).toHaveLength(1);
     expect(links[0]).toHaveAttribute(
       'href',

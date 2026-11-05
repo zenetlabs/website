@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { CalculatorCallout } from '@/components/calculator-callout';
 import { CtaLink } from '@/components/cta-link';
 import { CtaSection } from '@/components/cta-section';
+import { Faq } from '@/components/faq';
 import { BulletList } from '@/components/lists';
 import { Container, EmphasisTitle } from '@/components/section';
 import { sectionFrame } from '@/components/section-frame';
@@ -40,7 +41,7 @@ export const Route = createFileRoute('/{-$locale}/pricing')({
 
 function Pricing() {
   const { locale } = Route.useRouteContext();
-  const { page, services, hub } = Route.useLoaderData();
+  const { page, services, hub, faq } = Route.useLoaderData();
   const how = sectionFrame('default');
 
   return (
@@ -66,7 +67,7 @@ function Pricing() {
                 return (
                   <article
                     key={service.id}
-                    id={service.id}
+                    data-service={service.id}
                     className={`grid gap-6 border-b border-hairline py-8 last:border-b-0 md:grid-cols-12 md:gap-x-10 md:py-12 ${featured ? '-mx-4 bg-highlight-soft px-4 md:-mx-6 md:px-6' : ''}`}
                   >
                     <div className="md:col-span-5">
@@ -160,16 +161,9 @@ function Pricing() {
             </ol>
           </Container>
         </section>
+        <Faq copy={page.faq} items={faq} />
       </StickyZone>
-      <CtaSection
-        cta="pricing"
-        copy={page.cta}
-        locale={locale}
-        secondary={{
-          label: page.cta.faq,
-          href: navHref(locale, { page: 'home', section: 'faq' }),
-        }}
-      />
+      <CtaSection cta="pricing" copy={page.cta} locale={locale} />
     </>
   );
 }

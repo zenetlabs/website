@@ -165,7 +165,7 @@ export function FactsHero({
             {button}
           </CtaLink>
           <a
-            href={`${pagePath(locale, 'pricing')}#${serviceId}`}
+            href={pagePath(locale, 'pricing')}
             className={`font-medium ${TEXT_LINK}`}
           >
             {labels.pricing} →

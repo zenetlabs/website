@@ -60,6 +60,7 @@ export const aboutPage = {
   companies: {
     title: 'Companies we run',
     lead: 'Products we build and operate with automations and agents. They are where we learn what works.',
+    cases: 'Read the case studies',
   },
   vision: {
     title: 'Where this is going',

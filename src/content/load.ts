@@ -3,8 +3,10 @@ import type {
   BookPageContent,
   CalculatorPageContent,
   CasePageContent,
+  CasesHubContent,
   ChatCopy,
   CompanyCopy,
+  ContactPageContent,
   FaqItem,
   HoldedPairContent,
   HomeContent,
@@ -39,12 +41,14 @@ const PRICING = {
       import('@/content/en/pricing'),
       import('@/content/en/services'),
       import('@/content/en/services-hub'),
+      import('@/content/en/faq'),
     ]),
   es: () =>
     Promise.all([
       import('@/content/es/pricing'),
       import('@/content/es/services'),
       import('@/content/es/services-hub'),
+      import('@/content/es/faq'),
     ]),
 };
 
@@ -81,6 +85,16 @@ const ABOUT = {
     ]),
 };
 
+const CONTACT = {
+  en: () => import('@/content/en/contact').then((m) => m.contactPage),
+  es: () => import('@/content/es/contact').then((m) => m.contactPage),
+};
+
+const CASES_HUB = {
+  en: () => import('@/content/en/cases-hub').then((m) => m.casesHub),
+  es: () => import('@/content/es/cases-hub').then((m) => m.casesHub),
+};
+
 const LEGAL_META = {
   en: () => import('@/content/en/legal-meta').then((m) => m.legalMeta),
   es: () => import('@/content/es/legal-meta').then((m) => m.legalMeta),
@@ -90,6 +104,12 @@ const SERVICE_PAGES: Record<
   ServicePageId,
   Record<Locale, () => Promise<ServicePageContent>>
 > = {
+  diagnostic: {
+    en: () =>
+      import('@/content/en/service-pages/diagnostic').then((m) => m.diagnostic),
+    es: () =>
+      import('@/content/es/service-pages/diagnostic').then((m) => m.diagnostic),
+  },
   automation: {
     en: () =>
       import('@/content/en/service-pages/automation').then((m) => m.automation),
@@ -121,6 +141,16 @@ const SERVICE_PAGES: Record<
       import('@/content/en/service-pages/training').then((m) => m.training),
     es: () =>
       import('@/content/es/service-pages/training').then((m) => m.training),
+  },
+  maintenance: {
+    en: () =>
+      import('@/content/en/service-pages/maintenance').then(
+        (m) => m.maintenance,
+      ),
+    es: () =>
+      import('@/content/es/service-pages/maintenance').then(
+        (m) => m.maintenance,
+      ),
   },
 };
 
@@ -191,10 +221,16 @@ export async function loadPricingContent(locale: Locale): Promise<{
   page: PricingPageContent;
   services: Services;
   hub: ServicesHubContent;
+  faq: readonly FaqItem[];
 }> {
-  const [{ pricingPage }, { services }, { servicesHub }] =
+  const [{ pricingPage }, { services }, { servicesHub }, { faq }] =
     await PRICING[locale]();
-  return { page: pricingPage, services, hub: servicesHub };
+  return {
+    page: pricingPage,
+    services,
+    hub: servicesHub,
+    faq: faq.filter((item) => item.group === 'terms'),
+  };
 }
 
 export async function loadCalculatorContent(locale: Locale): Promise<{
@@ -219,6 +255,19 @@ export async function loadAboutContent(locale: Locale): Promise<{
 }> {
   const [{ aboutPage }, { companies }] = await ABOUT[locale]();
   return { page: aboutPage, companies };
+}
+
+export async function loadContactContent(
+  locale: Locale,
+): Promise<ContactPageContent> {
+  const page = await CONTACT[locale]();
+  if (__VOICE__) return page;
+  const { voice: _voice, ...form } = page.form;
+  return { ...page, form };
+}
+
+export function loadCasesHubContent(locale: Locale): Promise<CasesHubContent> {
+  return CASES_HUB[locale]();
 }
 
 export async function loadServicePageContent(
