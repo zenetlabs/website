@@ -6,7 +6,7 @@ export const chatCopy = {
   talk: 'Talk instead',
   badge: 'AI',
   notice:
-    "You're chatting with an AI assistant, not a person. It answers from this site's content and can make mistakes; prices come only from our official list. We keep this conversation for 30 days to reply to you and to prevent abuse, or for 24 months with your enquiry if you book a call or send the contact form. Please don't share passwords or sensitive personal data.",
+    "You're chatting with an AI assistant, not a person: its replies are generated automatically by an AI model. It answers from this site's content and can make mistakes; prices come only from our official list. We keep this conversation for 30 days to reply to you and to prevent abuse, or for 24 months with your enquiry if you book a call or send the contact form. Please don't share passwords or sensitive personal data.",
   privacyLink: 'Privacy policy',
   welcome: 'Hi! Ask me about our services, prices or how a project works.',
   welcomeBooking: ' I can also find you a time for a 30-minute call.',

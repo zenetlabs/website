@@ -64,9 +64,14 @@ describe('entities', () => {
     expect(value.slice(8)).toBe(letter);
   });
 
-  it('keeps the Spanish address unset until the owner provides it', () => {
-    expect(esEntity.address).toBeNull();
-    expect(hasAddress(esEntity)).toBe(false);
+  it('gives the Spanish entity its fiscal address in Barcelona', () => {
+    expect(hasAddress(esEntity)).toBe(true);
+    expect(esEntity.address).toEqual({
+      streetAddress: 'Carrer Gretel Ammann Martínez, 12',
+      postalCode: '08020',
+      locality: 'Barcelona',
+      country: 'ES',
+    });
   });
 
   it('gives the two entities separate json-ld ids', () => {
@@ -75,9 +80,9 @@ describe('entities', () => {
 });
 
 describe('legalEntity', () => {
-  it('serves the English entity to en and, until the flip, to es', () => {
+  it('serves the Singapore company to en and the sole trader to es', () => {
     expect(legalEntity('en')).toBe(enEntity);
-    expect(legalEntity('es')).toBe(hasAddress(esEntity) ? esEntity : enEntity);
+    expect(legalEntity('es')).toBe(esEntity);
   });
 });
 
@@ -91,18 +96,21 @@ describe('formatAddress', () => {
     );
   });
 
-  it('prints the Spanish form', () => {
+  it('prints the Spanish form with the country', () => {
     expect(formatAddress(BARCELONA, 'es')).toBe(
-      'Calle Ejemplo 1, 08001 Barcelona',
+      'Calle Ejemplo 1, 08001 Barcelona, España',
+    );
+    expect(formatAddress(legalEntity('es').address, 'es')).toBe(
+      'Carrer Gretel Ammann Martínez, 12, 08020 Barcelona, España',
     );
   });
 
   it('adds a region only when it differs from the locality', () => {
     expect(formatAddress({ ...BARCELONA, region: 'Barcelona' }, 'es')).toBe(
-      'Calle Ejemplo 1, 08001 Barcelona',
+      'Calle Ejemplo 1, 08001 Barcelona, España',
     );
     expect(formatAddress({ ...BARCELONA, region: 'Cataluña' }, 'es')).toBe(
-      'Calle Ejemplo 1, 08001 Barcelona (Cataluña)',
+      'Calle Ejemplo 1, 08001 Barcelona (Cataluña), España',
     );
   });
 });
@@ -115,7 +123,7 @@ describe('describeEntity', () => {
       'Zenet Technology Pte. Ltd. (UEN 202202371M), 160 Robinson Road #14-04, Singapur 068914',
     );
     expect(describeEntity('{legalName}, {address}', FLIPPED, 'es')).toBe(
-      'Albert Sabaté Martínez, Calle Ejemplo 1, 08001 Barcelona',
+      'Albert Sabaté Martínez, Calle Ejemplo 1, 08001 Barcelona, España',
     );
   });
 

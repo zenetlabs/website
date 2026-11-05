@@ -1,4 +1,4 @@
-// TODO(albert): owner legal review (both entity variants, and the Precios clause)
+// TODO(albert): counsel sign-off of the 2026-11-05 draft
 import { LegalPage, LegalSection } from '@/components/legal-page';
 import { TEXT_LINK } from '@/components/ui';
 import type { PublishedEntity } from '@/content/types';
@@ -19,7 +19,7 @@ export function LegalNoticeEs({
   return (
     <LegalPage
       title={title}
-      updated="Última actualización: 31 de octubre de 2026"
+      updated="Última actualización: 5 de noviembre de 2026"
     >
       <LegalSection title="Datos identificativos">
         <p>
@@ -29,7 +29,7 @@ export function LegalNoticeEs({
         </p>
         <p>{describeEntity(legalEs.holder, entity, 'es')}</p>
         <p>
-          Puedes contactar con el titular en{' '}
+          Puedes contactar con el titular por correo electrónico en{' '}
           <a href={`mailto:${PUBLIC_EMAIL}`} className={TEXT_LINK}>
             {PUBLIC_EMAIL}
           </a>{' '}
@@ -45,8 +45,10 @@ export function LegalNoticeEs({
           Este sitio web presenta los servicios de consultoría de IA de Zenet
           Labs (formación, implementación de agentes y automatizaciones,
           integraciones y desarrollo web y de aplicaciones a medida) y permite a
-          los visitantes ponerse en contacto con el titular. En el sitio no se
-          contratan servicios ni se realizan pagos.
+          los visitantes conocer sus precios orientativos y ponerse en contacto
+          con el titular. Los servicios se dirigen a empresas y profesionales, y
+          cada proyecto se rige por el presupuesto y el contrato que se firman
+          aparte. El titular no está adherido a ningún código de conducta.
         </p>
       </LegalSection>
       <LegalSection title="Precios">
@@ -58,34 +60,52 @@ export function LegalNoticeEs({
           se fija en el presupuesto que se entrega tras el diagnóstico. En este
           sitio web no se contrata ni se paga ningún servicio.
         </p>
+        {__CALCULATOR__ ? (
+          <p>
+            Las estimaciones de la calculadora de presupuesto son orientativas:
+            se calculan con tus respuestas y no constituyen una oferta
+            vinculante.
+          </p>
+        ) : null}
       </LegalSection>
       <LegalSection title="Condiciones de uso">
         <p>
-          El acceso al sitio es gratuito. Te comprometes a usarlo de forma
-          lícita: sin dañar el sitio ni sus sistemas, sin acceder sin
-          autorización a áreas restringidas y sin hacer un uso abusivo del
-          formulario de contacto.
+          El acceso al sitio es gratuito y no requiere registro. Te comprometes
+          a usarlo de forma lícita y de buena fe: sin dañar el sitio ni sus
+          sistemas, sin acceder sin autorización a áreas restringidas, sin
+          enviar contenidos ilícitos y sin hacer un uso abusivo de los
+          formularios ni de las demás herramientas del sitio. El titular puede
+          limitar el acceso de quien incumpla estas condiciones.
         </p>
       </LegalSection>
       <LegalSection title="Propiedad intelectual e industrial">
         <p>
           Los contenidos, el diseño, el logotipo y el código de este sitio
-          pertenecen al titular o a sus licenciantes. Las marcas de terceros que
-          aparecen en él pertenecen a sus respectivos propietarios.
+          pertenecen al titular o a sus licenciantes y están protegidos por la
+          normativa de propiedad intelectual e industrial. Puedes consultarlos y
+          citarlos indicando la fuente; para cualquier otro uso, como su
+          reproducción o distribución con fines comerciales, necesitas la
+          autorización del titular. Las marcas de terceros que aparecen en él
+          pertenecen a sus respectivos propietarios y se citan solo para
+          identificar sus productos.
         </p>
       </LegalSection>
       <LegalSection title="Responsabilidad">
         <p>
-          La información del sitio es de carácter general. No garantizamos su
-          disponibilidad ni su exactitud en todo momento, y el titular no
-          responde de los sitios web de terceros.
+          La información del sitio es de carácter general y no constituye
+          asesoramiento profesional, fiscal ni jurídico. El titular procura que
+          sea exacta y esté actualizada, pero no garantiza la disponibilidad
+          continua del sitio ni la ausencia de errores, y no responde de los
+          daños que se deriven de su uso, salvo en los casos en que la ley no
+          permita excluir esa responsabilidad.
         </p>
       </LegalSection>
       <LegalSection title="Enlaces">
         <p>
           El sitio enlaza a productos que opera el titular y a sitios de
-          terceros. El titular no se responsabiliza de los contenidos de esos
-          enlaces.
+          terceros. El titular no controla los sitios de terceros ni responde de
+          sus contenidos, salvo que, conociendo su ilicitud, no retire el enlace
+          con diligencia (art. 17 de la LSSI).
         </p>
       </LegalSection>
       <LegalSection title="Protección de datos y cookies">

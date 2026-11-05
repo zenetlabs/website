@@ -76,7 +76,7 @@ export const bookPage = {
     company: 'Company (optional)',
     topic: 'What would you like to talk about?',
     consent:
-      'I agree that {legalName} uses these details to book this call, including a Google Calendar event with my email address, as described in the {privacyLink}.',
+      'I agree that {legalName} uses these details to book this call, including a Google Calendar event with my email address, as described in the {privacyLink}, which also explains how to exercise my rights over my data.',
     consentLink: 'privacy policy',
     honeypot: 'Leave this field empty',
     submit: 'Book this time',

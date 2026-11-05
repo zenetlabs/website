@@ -14,6 +14,9 @@ const shared = {
     __ASSISTANT__: JSON.stringify(siteConfig('production').assistant.published),
     __WEBMCP__: JSON.stringify(siteConfig('production').webmcp.published),
     __VOICE__: JSON.stringify(siteConfig('production').voice.published),
+    __CALCULATOR__: JSON.stringify(
+      siteConfig('production').calculator.published,
+    ),
     __VOICE_FAKE__: JSON.stringify(false),
     __CHAT_FAKE__: JSON.stringify(false),
   },

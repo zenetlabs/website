@@ -4,7 +4,7 @@ import type { PublishedEntity } from '@/content/types';
 import { legalEntity } from '@/lib/content';
 import { locales } from '@/lib/i18n';
 import { PAGE_IDS, pagePath } from '@/lib/page-registry';
-import { PUBLIC_EMAIL } from '@/lib/site';
+import { PRIVACY_EMAIL, PUBLIC_EMAIL } from '@/lib/site';
 import { CONSENT_VERSION } from '@/server/lead-fields';
 import { FLIPPED } from '../../../../test/entities';
 import { PLACEHOLDER } from '../../../../test/placeholders';
@@ -15,6 +15,7 @@ import { PrivacyEn } from './privacy-en';
 import { PrivacyEs } from './privacy-es';
 
 const SINGAPORE = legalEntity('en');
+const SPANISH = legalEntity('es');
 
 function text(node: React.ReactElement): string {
   return render(node).container.textContent ?? '';
@@ -29,6 +30,7 @@ function hrefs(node: React.ReactElement): string[] {
 
 const KNOWN_HREFS = new Set([
   `mailto:${PUBLIC_EMAIL}`,
+  `mailto:${PRIVACY_EMAIL}`,
   `${pagePath('es', 'home')}#contact`,
   ...PAGE_IDS.flatMap((page) => locales.map((l) => pagePath(l, page))),
 ]);
@@ -41,11 +43,15 @@ type LegalPageComponent = (props: {
 const SINGAPORE_COMPANY = 'Zenet Technology Pte. Ltd.';
 const SINGAPORE_ADDRESS_ES = '160 Robinson Road #14-04, Singapur 068914';
 const SOLE_TRADER = ['Albert Sabaté Martínez', 'NIF 47986151D'];
+const SPANISH_ADDRESS =
+  'Carrer Gretel Ammann Martínez, 12, 08020 Barcelona, España';
+const CALCULATOR_ES = 'calculadora de presupuesto';
+const CALCULATOR_EN = 'price calculator';
 const STORAGE_ES = [
   'calendario de Google Workspace',
   'no se incluyen en la invitación',
-  'Google Workspace Calendar y Meet cuando reservas una llamada',
-  'a los 30 días los intentos de reserva sin confirmar',
+  'Google Workspace Calendar y Meet',
+  'que no llegan a confirmarse: los borramos a los 30 días',
   'Unión Europea',
   '24 meses',
   'acuse de recibo',
@@ -53,14 +59,14 @@ const STORAGE_ES = [
   'utm_source',
   'no guardamos nada en tu dispositivo',
   'art. 6.1.f del RGPD',
-  'versión de esta política',
+  'qué versión de la política era',
   'un correo de acuse de recibo',
 ];
 const STORAGE_EN = [
   'Google Workspace calendar',
   'they are not put in the invitation',
-  'Google Workspace Calendar and Meet when you book a call',
-  'Unconfirmed booking attempts are deleted after 30 days',
+  'Google Workspace Calendar and Meet',
+  'Booking attempts that are never confirmed: deleted after 30 days',
   'European Union',
   '24 months',
   'acknowledgement email',
@@ -68,7 +74,7 @@ const STORAGE_EN = [
   'utm_source',
   'We do not store anything on your device',
   'GDPR Art. 6(1)(f)',
-  'version of this policy you consented to',
+  'which version of the policy it was',
   'an acknowledgement email',
 ];
 const SINGAPORE_ONLY = ['Pte. Ltd.', 'ACRA', 'PDPA', 'PDPC', 'Singapur'];
@@ -101,9 +107,9 @@ const UNCONFIGURED_PRIVACY = [
   'Google Analytics',
   'Google Ireland Limited y Google LLC), para Google Analytics',
   'Google Ireland Limited and Google LLC), for Google Analytics',
-  'Data Privacy Framework',
-  'Marco de Privacidad de Datos',
   'zenet-first-touch',
+  '14 months',
+  '14 meses',
   'Cookie settings',
   'Configuración de cookies',
 ];
@@ -162,9 +168,23 @@ const STATES: ReadonlyArray<
     [
       `${SINGAPORE_COMPANY} (UEN 202202371M)`,
       '160 Robinson Road #14-04, Singapore 068914',
+      'English pages of zenetlabs.com',
+      `run by ${SPANISH.legalName}, a sole trader in Spain`,
+      'Personal Data Protection Act 2012',
+      'Our Data Protection Officer is Dan Lu',
+      PRIVACY_EMAIL,
+      'Google Asia Pacific Pte. Ltd.',
+      'single legal basis under the GDPR',
+      'once a month we delete by hand',
+      'kept by Resend',
+      'Cloudflare D1 Time Travel',
+      'section 26',
+      'within 30 days',
+      'Personal Data Protection Commission (PDPC)',
+      'WebMCP',
       ...STORAGE_EN,
     ],
-    UNCONFIGURED_PRIVACY,
+    [...UNCONFIGURED_PRIVACY, CALCULATOR_EN],
   ],
   [
     'CookiesEn with Singapore',
@@ -194,6 +214,61 @@ const STATES: ReadonlyArray<
     FLIPPED,
     SOLE_TRADER,
     UNCONFIGURED_COOKIES,
+  ],
+  [
+    'PrivacyEs with the Spanish entity',
+    PrivacyEs,
+    SPANISH,
+    [
+      ...SOLE_TRADER,
+      SPANISH_ADDRESS,
+      'páginas en español de zenetlabs.com',
+      'delegado de protección de datos',
+      'LOPDGDD',
+      'C/ Jorge Juan, 6, 28001 Madrid',
+      'art. 21 de la Ley 34/2002',
+      'arts. 5.2 y 6.1.c del RGPD',
+      'una por finalidad',
+      'no es una base jurídica adicional',
+      'contrata directamente como encargados del tratamiento',
+      'Google Cloud EMEA Limited',
+      'una vez al mes borramos a mano',
+      'en Resend (contenido, datos de envío y eventos de entrega): 30 días',
+      'Time Travel de Cloudflare D1',
+      'art. 12.3 del RGPD',
+      'art. 22 del RGPD',
+      'menores de 14 años',
+      'Marco de Privacidad de Datos UE-EE. UU.',
+      'Decisión de Ejecución (UE) 2021/914',
+      'art. 30 del Código de Comercio',
+      'Registros técnicos del servidor: 7 días como máximo',
+      'WebMCP',
+      ...STORAGE_ES,
+    ],
+    [...SINGAPORE_ONLY, ...UNCONFIGURED_PRIVACY, CALCULATOR_ES],
+  ],
+  [
+    'CookiesEs with the Spanish entity',
+    CookiesEs,
+    SPANISH,
+    [...SOLE_TRADER, 'art. 22.2 de la Ley 34/2002', '__cf_bm'],
+    [...SINGAPORE_ONLY, ...UNCONFIGURED_COOKIES],
+  ],
+  [
+    'LegalNoticeEs with the Spanish entity',
+    LegalNoticeEs,
+    SPANISH,
+    [
+      ...SOLE_TRADER,
+      SPANISH_ADDRESS,
+      'artículo 10 de la Ley 34/2002',
+      'Registro Mercantil',
+      'código de conducta',
+      'juzgados y tribunales de Barcelona',
+      'legislación española',
+      'no incluyen el IVA',
+    ],
+    [...SINGAPORE_ONLY, CALCULATOR_ES],
   ],
 ];
 
@@ -309,41 +384,47 @@ checkPages(CONFIGURED_STATES, 'G-TEST1234');
 
 describe('consent version', () => {
   it.each([
-    ['PrivacyEn', PrivacyEn, '1 November 2026'],
-    ['PrivacyEs', PrivacyEs, '1 de noviembre de 2026'],
+    ['PrivacyEn', PrivacyEn, '5 November 2026'],
+    ['PrivacyEs', PrivacyEs, '5 de noviembre de 2026'],
   ])('%s is dated like CONSENT_VERSION', (_name, Page, date) => {
     const body = text(<Page title="t" entity={SINGAPORE} />);
     expect(body).toContain(date);
-    expect(CONSENT_VERSION).toBe('2026-11-01');
+    expect(CONSENT_VERSION).toBe('2026-11-05');
   });
 });
 
 const ASSISTANT_EN = [
   'The site assistant',
+  'it is an AI system and not a person (Article 50 of the EU AI Act',
   'Cloudflare Workers AI',
   'does not use this content to train models',
   'database in the European Union',
   'do not store your IP address',
   'keyed one-way fingerprint of your IP address',
+  'about 51 hours at most',
   'not sent to the AI model',
   'a person reads every booking and enquiry',
   "run the assistant's AI model (Workers AI)",
   'outside the European Union',
-  'We delete assistant conversations 30 days after they start',
+  'Assistant conversations: we delete them 30 days after they start',
+  'within 24 hours of the start',
   'kept with that enquiry and deleted with it',
 ];
 const ASSISTANT_ES = [
   'El asistente de la web',
+  'es un sistema de IA y no una persona (art. 50 del Reglamento',
   'Cloudflare Workers AI',
   'no usa este contenido para entrenar modelos',
   'base de datos en la Unión Europea',
   'no guardamos con ellas tu dirección IP',
   'huella unidireccional con clave de tu dirección IP',
+  'unas 51 horas como máximo',
   'no se envían al modelo de IA',
   'una persona lee cada reserva y cada consulta',
   'ejecutar el modelo de IA del asistente (Workers AI)',
   'fuera de la Unión Europea',
-  'Borramos las conversaciones del asistente 30 días después de que empiecen',
+  'Conversaciones del asistente: las borramos 30 días después de que empiecen',
+  'en las 24 horas siguientes a su inicio',
   'se conserva con esa consulta y se borra con ella',
 ];
 
@@ -381,6 +462,7 @@ describe('assistant disclosure', () => {
 
 const VOICE_EN = [
   'Voice calls',
+  'the voice you hear is generated by AI',
   'streamed to ElevenLabs (ElevenLabs Inc., United States)',
   "We don't record audio",
   'keeps the text of the conversation for 30 days',
@@ -394,6 +476,7 @@ const VOICE_EN = [
 ];
 const VOICE_ES = [
   'Llamadas de voz',
+  'la voz que oirás está generada por IA',
   'se transmite a ElevenLabs (ElevenLabs Inc., Estados Unidos)',
   'No grabamos el audio',
   'guarda el texto de la conversación 30 días',
@@ -431,5 +514,61 @@ describe('voice disclosure', () => {
     vi.stubGlobal('__VOICE__', false);
     const body = text(<Page title="t" entity={SINGAPORE} />);
     expect(body).not.toContain('ElevenLabs');
+  });
+});
+
+describe('calculator disclosure', () => {
+  afterAll(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it.each([
+    ['PrivacyEn', PrivacyEn, CALCULATOR_EN],
+    ['PrivacyEs', PrivacyEs, CALCULATOR_ES],
+    ['LegalNoticeEs', LegalNoticeEs, CALCULATOR_ES],
+  ])(
+    '%s mentions the calculator only when it is published',
+    (_name, Page, snippet) => {
+      vi.stubGlobal('__CALCULATOR__', false);
+      expect(text(<Page title="t" entity={SPANISH} />)).not.toContain(snippet);
+      vi.stubGlobal('__CALCULATOR__', true);
+      expect(text(<Page title="t" entity={SPANISH} />)).toContain(snippet);
+    },
+  );
+
+  it.each([
+    [
+      'PrivacyEn',
+      PrivacyEn,
+      'if you accept analytics cookies, Google Analytics',
+    ],
+    [
+      'PrivacyEs',
+      PrivacyEs,
+      'si aceptas las cookies analíticas, a Google Analytics',
+    ],
+  ])(
+    '%s says the answers reach Google Analytics only when it is configured',
+    (_name, Page, snippet) => {
+      vi.stubGlobal('__CALCULATOR__', true);
+      vi.stubGlobal('__GA4_ID__', null);
+      expect(text(<Page title="t" entity={SPANISH} />)).not.toContain(snippet);
+      vi.stubGlobal('__GA4_ID__', 'G-TEST1234');
+      expect(text(<Page title="t" entity={SPANISH} />)).toContain(snippet);
+    },
+  );
+});
+
+describe('WebMCP disclosure', () => {
+  afterAll(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it.each([
+    ['PrivacyEn', PrivacyEn],
+    ['PrivacyEs', PrivacyEs],
+  ])('%s says nothing about WebMCP while it is dark', (_name, Page) => {
+    vi.stubGlobal('__WEBMCP__', false);
+    expect(text(<Page title="t" entity={SPANISH} />)).not.toContain('WebMCP');
   });
 });

@@ -44,6 +44,13 @@ import { PRICING_PAGE, SERVICES } from '../../test/page-content';
 import { SERVICE_BODIES } from '../../test/service-bodies';
 
 const ORIGIN = 'https://zenetlabs.com';
+const SINGAPORE = legalEntity('en');
+const SINGAPORE_ID = `${ORIGIN}/#organization`;
+const SOLE_TRADER_ID = `${ORIGIN}/es#business`;
+const ENTITY_ID: Record<Locale, string> = {
+  en: SINGAPORE_ID,
+  es: SOLE_TRADER_ID,
+};
 
 function blocks(entries: ReturnType<typeof structuredData>): unknown[] {
   return entries.map((entry): unknown => JSON.parse(entry.children));
@@ -190,7 +197,8 @@ describe('identityProblems', () => {
   });
 });
 
-describe.each(locales)('structured data (%s)', (locale) => {
+describe('structured data (en)', () => {
+  const locale = 'en';
   const entries = blocks(STRUCTURED_DATA[locale]);
   const json = STRUCTURED_DATA[locale].map((entry) => entry.children).join('');
   const [organization, website, person] = entries;
@@ -223,7 +231,7 @@ describe.each(locales)('structured data (%s)', (locale) => {
   it('gives the website its own id, description, language and publisher', () => {
     expect(website).toMatchObject({
       description: messages[locale].meta.description,
-      '@id': locale === 'en' ? `${ORIGIN}/#website` : `${ORIGIN}/es#website`,
+      '@id': `${ORIGIN}/#website`,
       inLanguage: locale,
       publisher: { '@id': `${ORIGIN}/#organization` },
     });
@@ -267,10 +275,10 @@ describe.each(locales)('structured data (%s)', (locale) => {
 });
 
 describe('structured data across locales', () => {
-  it('localises the website description but keeps one organization and founder node', () => {
+  it('gives each locale its legal person and website but keeps one founder node', () => {
     const en = blocks(STRUCTURED_DATA.en);
     const es = blocks(STRUCTURED_DATA.es);
-    expect(en[0]).toEqual(es[0]);
+    expect(en[0]).not.toEqual(es[0]);
     expect(en[1]).not.toEqual(es[1]);
     expect(en[2]).toEqual(es[2]);
     expect(
@@ -283,18 +291,27 @@ describe('structured data across locales', () => {
     ).toEqual([]);
   });
 
-  it('shares the entity id between en and the es fallback', () => {
-    expect(legalEntity('es').jsonLd.idPath).toBe(
+  it('gives the Spanish sole trader its own entity id', () => {
+    expect(legalEntity('es').jsonLd.idPath).not.toBe(
       legalEntity('en').jsonLd.idPath,
     );
   });
 });
 
-describe('structured data for the flipped Spanish entity', () => {
-  const entries = blocks(structuredData('es', FLIPPED));
+describe('structured data (es), the Spanish sole trader', () => {
+  const entries = blocks(STRUCTURED_DATA.es);
+  const json = STRUCTURED_DATA.es.map((entry) => entry.children).join('');
 
   it('is valid', () => {
     expect(validateJsonLd(entries, ORIGIN)).toEqual([]);
+  });
+
+  it('has an organization, a website and the founder', () => {
+    expect(entries).toHaveLength(3);
+  });
+
+  it('claims no social profiles', () => {
+    expect(json).not.toContain('sameAs');
   });
 
   it('describes a professional service with its tax id and address', () => {
@@ -309,10 +326,11 @@ describe('structured data for the flipped Spanish entity', () => {
         propertyID: 'NIF',
         value: '47986151D',
       },
+      email: 'hello@zenetlabs.com',
       address: {
-        streetAddress: 'Calle Ejemplo 1',
+        streetAddress: 'Carrer Gretel Ammann Martínez, 12',
         addressLocality: 'Barcelona',
-        postalCode: '08001',
+        postalCode: '08020',
         addressCountry: 'ES',
       },
     });
@@ -327,6 +345,8 @@ describe('structured data for the flipped Spanish entity', () => {
 
   it('publishes the es website under the sole trader', () => {
     expect(entries[1]).toMatchObject({
+      description: messages.es.meta.description,
+      inLanguage: 'es',
       '@id': `${ORIGIN}/es#website`,
       publisher: { '@id': `${ORIGIN}/es#business` },
     });
@@ -499,9 +519,7 @@ describe.each(locales)('route structured data (%s)', (locale) => {
       const label = price.label ? `: ${price.label}` : '';
       expect(offer?.name).toBe(`${service.name}${label}`);
       expect(offer?.url).toBe(`${pricing}#${service.id}`);
-      expect(offer?.itemOffered.provider['@id']).toBe(
-        `${ORIGIN}/#organization`,
-      );
+      expect(offer?.itemOffered.provider['@id']).toBe(ENTITY_ID[locale]);
       expect(offer?.itemOffered.areaServed).toBe(locale === 'en' ? 'SG' : 'ES');
       expect(spec?.priceCurrency).toBe(locale === 'en' ? 'SGD' : 'EUR');
       expect(spec?.valueAddedTaxIncluded).toBe(false);
@@ -745,7 +763,7 @@ describe.each(locales)('service pages structured data (%s)', (locale) => {
   });
 });
 
-describe('service structured data for the flipped Spanish entity', () => {
+describe('service structured data for the Spanish entity', () => {
   const provider = (entity?: typeof FLIPPED) =>
     serviceSchema.parse(
       blocks(
@@ -761,9 +779,9 @@ describe('service structured data for the flipped Spanish entity', () => {
     ).provider['@id'];
 
   it('follows the entity of the moment, without cache leaks', () => {
-    expect(provider()).toBe(`${ORIGIN}/#organization`);
-    expect(provider(FLIPPED)).toBe(`${ORIGIN}/es#business`);
-    expect(provider()).toBe(`${ORIGIN}/#organization`);
+    expect(provider()).toBe(SOLE_TRADER_ID);
+    expect(provider(SINGAPORE)).toBe(SINGAPORE_ID);
+    expect(provider()).toBe(SOLE_TRADER_ID);
   });
 
   it('passes the cross-page identity check with the flipped entity', () => {
@@ -793,7 +811,7 @@ describe('service structured data for the flipped Spanish entity', () => {
   });
 });
 
-describe('pricing structured data for the flipped Spanish entity', () => {
+describe('pricing structured data for the Spanish entity', () => {
   const providers = (entity?: typeof FLIPPED) =>
     catalogSchema
       .parse(
@@ -804,11 +822,9 @@ describe('pricing structured data for the flipped Spanish entity', () => {
       .itemListElement.map((offer) => offer.itemOffered.provider['@id']);
 
   it('points every offer at the entity of the moment, without cache leaks', () => {
-    const singapore = `${ORIGIN}/#organization`;
-    const sole = `${ORIGIN}/es#business`;
-    expect(new Set(providers())).toEqual(new Set([singapore]));
-    expect(new Set(providers(FLIPPED))).toEqual(new Set([sole]));
-    expect(new Set(providers())).toEqual(new Set([singapore]));
+    expect(new Set(providers())).toEqual(new Set([SOLE_TRADER_ID]));
+    expect(new Set(providers(SINGAPORE))).toEqual(new Set([SINGAPORE_ID]));
+    expect(new Set(providers())).toEqual(new Set([SOLE_TRADER_ID]));
   });
 });
 
@@ -1001,7 +1017,7 @@ describe('landing page structured data (es)', () => {
       expect(service.name).toBe(hub.landing[id]);
       expect(service.description).toBe(landingCopy(id).meta.description);
       expect(service.areaServed).toBe('ES');
-      expect(service.provider['@id']).toBe(`${ORIGIN}/#organization`);
+      expect(service.provider['@id']).toBe(SOLE_TRADER_ID);
       expect(service.offers).toHaveLength(1);
       const [offer] = service.offers;
       expect(offer?.itemOffered['@id']).toBe(service['@id']);
@@ -1064,9 +1080,9 @@ describe('landing page structured data (es)', () => {
           ),
         )[0],
       ).provider['@id'];
-    expect(provider()).toBe(`${ORIGIN}/#organization`);
-    expect(provider(FLIPPED)).toBe(`${ORIGIN}/es#business`);
-    expect(provider()).toBe(`${ORIGIN}/#organization`);
+    expect(provider()).toBe(SOLE_TRADER_ID);
+    expect(provider(SINGAPORE)).toBe(SINGAPORE_ID);
+    expect(provider()).toBe(SOLE_TRADER_ID);
   });
 
   it('keeps one identity per node across landing pages and the flipped entity', () => {
@@ -1130,7 +1146,7 @@ describe.each(locales)('case page structured data (%s)', (locale) => {
     expect(article.dateModified).toBe(PAGES.viatsyCase.lastmod);
     expect(article.image).toBe(`${ORIGIN}/og-${locale}.png`);
     expect(article.author['@id']).toBe(FOUNDER_ID);
-    expect(article.publisher['@id']).toBe(`${ORIGIN}/#organization`);
+    expect(article.publisher['@id']).toBe(ENTITY_ID[locale]);
   });
 
   it('never publishes after the last modification', () => {
@@ -1149,8 +1165,8 @@ describe.each(locales)('case page structured data (%s)', (locale) => {
           ),
         )[1],
       ).publisher['@id'];
-    expect(publisher()).toBe(`${ORIGIN}/#organization`);
-    expect(publisher(FLIPPED)).toBe(`${ORIGIN}/es#business`);
+    expect(publisher()).toBe(ENTITY_ID[locale]);
+    expect(publisher(FLIPPED)).toBe(SOLE_TRADER_ID);
   });
 });
 
