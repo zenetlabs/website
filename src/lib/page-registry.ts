@@ -6,17 +6,21 @@ import { SITE } from '@/lib/site';
 export const PAGE_IDS = [
   'home',
   'services',
+  'diagnostic',
   'automation',
   'integrations',
   'agents',
   'software',
   'training',
+  'maintenance',
   'holdedPrestashop',
   'holdedWoocommerce',
   'holdedHubspot',
   'verifactu',
   'travelAgencies',
   'viatsyCase',
+  'cases',
+  'contact',
   'pricing',
   'calculator',
   'about',
@@ -28,7 +32,13 @@ export const PAGE_IDS = [
 export type PageId = (typeof PAGE_IDS)[number];
 export type ServicePageId = Extract<
   PageId,
-  'automation' | 'integrations' | 'agents' | 'software' | 'training'
+  | 'diagnostic'
+  | 'automation'
+  | 'integrations'
+  | 'agents'
+  | 'software'
+  | 'training'
+  | 'maintenance'
 >;
 
 export const HOLDED_PAGE_IDS = [
@@ -75,6 +85,16 @@ export const PAGES: Record<
   home: { slugs: { en: '/', es: '/' }, lastmod: '2026-11-05' },
   services: {
     slugs: { en: '/services', es: '/servicios' },
+    lastmod: '2026-11-05',
+  },
+  diagnostic: {
+    slugs: {
+      en: '/services/automation-diagnostic',
+      es: '/servicios/diagnostico-de-automatizacion',
+    },
+    kind: 'service',
+    parent: 'services',
+    service: 'diagnostic',
     lastmod: '2026-11-05',
   },
   automation: {
@@ -124,6 +144,16 @@ export const PAGES: Record<
     service: 'training',
     lastmod: '2026-11-05',
   },
+  maintenance: {
+    slugs: {
+      en: '/services/maintenance',
+      es: '/servicios/mantenimiento',
+    },
+    kind: 'service',
+    parent: 'services',
+    service: 'maintenance',
+    lastmod: '2026-11-05',
+  },
   holdedPrestashop: {
     slugs: { es: '/servicios/integraciones/holded-prestashop' },
     route: '/services/integrations/holded-prestashop',
@@ -159,6 +189,15 @@ export const PAGES: Record<
   },
   viatsyCase: {
     slugs: { en: '/case-studies/viatsy', es: '/casos/viatsy' },
+    parent: 'cases',
+    lastmod: '2026-11-05',
+  },
+  cases: {
+    slugs: { en: '/case-studies', es: '/casos' },
+    lastmod: '2026-11-05',
+  },
+  contact: {
+    slugs: { en: '/contact', es: '/contacto' },
     lastmod: '2026-11-05',
   },
   pricing: {
@@ -266,9 +305,7 @@ export function pagePath(locale: Locale, page: PageId): string {
 
 export function serviceHref(locale: Locale, id: ServiceId): string {
   const [first] = pagesForService(id);
-  return first
-    ? pagePath(locale, first)
-    : `${pagePath(locale, 'pricing')}#${id}`;
+  return first ? pagePath(locale, first) : pagePath(locale, 'pricing');
 }
 
 export function markdownPath(locale: Locale, page: PageId): string {

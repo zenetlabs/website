@@ -1,4 +1,5 @@
 import type { Thing, WithContext } from 'schema-dts';
+import type { ServiceId } from '@/content/types';
 import { defaultLocale, type Locale } from '@/lib/i18n';
 import { ogImagePath } from '@/lib/og-image';
 import {
@@ -7,6 +8,7 @@ import {
   type PageId,
   pageLocales,
   pagePath,
+  serviceHref,
 } from '@/lib/page-registry';
 import { SITE } from '@/lib/site';
 
@@ -29,6 +31,10 @@ export function originTrialMeta(
 
 export function pageUrl(locale: Locale, page: PageId): string {
   return `${SITE.url}${pagePath(locale, page)}`;
+}
+
+export function serviceUrl(locale: Locale, id: ServiceId): string {
+  return `${SITE.url}${serviceHref(locale, id)}`;
 }
 
 export function markdownUrl(locale: Locale, page: PageId): string {

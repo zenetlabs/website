@@ -15,11 +15,14 @@ import {
   pagesIn,
   SERVICE_PAGE_IDS,
   type ServicePageId,
+  serviceHref,
 } from '@/lib/page-registry';
 import {
   breadcrumbStructuredData,
   calculatorStructuredData,
   caseStructuredData,
+  casesStructuredData,
+  contactStructuredData,
   homeStructuredData,
   pricingStructuredData,
   serviceStructuredData,
@@ -396,6 +399,12 @@ function routeData(locale: Locale, id: PageId) {
         PRICING_PAGE[locale],
         SERVICES[locale],
       );
+    case 'contact':
+      return contactStructuredData(locale, SERVICE_BODIES[locale].contact);
+    case 'cases':
+      return casesStructuredData(locale, SERVICE_BODIES[locale].casesHub);
+    case 'diagnostic':
+    case 'maintenance':
     case 'automation':
     case 'integrations':
     case 'agents':
@@ -518,7 +527,7 @@ describe.each(locales)('route structured data (%s)', (locale) => {
       const spec = offer?.priceSpecification;
       const label = price.label ? `: ${price.label}` : '';
       expect(offer?.name).toBe(`${service.name}${label}`);
-      expect(offer?.url).toBe(`${pricing}#${service.id}`);
+      expect(offer?.url).toBe(`${ORIGIN}${serviceHref(locale, service.id)}`);
       expect(offer?.itemOffered.provider['@id']).toBe(ENTITY_ID[locale]);
       expect(offer?.itemOffered.areaServed).toBe(locale === 'en' ? 'SG' : 'ES');
       expect(spec?.priceCurrency).toBe(locale === 'en' ? 'SGD' : 'EUR');
@@ -553,6 +562,9 @@ describe.each(locales)('route structured data (%s)', (locale) => {
       (id) =>
         id !== 'home' &&
         id !== 'calculator' &&
+        id !== 'viatsyCase' &&
+        id !== 'contact' &&
+        id !== 'cases' &&
         !isServicePage(id) &&
         !isHoldedPage(id),
     ),
@@ -568,6 +580,43 @@ describe.each(locales)('route structured data (%s)', (locale) => {
       item: `${base}${locale === 'en' ? '/' : ''}`,
     });
     expect(itemListElement[1]?.item.startsWith(ORIGIN)).toBe(true);
+  });
+
+  it.each(['contact', 'cases'] as const)(
+    'adds a two-step breadcrumb and the page node to %s',
+    (id) => {
+      const data = page(id);
+      expect(data.map((block) => typeOf.parse(block)['@type'])).toEqual([
+        id === 'contact' ? 'ContactPage' : 'CollectionPage',
+        'BreadcrumbList',
+      ]);
+      const { itemListElement } = breadcrumbSchema.parse(data[1]);
+      expect(itemListElement.map((entry) => entry.position)).toEqual([1, 2]);
+      expect(itemListElement[1]?.item).toBe(pageUrl(locale, id));
+    },
+  );
+
+  it('puts the Viatsy case under the cases hub', () => {
+    const { itemListElement } = breadcrumbSchema.parse(
+      page('viatsyCase').find(
+        (block) => breadcrumbSchema.safeParse(block).success,
+      ),
+    );
+    expect(itemListElement.map((entry) => entry.item)).toEqual([
+      `${base}${locale === 'en' ? '/' : ''}`,
+      pageUrl(locale, 'cases'),
+      pageUrl(locale, 'viatsyCase'),
+    ]);
+  });
+
+  it('lists the case pages in the collection', () => {
+    const [collection] = page('cases');
+    expect(collection).toMatchObject({
+      mainEntity: {
+        '@type': 'ItemList',
+        itemListElement: [{ position: 1, item: pageUrl(locale, 'viatsyCase') }],
+      },
+    });
   });
 
   it('adds a three-step breadcrumb to the calculator, under pricing', () => {
@@ -658,6 +707,27 @@ type ExpectedOffer = {
 
 const OFFERS: Record<Locale, Record<ServicePageId, ExpectedOffer[]>> = {
   en: {
+    diagnostic: [{ type: 'PriceSpecification', price: 3000 }],
+    maintenance: [
+      {
+        name: 'Maintenance: Essential',
+        type: 'UnitPriceSpecification',
+        unitCode: 'MON',
+        price: 500,
+      },
+      {
+        name: 'Maintenance: Standard',
+        type: 'UnitPriceSpecification',
+        unitCode: 'MON',
+        price: 1200,
+      },
+      {
+        name: 'Maintenance: Extended',
+        type: 'UnitPriceSpecification',
+        unitCode: 'MON',
+        price: 2500,
+      },
+    ],
     automation: [{ type: 'PriceSpecification', min: 8000 }],
     integrations: [{ type: 'PriceSpecification', min: 8000 }],
     agents: [{ type: 'PriceSpecification', min: 15000, max: 35000 }],
@@ -677,6 +747,27 @@ const OFFERS: Record<Locale, Record<ServicePageId, ExpectedOffer[]>> = {
     ],
   },
   es: {
+    diagnostic: [{ type: 'PriceSpecification', price: 1500 }],
+    maintenance: [
+      {
+        name: 'Mantenimiento: Esencial',
+        type: 'UnitPriceSpecification',
+        unitCode: 'MON',
+        price: 300,
+      },
+      {
+        name: 'Mantenimiento: Estándar',
+        type: 'UnitPriceSpecification',
+        unitCode: 'MON',
+        price: 750,
+      },
+      {
+        name: 'Mantenimiento: Ampliado',
+        type: 'UnitPriceSpecification',
+        unitCode: 'MON',
+        price: 1500,
+      },
+    ],
     automation: [{ type: 'PriceSpecification', min: 4000 }],
     integrations: [{ type: 'PriceSpecification', min: 4000 }],
     agents: [{ type: 'PriceSpecification', min: 8000, max: 20000 }],

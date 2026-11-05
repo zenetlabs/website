@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { locales } from '@/lib/i18n';
+import { NAVIGATE_SECTIONS } from '@/lib/navigate';
 import type { SiteFlags } from '@/lib/page-registry';
 import { CANARY } from '@/server/chat/guard';
 import {
@@ -9,6 +10,19 @@ import {
   turnContext,
 } from '@/server/chat/prompt';
 import { chatToolNames } from '@/server/chat/tools';
+
+const KNOWN_SECTIONS = ['services', 'cases', 'faq', 'contact'] as const;
+
+function namedMissingSections(prompt: string): string[] {
+  return KNOWN_SECTIONS.filter(
+    (name) =>
+      !NAVIGATE_SECTIONS.some((section) => section === name) &&
+      new RegExp(
+        `${name} section|sección de ${name}|sección de contacto`,
+        'i',
+      ).test(prompt),
+  );
+}
 
 const LIVE: SiteFlags = {
   calculator: { published: true },
@@ -20,6 +34,19 @@ const DARK: SiteFlags = {
 };
 
 describe.each(locales)('staticPrompt(%s)', (locale) => {
+  it.each([LIVE, DARK])(
+    'names no navigate section that does not exist',
+    (site) => {
+      const prompt = staticPrompt(
+        locale,
+        chatToolNames(site),
+        '<knowledge>',
+        featuresOf(site),
+      );
+      expect(namedMissingSections(prompt)).toEqual([]);
+    },
+  );
+
   const live = staticPrompt(
     locale,
     chatToolNames(LIVE),

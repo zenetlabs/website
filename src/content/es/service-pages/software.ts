@@ -140,5 +140,5 @@ export const software = {
       },
     ],
   },
-  related: ['integrations', 'agents'],
+  related: ['diagnostic', 'integrations', 'agents'],
 } satisfies ServicePageContent;

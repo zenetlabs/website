@@ -17,6 +17,7 @@ export type CtaId =
   | 'page_cta'
   | 'pricing'
   | 'about'
+  | 'cases'
   | 'services'
   | 'contact_book'
   | 'start_here'

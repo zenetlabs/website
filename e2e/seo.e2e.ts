@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { decodeEntities } from '../src/lib/markdown';
 import { ogImagePath } from '../src/lib/og-image';
 import { PATH_CASES } from '../test/redirect-cases';
+import { parseSitemap } from '../test/sitemap';
 import {
   CLUSTERS,
   gotoHydrated,
@@ -122,8 +123,8 @@ test('unknown paths answer 404', async ({ request }) => {
     '/es/nope',
     '/services/nope',
     '/es/servicios/nope',
-    '/case-studies',
-    '/es/casos',
+    '/case-studies/nope',
+    '/es/casos/nope',
     '/industries',
     '/es/sectores',
     '/es/servicios/integraciones/nope',
@@ -140,8 +141,8 @@ const NOT_FOUND: ReadonlyArray<readonly [string, string]> = [
   ['/services/nope', 'Page not found | Zenet Labs'],
   ['/es/servicios/nope', 'Página no encontrada | Zenet Labs'],
   ['/es/servicios/integraciones/nope', 'Página no encontrada | Zenet Labs'],
-  ['/case-studies', 'Page not found | Zenet Labs'],
-  ['/es/casos', 'Página no encontrada | Zenet Labs'],
+  ['/case-studies/nope', 'Page not found | Zenet Labs'],
+  ['/es/casos/nope', 'Página no encontrada | Zenet Labs'],
 ];
 
 for (const [path, title] of NOT_FOUND) {
@@ -237,4 +238,101 @@ test('every page renders a distinct title', async ({ request }) => {
     titles.set(title, path);
   }
   expect(titles.size).toBe(PAIRS.length * 2);
+});
+
+const TITLE_LENGTH = [30, 60] as const;
+const DESCRIPTION_LENGTH = [120, 160] as const;
+
+function headingLevels(html: string): number[] {
+  const main = /<main\b[^>]*>([\s\S]*?)<\/main>/.exec(html)?.[1] ?? '';
+  return [...main.matchAll(/<h([1-6])\b/g)].map(([, level]) => Number(level));
+}
+
+test('every sitemap url passes the technical SEO audit', async ({
+  request,
+}) => {
+  const entries = parseSitemap(
+    await (await request.get('/sitemap.xml')).text(),
+  );
+  expect(entries.length).toBeGreaterThan(30);
+  const titles = new Set<string>();
+  const descriptions = new Set<string>();
+
+  for (const entry of entries) {
+    await test.step(entry.loc, async () => {
+      const path = new URL(entry.loc).pathname;
+      const html = await (await request.get(path)).text();
+      const tags = tagsOf(html);
+      const meta = (name: string) =>
+        tags.find((tag) => tag.name === name || tag.property === name)
+          ?.content ?? '';
+
+      const title = decodeEntities(
+        html.match(/<title>([^<]*)<\/title>/)?.[1] ?? '',
+      );
+      expect(title.length, `title of ${path}`).toBeGreaterThanOrEqual(
+        TITLE_LENGTH[0],
+      );
+      expect(title.length, `title of ${path}`).toBeLessThanOrEqual(
+        TITLE_LENGTH[1],
+      );
+      expect(titles.has(title), `duplicate title ${title}`).toBe(false);
+      titles.add(title);
+
+      const description = meta('description');
+      expect(
+        description.length,
+        `description of ${path}`,
+      ).toBeGreaterThanOrEqual(DESCRIPTION_LENGTH[0]);
+      expect(description.length, `description of ${path}`).toBeLessThanOrEqual(
+        DESCRIPTION_LENGTH[1],
+      );
+      expect(descriptions.has(description), `duplicate ${path}`).toBe(false);
+      descriptions.add(description);
+
+      const canonical = tags.filter((tag) => tag.rel === 'canonical');
+      expect(canonical.map((tag) => tag.href)).toEqual([entry.loc]);
+      expect(entry.loc).not.toMatch(/[?#]/);
+
+      const hreflangs = tags.flatMap((tag) =>
+        tag.rel === 'alternate' && tag.hreflang ? [tag.hreflang] : [],
+      );
+      expect(hreflangs.includes('x-default'), `x-default on ${path}`).toBe(
+        hreflangs.includes('en'),
+      );
+      if (!hreflangs.includes('en')) {
+        expect(hreflangs, `${path} is es-only`).toEqual(['es']);
+      }
+      expect(htmlLang(html)).toBe(path.startsWith('/es') ? 'es' : 'en');
+
+      const levels = headingLevels(html);
+      expect(levels.filter((level) => level === 1)).toHaveLength(1);
+      expect(levels[0]).toBe(1);
+      levels.forEach((level, index) => {
+        if (index > 0) {
+          expect(level, `heading order in ${path}`).toBeLessThanOrEqual(
+            (levels[index - 1] ?? 0) + 1,
+          );
+        }
+      });
+
+      expect(meta('og:title')).toBe(title);
+      expect(meta('og:description')).toBe(description);
+      expect(meta('og:url')).toBe(entry.loc);
+      expect(meta('og:image:width')).toBe('1200');
+      expect(meta('og:image:height')).toBe('630');
+      expect(meta('twitter:card')).toBe('summary_large_image');
+      const image = await request.get(new URL(meta('og:image')).pathname);
+      expect(image.status()).toBe(200);
+      expect(image.headers()['content-type']).toBe('image/png');
+    });
+  }
+});
+
+test('the og images are 1200 by 630', async ({ request }) => {
+  for (const locale of ['en', 'es'] as const) {
+    const png = await (await request.get(ogImagePath(locale))).body();
+    expect(png.readUInt32BE(16)).toBe(1200);
+    expect(png.readUInt32BE(20)).toBe(630);
+  }
 });

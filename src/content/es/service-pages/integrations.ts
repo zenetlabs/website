@@ -155,5 +155,5 @@ export const integrations = {
       },
     ],
   },
-  related: ['automation', 'software'],
+  related: ['diagnostic', 'automation', 'software'],
 } satisfies ServicePageContent;

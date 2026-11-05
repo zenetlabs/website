@@ -16,12 +16,15 @@ import {
   CALCULATOR_PUBLISHED,
   CALCULATOR_RESULTS,
   CASE_PAIR,
+  CASES_HUB,
+  CONTACT_PAIR,
   deferredScripts,
   ES_ONLY_PAGES,
   gotoHydrated,
   HOLDED_PAGES,
   PAIRS,
   SECTOR_PAGE,
+  SERVICE_PAIRS,
   tagsOf,
   VERIFACTU_PAGE,
 } from './helpers';
@@ -55,6 +58,10 @@ type Kind =
   | 'verifactu'
   | 'sector'
   | 'case'
+  | 'cases'
+  | 'contact'
+  | 'diagnostic'
+  | 'maintenance'
   | 'calculator';
 type Locale = 'en' | 'es';
 
@@ -99,6 +106,22 @@ const NEEDLES: Record<Kind, Partial<Record<Locale, string>>> = {
   verifactu: { es: 'Registros encadenados' },
   sector: { es: 'Reservas y confirmaciones de proveedores' },
   case: { en: 'a lot of copying', es: 'mucho copiar y pegar' },
+  cases: {
+    en: 'In every case, agents prepare the work',
+    es: 'En todos los casos, los agentes preparan',
+  },
+  contact: {
+    en: 'Send the form or write to us',
+    es: 'Envía el formulario o escríbenos',
+  },
+  diagnostic: {
+    en: 'Do we need to know what to automate',
+    es: 'saber qué automatizar antes de empezar',
+  },
+  maintenance: {
+    en: 'Do automations really need maintenance',
+    es: 'necesitan mantenimiento las automatizaciones',
+  },
   calculator: {
     en: enCalculator.disclaimer.title,
     es: esCalculator.disclaimer.title,
@@ -156,6 +179,14 @@ const PAGES: readonly PageCase[] = [
   { path: SECTOR_PAGE, locale: 'es', kinds: ['sector'] },
   { path: CASE_PAIR.en, locale: 'en', kinds: ['case'] },
   { path: CASE_PAIR.es, locale: 'es', kinds: ['case'] },
+  { path: CASES_HUB.en, locale: 'en', kinds: ['cases'] },
+  { path: CASES_HUB.es, locale: 'es', kinds: ['cases'] },
+  { path: CONTACT_PAIR.en, locale: 'en', kinds: ['contact'] },
+  { path: CONTACT_PAIR.es, locale: 'es', kinds: ['contact'] },
+  { path: SERVICE_PAIRS.diagnostic.en, locale: 'en', kinds: ['diagnostic'] },
+  { path: SERVICE_PAIRS.diagnostic.es, locale: 'es', kinds: ['diagnostic'] },
+  { path: SERVICE_PAIRS.maintenance.en, locale: 'en', kinds: ['maintenance'] },
+  { path: SERVICE_PAIRS.maintenance.es, locale: 'es', kinds: ['maintenance'] },
   ...CALCULATOR_CASES,
 ];
 
@@ -176,6 +207,10 @@ const KINDS: readonly Kind[] = [
   'verifactu',
   'sector',
   'case',
+  'cases',
+  'contact',
+  'diagnostic',
+  'maintenance',
   'calculator',
 ];
 const LOCALES: readonly Locale[] = ['en', 'es'];

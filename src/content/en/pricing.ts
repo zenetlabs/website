@@ -92,10 +92,16 @@ export const pricingPage = {
     text: 'Answer six questions and see an indicative range for your project, without leaving your email.',
     link: 'Open the price calculator',
   },
+  faq: {
+    title: {
+      before: 'Questions about ',
+      emphasis: 'time, cost and ownership',
+      after: '',
+    },
+  },
   cta: {
     title: 'Start with the diagnostic',
     text: 'Tell us what your team does by hand and we will reply personally.',
     button: 'Book a diagnostic',
-    faq: 'Read the FAQ',
   },
 } satisfies PricingPageContent;

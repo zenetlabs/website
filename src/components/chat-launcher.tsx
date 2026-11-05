@@ -62,10 +62,7 @@ function LoadFailed({
     >
       <p>{chat.unavailable}</p>
       <p className="flex flex-wrap gap-x-4 gap-y-1">
-        <a
-          href={navHref(locale, { page: 'home', section: 'contact' })}
-          className={TEXT_LINK}
-        >
+        <a href={navHref(locale, { page: 'contact' })} className={TEXT_LINK}>
           {chat.contact}
         </a>
         <a href={`mailto:${PUBLIC_EMAIL}`} className={TEXT_LINK}>

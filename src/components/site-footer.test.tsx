@@ -35,7 +35,7 @@ describe('SiteFooter cookie settings', () => {
     vi.stubGlobal('__GA4_ID__', 'G-TEST1234');
     render(<SiteFooter locale="en" />);
     const link = screen.getByRole('link', { name: 'Cookie settings' });
-    expect(link).toHaveAttribute('href', '/cookies#manage');
+    expect(link).toHaveAttribute('href', '/cookies');
     const click = new MouseEvent('click', { bubbles: true, cancelable: true });
     link.dispatchEvent(click);
     expect(click.defaultPrevented).toBe(false);

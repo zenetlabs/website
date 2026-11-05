@@ -224,7 +224,7 @@ describe('VoicePanel', () => {
     expect(mint).not.toHaveBeenCalled();
     expect(screen.getByRole('link', { name: en.fallbackForm })).toHaveAttribute(
       'href',
-      '/#contact',
+      '/contact',
     );
     expect(
       screen.getByRole('link', { name: 'hello@zenetlabs.com' }),

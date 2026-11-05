@@ -67,6 +67,16 @@ export function Cases({
           );
         })}
       </ul>
+      {copy.more ? (
+        <p className="mt-10">
+          <a
+            href={pagePath(locale, 'cases')}
+            className={`font-medium ${TEXT_LINK}`}
+          >
+            {copy.more} →
+          </a>
+        </p>
+      ) : null}
     </Section>
   );
 }

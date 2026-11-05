@@ -5,7 +5,7 @@ export const calculatorPage = {
     title: 'Calculadora de precio',
     metaTitle: 'Calculadora de precio para automatización e IA | Zenet Labs',
     description:
-      'Responde seis preguntas y obtén un rango orientativo en euros (sin IVA), un plazo y el plan de mantenimiento que encaja. No es un presupuesto: el precio final sale del diagnóstico.',
+      'Responde seis preguntas y obtén un rango orientativo en euros (sin IVA) y un plazo. No es un presupuesto: el precio final sale del diagnóstico.',
   },
   breadcrumb: { label: 'Ruta de navegación', pricing: 'Precios' },
   title: {

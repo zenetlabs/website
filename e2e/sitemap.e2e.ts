@@ -132,8 +132,14 @@ test('every sitemap url is a self-canonical, indexable, reciprocal page', async 
     expect(orphans).toEqual([]);
   });
 
+  await test.step('no link points at a fragment of another page', () => {
+    expect(
+      fragmentLinks.filter(({ from, path }) => from !== path),
+      'cross-page fragment links',
+    ).toEqual([]);
+  });
+
   await test.step('every linked fragment exists on its target page', () => {
-    expect(fragmentLinks.length).toBeGreaterThan(0);
     const unknownPages = new Set<string>();
     const missingIds: string[] = [];
     for (const { from, path, fragment } of fragmentLinks) {

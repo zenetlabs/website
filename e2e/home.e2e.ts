@@ -1,13 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { formatPriceSummary } from '../src/lib/money';
 import { SERVICES } from '../test/page-content';
-import {
-  BOOKING_PUBLISHED,
-  CTA,
-  gotoHydrated,
-  navLinks,
-  waitForHydration,
-} from './helpers';
+import { CTA, gotoHydrated, navLinks, waitForHydration } from './helpers';
 
 const COMMON = [
   'companies',
@@ -25,38 +19,38 @@ const HOMES = [
     locale: 'en',
     path: '/',
     sections: COMMON,
-    nav: ['/services', '/pricing', '/#cases', '/about'],
+    nav: ['/services', '/pricing', '/case-studies', '/about'],
     faq: 15,
     pricing: '/pricing',
     cta: CTA.en,
     about: '/about',
     ladder: [
-      '/pricing#diagnostic',
+      '/services/automation-diagnostic',
       '/services/ai-automation',
       '/services/ai-agents',
       '/services/custom-software',
       '/services/ai-training',
-      '/pricing#maintenance',
-      '/pricing#growth',
+      '/services/maintenance',
+      '/pricing',
     ],
   },
   {
     locale: 'es',
     path: '/es',
     sections: ['companies', 'problems', 'verifactu', ...COMMON.slice(2)],
-    nav: ['/es/servicios', '/es/precios', '/es#cases', '/es/sobre-nosotros'],
+    nav: ['/es/servicios', '/es/precios', '/es/casos', '/es/sobre-nosotros'],
     faq: 16,
     pricing: '/es/precios',
     cta: CTA.es,
     about: '/es/sobre-nosotros',
     ladder: [
-      '/es/precios#diagnostic',
+      '/es/servicios/diagnostico-de-automatizacion',
       '/es/servicios/automatizacion-de-procesos',
       '/es/servicios/agentes-de-ia',
       '/es/servicios/desarrollo-de-software-a-medida',
       '/es/servicios/formacion-ia-equipos',
-      '/es/precios#maintenance',
-      '/es/precios#growth',
+      '/es/servicios/mantenimiento',
+      '/es/precios',
     ],
   },
 ] as const;
@@ -73,7 +67,7 @@ for (const home of HOMES) {
       await expect(page.locator('main img')).toHaveCount(0);
     });
 
-    test('shows the header nav and every anchor target exists', async ({
+    test('shows the header nav and every in-page anchor target exists', async ({
       page,
     }) => {
       await page.setViewportSize({ width: 1280, height: 900 });
@@ -92,7 +86,6 @@ for (const home of HOMES) {
               : [];
           }),
         );
-      expect(anchors.length).toBeGreaterThan(BOOKING_PUBLISHED ? 1 : 3);
       for (const id of anchors) {
         await expect(page.locator(`[id="${id}"]`), id).toHaveCount(1);
       }

@@ -190,6 +190,7 @@ export type HomeContent = {
     }[];
   };
   cases: SectionCopy & {
+    more?: string;
     automatedLabel: string;
     actors: Record<FlowActor, string>;
     items: readonly CaseStudy[];
@@ -260,7 +261,8 @@ export type PricingPageContent = {
   >;
   how: { title: string; items: readonly string[] };
   calculator: { title: string; text: string; link: string };
-  cta: { title: string; text: string; button: string; faq: string };
+  faq: { title: TitleParts };
+  cta: { title: string; text: string; button: string };
 };
 
 export type AboutPageContent = {
@@ -272,8 +274,24 @@ export type AboutPageContent = {
     title: string;
     items: readonly { id: string; title: string; text: string }[];
   };
-  companies: { title: string; lead: string };
+  companies: { title: string; lead: string; cases: string };
   vision: { title: string; text: string };
+  cta: { title: string; text: string; button: string };
+};
+
+export type ContactPageContent = {
+  meta: PageMeta;
+  title: TitleParts;
+  lead: string;
+  form: HomeContent['contact'];
+  next: ProcessCopy;
+};
+
+export type CasesHubContent = {
+  meta: PageMeta;
+  title: TitleParts;
+  lead: string;
+  cases: HomeContent['cases'];
   cta: { title: string; text: string; button: string };
 };
 
@@ -304,7 +322,7 @@ export type ServicePageContent = {
     page?: PageId;
   };
   faq: SectionCopy & { items: readonly FaqItem[] };
-  related: readonly [ServicePageId, ServicePageId];
+  related: readonly ServicePageId[];
 };
 
 export type LandingMeta = Pick<PageMeta, 'metaTitle' | 'description'>;
@@ -423,8 +441,14 @@ export type ServicesHubContent = {
   meta: PageMeta;
   title: TitleParts;
   lead: string;
-  cards: Record<ServicePageId, { name: string; summary: string }>;
-  landing: Partial<Record<LandingPageId | 'viatsyCase', string>>;
+  cards: Record<
+    Exclude<ServicePageId, 'diagnostic' | 'maintenance'>,
+    { name: string; summary: string }
+  > &
+    Record<'diagnostic' | 'maintenance', { name: string }>;
+  landing: Partial<
+    Record<LandingPageId | 'viatsyCase' | 'cases' | 'contact', string>
+  >;
   startHere: string;
   book: string;
   also: { title: string; lead: string };
@@ -688,7 +712,7 @@ export type ChatCopy = {
     form: string;
   };
   pages: Record<PageId, string>;
-  sections: Record<'services' | 'cases' | 'faq' | 'contact', string>;
+  sections: Record<'services' | 'cases' | 'faq', string>;
   booking: {
     title: string;
     when: string;

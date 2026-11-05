@@ -1,4 +1,4 @@
-import { viatsyCaseName } from '@/content/es/case-name';
+import { casesName, contactName, viatsyCaseName } from '@/content/es/case-name';
 import { services } from '@/content/es/services';
 import type { ServicesHubContent } from '@/content/types';
 import { formatPriceSummary } from '@/lib/money';
@@ -20,6 +20,9 @@ export const servicesHub = {
   // TODO(albert): review the "consultoría pequeña" claim
   lead: 'Zenet Labs es una consultoría de IA pequeña para pymes de 10 a 100 personas. No nos quedamos en el consejo: conectamos tus herramientas, automatizamos el trabajo manual, ponemos agentes de IA en producción y formamos a tu equipo, con precios publicados y un diagnóstico a precio cerrado para empezar.',
   cards: {
+    diagnostic: {
+      name: 'Diagnóstico de automatización',
+    },
     automation: {
       name: 'Automatización de procesos',
       summary:
@@ -45,6 +48,9 @@ export const servicesHub = {
       summary:
         'Talleres prácticos sobre tus propios procesos y mentoría mensual mientras el equipo adopta la IA.',
     },
+    maintenance: {
+      name: 'Mantenimiento',
+    },
   },
   landing: {
     holdedPrestashop: 'Integración de Holded con PrestaShop',
@@ -53,6 +59,8 @@ export const servicesHub = {
     verifactu: 'Integración con Verifactu',
     travelAgencies: 'Automatización para agencias de viajes',
     viatsyCase: viatsyCaseName,
+    cases: casesName,
+    contact: contactName,
   },
   labels: {
     breadcrumb: 'Ruta de navegación',

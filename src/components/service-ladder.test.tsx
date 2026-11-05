@@ -12,13 +12,13 @@ describe.each([
     enHome,
     '/pricing',
     [
-      '/pricing#diagnostic',
+      '/services/automation-diagnostic',
       '/services/ai-automation',
       '/services/ai-agents',
       '/services/custom-software',
       '/services/ai-training',
-      '/pricing#maintenance',
-      '/pricing#growth',
+      '/services/maintenance',
+      '/pricing',
     ],
   ],
   [
@@ -26,13 +26,13 @@ describe.each([
     esHome,
     '/es/precios',
     [
-      '/es/precios#diagnostic',
+      '/es/servicios/diagnostico-de-automatizacion',
       '/es/servicios/automatizacion-de-procesos',
       '/es/servicios/agentes-de-ia',
       '/es/servicios/desarrollo-de-software-a-medida',
       '/es/servicios/formacion-ia-equipos',
-      '/es/precios#maintenance',
-      '/es/precios#growth',
+      '/es/servicios/mantenimiento',
+      '/es/precios',
     ],
   ],
 ] as const)('ServiceLadder (%s)', (locale, home, pricing, hrefs) => {
@@ -51,7 +51,7 @@ describe.each([
       .filter((link) => link.dataset.cta === undefined);
   }
 
-  it('renders 7 rows linking to the service pages or the pricing cards', () => {
+  it('renders 7 rows linking to the service pages or the pricing page', () => {
     expect(rows().map((row) => row.getAttribute('href'))).toEqual(hrefs);
   });
 

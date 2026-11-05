@@ -47,7 +47,7 @@ export const faq = [
     id: 'prices',
     group: 'terms',
     question: '¿Cuánto cuesta?',
-    answer: `El diagnóstico cuesta ${price('diagnostic')} y se descuenta del proyecto si sigues adelante en 60 días. Una integración o automatización cuesta ${price('integration')}; un agente de IA en producción, ${price('agent')}, y una web o app a medida, ${price('web')}. Los precios no incluyen el IVA. Formación, mantenimiento y crecimiento están en la página de precios.`,
+    answer: `El diagnóstico cuesta ${price('diagnostic')} y se descuenta del proyecto si sigues adelante en 60 días. Una integración o automatización cuesta ${price('integration')}; un agente de IA en producción, ${price('agent')}, y una web o app a medida, ${price('web')}. Los precios no incluyen el IVA. El mantenimiento cuesta ${price('maintenance')}, en tres planes que describe la página de mantenimiento; la formación, ${price('training')}, y el crecimiento, ${price('growth')}.`,
   },
   {
     id: 'verifactu',

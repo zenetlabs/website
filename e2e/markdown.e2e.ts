@@ -2,7 +2,15 @@ import { expect, test } from '@playwright/test';
 import { formatPrice, formatPriceSummary } from '../src/lib/money';
 import { faqPairs, jsonLdBlocks } from '../test/json-ld';
 import { SERVICES } from '../test/page-content';
-import { LOCALES, markdownPathOf, normalise, PAGES, PAIRS } from './helpers';
+import {
+  BOOKING_PUBLISHED,
+  CONTACT_PAIR,
+  LOCALES,
+  markdownPathOf,
+  normalise,
+  PAGES,
+  PAIRS,
+} from './helpers';
 
 const VARY_ACCEPT = /(^|,)\s*accept\s*(,|$)/i;
 
@@ -365,4 +373,36 @@ test('the case markdown keeps the title, the date and no placeholder', async ({
   const en = await (await request.get('/case-studies/viatsy.md')).text();
   expect(en).toContain('# Viatsy, a travel company *run with AI agents*');
   expect(en.match(/```json/g)).toHaveLength(5);
+});
+
+test('the contact markdown lists the ways to reach us', async ({ request }) => {
+  for (const locale of LOCALES) {
+    const path = CONTACT_PAIR[locale];
+    const body = await (await request.get(markdownPathOf(path))).text();
+    expect(body, path).toContain(
+      '[hello@zenetlabs.com](mailto:hello@zenetlabs.com)',
+    );
+    expect(body, path).toMatch(/^## .*\n\n.+/m);
+    expect(/\]\([^)]*\/(book|reservar)\)/.test(body), path).toBe(
+      BOOKING_PUBLISHED,
+    );
+    expect(body, path).toContain('### ');
+  }
+});
+
+test('the cases hub and the new service pages keep their content in markdown', async ({
+  request,
+}) => {
+  const hub = await (await request.get('/case-studies.md')).text();
+  expect(hub).toContain('## Two of our companies, *run with agents*');
+  expect(hub).toContain('(http://localhost:4173/case-studies/viatsy)');
+  const diagnostic = await (
+    await request.get('/services/automation-diagnostic.md')
+  ).text();
+  expect(diagnostic).toContain('# The automation diagnostic');
+  expect(diagnostic).toContain('S$3,000');
+  const maintenance = await (
+    await request.get('/es/servicios/mantenimiento.md')
+  ).text();
+  expect(maintenance).toContain('Esencial');
 });

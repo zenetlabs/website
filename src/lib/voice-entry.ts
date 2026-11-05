@@ -34,6 +34,6 @@ export function openVoice(locale: Locale, push: (href: string) => void): void {
         return;
       }
       console.error('voice: panel failed', { error: String(error) });
-      location.assign(navHref(locale, { page: 'home', section: 'contact' }));
+      location.assign(navHref(locale, { page: 'contact' }));
     });
 }

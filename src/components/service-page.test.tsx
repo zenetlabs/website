@@ -89,10 +89,7 @@ describe.each(CASES)('ServicePage (%s %s)', (locale, page) => {
     }
     expect(
       screen.getByRole('link', { name: `${labels.pricing} →` }),
-    ).toHaveAttribute(
-      'href',
-      `${pagePath(locale, 'pricing')}#${serviceOf(page)}`,
-    );
+    ).toHaveAttribute('href', pagePath(locale, 'pricing'));
   });
 
   it('renders four collapsed questions with anchors and no script', () => {
@@ -130,20 +127,31 @@ describe.each(CASES)('ServicePage (%s %s)', (locale, page) => {
 });
 
 describe('ServicePage links', () => {
-  it('sends training to its own pricing card and a workshop label', () => {
+  it('sends training to the pricing page and a workshop label', () => {
     const { copy } = view('en', 'training');
     expect(copy.cta.button).toBe('Ask about a workshop');
     expect(screen.getByRole('link', { name: 'See pricing →' })).toHaveAttribute(
       'href',
-      '/pricing#training',
+      '/pricing',
     );
   });
 
-  it('sends automation to the integration card', () => {
+  it('links the case, the cases hub and the diagnostic from a service page', () => {
+    view('en', 'training');
+    const callout = document.querySelector('#case');
+    expect(callout?.querySelector('a[href="/case-studies"]')).not.toBeNull();
+    expect(
+      document.querySelector(
+        '#related-title ~ ul a[href="/services/automation-diagnostic"]',
+      ),
+    ).not.toBeNull();
+  });
+
+  it('sends automation to the pricing page', () => {
     view('es', 'automation');
     expect(screen.getByRole('link', { name: 'Ver precios →' })).toHaveAttribute(
       'href',
-      '/es/precios#integration',
+      '/es/precios',
     );
   });
 });
@@ -184,9 +192,12 @@ describe('ServicePage links into R5 pages', () => {
     );
   });
 
-  it('links no case page from a page without one', () => {
+  it('links only the cases hub from a page without a case page', () => {
     const { container } = view('en', 'training');
-    expect(container.querySelectorAll('#case a')).toHaveLength(0);
+    const links = [...container.querySelectorAll('#case a')];
+    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+      '/case-studies',
+    ]);
   });
 });
 

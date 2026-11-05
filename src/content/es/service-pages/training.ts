@@ -137,5 +137,5 @@ export const training = {
       },
     ],
   },
-  related: ['agents', 'automation'],
+  related: ['diagnostic', 'agents', 'automation'],
 } satisfies ServicePageContent;

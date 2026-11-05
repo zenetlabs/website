@@ -201,13 +201,15 @@ describe('the calculator page', () => {
 
 describe('pagesIn and slugForms', () => {
   it('lists the pages present in each locale', () => {
-    expect(pagesIn('en')).toHaveLength(12);
-    expect(pagesIn('es')).toHaveLength(18);
+    expect(pagesIn('en')).toHaveLength(16);
+    expect(pagesIn('es')).toHaveLength(22);
     expect(pagesIn('en')).toEqual([
       'home',
       'services',
       ...SERVICE_PAGE_IDS,
       'viatsyCase',
+      'cases',
+      'contact',
       'pricing',
       'about',
       'privacy',
@@ -219,6 +221,8 @@ describe('pagesIn and slugForms', () => {
       ...SERVICE_PAGE_IDS,
       ...LANDING_PAGE_IDS,
       'viatsyCase',
+      'cases',
+      'contact',
       'pricing',
       'about',
       'privacy',
@@ -467,11 +471,13 @@ describe('markdownPath', () => {
 
 describe('service pages', () => {
   const SERVICE_PAGES = [
+    'diagnostic',
     'automation',
     'integrations',
     'agents',
     'software',
     'training',
+    'maintenance',
   ] as const;
 
   it('derives the service pages from the entries that name a service', () => {
@@ -486,11 +492,13 @@ describe('service pages', () => {
 
   it('lists the ladder row each service page prices from', () => {
     expect(SERVICE_PAGE_IDS.map(serviceOf)).toEqual([
+      'diagnostic',
       'integration',
       'integration',
       'agent',
       'web',
       'training',
+      'maintenance',
     ]);
     for (const page of SERVICE_PAGES) {
       expect(PAGES[page].parent).toBe('services');
@@ -502,15 +510,19 @@ describe('service pages', () => {
     ['agent', ['agents']],
     ['web', ['software']],
     ['training', ['training']],
-    ['diagnostic', []],
-    ['maintenance', []],
+    ['diagnostic', ['diagnostic']],
+    ['maintenance', ['maintenance']],
     ['growth', []],
   ] as const)('lists the pages of %s', (id, expected) => {
     expect(pagesForService(id)).toEqual(expected);
   });
 
   it.each([
-    ['diagnostic', '/pricing#diagnostic', '/es/precios#diagnostic'],
+    [
+      'diagnostic',
+      '/services/automation-diagnostic',
+      '/es/servicios/diagnostico-de-automatizacion',
+    ],
     [
       'integration',
       '/services/ai-automation',
@@ -523,8 +535,8 @@ describe('service pages', () => {
       '/es/servicios/desarrollo-de-software-a-medida',
     ],
     ['training', '/services/ai-training', '/es/servicios/formacion-ia-equipos'],
-    ['maintenance', '/pricing#maintenance', '/es/precios#maintenance'],
-    ['growth', '/pricing#growth', '/es/precios#growth'],
+    ['maintenance', '/services/maintenance', '/es/servicios/mantenimiento'],
+    ['growth', '/pricing', '/es/precios'],
   ] as const satisfies readonly (readonly [ServiceId, string, string])[])(
     'links %s to its first page or its pricing card',
     (id, en, es) => {
@@ -586,7 +598,11 @@ describe('breadcrumbTrail', () => {
       'home',
       'travelAgencies',
     ]);
-    expect(breadcrumbTrail('viatsyCase')).toEqual(['home', 'viatsyCase']);
+    expect(breadcrumbTrail('viatsyCase')).toEqual([
+      'home',
+      'cases',
+      'viatsyCase',
+    ]);
   });
 });
 

@@ -38,7 +38,7 @@ for (const pair of Object.values(SERVICE_PAIRS)) {
         await expect(facts.locator('dd').nth(1)).toContainText(price);
       });
 
-      test('links the breadcrumb, the CTA and the pricing card', async ({
+      test('links the breadcrumb, the CTA and the pricing page', async ({
         page,
       }) => {
         await gotoHydrated(page, path);
@@ -60,10 +60,8 @@ for (const pair of Object.values(SERVICE_PAIRS)) {
         );
         await expect(hero.getByRole('link').last()).toHaveAttribute(
           'href',
-          `${PRICING[locale]}#${service}`,
+          PRICING[locale],
         );
-        await gotoHydrated(page, `${PRICING[locale]}#${service}`);
-        await expect(page.locator(`article#${service}`)).toBeInViewport();
       });
 
       test('opens a question by keyboard and from its deep link', async ({
@@ -102,7 +100,15 @@ for (const pair of Object.values(SERVICE_PAIRS)) {
       test('links the related pages and the hub', async ({ page }) => {
         await gotoHydrated(page, path);
         const links = page.locator('#related-title ~ ul a');
-        await expect(links).toHaveCount(3);
+        await expect(links).toHaveCount(
+          service === 'diagnostic' || service === 'maintenance' ? 3 : 4,
+        );
+        if (service !== 'diagnostic' && service !== 'maintenance') {
+          await expect(links.first()).toHaveAttribute(
+            'href',
+            SERVICE_PAIRS.diagnostic[locale],
+          );
+        }
         await expect(links.last()).toHaveAttribute(
           'href',
           SERVICES_HUB[locale],
@@ -141,12 +147,13 @@ for (const locale of LOCALES) {
       const rows = await page
         .locator('main ul a')
         .evaluateAll((links) => links.map((a) => a.getAttribute('href')));
+      const { diagnostic, maintenance, ...listed } = SERVICE_PAIRS;
       expect(rows).toEqual([
-        `${PRICING[locale]}#diagnostic`,
+        diagnostic[locale],
         CTA[locale],
-        ...Object.values(SERVICE_PAIRS).map((pair) => pair[locale]),
-        `${PRICING[locale]}#maintenance`,
-        `${PRICING[locale]}#growth`,
+        ...Object.values(listed).map((pair) => pair[locale]),
+        maintenance[locale],
+        PRICING[locale],
       ]);
       await expect(
         page.locator('main section').last().getByRole('link').first(),

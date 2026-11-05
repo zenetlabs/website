@@ -24,8 +24,8 @@ describe('pagePathForMarkdown', () => {
     expect(redirectTarget(url)).toBeNull();
   });
 
-  it('covers 30 pages', () => {
-    expect(mdCases).toHaveLength(30);
+  it('covers 38 pages', () => {
+    expect(mdCases).toHaveLength(38);
   });
 
   it.each([

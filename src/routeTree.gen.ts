@@ -20,6 +20,7 @@ import { Route as InternalLeadsDotcsvRouteImport } from './routes/internal/leads
 import { Route as Char123LocaleChar125IndexRouteImport } from './routes/{-$locale}/index'
 import { Route as Char123LocaleChar125AboutRouteImport } from './routes/{-$locale}/about'
 import { Route as Char123LocaleChar125BookRouteImport } from './routes/{-$locale}/book'
+import { Route as Char123LocaleChar125ContactRouteImport } from './routes/{-$locale}/contact'
 import { Route as Char123LocaleChar125CookiesRouteImport } from './routes/{-$locale}/cookies'
 import { Route as Char123LocaleChar125LegalNoticeRouteImport } from './routes/{-$locale}/legal-notice'
 import { Route as Char123LocaleChar125LlmsFullDottxtRouteImport } from './routes/{-$locale}/llms-full[.]txt'
@@ -32,6 +33,7 @@ import { Route as ApiToolsIndexRouteImport } from './routes/api/tools/index'
 import { Route as ApiToolsNameRouteImport } from './routes/api/tools/$name'
 import { Route as ApiVoiceSessionRouteImport } from './routes/api/voice/session'
 import { Route as InternalLeadsIdRouteImport } from './routes/internal/leads.$id'
+import { Route as Char123LocaleChar125CaseStudiesIndexRouteImport } from './routes/{-$locale}/case-studies/index'
 import { Route as Char123LocaleChar125CaseStudiesViatsyRouteImport } from './routes/{-$locale}/case-studies/viatsy'
 import { Route as Char123LocaleChar125IndustriesTravelAgenciesRouteImport } from './routes/{-$locale}/industries/travel-agencies'
 import { Route as Char123LocaleChar125PricingCalculatorRouteImport } from './routes/{-$locale}/pricing_.calculator'
@@ -39,7 +41,9 @@ import { Route as Char123LocaleChar125ServicesIndexRouteImport } from './routes/
 import { Route as Char123LocaleChar125ServicesAiAgentsRouteImport } from './routes/{-$locale}/services/ai-agents'
 import { Route as Char123LocaleChar125ServicesAiAutomationRouteImport } from './routes/{-$locale}/services/ai-automation'
 import { Route as Char123LocaleChar125ServicesAiTrainingRouteImport } from './routes/{-$locale}/services/ai-training'
+import { Route as Char123LocaleChar125ServicesAutomationDiagnosticRouteImport } from './routes/{-$locale}/services/automation-diagnostic'
 import { Route as Char123LocaleChar125ServicesCustomSoftwareRouteImport } from './routes/{-$locale}/services/custom-software'
+import { Route as Char123LocaleChar125ServicesMaintenanceRouteImport } from './routes/{-$locale}/services/maintenance'
 import { Route as Char123LocaleChar125ServicesIntegrationsIndexRouteImport } from './routes/{-$locale}/services/integrations/index'
 import { Route as Char123LocaleChar125ServicesIntegrationsHoldedHubspotRouteImport } from './routes/{-$locale}/services/integrations/holded-hubspot'
 import { Route as Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRouteImport } from './routes/{-$locale}/services/integrations/holded-prestashop'
@@ -101,6 +105,12 @@ const Char123LocaleChar125BookRoute =
   Char123LocaleChar125BookRouteImport.update({
     id: '/book',
     path: '/book',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125ContactRoute =
+  Char123LocaleChar125ContactRouteImport.update({
+    id: '/contact',
+    path: '/contact',
     getParentRoute: () => Char123LocaleChar125Route,
   } as any)
 const Char123LocaleChar125CookiesRoute =
@@ -170,6 +180,12 @@ const InternalLeadsIdRoute = InternalLeadsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => InternalLeadsRoute,
 } as any)
+const Char123LocaleChar125CaseStudiesIndexRoute =
+  Char123LocaleChar125CaseStudiesIndexRouteImport.update({
+    id: '/case-studies/',
+    path: '/case-studies/',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
 const Char123LocaleChar125CaseStudiesViatsyRoute =
   Char123LocaleChar125CaseStudiesViatsyRouteImport.update({
     id: '/case-studies/viatsy',
@@ -212,10 +228,22 @@ const Char123LocaleChar125ServicesAiTrainingRoute =
     path: '/services/ai-training',
     getParentRoute: () => Char123LocaleChar125Route,
   } as any)
+const Char123LocaleChar125ServicesAutomationDiagnosticRoute =
+  Char123LocaleChar125ServicesAutomationDiagnosticRouteImport.update({
+    id: '/services/automation-diagnostic',
+    path: '/services/automation-diagnostic',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
 const Char123LocaleChar125ServicesCustomSoftwareRoute =
   Char123LocaleChar125ServicesCustomSoftwareRouteImport.update({
     id: '/services/custom-software',
     path: '/services/custom-software',
+    getParentRoute: () => Char123LocaleChar125Route,
+  } as any)
+const Char123LocaleChar125ServicesMaintenanceRoute =
+  Char123LocaleChar125ServicesMaintenanceRouteImport.update({
+    id: '/services/maintenance',
+    path: '/services/maintenance',
     getParentRoute: () => Char123LocaleChar125Route,
   } as any)
 const Char123LocaleChar125ServicesIntegrationsIndexRoute =
@@ -254,6 +282,7 @@ export interface FileRoutesByFullPath {
   '/internal/leads.csv': typeof InternalLeadsDotcsvRoute
   '/{-$locale}/about': typeof Char123LocaleChar125AboutRoute
   '/{-$locale}/book': typeof Char123LocaleChar125BookRoute
+  '/{-$locale}/contact': typeof Char123LocaleChar125ContactRoute
   '/{-$locale}/cookies': typeof Char123LocaleChar125CookiesRoute
   '/{-$locale}/legal-notice': typeof Char123LocaleChar125LegalNoticeRoute
   '/{-$locale}/llms-full.txt': typeof Char123LocaleChar125LlmsFullDottxtRoute
@@ -272,8 +301,11 @@ export interface FileRoutesByFullPath {
   '/{-$locale}/services/ai-agents': typeof Char123LocaleChar125ServicesAiAgentsRoute
   '/{-$locale}/services/ai-automation': typeof Char123LocaleChar125ServicesAiAutomationRoute
   '/{-$locale}/services/ai-training': typeof Char123LocaleChar125ServicesAiTrainingRoute
+  '/{-$locale}/services/automation-diagnostic': typeof Char123LocaleChar125ServicesAutomationDiagnosticRoute
   '/{-$locale}/services/custom-software': typeof Char123LocaleChar125ServicesCustomSoftwareRoute
+  '/{-$locale}/services/maintenance': typeof Char123LocaleChar125ServicesMaintenanceRoute
   '/api/tools/': typeof ApiToolsIndexRoute
+  '/{-$locale}/case-studies/': typeof Char123LocaleChar125CaseStudiesIndexRoute
   '/{-$locale}/services/': typeof Char123LocaleChar125ServicesIndexRoute
   '/{-$locale}/services/integrations/holded-hubspot': typeof Char123LocaleChar125ServicesIntegrationsHoldedHubspotRoute
   '/{-$locale}/services/integrations/holded-prestashop': typeof Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRoute
@@ -290,6 +322,7 @@ export interface FileRoutesByTo {
   '/internal/leads.csv': typeof InternalLeadsDotcsvRoute
   '/{-$locale}/about': typeof Char123LocaleChar125AboutRoute
   '/{-$locale}/book': typeof Char123LocaleChar125BookRoute
+  '/{-$locale}/contact': typeof Char123LocaleChar125ContactRoute
   '/{-$locale}/cookies': typeof Char123LocaleChar125CookiesRoute
   '/{-$locale}/legal-notice': typeof Char123LocaleChar125LegalNoticeRoute
   '/{-$locale}/llms-full.txt': typeof Char123LocaleChar125LlmsFullDottxtRoute
@@ -308,8 +341,11 @@ export interface FileRoutesByTo {
   '/{-$locale}/services/ai-agents': typeof Char123LocaleChar125ServicesAiAgentsRoute
   '/{-$locale}/services/ai-automation': typeof Char123LocaleChar125ServicesAiAutomationRoute
   '/{-$locale}/services/ai-training': typeof Char123LocaleChar125ServicesAiTrainingRoute
+  '/{-$locale}/services/automation-diagnostic': typeof Char123LocaleChar125ServicesAutomationDiagnosticRoute
   '/{-$locale}/services/custom-software': typeof Char123LocaleChar125ServicesCustomSoftwareRoute
+  '/{-$locale}/services/maintenance': typeof Char123LocaleChar125ServicesMaintenanceRoute
   '/api/tools': typeof ApiToolsIndexRoute
+  '/{-$locale}/case-studies': typeof Char123LocaleChar125CaseStudiesIndexRoute
   '/{-$locale}/services': typeof Char123LocaleChar125ServicesIndexRoute
   '/{-$locale}/services/integrations/holded-hubspot': typeof Char123LocaleChar125ServicesIntegrationsHoldedHubspotRoute
   '/{-$locale}/services/integrations/holded-prestashop': typeof Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRoute
@@ -328,6 +364,7 @@ export interface FileRoutesById {
   '/internal/leads.csv': typeof InternalLeadsDotcsvRoute
   '/{-$locale}/about': typeof Char123LocaleChar125AboutRoute
   '/{-$locale}/book': typeof Char123LocaleChar125BookRoute
+  '/{-$locale}/contact': typeof Char123LocaleChar125ContactRoute
   '/{-$locale}/cookies': typeof Char123LocaleChar125CookiesRoute
   '/{-$locale}/legal-notice': typeof Char123LocaleChar125LegalNoticeRoute
   '/{-$locale}/llms-full.txt': typeof Char123LocaleChar125LlmsFullDottxtRoute
@@ -346,8 +383,11 @@ export interface FileRoutesById {
   '/{-$locale}/services/ai-agents': typeof Char123LocaleChar125ServicesAiAgentsRoute
   '/{-$locale}/services/ai-automation': typeof Char123LocaleChar125ServicesAiAutomationRoute
   '/{-$locale}/services/ai-training': typeof Char123LocaleChar125ServicesAiTrainingRoute
+  '/{-$locale}/services/automation-diagnostic': typeof Char123LocaleChar125ServicesAutomationDiagnosticRoute
   '/{-$locale}/services/custom-software': typeof Char123LocaleChar125ServicesCustomSoftwareRoute
+  '/{-$locale}/services/maintenance': typeof Char123LocaleChar125ServicesMaintenanceRoute
   '/api/tools/': typeof ApiToolsIndexRoute
+  '/{-$locale}/case-studies/': typeof Char123LocaleChar125CaseStudiesIndexRoute
   '/{-$locale}/services/': typeof Char123LocaleChar125ServicesIndexRoute
   '/{-$locale}/services/integrations/holded-hubspot': typeof Char123LocaleChar125ServicesIntegrationsHoldedHubspotRoute
   '/{-$locale}/services/integrations/holded-prestashop': typeof Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRoute
@@ -367,6 +407,7 @@ export interface FileRouteTypes {
     | '/internal/leads.csv'
     | '/{-$locale}/about'
     | '/{-$locale}/book'
+    | '/{-$locale}/contact'
     | '/{-$locale}/cookies'
     | '/{-$locale}/legal-notice'
     | '/{-$locale}/llms-full.txt'
@@ -385,8 +426,11 @@ export interface FileRouteTypes {
     | '/{-$locale}/services/ai-agents'
     | '/{-$locale}/services/ai-automation'
     | '/{-$locale}/services/ai-training'
+    | '/{-$locale}/services/automation-diagnostic'
     | '/{-$locale}/services/custom-software'
+    | '/{-$locale}/services/maintenance'
     | '/api/tools/'
+    | '/{-$locale}/case-studies/'
     | '/{-$locale}/services/'
     | '/{-$locale}/services/integrations/holded-hubspot'
     | '/{-$locale}/services/integrations/holded-prestashop'
@@ -403,6 +447,7 @@ export interface FileRouteTypes {
     | '/internal/leads.csv'
     | '/{-$locale}/about'
     | '/{-$locale}/book'
+    | '/{-$locale}/contact'
     | '/{-$locale}/cookies'
     | '/{-$locale}/legal-notice'
     | '/{-$locale}/llms-full.txt'
@@ -421,8 +466,11 @@ export interface FileRouteTypes {
     | '/{-$locale}/services/ai-agents'
     | '/{-$locale}/services/ai-automation'
     | '/{-$locale}/services/ai-training'
+    | '/{-$locale}/services/automation-diagnostic'
     | '/{-$locale}/services/custom-software'
+    | '/{-$locale}/services/maintenance'
     | '/api/tools'
+    | '/{-$locale}/case-studies'
     | '/{-$locale}/services'
     | '/{-$locale}/services/integrations/holded-hubspot'
     | '/{-$locale}/services/integrations/holded-prestashop'
@@ -440,6 +488,7 @@ export interface FileRouteTypes {
     | '/internal/leads.csv'
     | '/{-$locale}/about'
     | '/{-$locale}/book'
+    | '/{-$locale}/contact'
     | '/{-$locale}/cookies'
     | '/{-$locale}/legal-notice'
     | '/{-$locale}/llms-full.txt'
@@ -458,8 +507,11 @@ export interface FileRouteTypes {
     | '/{-$locale}/services/ai-agents'
     | '/{-$locale}/services/ai-automation'
     | '/{-$locale}/services/ai-training'
+    | '/{-$locale}/services/automation-diagnostic'
     | '/{-$locale}/services/custom-software'
+    | '/{-$locale}/services/maintenance'
     | '/api/tools/'
+    | '/{-$locale}/case-studies/'
     | '/{-$locale}/services/'
     | '/{-$locale}/services/integrations/holded-hubspot'
     | '/{-$locale}/services/integrations/holded-prestashop'
@@ -561,6 +613,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char123LocaleChar125BookRouteImport
       parentRoute: typeof Char123LocaleChar125Route
     }
+    '/{-$locale}/contact': {
+      id: '/{-$locale}/contact'
+      path: '/contact'
+      fullPath: '/{-$locale}/contact'
+      preLoaderRoute: typeof Char123LocaleChar125ContactRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
     '/{-$locale}/cookies': {
       id: '/{-$locale}/cookies'
       path: '/cookies'
@@ -645,6 +704,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InternalLeadsIdRouteImport
       parentRoute: typeof InternalLeadsRoute
     }
+    '/{-$locale}/case-studies/': {
+      id: '/{-$locale}/case-studies/'
+      path: '/case-studies'
+      fullPath: '/{-$locale}/case-studies/'
+      preLoaderRoute: typeof Char123LocaleChar125CaseStudiesIndexRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
     '/{-$locale}/case-studies/viatsy': {
       id: '/{-$locale}/case-studies/viatsy'
       path: '/case-studies/viatsy'
@@ -694,11 +760,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char123LocaleChar125ServicesAiTrainingRouteImport
       parentRoute: typeof Char123LocaleChar125Route
     }
+    '/{-$locale}/services/automation-diagnostic': {
+      id: '/{-$locale}/services/automation-diagnostic'
+      path: '/services/automation-diagnostic'
+      fullPath: '/{-$locale}/services/automation-diagnostic'
+      preLoaderRoute: typeof Char123LocaleChar125ServicesAutomationDiagnosticRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
     '/{-$locale}/services/custom-software': {
       id: '/{-$locale}/services/custom-software'
       path: '/services/custom-software'
       fullPath: '/{-$locale}/services/custom-software'
       preLoaderRoute: typeof Char123LocaleChar125ServicesCustomSoftwareRouteImport
+      parentRoute: typeof Char123LocaleChar125Route
+    }
+    '/{-$locale}/services/maintenance': {
+      id: '/{-$locale}/services/maintenance'
+      path: '/services/maintenance'
+      fullPath: '/{-$locale}/services/maintenance'
+      preLoaderRoute: typeof Char123LocaleChar125ServicesMaintenanceRouteImport
       parentRoute: typeof Char123LocaleChar125Route
     }
     '/{-$locale}/services/integrations/': {
@@ -735,6 +815,7 @@ declare module '@tanstack/react-router' {
 interface Char123LocaleChar125RouteChildren {
   Char123LocaleChar125AboutRoute: typeof Char123LocaleChar125AboutRoute
   Char123LocaleChar125BookRoute: typeof Char123LocaleChar125BookRoute
+  Char123LocaleChar125ContactRoute: typeof Char123LocaleChar125ContactRoute
   Char123LocaleChar125CookiesRoute: typeof Char123LocaleChar125CookiesRoute
   Char123LocaleChar125LegalNoticeRoute: typeof Char123LocaleChar125LegalNoticeRoute
   Char123LocaleChar125LlmsFullDottxtRoute: typeof Char123LocaleChar125LlmsFullDottxtRoute
@@ -749,7 +830,10 @@ interface Char123LocaleChar125RouteChildren {
   Char123LocaleChar125ServicesAiAgentsRoute: typeof Char123LocaleChar125ServicesAiAgentsRoute
   Char123LocaleChar125ServicesAiAutomationRoute: typeof Char123LocaleChar125ServicesAiAutomationRoute
   Char123LocaleChar125ServicesAiTrainingRoute: typeof Char123LocaleChar125ServicesAiTrainingRoute
+  Char123LocaleChar125ServicesAutomationDiagnosticRoute: typeof Char123LocaleChar125ServicesAutomationDiagnosticRoute
   Char123LocaleChar125ServicesCustomSoftwareRoute: typeof Char123LocaleChar125ServicesCustomSoftwareRoute
+  Char123LocaleChar125ServicesMaintenanceRoute: typeof Char123LocaleChar125ServicesMaintenanceRoute
+  Char123LocaleChar125CaseStudiesIndexRoute: typeof Char123LocaleChar125CaseStudiesIndexRoute
   Char123LocaleChar125ServicesIndexRoute: typeof Char123LocaleChar125ServicesIndexRoute
   Char123LocaleChar125ServicesIntegrationsHoldedHubspotRoute: typeof Char123LocaleChar125ServicesIntegrationsHoldedHubspotRoute
   Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRoute: typeof Char123LocaleChar125ServicesIntegrationsHoldedPrestashopRoute
@@ -760,6 +844,7 @@ interface Char123LocaleChar125RouteChildren {
 const Char123LocaleChar125RouteChildren: Char123LocaleChar125RouteChildren = {
   Char123LocaleChar125AboutRoute: Char123LocaleChar125AboutRoute,
   Char123LocaleChar125BookRoute: Char123LocaleChar125BookRoute,
+  Char123LocaleChar125ContactRoute: Char123LocaleChar125ContactRoute,
   Char123LocaleChar125CookiesRoute: Char123LocaleChar125CookiesRoute,
   Char123LocaleChar125LegalNoticeRoute: Char123LocaleChar125LegalNoticeRoute,
   Char123LocaleChar125LlmsFullDottxtRoute:
@@ -781,8 +866,14 @@ const Char123LocaleChar125RouteChildren: Char123LocaleChar125RouteChildren = {
     Char123LocaleChar125ServicesAiAutomationRoute,
   Char123LocaleChar125ServicesAiTrainingRoute:
     Char123LocaleChar125ServicesAiTrainingRoute,
+  Char123LocaleChar125ServicesAutomationDiagnosticRoute:
+    Char123LocaleChar125ServicesAutomationDiagnosticRoute,
   Char123LocaleChar125ServicesCustomSoftwareRoute:
     Char123LocaleChar125ServicesCustomSoftwareRoute,
+  Char123LocaleChar125ServicesMaintenanceRoute:
+    Char123LocaleChar125ServicesMaintenanceRoute,
+  Char123LocaleChar125CaseStudiesIndexRoute:
+    Char123LocaleChar125CaseStudiesIndexRoute,
   Char123LocaleChar125ServicesIndexRoute:
     Char123LocaleChar125ServicesIndexRoute,
   Char123LocaleChar125ServicesIntegrationsHoldedHubspotRoute:

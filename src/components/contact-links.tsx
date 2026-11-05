@@ -27,10 +27,7 @@ export function ContactLinks({
         </li>
       ) : null}
       <li>
-        <a
-          href={navHref(locale, { page: 'home', section: 'contact' })}
-          className={TEXT_LINK}
-        >
+        <a href={navHref(locale, { page: 'contact' })} className={TEXT_LINK}>
           {labels.form}
         </a>
       </li>

@@ -159,5 +159,5 @@ export const agents = {
       },
     ],
   },
-  related: ['automation', 'training'],
+  related: ['diagnostic', 'automation', 'training'],
 } satisfies ServicePageContent;

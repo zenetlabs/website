@@ -1,4 +1,4 @@
-import { viatsyCaseName } from '@/content/en/case-name';
+import { casesName, contactName, viatsyCaseName } from '@/content/en/case-name';
 import { services } from '@/content/en/services';
 import type { ServicesHubContent } from '@/content/types';
 import { formatPriceSummary } from '@/lib/money';
@@ -20,6 +20,9 @@ export const servicesHub = {
   // TODO(albert): review the "small AI consultancy" claim
   lead: "Zenet Labs is a small AI consultancy for Singapore companies of 10 to 100 people. We don't stop at advice: we connect your tools, automate the manual work, put AI agents into production and train your team, with published prices and a fixed-price diagnostic to start.",
   cards: {
+    diagnostic: {
+      name: 'Automation diagnostic',
+    },
     automation: {
       name: 'AI automation',
       summary:
@@ -45,9 +48,14 @@ export const servicesHub = {
       summary:
         'Hands-on workshops on your own processes, and monthly mentoring while the team adopts AI.',
     },
+    maintenance: {
+      name: 'Maintenance',
+    },
   },
   landing: {
     viatsyCase: viatsyCaseName,
+    cases: casesName,
+    contact: contactName,
   },
   labels: {
     breadcrumb: 'Breadcrumb',

@@ -11,8 +11,8 @@ import { formatPriceSummary } from '@/lib/money';
 import { CTA_TARGET, navHref } from '@/lib/nav';
 import {
   pagePath,
-  pagesForService,
   SERVICE_PAGE_IDS,
+  serviceHref,
   serviceOf,
 } from '@/lib/page-registry';
 import { servicesHubStructuredData } from '@/lib/page-structured-data';
@@ -36,12 +36,17 @@ function ServicesHub() {
   const { locale } = Route.useRouteContext();
   const { hub, services } = Route.useLoaderData();
   const pricing = pagePath(locale, 'pricing');
-  const unpaged = Object.values(services).filter(
-    (service) =>
-      service.id !== 'diagnostic' && pagesForService(service.id).length === 0,
-  );
   const { diagnostic } = services;
-  const also = sectionFrame('compact');
+  const main = SERVICE_PAGE_IDS.flatMap((page) => {
+    const card = hub.cards[page];
+    return 'summary' in card ? [{ page, ...card }] : [];
+  });
+  const also = Object.values(services).filter(
+    (service) =>
+      service.id !== diagnostic.id &&
+      !main.some(({ page }) => serviceOf(page) === service.id),
+  );
+  const alsoFrame = sectionFrame('compact');
 
   return (
     <>
@@ -58,7 +63,7 @@ function ServicesHub() {
           <ul className="grid border-t border-hairline">
             <ServiceRow
               heading="h2"
-              href={`${pricing}#diagnostic`}
+              href={pagePath(locale, 'diagnostic')}
               name={diagnostic.name}
               summary={diagnostic.summary}
               price={formatPriceSummary(locale, diagnostic.prices)}
@@ -81,13 +86,13 @@ function ServicesHub() {
         </Container>
         <Container className="pb-section">
           <ul className="grid border-t border-hairline">
-            {SERVICE_PAGE_IDS.map((page) => (
+            {main.map(({ page, name, summary }) => (
               <ServiceRow
                 key={page}
                 heading="h2"
                 href={pagePath(locale, page)}
-                name={hub.cards[page].name}
-                summary={hub.cards[page].summary}
+                name={name}
+                summary={summary}
                 price={formatPriceSummary(
                   locale,
                   services[serviceOf(page)].prices,
@@ -98,19 +103,19 @@ function ServicesHub() {
         </Container>
         <section
           aria-labelledby="also-title"
-          data-ground={also.ground}
-          className={also.bg}
+          data-ground={alsoFrame.ground}
+          className={alsoFrame.bg}
         >
-          <Container className={`${also.pad} pb-section`}>
+          <Container className={`${alsoFrame.pad} pb-section`}>
             <h2 id="also-title" className="max-w-3xl text-h2-compact">
               {hub.also.title}
             </h2>
             <p className={`mt-4 ${LEAD}`}>{hub.also.lead}</p>
             <ul className="mt-8 grid border-t border-hairline md:mt-10">
-              {unpaged.map((service) => (
+              {also.map((service) => (
                 <ServiceRow
                   key={service.id}
-                  href={`${pricing}#${service.id}`}
+                  href={serviceHref(locale, service.id)}
                   name={service.name}
                   summary={service.summary}
                   price={formatPriceSummary(locale, service.prices)}

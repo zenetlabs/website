@@ -1,7 +1,10 @@
 import type {
   Article,
   BreadcrumbList,
+  CollectionPage,
+  ContactPage,
   FAQPage,
+  ListItem,
   Offer,
   OfferCatalog,
   PriceSpecification,
@@ -12,6 +15,8 @@ import type {
 import type {
   CalculatorPageContent,
   CasePageContent,
+  CasesHubContent,
+  ContactPageContent,
   Country,
   FaqItem,
   Price,
@@ -34,9 +39,9 @@ import {
   type ServicePageId,
   serviceOf,
 } from '@/lib/page-registry';
-import { jsonLd, pageUrl, SITE_NAME } from '@/lib/seo';
+import { jsonLd, pageUrl, SITE_NAME, serviceUrl } from '@/lib/seo';
 import { SITE } from '@/lib/site';
-import { FOUNDER_ID } from '@/lib/structured-data';
+import { FOUNDER_ID, websiteId } from '@/lib/structured-data';
 import { titleText } from '@/lib/title-text';
 
 type Entries = ReturnType<typeof jsonLd>[];
@@ -113,7 +118,7 @@ function offerNode(
   return {
     '@type': 'Offer',
     name,
-    url: `${pageUrl(locale, 'pricing')}#${service.id}`,
+    url: serviceUrl(locale, service.id),
     itemOffered: {
       '@type': 'Service',
       name,
@@ -200,11 +205,61 @@ function articleNode(
   };
 }
 
+function contactNode(
+  locale: Locale,
+  page: ContactPageContent,
+  entity: PublishedEntity,
+): WithContext<ContactPage> {
+  const url = pageUrl(locale, 'contact');
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ContactPage',
+    '@id': `${url}#contactpage`,
+    name: page.meta.title,
+    description: page.meta.description,
+    url,
+    inLanguage: locale,
+    isPartOf: { '@id': websiteId(locale) },
+    about: { '@id': `${SITE.url}${entity.jsonLd.idPath}` },
+  };
+}
+
+function casesNode(
+  locale: Locale,
+  page: CasesHubContent,
+): WithContext<CollectionPage> {
+  const url = pageUrl(locale, 'cases');
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': `${url}#collection`,
+    name: page.meta.title,
+    description: page.meta.description,
+    url,
+    inLanguage: locale,
+    isPartOf: { '@id': websiteId(locale) },
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: page.cases.items
+        .flatMap(({ link }) => (link ? [link] : []))
+        .map(
+          (link, index): ListItem => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            name: link.label,
+            item: pageUrl(locale, link.page),
+          }),
+        ),
+    },
+  };
+}
+
 const byFaq = new WeakMap<object, Entries>();
 const byEntity = new WeakMap<object, WeakMap<object, Entries>>();
 const byPage = new Map<string, Entries>();
 const byHub = new WeakMap<object, Entries>();
 const byCalculator = new WeakMap<object, Entries>();
+const byCases = new WeakMap<object, Entries>();
 
 export function homeStructuredData(locale: Locale, faq: readonly FaqItem[]) {
   const found = byFaq.get(faq);
@@ -257,6 +312,38 @@ export function breadcrumbStructuredData(
     jsonLd(breadcrumbNode(locale, page, { home: SITE_NAME, [page]: name })),
   ];
   byPage.set(key, made);
+  return made;
+}
+
+export function contactStructuredData(
+  locale: Locale,
+  page: ContactPageContent,
+  entity: PublishedEntity = legalEntity(locale),
+) {
+  return cached(entity, page.meta, () => [
+    jsonLd(contactNode(locale, page, entity)),
+    jsonLd(
+      breadcrumbNode(locale, 'contact', {
+        home: SITE_NAME,
+        contact: page.meta.title,
+      }),
+    ),
+  ]);
+}
+
+export function casesStructuredData(locale: Locale, page: CasesHubContent) {
+  const found = byCases.get(page);
+  if (found) return found;
+  const made = [
+    jsonLd(casesNode(locale, page)),
+    jsonLd(
+      breadcrumbNode(locale, 'cases', {
+        home: SITE_NAME,
+        cases: page.meta.title,
+      }),
+    ),
+  ];
+  byCases.set(page, made);
   return made;
 }
 

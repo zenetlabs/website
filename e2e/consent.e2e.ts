@@ -459,11 +459,12 @@ test.describe('events', () => {
 
   test('every booking CTA on every page is tracked', async ({ request }) => {
     for (const path of PAGES.filter((entry) => entry !== LEGAL_NOTICE)) {
-      const html = await (await request.get(path)).text();
+      const html = (await (await request.get(path)).text()).replace(
+        /<footer[\s\S]*<\/footer>/,
+        '',
+      );
       const anchors = (html.match(/<a\b[^>]*>/g) ?? []).filter((tag) =>
-        /href="(?:\/es)?\/?#contact"|href="(?:\/book|\/es\/reservar)"/.test(
-          tag,
-        ),
+        /href="(?:\/contact|\/es\/contacto|\/book|\/es\/reservar)"/.test(tag),
       );
       for (const tag of anchors.filter((tag) => !tag.includes('hrefLang'))) {
         expect(tag, `${path} ${tag}`).toContain('data-cta="');

@@ -16,6 +16,8 @@ import {
   loadBookContent,
   loadCalculatorContent,
   loadCaseContent,
+  loadCasesHubContent,
+  loadContactContent,
   loadHoldedPairContent,
   loadSectorContent,
   loadServicePageContent,
@@ -28,6 +30,8 @@ import type {
   CalculatorPageContent,
   Card,
   CasePageContent,
+  CasesHubContent,
+  ContactPageContent,
   FaqItem,
   FlowSectionCopy,
   HomeContent,
@@ -77,7 +81,7 @@ import {
 } from '@/lib/page-registry';
 import { contentMeta, legalMetaKey, pageCopy } from '@/lib/pages';
 import { PORTFOLIO } from '@/lib/portfolio';
-import { markdownUrl, pageUrl, SITE_NAME } from '@/lib/seo';
+import { markdownUrl, pageUrl, SITE_NAME, serviceUrl } from '@/lib/seo';
 import { PUBLIC_EMAIL, SITE } from '@/lib/site';
 import { titleText } from '@/lib/title-text';
 
@@ -119,6 +123,8 @@ export type LandingBodies = {
 export type ServiceBodies = {
   book: BookPageContent;
   calculator: CalculatorPageContent;
+  contact: ContactPageContent;
+  casesHub: CasesHubContent;
   hub: ServicesHubContent;
   pages: Record<ServicePageId, ServicePageContent>;
   landing: LandingBodies;
@@ -155,36 +161,48 @@ async function landingBodies(locale: Locale): Promise<LandingBodies> {
 export async function serviceBodies(locale: Locale): Promise<ServiceBodies> {
   const [
     { hub },
+    diagnostic,
     automation,
     integrations,
     agents,
     software,
     training,
+    maintenance,
     landing,
     { copy: calculator },
     { copy: book },
+    contact,
+    casesHub,
   ] = await Promise.all([
     loadServicesHubContent(locale),
+    loadServicePageContent(locale, 'diagnostic'),
     loadServicePageContent(locale, 'automation'),
     loadServicePageContent(locale, 'integrations'),
     loadServicePageContent(locale, 'agents'),
     loadServicePageContent(locale, 'software'),
     loadServicePageContent(locale, 'training'),
+    loadServicePageContent(locale, 'maintenance'),
     landingBodies(locale),
     loadCalculatorContent(locale),
     loadBookContent(locale),
+    loadContactContent(locale),
+    loadCasesHubContent(locale),
   ]);
   return {
     book,
     calculator,
+    contact,
+    casesHub,
     hub,
     landing,
     pages: {
+      diagnostic: diagnostic.copy,
       automation: automation.copy,
       integrations: integrations.copy,
       agents: agents.copy,
       software: software.copy,
       training: training.copy,
+      maintenance: maintenance.copy,
     },
   };
 }
@@ -264,7 +282,7 @@ function pagesLines(
 export function metaOf(
   locale: Locale,
   page: PageId,
-  { book, calculator, hub, pages, landing }: ServiceBodies,
+  { book, calculator, contact, casesHub, hub, pages, landing }: ServiceBodies,
 ): { title: string; description: string } {
   if (page === 'services') return contentMeta(hub.meta);
   if (isServicePage(page)) return contentMeta(pages[page].meta);
@@ -273,6 +291,8 @@ export function metaOf(
     if (!landing.spanish) throw new Error(`No content loaded for ${page}`);
     return contentMeta(landing.spanish[page].meta);
   }
+  if (page === 'contact') return contentMeta(contact.meta);
+  if (page === 'cases') return contentMeta(casesHub.meta);
   if (page === 'pricing') return contentMeta(BODIES[locale].pricing.meta);
   if (page === 'about') return contentMeta(BODIES[locale].about.meta);
   if (page === 'calculator') return contentMeta(calculator.meta);
@@ -324,7 +344,7 @@ function contactLines(
   const { home, copy } = BODIES[locale];
   return [
     `- [${copy.labels.email}](mailto:${PUBLIC_EMAIL}): ${home.contact.human}`,
-    `- [${copy.labels.form}](${pageUrl(locale, 'home')}#contact): ${home.contact.lead}`,
+    `- [${copy.labels.form}](${pageUrl(locale, 'contact')}): ${home.contact.lead}`,
     ...(isPublished('book', site)
       ? [`- [${book.llms}](${pageUrl(locale, 'book')}): ${book.lead}`]
       : []),
@@ -338,14 +358,13 @@ export async function buildLlmsTxt(
 ): Promise<string> {
   const { services, copy } = BODIES[locale];
   const bodies = await serviceBodies(locale);
-  const pricing = pageUrl(locale, 'pricing');
   return doc([
     ...preamble(locale, entity),
     section(
       copy.headings.services,
       Object.values(services).map(
         (service) =>
-          `- [${service.name}](${pricing}#${service.id}): ${formatPriceSummary(locale, service.prices)}. ${service.summary}`,
+          `- [${service.name}](${serviceUrl(locale, service.id)}): ${formatPriceSummary(locale, service.prices)}. ${service.summary}`,
       ),
     ),
     section(copy.headings.pages, pagesLines(locale, bodies, site)),
@@ -358,7 +377,6 @@ export async function buildLlmsTxt(
 
 function pricingSection(locale: Locale): string {
   const { pricing, services, copy } = BODIES[locale];
-  const url = pageUrl(locale, 'pricing');
   return section(
     copy.headings.pricing,
     [
@@ -366,7 +384,7 @@ function pricingSection(locale: Locale): string {
       ...Object.values(services).flatMap((service) => {
         const { includes, timeline } = pricing.details[service.id];
         return [
-          `### [${service.name}](${url}#${service.id})`,
+          `### [${service.name}](${serviceUrl(locale, service.id)})`,
           service.summary,
           service.prices
             .map(
@@ -600,27 +618,40 @@ function caseBlocks(
   ];
 }
 
+function contactPageLines({ contact }: ServiceBodies): string[] {
+  return [
+    '',
+    `${titleText(contact.title)}. ${contact.lead}`,
+    ...contact.next.steps.map(
+      (step, index) => `${index + 1}. ${step.label}: ${step.text}`,
+    ),
+  ];
+}
+
 function casesSection(locale: Locale, bodies: ServiceBodies): string {
   const { home, copy } = BODIES[locale];
   return section(
     copy.headings.cases,
-    home.cases.items.flatMap((item) => [
-      `### ${item.name} (${item.tag})`,
-      item.context,
-      [
-        `${home.cases.automatedLabel}:`,
-        ...item.automated.map((line) => `- ${line}`),
-        ...item.metrics
-          .filter(isMeasured)
-          .map(
-            (metric) =>
-              `- ${metric.label}: ${formatNumber(locale, metric.value)}${metric.unit}`,
-          ),
-      ].join('\n'),
-      ...(item.link?.page === 'viatsyCase'
-        ? caseBlocks(locale, bodies, item.metrics)
-        : []),
-    ]),
+    [
+      `[${bodies.casesHub.meta.title}](${pageUrl(locale, 'cases')}): ${bodies.casesHub.lead}`,
+      ...home.cases.items.flatMap((item) => [
+        `### ${item.name} (${item.tag})`,
+        item.context,
+        [
+          `${home.cases.automatedLabel}:`,
+          ...item.automated.map((line) => `- ${line}`),
+          ...item.metrics
+            .filter(isMeasured)
+            .map(
+              (metric) =>
+                `- ${metric.label}: ${formatNumber(locale, metric.value)}${metric.unit}`,
+            ),
+        ].join('\n'),
+        ...(item.link?.page === 'viatsyCase'
+          ? caseBlocks(locale, bodies, item.metrics)
+          : []),
+      ]),
+    ],
     '\n\n',
   );
 }
@@ -704,7 +735,10 @@ export async function buildLlmsFull(
       faq.flatMap(({ question, answer }) => [`### ${question}`, answer]),
       '\n\n',
     ),
-    section(copy.headings.contact, contactLines(locale, bodies, site)),
+    section(copy.headings.contact, [
+      ...contactLines(locale, bodies, site),
+      ...contactPageLines(bodies),
+    ]),
     section(copy.headings.pages, pagesLines(locale, bodies, site)),
     optional(locale, 'llms-full'),
   ]);
