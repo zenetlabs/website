@@ -128,8 +128,10 @@ const productionServer: ServerConfig = {
   // TODO(albert): confirm the lead notification address
   leads: { notifyTo: 'admin@zenetlabs.com' },
   resendBaseUrl: 'https://api.resend.com',
-  // TODO(albert): set { teamDomain: 'https://<team>.cloudflareaccess.com', aud } once the Access app exists
-  access: null,
+  access: {
+    teamDomain: 'https://odd-bush-dcff.cloudflareaccess.com',
+    aud: '96c32a6cc61c8b596d3ae2e8a1b72f8a1649f83007db00ce4127796c168ea612',
+  },
   booking: {
     tokenUrl: 'https://oauth2.googleapis.com/token',
     calendarUrl: 'https://www.googleapis.com/calendar/v3',

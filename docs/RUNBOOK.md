@@ -17,7 +17,7 @@ Conventions: `<store-id>`, `<secret-id>`, `<version-id>`, `<alias>`, `<booking-i
 | Cron | One trigger, `*/10 * * * *`, production only (section 8). |
 | Config | Public per-env values in `site.config.ts` (build time, by `CLOUDFLARE_ENV`); secrets in the Secrets Store, read per request. |
 
-**The account's Workers plan is not confirmed.** The limits below apply *if* the account is on Workers Free (the design stays inside them); on Workers Paid most of them are much higher. Production CPU readings (section 16) are inconsistent with the Free CPU limit, so the owner check "Workers plan" in the [owner checklist](owner-checklist.md) (P3) settles which column applies. Cloudflare docs, checked 2026-11-01:
+**The account is on Workers Paid** (confirmed in the account's subscriptions on 2026-11-05). The limits below are the Free ones the design was built to stay inside; on Paid most of them are much higher, which matches the production CPU readings in section 16. Cloudflare docs, checked 2026-11-01:
 
 | Limit | If on Workers Free |
 |---|---|
