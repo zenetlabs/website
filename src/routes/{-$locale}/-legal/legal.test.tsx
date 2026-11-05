@@ -388,13 +388,12 @@ checkPages(CONFIGURED_STATES, 'G-TEST1234');
 
 describe('consent version', () => {
   it.each([
-    ['PrivacyEn', PrivacyEn, '5 November 2026'],
-    ['PrivacyEs', PrivacyEs, '5 de noviembre de 2026'],
+    ['PrivacyEn', PrivacyEn, '6 November 2026'],
+    ['PrivacyEs', PrivacyEs, '6 de noviembre de 2026'],
   ])('%s is dated like CONSENT_VERSION', (_name, Page, date) => {
     const body = text(<Page title="t" entity={SINGAPORE} />);
     expect(body).toContain(date);
-    // The date of the policy, then a revision for a second change that day.
-    expect(CONSENT_VERSION).toBe('2026-11-05.2');
+    expect(CONSENT_VERSION).toBe('2026-11-06');
   });
 });
 

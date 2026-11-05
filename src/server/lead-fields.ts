@@ -4,7 +4,7 @@ import { isSingleLine } from '@/lib/single-line';
 import type { NewLead } from '@/server/lead-store';
 
 // Bump with the consent sentence or the privacy pages' "last updated" date.
-export const CONSENT_VERSION = '2026-11-05.2';
+export const CONSENT_VERSION = '2026-11-06';
 
 const PARAM_MAX = 200;
 const TEST_NAME = /^\[TEST\]/;
