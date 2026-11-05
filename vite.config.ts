@@ -20,6 +20,9 @@ export default defineConfig({
     __VOICE__: JSON.stringify(
       siteConfig(process.env.CLOUDFLARE_ENV).voice.published,
     ),
+    __CALCULATOR__: JSON.stringify(
+      siteConfig(process.env.CLOUDFLARE_ENV).calculator.published,
+    ),
     __VOICE_FAKE__: JSON.stringify(
       siteConfig(process.env.CLOUDFLARE_ENV).voice.fakeSdk,
     ),

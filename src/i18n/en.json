@@ -27,7 +27,7 @@
       "email": "Email",
       "company": "Company (optional)",
       "message": "What should we look at?",
-      "consent": "I agree that {legalName} uses these details to reply to my enquiry, as described in the {privacyLink}.",
+      "consent": "I agree that {legalName} uses these details to reply to my enquiry, as described in the {privacyLink}, which also explains how to exercise my rights over my data.",
       "consentLink": "privacy policy",
       "submit": "Send message",
       "sending": "Sending…",

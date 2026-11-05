@@ -6,7 +6,7 @@ export const chatCopy = {
   talk: 'Mejor por voz',
   badge: 'IA',
   notice:
-    'Estás hablando con un asistente de IA, no con una persona. Responde con el contenido de esta web y puede equivocarse; los precios salen solo de nuestra lista oficial. Guardamos esta conversación 30 días para responderte y evitar abusos, o 24 meses junto a tu consulta si reservas una llamada o envías el formulario de contacto. No compartas contraseñas ni datos personales sensibles.',
+    'Estás hablando con un asistente de IA, no con una persona: sus respuestas las genera automáticamente un modelo de IA. Responde con el contenido de esta web y puede equivocarse; los precios salen solo de nuestra lista oficial. Guardamos esta conversación 30 días para responderte y evitar abusos, o 24 meses junto a tu consulta si reservas una llamada o envías el formulario de contacto. No compartas contraseñas ni datos personales sensibles.',
   privacyLink: 'Política de privacidad',
   welcome:
     '¡Hola! Pregúntame por nuestros servicios, precios o cómo trabajamos.',

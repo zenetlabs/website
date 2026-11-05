@@ -206,22 +206,22 @@ describe('LLMS_TXT operator', () => {
     );
   });
 
-  it('names the same company in Spanish while the entity is unflipped', () => {
-    const operator = legalEntity('en');
+  it('names the Spanish sole trader in Spanish', async () => {
     expect(LLMS_TXT.es).toContain(
-      `Este sitio lo opera ${operator.legalName} (UEN ${operator.taxId.value}), 160 Robinson Road #14-04,`,
+      'Este sitio lo opera Albert Sabaté Martínez (NIF 47986151D), Carrer Gretel Ammann Martínez, 12, 08020 Barcelona, España.',
+    );
+    expect(LLMS_TXT.es).not.toContain('Pte. Ltd.');
+    expect(LLMS_FULL.es).toContain(
+      'Este sitio lo opera Albert Sabaté Martínez (NIF 47986151D)',
     );
   });
 
-  it('names the sole trader in Spanish once flipped and leaves English alone', async () => {
+  it('follows the entity it is given and leaves English alone', async () => {
     const flipped = await buildLlmsTxt('es', FLIPPED);
     expect(flipped).toContain(
-      'Este sitio lo opera Albert Sabaté Martínez (NIF 47986151D), Calle Ejemplo 1, 08001 Barcelona.',
+      'Este sitio lo opera Albert Sabaté Martínez (NIF 47986151D), Calle Ejemplo 1, 08001 Barcelona, España.',
     );
     expect(await buildLlmsTxt('en')).toBe(LLMS_TXT.en);
-    expect(await buildLlmsFull('es', FLIPPED)).toContain(
-      'Este sitio lo opera Albert Sabaté Martínez (NIF 47986151D)',
-    );
   });
 });
 

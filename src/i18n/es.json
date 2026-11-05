@@ -27,7 +27,7 @@
       "email": "Correo electrónico",
       "company": "Empresa (opcional)",
       "message": "¿Qué deberíamos mirar?",
-      "consent": "Acepto que {legalName} use estos datos para responder a mi consulta, según se describe en la {privacyLink}.",
+      "consent": "He leído la {privacyLink}: {legalName} usará estos datos para responder a mi consulta, y en ella se explica cómo ejercer mis derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad.",
       "consentLink": "política de privacidad",
       "submit": "Enviar mensaje",
       "sending": "Enviando…",

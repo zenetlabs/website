@@ -50,10 +50,9 @@ export const training = {
         text: 'We work through real tasks from your team, such as emails, reports, proposals or data clean-up, and each person leaves with prompts and workflows they can reuse.',
       },
       {
-        // TODO(albert): legal review of the safe-use wording
         id: 'safe-use',
         title: 'Safe use',
-        text: 'Which data can go into which tool, what the PDPA means for it, and a short usage policy your team can actually follow.',
+        text: 'Which data can go into which tool, what the PDPA means for it, the duty in Article 4 of the EU AI Act, if you also work in the EU, to take measures that support the AI literacy of your staff, and a short usage policy your team can actually follow.',
       },
       {
         id: 'leaders',

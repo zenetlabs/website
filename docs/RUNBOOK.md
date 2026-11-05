@@ -321,7 +321,7 @@ Every recipe ends the same way: after the deploy run `bash scripts/smoke.sh`, ch
 
 1. Owner reviews every coefficient in `src/content/pricing-rules.ts` (the `TODO(albert)` markers there).
 2. The flip PR: production `calculator: { published: true }`; update `src/site-config.test.ts`, `src/components/service-ladder.test.tsx`, `src/lib/{calculator-flag,llms,markdown-response,page-registry,seo,structured-data}.test.ts`, `src/routes/{locale-layout,robots-sitemap}.test.ts`; regenerate the voice agent file (the estimate tool changes). Bump `PRICING_RULES.version` and the goldens if any coefficient changed.
-3. Add the privacy sentence in both locales (the answers travel in the page URL and reach GA `page_location` after consent), then bump `CONSENT_VERSION` (`src/server/lead-fields.ts`), the `updated` date of both privacy pages, `PAGES.privacy.lastmod` and the date assertion in `legal.test.tsx`.
+3. The legal sentences already exist behind the build-time constant `__CALCULATOR__` (derived from the same flag): `CalculatorUse` in `privacy-extras-{en,es}.tsx` (the answers travel in the page URL and reach GA `page_location` after consent) and the estimate line in the aviso legal's "Precios" section. The flip makes them render, so only the bumps remain: `CONSENT_VERSION` (`src/server/lead-fields.ts`), the `updated` date of both privacy pages and of the aviso legal, `PAGES.privacy.lastmod`, `PAGES.legalNotice.lastmod` and the date assertion in `legal.test.tsx`.
 4. `lastmod` for `calculator`, `pricing` and `home` (the `<main>` of `/`, `/pricing`, `/es` and `/es/precios` change; no JSON-LD changes).
 5. After the deploy: both URLs 200 and listed in the sitemap and llms; a result URL renders; `estimate_project` returns an estimate; Lighthouse on a result URL.
 
@@ -361,7 +361,9 @@ Every recipe ends the same way: after the deploy run `bash scripts/smoke.sh`, ch
 2. The PR: `productionServer.access: { teamDomain, aud }` only; no test fails (the dry run was green).
 3. After the deploy: `/internal/leads` and `/internal/leads.csv` answer 302 to the team domain (locally the dry run answered 403 without a JWT); a browser login lists the leads; a preview alias answers 403.
 
-### Spanish entity address (level `high`: the consent sentence names the entity)
+### Spanish entity address (level `high`: the consent sentence names the entity). Done on 2026-11-05
+
+Applied in the legal-draft PR (address set, tests, voice agents, smoke line and the bumps below); kept as a record.
 
 1. Owner supplies the postal address.
 2. The PR: `address` in `src/content/es/entity.ts`; update `src/lib/{content,llms,structured-data}.test.ts`; regenerate the voice agent file; change the smoke line "footer names the entity" (it expects `Zenet Technology Pte. Ltd.` on `/es`, which stops being true).
@@ -488,14 +490,18 @@ Symptom: lead POSTs fail and the form shows the mailto fallback. Contain: nothin
 | Confirmed bookings | with their lead |
 | Bookings in any other status | 30 days |
 | Unlinked chat sessions and messages | 30 days from the start; a session linked to a lead goes with the lead |
-| `chat_ip_usage` | until the end of the next UTC day |
+| `chat_ip_usage` | a day's rows go at the 03:00 UTC tick two days later (the purge deletes days before yesterday): about 51 hours at most |
 | `ai_usage` | kept (daily aggregates, no personal data) |
 | Voice sessions in D1 | 30 days |
 | ElevenLabs transcripts | 30 days (`retention_days: 30`, no audio recorded) |
 | Workers Logs | 3 days (7 from 2026-12-01) |
-| D1 Time Travel | 7 days (erased rows are restorable that long) |
+| D1 Time Travel | 7 days on Workers Free, 30 on Paid (erased rows are restorable that long); the privacy pages say up to 30 days |
 | Consent record, first-touch, GA cookies | 12 months, 90 days, 13 months (browser side, [analytics.md](analytics.md)); GA4 event retention 14 months |
-| Resend logs and the mailbox | the providers' own retention |
+| Resend (sent emails: content, metadata, delivery events and logs) | 30 days on every self-serve plan ([Resend: account quotas and limits](https://resend.com/docs/knowledge-base/account-quotas-and-limits)) |
+| Mailbox threads about a lead | deleted by hand once a month when the last message is older than 24 months, unless a client relationship started (then for its duration plus the legal record periods: 6 years in Spain, 5 in Singapore) |
+| Google Calendar call events | deleted by hand once a month when older than 24 months (no code deletes them, and `bookings.event_id` is gone once the lead purge cascades) |
+
+Monthly hand routine (the privacy pages promise it): in the booking user's Google Calendar, search the call events (titles "Zenet Labs · 30-minute call" and "Zenet Labs · llamada de 30 minutos", from `src/server/google-calendar.ts`) dated more than 24 months ago and delete them; in the mailbox, search lead threads (`older_than:24m` in Gmail search) and delete those whose last message is older than 24 months and that did not turn into a client relationship. Until the booking flip there are no events.
 
 Erasure for one person: the SQL in section 5 across the tables; delete the Google Calendar event; delete the messages in the mailbox; delete the conversation in ElevenLabs (Agents, Call history) when the lead carries `context.voice`; delete the Resend log entries if requested; then reply to the person.
 
@@ -512,7 +518,7 @@ Erasure for one person: the SQL in section 5 across the tables; delete the Googl
 ## 15. Routine checks
 
 - **Weekly:** `ai_usage` and `guards`; dead outbox rows; `failed` and `unknown` bookings; Workers Logs errors; Web Analytics Core Web Vitals.
-- **Monthly:** Search Console coverage and hreflang; the external link check (collect every absolute link from the sitemap pages, the `.md` twins and `llms-full`, then `HEAD` each one per second per host and fall back to `GET` on 403, 405 or 429); Resend Suppressions; the alias list (section 2).
+- **Monthly:** Search Console coverage and hreflang; the external link check (collect every absolute link from the sitemap pages, the `.md` twins and `llms-full`, then `HEAD` each one per second per host and fall back to `GET` on 403, 405 or 429); Resend Suppressions; the alias list (section 2); the section 13 hand routine (Calendar events and mailbox threads older than 24 months).
 - **Per deploy:** smoke and the sitemap walk (automatic); the Verifactu re-check when it is touched.
 
 ## 16. Baseline numbers (2026-11-01, production serving the R12 release)

@@ -1,4 +1,4 @@
-// TODO(albert): review every claim; the REAV sentence needs the asesoría's wording
+// TODO(albert): review every claim
 import { services } from '@/content/es/services';
 import type { SectorPageContent } from '@/content/types';
 import { formatPrice, formatPriceSummary } from '@/lib/money';
@@ -74,9 +74,9 @@ export const travelAgencies = {
         title: 'Cobros y facturación',
         today:
           'Se calcula a mano cuándo pedir la señal y el resto, y las facturas se hacen una a una.',
-        // TODO(albert): REAV wording from the asesoría
+        // TODO(albert): asesoría to confirm the REAV and registration wording here and in the documents item
         automated:
-          'Las solicitudes de pago y sus recordatorios salen según el calendario de cada reserva, y las facturas se crean en tu programa de facturación con el régimen que indique tu asesoría, sea el especial de agencias de viajes o el general.',
+          'Las solicitudes de pago y sus recordatorios salen según el calendario de cada reserva, y las facturas se crean en tu programa de facturación con el régimen de IVA que decida tu asesoría: el régimen especial de las agencias de viajes (REAV) o el general. Nosotros no elegimos el régimen; configuramos la facturación para aplicarlo.',
       },
       {
         id: 'documents',
@@ -84,7 +84,7 @@ export const travelAgencies = {
         today:
           'Bonos, horarios, contactos y condiciones se juntan en un documento a última hora.',
         automated:
-          'La documentación se monta con los datos de la reserva y, antes de enviarla, se comprueba que no falte nada.',
+          'La documentación se monta con los datos de la reserva y con los datos de tu agencia que deben figurar en ella, como el número de registro de agencia de viajes y la garantía de insolvencia, y antes de enviarla se comprueba que no falte nada.',
       },
       {
         id: 'travel',

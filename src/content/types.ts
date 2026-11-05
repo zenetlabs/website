@@ -22,9 +22,12 @@ export type PostalAddress = {
 
 export type SpanishLegalClauses = {
   controller: string;
+  dataProtectionOfficer: string;
   holder: string;
-  consentBasis: string;
+  formAcknowledgement: string;
+  processors: string;
   transferPlaces: string;
+  recordsRetention: string;
   authorities: string;
   governingLaw: string;
 };

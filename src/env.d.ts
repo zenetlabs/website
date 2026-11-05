@@ -4,6 +4,7 @@ declare const __SERVER__: import('../site.config').ServerConfig;
 declare const __ASSISTANT__: boolean;
 declare const __WEBMCP__: boolean;
 declare const __VOICE__: boolean;
+declare const __CALCULATOR__: boolean;
 declare const __VOICE_FAKE__: boolean;
 declare const __CHAT_FAKE__: boolean;
 

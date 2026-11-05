@@ -217,7 +217,8 @@ done
 attempt "es llms.txt has the FAQ" body_contains "${SITE}/es/llms.txt" '## Preguntas frecuentes'
 attempt "html for */* ${SITE}/" content_type_is 'text/html; charset=utf-8' '*/*' "${SITE}/"
 attempt "vary accept ${SITE}/" header_matches '*/*' "${SITE}/" '^vary:(.*[ ,])?accept([ ,]|$)'
-attempt "footer names the entity" body_contains "${SITE}/es" 'Zenet Technology Pte. Ltd.'
+attempt "footer names the Spanish entity" body_contains "${SITE}/es" 'NIF 47986151D'
+attempt "footer names the Singapore entity" body_contains "${SITE}/" 'Zenet Technology Pte. Ltd.'
 attempt "home carries the FAQ JSON-LD" body_contains "${SITE}/" '"@type":"FAQPage"'
 attempt "service page carries the Service JSON-LD" body_contains "${SITE}/services/ai-automation" '"@type":"Service"'
 attempt "service page carries the FAQ JSON-LD" body_contains "${SITE}/services/ai-automation" '"@type":"FAQPage"'

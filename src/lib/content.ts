@@ -38,7 +38,7 @@ export function formatAddress(address: PostalAddress, locale: Locale): string {
     return `${streetAddress}, ${CONTENT[locale].countryNames[country]} ${postalCode}`;
   }
   const area = region && region !== locality ? ` (${region})` : '';
-  return `${streetAddress}, ${postalCode} ${locality}${area}`;
+  return `${streetAddress}, ${postalCode} ${locality}${area}, ${CONTENT[locale].countryNames[country]}`;
 }
 
 export function taxIdLabel(entity: LegalEntity): string {

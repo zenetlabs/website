@@ -76,7 +76,7 @@ export const bookPage = {
     company: 'Empresa (opcional)',
     topic: '¿De qué te gustaría hablar?',
     consent:
-      'Acepto que {legalName} use estos datos para reservar esta llamada, incluido un evento de Google Calendar con mi correo electrónico, tal como se describe en la {privacyLink}.',
+      'He leído la {privacyLink}: {legalName} usará estos datos para reservar esta llamada, incluido un evento de Google Calendar con mi correo electrónico, y en ella se explica cómo ejercer mis derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad.',
     consentLink: 'política de privacidad',
     honeypot: 'Deja este campo vacío',
     submit: 'Reservar esta hora',

@@ -50,10 +50,9 @@ export const training = {
         text: 'Trabajamos con tareas reales del equipo, como correos, informes, propuestas o limpieza de datos, y cada persona se lleva instrucciones y flujos que puede reutilizar.',
       },
       {
-        // TODO(albert): legal review of the AI Act article 4 sentence
         id: 'safe-use',
         title: 'Uso seguro',
-        text: 'Qué datos pueden ir a cada herramienta, qué implica el RGPD, qué pide el artículo 4 del Reglamento Europeo de IA sobre la formación del personal y una política de uso breve que el equipo pueda cumplir.',
+        text: 'Qué datos pueden ir a cada herramienta, qué implica el RGPD, qué pide el artículo 4 del Reglamento (UE) 2024/1689 de Inteligencia Artificial, que obliga a las empresas que usan IA a adoptar medidas para apoyar la alfabetización en IA de su personal, y una política de uso breve que el equipo pueda cumplir.',
       },
       {
         id: 'leaders',
