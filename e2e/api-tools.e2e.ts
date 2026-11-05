@@ -114,6 +114,31 @@ test('transport failures use 4xx with an error code', async ({ request }) => {
   expect(toolEnvelope.parse(await invalid.json()).error).toBe('invalid');
 });
 
+// An unread body used to 500 now and then in local workerd (vault README, 2026-11-06).
+test('refusals sent before the body is read never turn into a 500', async ({
+  request,
+}) => {
+  test.setTimeout(30_000);
+  const statuses = new Map<number, number>();
+  const count = (status: number) =>
+    statuses.set(status, (statuses.get(status) ?? 0) + 1);
+  for (let index = 0; index < 280; index += 1) {
+    const refused = await request.post('/api/tools/get_pricing', {
+      headers: { 'Content-Type': 'text/plain' },
+      data: JSON.stringify({ service: 'diagnostic', pad: 'x'.repeat(512) }),
+    });
+    count(refused.status());
+    if (index % 4 === 0) {
+      const lead = await request.post('/api/lead', {
+        headers: { Origin: 'https://evil.example' },
+        data: { name: 'x'.repeat(512) },
+      });
+      count(lead.status());
+    }
+  }
+  expect(Object.fromEntries(statuses)).toEqual({ 415: 280, 403: 70 });
+});
+
 test('a bearer caller books on the test calendar', async ({ request }) => {
   // A late window, so this never shares a slot with booking.e2e.ts.
   const from = new Date(Date.now() + 11 * 86_400_000)

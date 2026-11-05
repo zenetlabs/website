@@ -221,7 +221,7 @@ export const PAGES: Record<
   },
   privacy: {
     slugs: { en: '/privacy', es: '/privacidad' },
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   cookies: {
     slugs: { en: '/cookies', es: '/cookies' },

@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import type { GuardError } from '@/lib/guard-error';
+import { noop } from '@/lib/time';
 import { ipBucket, isLimited, type Limiter } from '@/server/rate-limit';
 import { verifyTurnstile } from '@/server/turnstile';
 
@@ -19,26 +20,58 @@ export function isJsonRequest(request: Request): boolean {
   return JSON_TYPE.test(request.headers.get('content-type') ?? '');
 }
 
+// Reads a body chunk by chunk until it ends or passes `maxBytes`, then cancels the rest.
+async function readUpTo(
+  body: ReadableStream<Uint8Array>,
+  maxBytes: number,
+  onChunk: (chunk: Uint8Array) => void,
+): Promise<'done' | 'too-large'> {
+  const reader = body.getReader();
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) return 'done';
+    size += value.byteLength;
+    if (size > maxBytes) {
+      await reader.cancel();
+      return 'too-large';
+    }
+    onChunk(value);
+  }
+}
+
+function declaredBytes(request: Request): number {
+  return Number(request.headers.get('content-length'));
+}
+
 export async function readCapped(
   request: Request,
   maxBytes: number,
 ): Promise<string | null> {
-  const declared = Number(request.headers.get('content-length'));
-  if (declared > maxBytes) return null;
+  if (declaredBytes(request) > maxBytes) return null;
   if (!request.body) return '';
-  const reader = request.body.getReader();
   const decoder = new TextDecoder();
-  let size = 0;
   let text = '';
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) return text + decoder.decode();
-    size += value.byteLength;
-    if (size > maxBytes) {
-      await reader.cancel();
-      return null;
+  const read = await readUpTo(request.body, maxBytes, (chunk) => {
+    text += decoder.decode(chunk, { stream: true });
+  });
+  return read === 'done' ? text + decoder.decode() : null;
+}
+
+export const DRAIN_LIMIT_BYTES = 65_536;
+
+// Reads a body the handler never read: in local workerd an unread body can 500 the request.
+export async function drainUnreadBody(request: Request): Promise<void> {
+  const { body } = request;
+  if (body === null || request.bodyUsed || body.locked) return;
+  try {
+    if (declaredBytes(request) > DRAIN_LIMIT_BYTES) {
+      await body.cancel();
+      return;
     }
-    text += decoder.decode(value, { stream: true });
+    await readUpTo(body, DRAIN_LIMIT_BYTES, noop);
+  } catch {
+    // A client that went away, or a handler that took the stream, leaves nothing to drain.
   }
 }
 
