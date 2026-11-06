@@ -28,6 +28,7 @@
   --tool-soft: #e9f1fd;
   --human: #8f5600;
   --human-soft: #fff2d9;
+  --human-ring: #ffaa00;
   --focus: #0b5c4e;
   --raised-shadow:
     0 1px 2px rgb(15 31 27 / 0.06), 0 10px 24px -8px rgb(15 31 27 / 0.12),
@@ -69,6 +70,7 @@
   --tool-soft: #0f3a32;
   --human: #ffaa00;
   --human-soft: #0f3a32;
+  --human-ring: #ffaa00;
   --focus: #00c5a7;
   --accent: #ffffff;
   --accent-fg: #0f1f1b;

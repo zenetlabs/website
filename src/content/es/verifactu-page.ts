@@ -41,7 +41,7 @@ export const verifactuPage = {
   cta: {
     title: 'Revisemos cómo facturas hoy',
     text: 'Dinos desde dónde salen tus facturas: la tienda, el TPV, el CRM, el ERP o un programa propio. En el diagnóstico te decimos qué hay que cambiar para Verifactu y cuánto cuesta.',
-    button: 'Reserva un diagnóstico',
+    button: 'Reservar una llamada',
   },
   deadlines: {
     title: { before: 'Quién debe cumplir ', emphasis: 'y cuándo', after: '' },

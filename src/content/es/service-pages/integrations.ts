@@ -32,7 +32,7 @@ export const integrations = {
   cta: {
     title: 'Enséñanos qué herramientas usas',
     text: 'Dinos qué programas usáis y dónde se siguen copiando datos a mano. En el diagnóstico confirmamos qué se puede conectar y cuánto cuesta.',
-    button: 'Reserva un diagnóstico',
+    button: 'Reservar una llamada',
   },
   useCases: {
     title: {

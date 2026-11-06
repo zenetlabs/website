@@ -5,15 +5,19 @@ export function CtaLink({
   cta,
   href,
   className,
+  label,
   onClick,
   current,
+  popup,
   children,
 }: {
   cta: CtaId;
   href: string;
   className?: string;
+  label?: string;
   onClick?: MouseEventHandler<HTMLAnchorElement>;
   current?: boolean;
+  popup?: 'dialog';
   children: ReactNode;
 }) {
   return (
@@ -21,6 +25,8 @@ export function CtaLink({
       href={href}
       aria-current={current ? 'page' : undefined}
       className={className}
+      aria-label={label}
+      aria-haspopup={popup}
       data-cta={cta}
       onClick={(event) => {
         onClick?.(event);

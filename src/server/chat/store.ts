@@ -1,6 +1,6 @@
 import type { ModelMessage } from 'ai';
 import { z } from 'zod';
-import { CHAT_LIMITS } from '@/lib/chat-events';
+import { CHAT_LIMITS } from '@/lib/assistant-limits';
 import { locales } from '@/lib/i18n';
 import { DAY_MS, HOUR_MS, utcDay } from '@/lib/time';
 import { countAddressUse, purgeAddressUsage } from '@/server/address-usage';

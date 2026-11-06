@@ -1,5 +1,7 @@
+import { assistantIntro } from '@/content/en/assistant-intro';
 import { cases } from '@/content/en/cases';
 import { companies } from '@/content/en/companies';
+import { diagnosticPlan } from '@/content/en/diagnostic-plan';
 import type { HomeContent } from '@/content/types';
 
 export const home = {
@@ -7,30 +9,40 @@ export const home = {
     title: {
       before: 'Stop doing ',
       emphasis: 'by hand',
-      after: ' what your tools can do on their own.',
+      after: ' what your tools can do.',
     },
     lead: 'We connect the tools your company already uses (ERP, online shop, CRM, WhatsApp, spreadsheets) and put AI agents on the repetitive work, so your team stops moving data by hand.',
-    primary: 'Book a diagnostic',
+    fact: '{price} fixed-price diagnostic, credited to the project if you continue within 60 days.',
+    primary: 'Book a call',
     secondary: 'See pricing',
     audience: 'For companies of 10 to 100 people',
-    diagnostic: 'Diagnostic',
   },
-  proof: {
-    title: 'An agent run',
-    caption: 'Illustrative example',
-    description:
-      'An agent run: it matches supplier invoices to purchase orders, answers order-status questions and drafts the weekly operations report, then stops and asks a person to approve a refund.',
-    lines: [
-      'Matched supplier invoices to purchase orders',
-      'Answered order-status questions',
-      'Drafted the weekly operations report',
-    ],
-    approval: {
-      title: 'Needs your approval',
-      detail: 'A refund request is waiting for a person to decide.',
-      approve: 'Approve',
-      hold: 'Hold',
+  desk: {
+    label: 'Ask the assistant',
+    intro: assistantIntro,
+    human: {
+      title: 'Ask us',
+      welcome:
+        'Ask us anything about your tools and processes. A person replies by email, usually within a working day.',
+      label: 'Your question for us',
+      placeholder: 'Type your question',
     },
+    call: {
+      text: 'Prefer to talk? Our voice assistant is an AI, not a person: it can answer questions and book a call.',
+      button: 'Call the agent',
+    },
+    slots: {
+      title: 'Book a 30-minute call',
+      meta: '30 minutes on Google Meet',
+      group: 'Next free times',
+      timesIn: 'Times in {zone}',
+      seeAll: 'See all times',
+      seeAvailable: 'See available times',
+      unavailable:
+        "Online booking isn't available right now. Send us a message instead and we will suggest a time.",
+      message: 'Send a message',
+    },
+    handoff: 'You work with the person who builds it.',
   },
   companies: {
     title: 'We run our own companies with agents',
@@ -77,8 +89,10 @@ export const home = {
     lead: 'Every project starts with a fixed-price diagnostic. Prices are in Singapore dollars and exclude GST.',
     more: 'See full pricing',
     calculator: 'Estimate your project',
-    startHere: 'Start here',
     book: 'Book the diagnostic',
+    oneOff: 'One-off',
+    timeline: '1–2 weeks',
+    plan: { title: 'Your costed plan', items: diagnosticPlan },
   },
   process: {
     title: {
@@ -121,15 +135,6 @@ export const home = {
     actors: { tool: 'Your tools', agent: 'Agent', human: 'A person' },
     items: cases,
   },
-  founder: {
-    // TODO(albert): confirm the founder section title
-    title: {
-      before: 'You work with ',
-      emphasis: 'the person who builds it',
-      after: '',
-    },
-    more: 'More about Albert',
-  },
   faq: {
     title: { before: 'What people ', emphasis: 'ask us', after: ' most' },
     groups: [
@@ -151,6 +156,20 @@ export const home = {
     voice: {
       text: 'Prefer to talk? Our voice assistant is an AI, not a person: it can answer questions and book a call.',
       button: 'Talk to the assistant',
+    },
+  },
+  doors: {
+    ask: {
+      title: 'Ask the agent',
+      text: 'About our services, prices or how a project works.',
+    },
+    call: {
+      title: 'Call the agent',
+      text: 'Our voice assistant is an AI, not a person.',
+    },
+    write: {
+      title: 'Write to us',
+      text: 'Use the contact form.',
     },
   },
 } satisfies HomeContent;

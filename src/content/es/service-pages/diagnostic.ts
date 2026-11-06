@@ -28,7 +28,7 @@ export const diagnostic = {
   cta: {
     title: 'Reserva tu diagnóstico',
     text: 'Cuéntanos qué herramientas usas y qué sigue haciendo tu equipo a mano. Te respondemos personalmente y acordamos el alcance en una llamada breve.',
-    button: 'Reserva un diagnóstico',
+    button: 'Reservar una llamada',
   },
   useCases: {
     title: {

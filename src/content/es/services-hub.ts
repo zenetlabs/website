@@ -76,7 +76,7 @@ export const servicesHub = {
     actors: { tool: 'Tus herramientas', agent: 'Agente', human: 'Una persona' },
   },
   startHere: 'Empieza aquí',
-  book: 'Reserva el diagnóstico',
+  book: 'Reservar el diagnóstico',
   also: {
     title: 'Mantenimiento y crecimiento',
     lead: 'Cuando tu proyecto ya funciona, el mantenimiento hace que siga funcionando y el trabajo de crecimiento ayuda a que te encuentren los clientes adecuados.',
@@ -84,7 +84,7 @@ export const servicesHub = {
   start: {
     title: '¿No sabes qué servicio necesitas?',
     text: `Empieza por el diagnóstico de automatización. En una o dos semanas analizamos tus herramientas y el trabajo manual, y te damos un plan con precio. Cuesta ${diagnostic}, IVA no incluido, y se descuenta del proyecto si sigues adelante en 60 días.`,
-    button: 'Reserva un diagnóstico',
+    button: 'Reservar una llamada',
   },
   pricing: 'Ver todos los precios',
 } satisfies ServicesHubContent;

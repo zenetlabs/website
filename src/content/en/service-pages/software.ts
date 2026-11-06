@@ -32,7 +32,7 @@ export const software = {
   cta: {
     title: 'Describe the tool you wish you had',
     text: 'Tell us what your team works around today. In the diagnostic we check whether to build, buy or connect, and what the first version would cost.',
-    button: 'Book a diagnostic',
+    button: 'Book a call',
   },
   useCases: {
     title: {

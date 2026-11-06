@@ -31,7 +31,7 @@ export const integrations = {
   cta: {
     title: 'Show us the tools you use',
     text: 'List the systems you run and where people still copy data between them. In the diagnostic we confirm what can be connected and what it costs.',
-    button: 'Book a diagnostic',
+    button: 'Book a call',
   },
   useCases: {
     title: {

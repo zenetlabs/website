@@ -17,8 +17,9 @@ describe('resolveNavigation', () => {
       '/#faq',
     );
     expect(
-      resolveNavigation({ page: 'home', section: 'cases' }, 'es', ON),
-    ).toBe('/es#cases');
+      resolveNavigation({ page: 'home', section: 'services' }, 'es', ON),
+    ).toBe('/es#services');
+    expect(resolveNavigation({ page: 'cases' }, 'es', ON)).toBe('/es/casos');
     expect(
       resolveNavigation({ page: 'pricing', section: 'faq' }, 'en', ON),
     ).toBe('/pricing');

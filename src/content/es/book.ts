@@ -1,4 +1,5 @@
 import { bookingPending } from '@/content/es/booking-pending';
+import { zoneNames } from '@/content/es/zone-names';
 import type { BookPageContent } from '@/content/types';
 
 // TODO(albert): revisar el texto, incluido "gratis, sin compromiso" y que la llamada sea el paso previo al diagnóstico de pago
@@ -35,34 +36,7 @@ export const bookPage = {
     label: 'Tu zona horaria',
     show: 'Ver horarios',
     legend: 'Horas en {zone}',
-    zones: {
-      'Pacific/Honolulu': 'Honolulú',
-      'America/Los_Angeles': 'Los Ángeles',
-      'America/Denver': 'Denver',
-      'America/Mexico_City': 'Ciudad de México',
-      'America/Chicago': 'Chicago',
-      'America/New_York': 'Nueva York',
-      'America/Bogota': 'Bogotá',
-      'America/Sao_Paulo': 'São Paulo',
-      'America/Argentina/Buenos_Aires': 'Buenos Aires',
-      UTC: 'UTC',
-      'Europe/London': 'Londres',
-      'Europe/Madrid': 'Madrid',
-      'Europe/Berlin': 'Berlín',
-      'Europe/Athens': 'Atenas',
-      'Europe/Moscow': 'Moscú',
-      'Africa/Lagos': 'Lagos',
-      'Africa/Johannesburg': 'Johannesburgo',
-      'Asia/Dubai': 'Dubái',
-      'Asia/Kolkata': 'Bombay y Delhi',
-      'Asia/Bangkok': 'Bangkok',
-      'Asia/Singapore': 'Singapur',
-      'Asia/Hong_Kong': 'Hong Kong',
-      'Asia/Tokyo': 'Tokio',
-      'Australia/Perth': 'Perth',
-      'Australia/Sydney': 'Sídney',
-      'Pacific/Auckland': 'Auckland',
-    },
+    zones: zoneNames,
   },
   picker: {
     legend: 'Elige una hora',

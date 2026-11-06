@@ -79,7 +79,7 @@ export const servicesHub = {
   start: {
     title: 'Not sure which service you need?',
     text: `Start with the automation diagnostic. In one to two weeks we map your tools and manual work and hand you a costed plan. It costs ${diagnostic}, excluding GST, and is credited to the project if you continue within 60 days.`,
-    button: 'Book a diagnostic',
+    button: 'Book a call',
   },
   pricing: 'See all prices',
 } satisfies ServicesHubContent;

@@ -32,7 +32,7 @@ export const automation = {
   cta: {
     title: 'Descubre qué puedes automatizar',
     text: 'Cuéntanos qué proceso se come más horas. El diagnóstico lo analiza, le pone precio y te dice con franqueza si automatizarlo compensa.',
-    button: 'Reserva un diagnóstico',
+    button: 'Reservar una llamada',
   },
   useCases: {
     title: {

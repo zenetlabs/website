@@ -33,3 +33,12 @@ export function isCurrent(
 ): boolean {
   return target.page === page;
 }
+
+// The contact page with a question already in its message field: the home
+// desk without JavaScript or while the assistant is dark, and every fallback
+// that must not lose what the visitor typed. The same encoding a GET form
+// uses, so the router reads it back unchanged.
+export function contactWithMessage(locale: Locale, message: string): string {
+  const query = new URLSearchParams({ message }).toString();
+  return `${navHref(locale, { page: 'contact' })}?${query}`;
+}

@@ -32,7 +32,7 @@ export const software = {
   cta: {
     title: 'Describe la herramienta que te gustaría tener',
     text: 'Cuéntanos qué está sorteando hoy tu equipo. En el diagnóstico vemos si conviene desarrollar, comprar o conectar, y cuánto costaría la primera versión.',
-    button: 'Reserva un diagnóstico',
+    button: 'Reservar una llamada',
   },
   useCases: {
     title: {

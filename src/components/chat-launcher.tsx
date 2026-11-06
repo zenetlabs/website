@@ -1,34 +1,26 @@
 import { useHydrated } from '@tanstack/react-router';
-import { Component, type ReactNode, Suspense, use, useState } from 'react';
-import type { ChatPanel } from '@/components/chat/chat-panel';
+import {
+  Component,
+  type ReactNode,
+  Suspense,
+  use,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { TEXT_LINK } from '@/components/ui';
-import { loadChatCopy } from '@/content/load';
-import type { ChatCopy } from '@/content/types';
+import {
+  type ChatRequest,
+  chatRequest,
+  clearChatRequest,
+  noChatRequest,
+  subscribeChatRequest,
+} from '@/lib/chat-open';
+import { prefetchChat } from '@/lib/chat-prefetch';
 import { type Locale, useLocale, useMessages } from '@/lib/i18n';
-import { navHref } from '@/lib/nav';
+import { contactWithMessage, navHref } from '@/lib/nav';
 import { isPublished } from '@/lib/page-registry';
 import { PUBLIC_EMAIL, SITE } from '@/lib/site';
 import { track } from '@/lib/track';
-
-type Loaded = {
-  ChatPanel: typeof ChatPanel;
-  copy: ChatCopy;
-};
-
-const loads = new Map<Locale, Promise<Loaded>>();
-
-// The panel, the AI client and the copy load on the first interaction, never at idle.
-function prefetchChat(locale: Locale): Promise<Loaded> {
-  const known = loads.get(locale);
-  if (known) return known;
-  const loading = Promise.all([
-    import('@/components/chat/chat-panel'),
-    loadChatCopy(locale),
-  ]).then(([{ ChatPanel }, copy]) => ({ ChatPanel, copy }));
-  loads.set(locale, loading);
-  loading.catch(() => loads.delete(locale));
-  return loading;
-}
 
 // A tab left open across a deploy asks for chunk files that no longer exist.
 // The panel then fails to load, and a visitor must still be able to reach us.
@@ -49,9 +41,11 @@ export class PanelBoundary extends Component<
 
 function LoadFailed({
   locale,
+  message,
   onClose,
 }: {
   locale: Locale;
+  message: string | null;
   onClose: () => void;
 }) {
   const { chat } = useMessages();
@@ -62,7 +56,14 @@ function LoadFailed({
     >
       <p>{chat.unavailable}</p>
       <p className="flex flex-wrap gap-x-4 gap-y-1">
-        <a href={navHref(locale, { page: 'contact' })} className={TEXT_LINK}>
+        <a
+          href={
+            message === null
+              ? navHref(locale, { page: 'contact' })
+              : contactWithMessage(locale, message)
+          }
+          className={TEXT_LINK}
+        >
           {chat.contact}
         </a>
         <a href={`mailto:${PUBLIC_EMAIL}`} className={TEXT_LINK}>
@@ -76,13 +77,23 @@ function LoadFailed({
   );
 }
 
-function Panel({ locale, onClose }: { locale: Locale; onClose: () => void }) {
+function Panel({
+  locale,
+  request,
+  onClose,
+}: {
+  locale: Locale;
+  request: ChatRequest | null;
+  onClose: () => void;
+}) {
   const { ChatPanel, copy } = use(prefetchChat(locale));
   return (
     <ChatPanel
       locale={locale}
       copy={copy}
       booking={isPublished('book', SITE)}
+      initialMessage={request?.message ?? null}
+      from={request?.from ?? null}
       onClose={onClose}
     />
   );
@@ -112,7 +123,7 @@ export function LauncherButton({
       onFocus={prefetch}
       onTouchStart={prefetch}
       onClick={() => {
-        track('chat_open');
+        track('chat_open', { entry: 'launcher' });
         onOpen();
       }}
       className="launcher"
@@ -137,22 +148,40 @@ function LauncherHost() {
   const hydrated = useHydrated();
   const locale = useLocale();
   const [open, setOpen] = useState(false);
+  // The home desk opens the same panel, with the visitor's first message.
+  const request = useSyncExternalStore(
+    subscribeChatRequest,
+    chatRequest,
+    noChatRequest,
+  );
+  const shown = open || request !== null;
+  const close = () => {
+    setOpen(false);
+    clearChatRequest();
+  };
   if (!hydrated) return null;
   return (
     <>
       <LauncherButton
-        open={open}
+        open={shown}
         onOpen={() => setOpen(true)}
         locale={locale}
       />
-      {open ? (
+      {shown ? (
+        // Keyed by the request, so a new question after a failed load tries
+        // again instead of showing the old failure.
         <PanelBoundary
+          key={request?.id ?? 0}
           fallback={
-            <LoadFailed locale={locale} onClose={() => setOpen(false)} />
+            <LoadFailed
+              locale={locale}
+              message={request?.message ?? null}
+              onClose={close}
+            />
           }
         >
           <Suspense fallback={null}>
-            <Panel locale={locale} onClose={() => setOpen(false)} />
+            <Panel locale={locale} request={request} onClose={close} />
           </Suspense>
         </PanelBoundary>
       ) : null}

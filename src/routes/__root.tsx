@@ -84,6 +84,11 @@ function RootDocument({ children }: { children: ReactNode }) {
         <HeadContent />
         <meta name="color-scheme" content="light" />
         <meta name="theme-color" content={THEME_COLOR} />
+        {/* Controls that need JavaScript (the home desk's call and chat doors)
+            are hidden from the first paint without it, so nothing shifts. */}
+        <noscript>
+          <style>{'[data-needs-js]{display:none}'}</style>
+        </noscript>
       </head>
       <body data-hydrated={hydrated ? 'true' : undefined}>
         <a

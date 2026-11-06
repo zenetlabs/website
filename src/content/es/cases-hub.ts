@@ -28,6 +28,6 @@ export const casesHub = {
   cta: {
     title: 'Empieza por el diagnóstico',
     text: 'Cuéntanos qué hace tu equipo a mano y te responderemos personalmente.',
-    button: 'Reserva un diagnóstico',
+    button: 'Reservar una llamada',
   },
 } satisfies CasesHubContent;

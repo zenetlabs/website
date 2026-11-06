@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { BeforeAfter } from '@/components/before-after';
 import { SectorPage } from '@/components/sector-page';
 import { pagePath } from '@/lib/page-registry';
 import { HUB_ES, SPANISH } from '../../test/landing';
@@ -71,24 +70,14 @@ describe('SectorPage ledger and platform', () => {
   });
 });
 
-describe('SectorPage ledger parity', () => {
-  it('renders the same list as BeforeAfter for the same rows', () => {
-    const rows = copy.work.items.map((item) => ({
-      id: item.id,
-      title: item.title,
-      before: item.today,
-      after: item.automated,
-    }));
-    const shared = render(
-      <BeforeAfter
-        rows={rows}
-        beforeLabel={copy.work.todayLabel}
-        afterLabel={copy.work.automatedLabel}
-      />,
-    );
-    const expected = shared.container.querySelector('ul')?.outerHTML;
-    shared.unmount();
+describe('SectorPage ledger', () => {
+  it('lists every job with what happens today and what runs on its own', () => {
     const { container } = view();
-    expect(container.querySelector('#work ul')?.outerHTML).toBe(expected);
+    const rows = container.querySelectorAll('#work .ledger-row');
+    expect(rows).toHaveLength(copy.work.items.length);
+    for (const [index, item] of copy.work.items.entries()) {
+      expect(rows[index]).toHaveTextContent(item.today);
+      expect(rows[index]).toHaveTextContent(item.automated);
+    }
   });
 });

@@ -53,7 +53,7 @@ test('an English lead is stored, notified and acknowledged with a fixed confirma
   await submit(
     page,
     'en',
-    '/?utm_source=e2e&utm_medium=test&utm_campaign=r6&gclid=g1',
+    '/contact?utm_source=e2e&utm_medium=test&utm_campaign=r6&gclid=g1',
     email,
   );
   await expect.poll(async () => (await sentFor(email)).length).toBe(2);
@@ -65,13 +65,13 @@ test('an English lead is stored, notified and acknowledged with a fixed confirma
   );
   expect(owner?.replyTo).toBe(email);
   expect(owner?.text).toContain(
-    'Landing page: /?utm_source=e2e&utm_medium=test&utm_campaign=r6&gclid=g1',
+    'Landing page: /contact?utm_source=e2e&utm_medium=test&utm_campaign=r6&gclid=g1',
   );
   expect(owner?.text).toContain(
     'UTM: source=e2e · medium=test · campaign=r6 · term=- · content=-',
   );
   expect(owner?.text).toContain('gclid: g1');
-  expect(owner?.text).toContain('Submitted from: /');
+  expect(owner?.text).toContain('Submitted from: /contact');
   expect(owner?.text).toContain(MESSAGE);
 
   const confirmation = sent.find((entry) => entry.to === email);
@@ -87,7 +87,7 @@ test('a Spanish lead gets Spanish copy and the page it came from', async ({
   page,
 }) => {
   const email = uniqueEmail('es');
-  await submit(page, 'es', '/es?utm_source=e2e-es', email);
+  await submit(page, 'es', '/es/contacto?utm_source=e2e-es', email);
   await expect.poll(async () => (await sentFor(email)).length).toBe(2);
   const sent = await sentFor(email);
 
@@ -95,7 +95,7 @@ test('a Spanish lead gets Spanish copy and the page it came from', async ({
   expect(owner?.subject).toBe(
     '[TEST] [Lead ES] Ada Lovelace — Analytical Engines — form',
   );
-  expect(owner?.text).toContain('Submitted from: /es');
+  expect(owner?.text).toContain('Submitted from: /es/contacto');
   expect(owner?.text).toContain('source=e2e-es');
 
   const confirmation = sent.find((entry) => entry.to === email);
@@ -109,9 +109,9 @@ test('a second lead from the same address gets no second confirmation', async ({
   page,
 }) => {
   const email = uniqueEmail('cap');
-  await submit(page, 'en', '/', email);
+  await submit(page, 'en', '/contact', email);
   await expect.poll(async () => (await sentFor(email)).length).toBe(2);
-  await submit(page, 'en', '/?utm_source=second', email);
+  await submit(page, 'en', '/contact?utm_source=second', email);
   await expect
     .poll(async () => (await sentFor(email)).filter((e) => e.to === NOTIFY_TO))
     .toHaveLength(2);
@@ -127,7 +127,7 @@ test('failed sends are retried by the cron with the same idempotency keys', asyn
 }) => {
   const email = uniqueEmail('retry');
   await failFor(email, 2);
-  await submit(page, 'en', '/', email);
+  await submit(page, 'en', '/contact', email);
 
   await expect
     .poll(async () => (await attemptsFor(email)).length)

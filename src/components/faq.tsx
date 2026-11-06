@@ -38,11 +38,11 @@ export function Faq({
   return (
     <Section id="faq" title={copy.title}>
       {sets ? (
-        <div className="grid gap-10 lg:grid-cols-2 lg:gap-x-16">
+        <div className="grid gap-8 lg:grid-cols-2 lg:gap-x-16 lg:gap-y-10">
           {[sets.slice(0, split), sets.slice(split)].map((column) => (
             <div
               key={column[0]?.group.id}
-              className="grid content-start gap-10"
+              className="grid content-start gap-8 lg:gap-10"
             >
               {column.map(({ group, items: groupItems }) => (
                 <div key={group.id} data-faq-group={group.id}>

@@ -12,6 +12,7 @@ import {
 import { BAND_CARD, H3, PRIMARY_BUTTON } from '@/components/ui';
 import { useChallenge } from '@/components/use-challenge';
 import { getChatSessionId } from '@/lib/chat-session';
+import { CONTACT_MESSAGE_MAX } from '@/lib/contact-message';
 import { text } from '@/lib/form-data';
 import { useLocale, useMessages } from '@/lib/i18n';
 import { attribution, submitLead } from '@/lib/lead-client';
@@ -150,7 +151,7 @@ export function ContactForm({ prefill }: { prefill?: ContactPrefill }) {
                   defaultValue={prefill?.message}
                   required
                   minLength={10}
-                  maxLength={5000}
+                  maxLength={CONTACT_MESSAGE_MAX}
                   rows={5}
                   className={`${CONTROL} resize-y`}
                 />

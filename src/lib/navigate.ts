@@ -7,7 +7,8 @@ import {
   type SiteFlags,
 } from '@/lib/page-registry';
 
-export const NAVIGATE_SECTIONS = ['services', 'cases', 'faq'] as const;
+// The case studies have their own page (`cases`), so they are not a home section.
+export const NAVIGATE_SECTIONS = ['services', 'faq'] as const;
 export type NavigateSection = (typeof NAVIGATE_SECTIONS)[number];
 
 export function resolveNavigation(

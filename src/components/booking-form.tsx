@@ -42,11 +42,13 @@ export function BookingForm({
   locale,
   zone,
   slots: initialSlots,
+  preselect = null,
 }: {
   copy: BookPageContent;
   locale: Locale;
   zone: string;
   slots: readonly PageSlot[];
+  preselect?: number | null;
 }) {
   const hydrated = useHydrated();
   const [slots, setSlots] = useState(initialSlots);
@@ -133,6 +135,7 @@ export function BookingForm({
           zone={zone}
           locale={locale}
           copy={copy.picker}
+          preselect={preselect}
         />
         <h2 className={`mt-2 border-t border-hairline pt-6 ${H3}`}>
           {form.details}

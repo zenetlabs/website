@@ -33,7 +33,7 @@ export const travelAgencies = {
   cta: {
     title: 'Cuéntanos cómo trabaja tu agencia',
     text: 'Dinos qué tareas se comen más horas y con qué proveedores y herramientas trabajas. En el diagnóstico te decimos qué se puede automatizar y cuánto cuesta.',
-    button: 'Reserva un diagnóstico',
+    button: 'Reservar una llamada',
   },
   work: {
     title: {

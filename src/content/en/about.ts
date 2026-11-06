@@ -69,6 +69,6 @@ export const aboutPage = {
   cta: {
     title: 'Tell us what your team does by hand',
     text: 'We reply personally and agree the next step with you.',
-    button: 'Book a diagnostic',
+    button: 'Book a call',
   },
 } satisfies AboutPageContent;

@@ -1,4 +1,11 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderToString } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,6 +14,7 @@ import {
   LauncherButton,
   PanelBoundary,
 } from '@/components/chat-launcher';
+import { chatRequest, clearChatRequest, requestChat } from '@/lib/chat-open';
 
 const state = vi.hoisted(() => {
   vi.stubGlobal('__ASSISTANT__', true);
@@ -14,6 +22,7 @@ const state = vi.hoisted(() => {
 });
 const track = vi.hoisted(() => vi.fn());
 const panelLoaded = vi.hoisted(() => vi.fn());
+const panelFails = vi.hoisted(() => ({ value: false }));
 
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@tanstack/react-router')>()),
@@ -32,20 +41,27 @@ vi.mock('@/components/chat/chat-panel', () => {
       locale,
       copy,
       booking,
+      initialMessage,
       onClose,
     }: {
       locale: string;
       copy: { title: string };
       booking: boolean;
+      initialMessage: string | null;
       onClose: () => void;
-    }) => (
-      <div role="dialog" aria-label={copy.title}>
-        {locale}:{String(booking)}
-        <button type="button" onClick={onClose}>
-          close panel
-        </button>
-      </div>
-    ),
+    }) => {
+      if (panelFails.value) {
+        throw new Error('Failed to fetch dynamically imported module');
+      }
+      return (
+        <div role="dialog" aria-label={copy.title}>
+          {locale}:{String(booking)}:{initialMessage ?? 'none'}
+          <button type="button" onClick={onClose}>
+            close panel
+          </button>
+        </div>
+      );
+    },
   };
 });
 
@@ -109,10 +125,51 @@ describe('ChatLauncher', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Open the AI assistant' }),
     );
-    expect(track).toHaveBeenCalledWith('chat_open');
+    expect(track).toHaveBeenCalledWith('chat_open', { entry: 'launcher' });
     expect(onOpen).toHaveBeenCalledTimes(1);
     rerender(<LauncherButton open onOpen={onOpen} locale="en" />);
     expect(screen.getByRole('button')).toHaveAttribute('aria-expanded', 'true');
+  });
+});
+
+describe('ChatLauncher and the home desk', () => {
+  it('opens the panel with the desk message, and closing clears the request', async () => {
+    render(<ChatLauncher />);
+    await act(async () => {
+      requestChat('How much?', null);
+    });
+    await waitFor(() => expect(document.body).toHaveTextContent('How much?'), {
+      timeout: 3000,
+    });
+    expect(screen.getByRole('dialog')).toHaveTextContent('How much?');
+    expect(
+      screen.getByRole('button', { name: 'Open the AI assistant' }),
+    ).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'close panel' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(chatRequest()).toBeNull();
+  });
+});
+
+describe('ChatLauncher when the panel fails to load', () => {
+  it('keeps the question in the contact link, and a new question tries again', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    panelFails.value = true;
+    render(<ChatLauncher />);
+    await act(async () => {
+      requestChat('How much?', null);
+    });
+    const alert = await screen.findByRole('alert');
+    expect(
+      within(alert).getByRole('link', { name: 'Use the contact form' }),
+    ).toHaveAttribute('href', '/contact?message=How+much%3F');
+    panelFails.value = false;
+    await act(async () => {
+      requestChat('Again', null);
+    });
+    expect(await screen.findByRole('dialog')).toHaveTextContent('Again');
+    clearChatRequest();
+    log.mockRestore();
   });
 });
 

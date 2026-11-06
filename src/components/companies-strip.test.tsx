@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { CompaniesStrip } from '@/components/companies-strip';
 import { home as enHome } from '@/content/en/home';
 import { home as esHome } from '@/content/es/home';
+import { pagePath } from '@/lib/page-registry';
 import { PORTFOLIO } from '@/lib/portfolio';
 
 const HREFS = [
@@ -16,9 +17,15 @@ const HREFS = [
 describe.each([
   ['en', enHome],
   ['es', esHome],
-] as const)('CompaniesStrip (%s)', (_locale, home) => {
+] as const)('CompaniesStrip (%s)', (locale, home) => {
   function links() {
-    render(<CompaniesStrip copy={home.companies} />);
+    render(
+      <CompaniesStrip
+        copy={home.companies}
+        more={home.cases.more}
+        locale={locale}
+      />,
+    );
     return within(screen.getByRole('list')).getAllByRole('link');
   }
 
@@ -55,9 +62,28 @@ describe.each([
   });
 
   it('names the strip with an h2', () => {
-    render(<CompaniesStrip copy={home.companies} />);
+    render(
+      <CompaniesStrip
+        copy={home.companies}
+        more={home.cases.more}
+        locale={locale}
+      />,
+    );
     expect(
       screen.getByRole('heading', { level: 2, name: home.companies.title }),
     ).toBeInTheDocument();
+  });
+
+  it('links once to the case studies hub', () => {
+    render(
+      <CompaniesStrip
+        copy={home.companies}
+        more={home.cases.more}
+        locale={locale}
+      />,
+    );
+    expect(
+      screen.getByRole('link', { name: `${home.cases.more} →` }),
+    ).toHaveAttribute('href', pagePath(locale, 'cases'));
   });
 });

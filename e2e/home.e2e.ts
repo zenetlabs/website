@@ -1,15 +1,19 @@
 import { expect, test } from '@playwright/test';
-import { formatPriceSummary } from '../src/lib/money';
+import { priceParts } from '../src/lib/money';
 import { SERVICES } from '../test/page-content';
-import { CTA, gotoHydrated, navLinks, waitForHydration } from './helpers';
+import {
+  CASES_HUB,
+  CTA,
+  gotoHydrated,
+  navLinks,
+  waitForHydration,
+} from './helpers';
 
 const COMMON = [
   'companies',
   'problems',
   'services',
   'process',
-  'cases',
-  'founder',
   'faq',
   'contact',
 ];
@@ -24,33 +28,31 @@ const HOMES = [
     pricing: '/pricing',
     cta: CTA.en,
     about: '/about',
-    ladder: [
+    offer: [
       '/services/automation-diagnostic',
       '/services/ai-automation',
-      '/services/ai-agents',
       '/services/custom-software',
+      '/services/ai-agents',
       '/services/ai-training',
       '/services/maintenance',
-      '/pricing',
     ],
   },
   {
     locale: 'es',
     path: '/es',
-    sections: ['companies', 'problems', 'verifactu', ...COMMON.slice(2)],
+    sections: [...COMMON.slice(0, 4), 'verifactu', ...COMMON.slice(4)],
     nav: ['/es/servicios', '/es/precios', '/es/casos', '/es/sobre-nosotros'],
     faq: 16,
     pricing: '/es/precios',
     cta: CTA.es,
     about: '/es/sobre-nosotros',
-    ladder: [
+    offer: [
       '/es/servicios/diagnostico-de-automatizacion',
       '/es/servicios/automatizacion-de-procesos',
-      '/es/servicios/agentes-de-ia',
       '/es/servicios/desarrollo-de-software-a-medida',
+      '/es/servicios/agentes-de-ia',
       '/es/servicios/formacion-ia-equipos',
       '/es/servicios/mantenimiento',
-      '/es/precios',
     ],
   },
 ] as const;
@@ -91,7 +93,7 @@ for (const home of HOMES) {
       }
     });
 
-    test('sends the hero CTAs to the contact form and the prices', async ({
+    test('sends the hero CTAs to the booking target and the prices', async ({
       page,
     }) => {
       await gotoHydrated(page, home.path);
@@ -101,7 +103,7 @@ for (const home of HOMES) {
       await expect(links.nth(1)).toHaveAttribute('href', home.pricing);
     });
 
-    test('fits the heading, lead, button and proof panel in the first screen', async ({
+    test('fits the heading, the button and the whole desk in the first screen', async ({
       page,
     }) => {
       await page.setViewportSize({ width: 1440, height: 900 });
@@ -111,39 +113,39 @@ for (const home of HOMES) {
         if (!found) throw new Error(`${selector} has no box`);
         return found;
       };
-      const heading = await box('main h1');
       const button = await box('main > section:first-child a');
-      const panel = await box(
-        'main > section:first-child [aria-hidden="true"]',
-      );
+      const desk = await box('[data-desk]');
       expect(button.y + button.height).toBeLessThanOrEqual(900);
-      expect(panel.y + panel.height).toBeLessThanOrEqual(900);
-      expect(Math.abs(panel.y - heading.y)).toBeLessThanOrEqual(24);
+      expect(desk.y + desk.height).toBeLessThanOrEqual(900);
+      expect(desk.x).toBeGreaterThan(button.x);
       await page.setViewportSize({ width: 390, height: 844 });
       await expect(
         page.locator('main > section:first-child a').first(),
       ).toBeInViewport({ ratio: 1 });
     });
 
-    test('links the ladder rows to the service pages and the pricing cards', async ({
+    test('links the offer to the service pages, diagnostic first', async ({
       page,
     }) => {
       await gotoHydrated(page, home.path);
       const hrefs = await page
-        .locator('#services ul > li > a:first-of-type')
+        .locator('#services h3 a')
         .evaluateAll((links) => links.map((a) => a.getAttribute('href')));
-      expect(hrefs).toEqual(home.ladder);
+      expect(hrefs).toEqual(home.offer);
     });
 
-    test('shows every price summary in the ladder', async ({ page }) => {
+    test('shows every price of the offer, growth aside', async ({ page }) => {
       await gotoHydrated(page, home.path);
       const text = (await page.locator('#services').innerText()).replace(
         /\s+/g,
         ' ',
       );
       for (const service of Object.values(SERVICES[home.locale])) {
-        const summary = formatPriceSummary(home.locale, service.prices);
-        expect(text).toContain(summary.replace(/\s+/g, ' '));
+        if (service.id === 'growth') continue;
+        for (const price of service.prices) {
+          const { amount } = priceParts(home.locale, price);
+          expect(text).toContain(amount.replace(/\s+/g, ' '));
+        }
       }
     });
 
@@ -171,28 +173,14 @@ for (const home of HOMES) {
       await expect(page.locator('#faq-prices')).toBeInViewport();
     });
 
-    test('shows the founder without an image and cases without figures', async ({
+    test('hands over to the founder in the hero, without an image', async ({
       page,
     }) => {
       await gotoHydrated(page, home.path);
-      await expect(page.locator('#founder img')).toHaveCount(0);
-      await expect(
-        page.locator('#founder [aria-hidden="true"]').first(),
-      ).toHaveText('AS');
-      await expect(
-        page.locator('#founder').getByRole('link', { name: /→$/ }),
-      ).toHaveAttribute('href', home.about);
-      await expect(page.locator('#cases dl')).toHaveCount(0);
-    });
-
-    test('links only the Viatsy card to its case page', async ({ page }) => {
-      await gotoHydrated(page, home.path);
-      const links = page.locator('#cases li a');
-      await expect(links).toHaveCount(1);
-      await expect(links).toHaveAttribute(
-        'href',
-        home.path === '/' ? '/case-studies/viatsy' : '/es/casos/viatsy',
-      );
+      const handoff = page.locator('main > section:first-child .handoff');
+      await expect(handoff.locator('img')).toHaveCount(0);
+      await expect(handoff.locator('[aria-hidden="true"]')).toHaveText('AS');
+      await expect(handoff).toHaveAttribute('href', home.about);
     });
   });
 }
@@ -236,7 +224,7 @@ test.describe('mobile menu', () => {
     await menu.locator('summary').click();
     await expect(menu).toHaveAttribute('open', '');
     await expect(
-      menu.getByRole('link', { name: 'Book a diagnostic' }),
+      menu.getByRole('link', { name: 'Book a call' }),
     ).toHaveAttribute('href', CTA.en);
     await menu.getByRole('link', { name: 'Services' }).click();
     await expect(page).toHaveURL(/\/services$/);
@@ -251,7 +239,7 @@ test.describe('mobile menu', () => {
 test.describe('case bullets fold on mobile only', () => {
   test('are collapsed at 390 until the summary is opened', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await gotoHydrated(page, '/');
+    await gotoHydrated(page, CASES_HUB.en);
     const first = page.locator('#cases li').first();
     const bullets = first.locator('ul li').first();
     await expect(bullets).toBeHidden();
@@ -261,7 +249,7 @@ test.describe('case bullets fold on mobile only', () => {
 
   test('are open with no toggle at 1280', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
-    await gotoHydrated(page, '/');
+    await gotoHydrated(page, CASES_HUB.en);
     const first = page.locator('#cases li').first();
     await expect(first.locator('ul li').first()).toBeVisible();
     await expect(first.locator('summary')).toBeHidden();

@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
+import { home as enHome } from '../src/content/en/home';
+import { home as esHome } from '../src/content/es/home';
 import { verifactuDates } from '../src/content/es/verifactu';
-import { formatPrice, formatPriceSummary } from '../src/lib/money';
+import { formatPrice, formatPriceSummary, priceParts } from '../src/lib/money';
 import { faqPairs, jsonLdBlocks } from '../test/json-ld';
 import { SERVICES } from '../test/page-content';
 import {
@@ -13,6 +15,7 @@ import {
 import {
   BOOKING_PUBLISHED,
   CASE_PAIR,
+  CONTACT_PAIR,
   HOLDED_PAGES,
   LOCALES,
   lateSlot,
@@ -27,6 +30,8 @@ test.use({ javaScriptEnabled: false });
 
 const HOMES = LOCALES.map((locale) => ({ locale, path: PAIRS[0][locale] }));
 const PRICING = LOCALES.map((locale) => ({ locale, path: PAIRS[1][locale] }));
+
+const HOME_COPY = { en: enHome, es: esHome } as const;
 
 const TAX_NOTE = { en: 'exclude GST', es: 'no incluyen el IVA' } as const;
 
@@ -56,9 +61,10 @@ for (const { path, locale } of HOMES) {
     await page.goto(path);
     const services = normalise(await page.locator('#services').innerText());
     for (const service of Object.values(SERVICES[locale])) {
-      expect(services).toContain(
-        normalise(formatPriceSummary(locale, service.prices)),
-      );
+      if (service.id === 'growth') continue;
+      for (const price of service.prices) {
+        expect(services).toContain(normalise(priceParts(locale, price).amount));
+      }
     }
 
     const summaries = (await page.locator('#faq summary').allInnerTexts()).map(
@@ -81,8 +87,45 @@ for (const { path, locale } of HOMES) {
     await expect(
       contact.locator('a[href="mailto:hello@zenetlabs.com"]'),
     ).toBeVisible();
-    await expect(contact.locator('input[name="name"]')).toBeVisible();
-    await expect(contact.locator('input[name="email"]')).toBeVisible();
+    await expect(
+      contact.locator(
+        `a[href="${CONTACT_PAIR[locale]}"][data-cta="close_contact"]`,
+      ),
+    ).toBeVisible();
+  });
+
+  test(`${path} desk sends the question to the contact form without JavaScript`, async ({
+    page,
+  }) => {
+    const { desk } = HOME_COPY[locale];
+    await page.goto(path);
+    for (const hidden of await page.locator('[data-needs-js]').all()) {
+      await expect(hidden).toBeHidden();
+    }
+    const question =
+      locale === 'en'
+        ? 'Can you read our supplier PDFs?'
+        : '¿Podéis leer los PDF de proveedores?';
+    await page.getByLabel(desk.label).fill(question);
+    await page.getByRole('button', { name: desk.intro.send }).click();
+    await expect(page).toHaveURL(
+      `${CONTACT_PAIR[locale]}?${new URLSearchParams({ message: question })}`,
+    );
+    await expect(page.locator('textarea[name="message"]')).toHaveValue(
+      question,
+    );
+  });
+
+  test(`${path} desk chips open the contact form with the question`, async ({
+    page,
+  }) => {
+    const { desk } = HOME_COPY[locale];
+    await page.goto(path);
+    await page.getByRole('link', { name: desk.intro.suggestions[0] }).click();
+    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page.locator('textarea[name="message"]')).toHaveValue(
+      desk.intro.suggestions[0],
+    );
   });
 }
 

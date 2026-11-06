@@ -6,12 +6,8 @@ import {
 } from 'ai';
 import { DEFAULT_ZONE } from '@/content/booking-rules';
 import { loadPricingContent } from '@/content/load';
-import {
-  CHAT_LIMITS,
-  type ChatError,
-  type ChatEvent,
-  type Proposal,
-} from '@/lib/chat-events';
+import { CHAT_LIMITS } from '@/lib/assistant-limits';
+import type { ChatError, ChatEvent, Proposal } from '@/lib/chat-events';
 import type { Locale } from '@/lib/i18n';
 import { pagePath } from '@/lib/page-registry';
 import { isLiveHost } from '@/lib/redirects';

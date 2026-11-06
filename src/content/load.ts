@@ -206,7 +206,9 @@ const SERVICES_HUB = {
 // in the data a route hands to the client.
 function withoutVoice(home: HomeContent): HomeContent {
   const { voice: _voice, ...contact } = home.contact;
-  return { ...home, contact };
+  const { call: _deskCall, ...desk } = home.desk;
+  const { call: _doorCall, ...doors } = home.doors;
+  return { ...home, contact, desk, doors };
 }
 
 export async function loadHomeContent(locale: Locale): Promise<{

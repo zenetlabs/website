@@ -501,7 +501,7 @@ test.describe('leads', () => {
       EXTERNAL,
     );
     await clickBanner(page, 'accept');
-    await gotoHydrated(page, '/?utm_source=later');
+    await gotoHydrated(page, '/contact?utm_source=later');
     await fillAndSend(page, email);
     await expect.poll(async () => (await sentFor(email)).length).toBe(2);
     const owner = (await sentFor(email)).find(
@@ -512,7 +512,7 @@ test.describe('leads', () => {
     );
     expect(owner?.text).toContain('source=e2e-first');
     expect(owner?.text).toContain('gclid: g1');
-    expect(owner?.text).toContain('Submitted from: /');
+    expect(owner?.text).toContain('Submitted from: /contact');
   });
 
   test('after a rejection the lead describes only the page load it was sent from', async ({
@@ -522,13 +522,13 @@ test.describe('leads', () => {
     const email = uniqueEmail('rejected');
     await gotoHydrated(page, '/pricing?utm_source=e2e-first', EXTERNAL);
     await clickBanner(page, 'reject');
-    await gotoHydrated(page, '/?utm_source=later');
+    await gotoHydrated(page, '/contact?utm_source=later');
     await fillAndSend(page, email);
     await expect.poll(async () => (await sentFor(email)).length).toBe(2);
     const owner = (await sentFor(email)).find(
       (entry) => entry.to === NOTIFY_TO,
     );
-    expect(owner?.text).toContain('Landing page: /?utm_source=later');
+    expect(owner?.text).toContain('Landing page: /contact?utm_source=later');
     expect(owner?.text).not.toContain('e2e-first');
   });
 });

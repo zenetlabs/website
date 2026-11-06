@@ -1,6 +1,49 @@
 import { useHydrated, useRouter } from '@tanstack/react-router';
-import { useLocale } from '@/lib/i18n';
+import type { ReactNode } from 'react';
+import { type Locale, useLocale } from '@/lib/i18n';
+import { navHref } from '@/lib/nav';
+import { isPlainClick } from '@/lib/plain-click';
+import { type CtaId, track } from '@/lib/track';
 import { openVoice, prefetchVoice, voiceAvailable } from '@/lib/voice-entry';
+
+// A call door that is a real link at first paint: without JavaScript (or
+// before hydration) it goes to the contact page; once hydrated it starts the
+// call in place. Rendered only while voice is published, so nothing shifts.
+export function CallLink({
+  locale,
+  cta,
+  className,
+  children,
+}: {
+  locale: Locale;
+  cta: CtaId;
+  className: string;
+  children: ReactNode;
+}) {
+  const router = useRouter();
+  const hydrated = useHydrated();
+  const prefetch = () => prefetchVoice(locale);
+  return (
+    <a
+      href={navHref(locale, { page: 'contact' })}
+      data-cta={cta}
+      data-voice-button
+      aria-haspopup={hydrated ? 'dialog' : undefined}
+      onPointerEnter={prefetch}
+      onFocus={prefetch}
+      onTouchStart={prefetch}
+      onClick={(event) => {
+        track('cta_click', { cta_id: cta });
+        if (!hydrated || !isPlainClick(event)) return;
+        event.preventDefault();
+        openVoice(locale, (href) => router.history.push(href));
+      }}
+      className={className}
+    >
+      {children}
+    </a>
+  );
+}
 
 type CalloutProps = { text: string; button: string };
 
@@ -23,18 +66,7 @@ function Callout({ text, button }: CalloutProps) {
         onClick={() => openVoice(locale, (href) => router.history.push(href))}
         className="voice-door"
       >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="size-5"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2" />
-        </svg>
+        <span aria-hidden="true" className="icon icon-phone size-5" />
         {button}
       </button>
     </div>

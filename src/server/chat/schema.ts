@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CHAT_LIMITS } from '@/lib/chat-events';
+import { CHAT_LIMITS } from '@/lib/assistant-limits';
 import {
   localeField,
   pageField,

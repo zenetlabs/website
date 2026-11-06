@@ -32,7 +32,7 @@ export const holdedHubspot = {
   cta: {
     title: 'Enséñanos tu proceso de venta',
     text: 'Cuéntanos por qué etapas pasa una oportunidad en HubSpot y quién factura en Holded. En el diagnóstico confirmamos qué se puede conectar y cuánto cuesta.',
-    button: 'Reserva un diagnóstico',
+    button: 'Reservar una llamada',
   },
   sync: {
     title: {
