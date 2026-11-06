@@ -41,8 +41,7 @@ const production: SiteConfig = {
   ga4Id: 'G-EEX9THLNQ9',
   // TODO(albert): set true after reviewing src/content/pricing-rules.ts
   calculator: { published: false },
-  // TODO(albert): set true once the Google Calendar secret exists and /api/health reports booking:true (docs/ai-assistant.md "Booking activation")
-  booking: { published: false },
+  booking: { published: true },
   // TODO(albert): set true after the model bake-off passes (docs/ai-assistant.md "Activation")
   assistant: { published: false },
   // Read-only tools plus a Turnstile-gated, visitor-confirmed booking, and nothing loads where the browser lacks WebMCP.

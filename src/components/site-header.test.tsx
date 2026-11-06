@@ -5,6 +5,8 @@ import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 import { CTA_TARGET, navHref } from '@/lib/nav';
 
+const matched = vi.hoisted(() => ({ page: undefined as string | undefined }));
+
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@tanstack/react-router')>()),
   useRouteContext: ({
@@ -17,8 +19,12 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
   }: {
     select: (location: { searchStr: string }) => unknown;
   }) => select({ searchStr: '' }),
-  useMatches: ({ select }: { select: (matches: never[]) => unknown }) =>
-    select([]),
+  useMatches: ({ select }: { select: (matches: unknown[]) => unknown }) =>
+    select(
+      matched.page
+        ? [{ status: 'success', staticData: { page: matched.page } }]
+        : [],
+    ),
 }));
 
 describe('SiteHeader', () => {
@@ -60,6 +66,24 @@ describe('SiteHeader', () => {
     expect(details.open).toBe(true);
     fireEvent.blur(links[1], { relatedTarget: outside });
     expect(details.open).toBe(false);
+  });
+
+  it('marks the call-to-action as current on its own page only', () => {
+    const ctas = () =>
+      Array.from(document.querySelectorAll('a[data-cta^="header"]'));
+    matched.page = 'book';
+    const { unmount } = render(<SiteHeader locale="en" />);
+    expect(ctas()).toHaveLength(2);
+    for (const link of ctas()) {
+      expect(link).toHaveAttribute('aria-current', 'page');
+    }
+    unmount();
+    matched.page = 'pricing';
+    render(<SiteHeader locale="en" />);
+    for (const link of ctas()) {
+      expect(link).not.toHaveAttribute('aria-current');
+    }
+    matched.page = undefined;
   });
 
   it('names the menu toggle for assistive technology', () => {

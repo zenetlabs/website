@@ -32,6 +32,7 @@ export function SiteHeader({ locale }: { locale: Locale }) {
   const home = pagePath(locale, 'home');
   const current = useCurrentPage();
   const cta = navHref(locale, CTA_TARGET);
+  const ctaCurrent = isCurrent(CTA_TARGET, current);
   const links = NAV.map((item) => ({
     href: navHref(locale, item.target),
     label: nav[item.id],
@@ -68,6 +69,7 @@ export function SiteHeader({ locale }: { locale: Locale }) {
           <CtaLink
             cta="header"
             href={cta}
+            current={ctaCurrent}
             className={`${SECONDARY_BUTTON_SM} max-lg:hidden`}
           >
             {nav.cta}
@@ -99,6 +101,7 @@ export function SiteHeader({ locale }: { locale: Locale }) {
               <CtaLink
                 cta="header_menu"
                 href={cta}
+                current={ctaCurrent}
                 onClick={closeMenu}
                 className={`${PRIMARY_BUTTON_FULL} mt-8`}
               >

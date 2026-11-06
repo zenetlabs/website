@@ -6,17 +6,20 @@ export function CtaLink({
   href,
   className,
   onClick,
+  current,
   children,
 }: {
   cta: CtaId;
   href: string;
   className?: string;
   onClick?: MouseEventHandler<HTMLAnchorElement>;
+  current?: boolean;
   children: ReactNode;
 }) {
   return (
     <a
       href={href}
+      aria-current={current ? 'page' : undefined}
       className={className}
       data-cta={cta}
       onClick={(event) => {

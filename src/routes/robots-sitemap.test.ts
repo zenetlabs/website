@@ -65,6 +65,7 @@ describe('sitemapXml', () => {
       'https://zenetlabs.com/contact',
       'https://zenetlabs.com/pricing',
       'https://zenetlabs.com/about',
+      'https://zenetlabs.com/book',
       'https://zenetlabs.com/privacy',
       'https://zenetlabs.com/cookies',
       'https://zenetlabs.com/es',
@@ -86,6 +87,7 @@ describe('sitemapXml', () => {
       'https://zenetlabs.com/es/contacto',
       'https://zenetlabs.com/es/precios',
       'https://zenetlabs.com/es/sobre-nosotros',
+      'https://zenetlabs.com/es/reservar',
       'https://zenetlabs.com/es/privacidad',
       'https://zenetlabs.com/es/cookies',
       'https://zenetlabs.com/es/aviso-legal',
@@ -102,7 +104,7 @@ describe('sitemapXml', () => {
 
   it('gives every url its alternates', () => {
     const entries = parseSitemap(xml);
-    expect(entries).toHaveLength(38);
+    expect(entries).toHaveLength(40);
     for (const { loc, alternates } of entries) {
       const page = PAGE_IDS.find((id) =>
         locales.some((locale) => pageUrl(locale, id) === loc),
