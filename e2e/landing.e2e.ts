@@ -86,7 +86,7 @@ for (const path of ES_PAGES) {
       await page
         .getByRole('navigation', { name: 'Idioma' })
         .first()
-        .getByRole('link', { name: 'EN' })
+        .getByRole('link', { name: 'English' })
         .click();
       await expect(page).toHaveURL(
         HOLDED_PAGES.some((holded) => holded === path)
@@ -218,8 +218,8 @@ test.describe(SECTOR_PAGE, () => {
 });
 
 for (const [locale, path, switchTo, label, nav] of [
-  ['en', CASE_PAIR.en, CASE_PAIR.es, 'ES', 'Language'],
-  ['es', CASE_PAIR.es, CASE_PAIR.en, 'EN', 'Idioma'],
+  ['en', CASE_PAIR.en, CASE_PAIR.es, 'Español', 'Language'],
+  ['es', CASE_PAIR.es, CASE_PAIR.en, 'English', 'Idioma'],
 ] as const) {
   test.describe(path, () => {
     test('shows the story with a dated header and no figures', async ({

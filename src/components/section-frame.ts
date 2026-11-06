@@ -1,5 +1,7 @@
 export type SectionVariant = 'default' | 'tint' | 'band' | 'compact' | 'notice';
 
+// White by default, the cool `tint` ground for alternating regions, and at most
+// one dark band per page (the close). The notice strip sits on the tint ground.
 const VARIANTS: Record<
   SectionVariant,
   { ground: string; bg: string; pad: string }
@@ -10,7 +12,7 @@ const VARIANTS: Record<
   band: { ground: 'band', bg: 'band', pad: 'py-section-band' },
   notice: {
     ground: 'notice',
-    bg: 'bg-human-soft',
+    bg: 'bg-tint',
     pad: 'py-section-compact',
   },
 };

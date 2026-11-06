@@ -19,8 +19,6 @@ import { COOKIE_SETTINGS_ID, openCookieSettings } from '@/lib/cookie-settings';
 import type { Locale } from '@/lib/i18n';
 import { pagePath } from '@/lib/page-registry';
 
-const BANNER_BUTTON = `${SECONDARY_BUTTON_SM} hover:bg-bg-tint!`;
-
 const CHECKBOX = 'mt-1 size-6 shrink-0 accent-accent';
 
 function trackBannerHeight(node: HTMLElement): () => void {
@@ -98,21 +96,21 @@ function ConsentBanner({
         <div className="grid grid-cols-3 gap-2 md:w-[28rem] md:gap-3">
           <button
             type="button"
-            className={BANNER_BUTTON}
+            className={SECONDARY_BUTTON_SM}
             onClick={() => choose(gaId, REJECT_ALL)}
           >
             {copy.reject}
           </button>
           <button
             type="button"
-            className={BANNER_BUTTON}
+            className={SECONDARY_BUTTON_SM}
             onClick={openCookieSettings}
           >
             {copy.settings}
           </button>
           <button
             type="button"
-            className={BANNER_BUTTON}
+            className={SECONDARY_BUTTON_SM}
             onClick={() => choose(gaId, ACCEPT_ALL)}
           >
             {copy.accept}

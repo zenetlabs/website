@@ -3,32 +3,34 @@ import { type SectionVariant, sectionFrame } from '@/components/section-frame';
 import { LEAD } from '@/components/ui';
 import type { TitleParts } from '@/content/types';
 
+// One wrap for every section (1312px of content between the gutters), or the
+// narrow reading column for legal pages and /book.
+const WIDTHS = {
+  wrap: 'max-w-[calc(82rem+2*var(--spacing-gutter))]',
+  narrow: 'max-w-3xl',
+} as const;
+
 export function Container({
   className = '',
-  width = 'content',
+  width = 'wrap',
   children,
 }: {
   className?: string;
-  width?: 'content' | 'wide';
+  width?: keyof typeof WIDTHS;
   children: ReactNode;
 }) {
-  const max = width === 'wide' ? 'max-w-[1360px]' : 'max-w-[1200px]';
   return (
-    <div className={`mx-auto w-full ${max} px-6 ${className}`}>{children}</div>
+    <div className={`mx-auto w-full ${WIDTHS[width]} px-gutter ${className}`}>
+      {children}
+    </div>
   );
 }
 
-export function EmphasisTitle({
-  parts,
-  marker = false,
-}: {
-  parts: TitleParts;
-  marker?: boolean;
-}) {
+export function EmphasisTitle({ parts }: { parts: TitleParts }) {
   return (
     <>
       {parts.before}
-      <em className={marker ? 'marker' : undefined}>{parts.emphasis}</em>
+      <em>{parts.emphasis}</em>
       {parts.after}
     </>
   );
@@ -39,14 +41,12 @@ export function Section({
   title,
   lead,
   variant = 'default',
-  width = 'content',
   children,
 }: {
   id: string;
   title: TitleParts;
   lead?: string;
   variant?: SectionVariant;
-  width?: 'content' | 'wide';
   children: ReactNode;
 }) {
   const { ground, bg, pad } = sectionFrame(variant);
@@ -57,12 +57,12 @@ export function Section({
       data-ground={ground}
       className={bg}
     >
-      <Container className={pad} width={width}>
-        <h2 id={`${id}-title`} className="max-w-3xl">
+      <Container className={pad}>
+        <h2 id={`${id}-title`} className="max-w-[12em]">
           <EmphasisTitle parts={title} />
         </h2>
-        {lead ? <p className={`mt-4 md:mt-5 ${LEAD}`}>{lead}</p> : null}
-        <div className="mt-6 md:mt-12">{children}</div>
+        {lead ? <p className={`mt-5 md:mt-6 ${LEAD}`}>{lead}</p> : null}
+        <div className="mt-8 md:mt-14">{children}</div>
       </Container>
     </section>
   );

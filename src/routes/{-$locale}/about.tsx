@@ -43,7 +43,7 @@ function About() {
       <section data-ground="paper">
         <Container className="py-12 md:py-24">
           <h1 className="max-w-4xl">
-            <EmphasisTitle parts={page.title} marker />
+            <EmphasisTitle parts={page.title} />
           </h1>
           <p className={`mt-6 ${LEAD}`}>{page.lead}</p>
         </Container>
@@ -87,7 +87,7 @@ function About() {
                 <li key={key}>
                   <a
                     href={href}
-                    className={`${CARD} group flex h-full flex-col items-start gap-3 p-5 motion-safe:transition-colors motion-safe:duration-(--duration-hover) hover:border-fg md:p-8`}
+                    className={`${CARD} group flex h-full flex-col items-start gap-3 p-5 motion-safe:transition-colors motion-safe:duration-(--duration-hover) pointer-fine:hover:border-fg md:p-8`}
                   >
                     <CompanyMark name={name} logo={logo} />
                     <span className="text-ui-s text-muted-fg">
@@ -117,7 +117,7 @@ function About() {
         >
           <Container className={vision.pad}>
             <h2 id="vision-title">{page.vision.title}</h2>
-            <p className="mt-5 max-w-[60ch] text-pretty font-display text-h2-compact md:mt-8">
+            <p className="mt-5 max-w-[60ch] text-pretty text-h2-compact md:mt-8">
               {page.vision.text}
             </p>
           </Container>

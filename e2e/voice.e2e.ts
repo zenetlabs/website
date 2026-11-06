@@ -99,35 +99,29 @@ test.describe('without JavaScript', () => {
 });
 
 for (const locale of ['en', 'es'] as const) {
-  for (const colorScheme of ['light', 'dark'] as const) {
-    test(`the ${locale} panel (${colorScheme}) names the AI and ElevenLabs, links the privacy page and has no axe violations`, async ({
-      page,
-    }) => {
-      await page.emulateMedia({ colorScheme });
-      const dialog = await openPanel(page, locale);
-      const copy = COPY[locale];
-      await expect(dialog.getByText(copy.badge, { exact: true })).toBeVisible();
-      await expect(dialog).toContainText('ElevenLabs');
-      await expect(
-        dialog.getByRole('link', { name: copy.privacyLink }),
-      ).toHaveAttribute(
-        'href',
-        locale === 'en' ? '/privacy' : '/es/privacidad',
-      );
-      await expect(
-        dialog.getByRole('heading', { name: copy.title }),
-      ).toBeFocused();
-      await expect(
-        dialog.getByRole('button', { name: copy.start }),
-      ).toBeEnabled({ timeout: 30_000 });
-      await settleAnimations(page);
-      const results = await new AxeBuilder({ page })
-        .withTags(TAGS)
-        .exclude('iframe[src*="challenges.cloudflare.com"]')
-        .analyze();
-      expect(results.violations).toEqual([]);
+  test(`the ${locale} panel names the AI and ElevenLabs, links the privacy page and has no axe violations`, async ({
+    page,
+  }) => {
+    const dialog = await openPanel(page, locale);
+    const copy = COPY[locale];
+    await expect(dialog.getByText(copy.badge, { exact: true })).toBeVisible();
+    await expect(dialog).toContainText('ElevenLabs');
+    await expect(
+      dialog.getByRole('link', { name: copy.privacyLink }),
+    ).toHaveAttribute('href', locale === 'en' ? '/privacy' : '/es/privacidad');
+    await expect(
+      dialog.getByRole('heading', { name: copy.title }),
+    ).toBeFocused();
+    await expect(dialog.getByRole('button', { name: copy.start })).toBeEnabled({
+      timeout: 30_000,
     });
-  }
+    await settleAnimations(page);
+    const results = await new AxeBuilder({ page })
+      .withTags(TAGS)
+      .exclude('iframe[src*="challenges.cloudflare.com"]')
+      .analyze();
+    expect(results.violations).toEqual([]);
+  });
 }
 
 test('starts a call after Turnstile: one mint, the Spanish agent, the session handed to the SDK', async ({
@@ -173,7 +167,6 @@ test.describe('on a phone', () => {
   test('the live panel is a bottom sheet with no axe violations', async ({
     page,
   }) => {
-    await page.emulateMedia({ colorScheme: 'dark' });
     await openPanel(page, 'es');
     await startCall(page, 'es');
     await page.evaluate(() =>

@@ -1,6 +1,4 @@
-import instrumentSerifItalic from '@fontsource/instrument-serif/files/instrument-serif-latin-400-italic.woff2?url';
-import instrumentSerifLatin from '@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff2?url';
-import interLatin from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
+import schibstedLatin from '@fontsource-variable/schibsted-grotesk/files/schibsted-grotesk-latin-wght-normal.woff2?url';
 import {
   createRootRoute,
   HeadContent,
@@ -16,10 +14,9 @@ import { fontPreload } from '@/lib/font-preload';
 import { localeFromPath, messages, useLocale, useMessages } from '@/lib/i18n';
 import { originTrialMeta, SITE_NAME } from '@/lib/seo';
 import { SITE } from '@/lib/site';
-import { THEME_COLOR_DARK, THEME_COLOR_LIGHT } from '@/lib/theme-colors';
+import { THEME_COLOR } from '@/lib/theme-colors';
 import appCss from '@/styles/app.css?url';
 
-const FONT_PRELOADS = [instrumentSerifLatin, instrumentSerifItalic, interLatin];
 const BEACON_SRC = 'https://static.cloudflareinsights.com/beacon.min.js';
 
 export const Route = createRootRoute({
@@ -58,7 +55,7 @@ export const Route = createRootRoute({
         },
         { rel: 'apple-touch-icon', href: '/icons/apple-touch-icon.png' },
         { rel: 'stylesheet', href: appCss },
-        ...FONT_PRELOADS.map(fontPreload),
+        fontPreload(schibstedLatin),
       ],
     };
   },
@@ -85,21 +82,13 @@ function RootDocument({ children }: { children: ReactNode }) {
     <html lang={locale}>
       <head>
         <HeadContent />
-        <meta
-          name="theme-color"
-          content={THEME_COLOR_LIGHT}
-          media="(prefers-color-scheme: light)"
-        />
-        <meta
-          name="theme-color"
-          content={THEME_COLOR_DARK}
-          media="(prefers-color-scheme: dark)"
-        />
+        <meta name="color-scheme" content="light" />
+        <meta name="theme-color" content={THEME_COLOR} />
       </head>
       <body data-hydrated={hydrated ? 'true' : undefined}>
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-input focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-fg"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-4 focus:z-50 focus:rounded-input focus:bg-accent focus:px-4 focus:py-2.5 focus:font-semibold focus:text-accent-fg"
         >
           {nav.skip}
         </a>

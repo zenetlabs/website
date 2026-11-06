@@ -49,7 +49,7 @@ function Pricing() {
       <section data-ground="paper">
         <Container className="py-12 md:py-24">
           <h1 className="max-w-4xl">
-            <EmphasisTitle parts={page.title} marker />
+            <EmphasisTitle parts={page.title} />
           </h1>
           <p className={`mt-6 ${LEAD}`}>{page.lead}</p>
           <p className="mt-4 text-ui-s text-muted-fg">{page.taxNote}</p>
@@ -88,7 +88,7 @@ function Pricing() {
                             <dt className={EYEBROW}>
                               {price.label ?? page.labels.price}
                             </dt>
-                            <dd className="mt-0.5 font-mono text-xl tabular-nums">
+                            <dd className="mt-0.5 text-xl font-semibold">
                               {formatPrice(locale, price)}
                               {price.note ? (
                                 <span className="block font-sans text-ui-s text-muted-fg">

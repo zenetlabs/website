@@ -1,8 +1,8 @@
-export type Scope = 'light' | 'dark' | 'bandLight' | 'bandDark';
+export type Scope = 'light' | 'band';
 export type Tokens = Record<string, string>;
-type Block = { selector: string; dark: boolean; body: string };
+type Block = { selector: string; body: string };
 
-function walk(source: string, dark: boolean, out: Block[]) {
+function walk(source: string, out: Block[]) {
   let position = 0;
   while (position < source.length) {
     const open = source.indexOf('{', position);
@@ -17,9 +17,9 @@ function walk(source: string, dark: boolean, out: Block[]) {
     }
     const body = source.slice(open + 1, end - 1);
     if (head.startsWith('@media')) {
-      walk(body, dark || head.includes('prefers-color-scheme: dark'), out);
+      walk(body, out);
     } else {
-      out.push({ selector: head, dark, body });
+      out.push({ selector: head, body });
     }
     position = end;
   }
@@ -47,36 +47,21 @@ function resolved(tokens: Tokens): Tokens {
 
 export function scopes(css: string): Record<Scope, Tokens> {
   const blocks: Block[] = [];
-  walk(css.replace(/\/\*[\s\S]*?\*\//g, ''), false, blocks);
+  walk(css.replace(/\/\*[\s\S]*?\*\//g, ''), blocks);
   const merged = (match: (block: Block) => boolean): Tokens =>
     Object.fromEntries(
       blocks
         .filter(match)
         .flatMap((block) => Object.entries(declared(block.body))),
     );
-  const root = (block: Block, dark: boolean) =>
-    block.selector.includes(':root') && block.dark === dark;
-  const band = (block: Block, dark: boolean) =>
-    block.selector === '.band' && block.dark === dark;
-  const light = merged((block) => root(block, false));
-  const dark = { ...light, ...merged((block) => root(block, true)) };
-  const bandLight = { ...light, ...merged((block) => band(block, false)) };
-  const bandDark = {
-    ...dark,
-    ...merged((block) => band(block, false)),
-    ...merged((block) => band(block, true)),
-  };
-  return {
-    light: resolved(light),
-    dark: resolved(dark),
-    bandLight: resolved(bandLight),
-    bandDark: resolved(bandDark),
-  };
+  const light = merged((block) => block.selector.includes(':root'));
+  const band = { ...light, ...merged((block) => block.selector === '.band') };
+  return { light: resolved(light), band: resolved(band) };
 }
 
 function propertyNames(css: string, match: (block: Block) => boolean) {
   const blocks: Block[] = [];
-  walk(css.replace(/\/\*[\s\S]*?\*\//g, ''), false, blocks);
+  walk(css.replace(/\/\*[\s\S]*?\*\//g, ''), blocks);
   return new Set(
     blocks
       .filter(match)

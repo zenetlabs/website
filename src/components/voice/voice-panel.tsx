@@ -152,7 +152,7 @@ export function VoicePanel({
             >
               {copy.title}
             </h2>
-            <span className="rounded-input border border-border px-1.5 py-0.5 font-mono text-xs">
+            <span className="rounded-input border border-border px-1.5 py-0.5 text-label font-semibold">
               {copy.badge}
             </span>
           </div>
@@ -160,7 +160,7 @@ export function VoicePanel({
             type="button"
             aria-label={copy.close}
             onClick={() => void close()}
-            className="inline-flex size-11 items-center justify-center rounded-input hover:bg-surface"
+            className="inline-flex size-11 items-center justify-center rounded-input pointer-fine:hover:bg-tint"
           >
             <svg
               aria-hidden="true"
@@ -175,7 +175,7 @@ export function VoicePanel({
             </svg>
           </button>
         </header>
-        <p id={noticeId} className="text-xs leading-snug text-muted-fg">
+        <p id={noticeId} className="text-ui-s leading-snug text-muted-fg">
           {copy.notice}{' '}
           <a href={pagePath(locale, 'privacy')} className={TEXT_LINK}>
             {copy.privacyLink}
@@ -183,7 +183,7 @@ export function VoicePanel({
         </p>
         {state.phase === 'intro' ? (
           <>
-            <p className="text-xs text-muted-fg">{copy.micNote}</p>
+            <p className="text-ui-s text-muted-fg">{copy.micNote}</p>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"

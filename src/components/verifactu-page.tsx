@@ -51,7 +51,6 @@ export function VerifactuPage({
               id: row.id,
               cells: [row.who, row.date],
             }))}
-            dataColumns={[1]}
           />
           <div className={`mt-8 grid gap-4 ${PROSE}`}>
             <p>{deadlines.announced}</p>

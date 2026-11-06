@@ -147,7 +147,7 @@ function Book() {
           data-ground={BAND.ground}
           className={BAND.bg}
         >
-          <Container className={`max-w-3xl ${BAND.pad}`}>
+          <Container width="narrow" className={BAND.pad}>
             <div className={BAND_CARD}>
               <BookingConfirm
                 confirm={confirmation.copy}
@@ -166,7 +166,7 @@ function Book() {
           data-ground={BAND.ground}
           className={BAND.bg}
         >
-          <Container className={`max-w-3xl ${BAND.pad}`}>
+          <Container width="narrow" className={BAND.pad}>
             <div className={`grid gap-8 ${BAND_CARD}`}>
               <ZoneSelect
                 zone={zone}
@@ -196,7 +196,7 @@ function Book() {
           data-ground={BAND.ground}
           className={BAND.bg}
         >
-          <Container className={`grid max-w-3xl gap-6 ${BAND.pad}`}>
+          <Container width="narrow" className={`grid gap-6 ${BAND.pad}`}>
             <h2 id="book-fallback">{fallback.title}</h2>
             <p className={LEAD}>{fallback.text}</p>
             <Suspense fallback={null}>

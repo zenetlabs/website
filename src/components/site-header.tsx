@@ -1,19 +1,30 @@
-import type { MouseEvent } from 'react';
+import type { FocusEvent, KeyboardEvent, MouseEvent } from 'react';
 import { CtaLink } from '@/components/cta-link';
 import { LanguageSwitch } from '@/components/language-switch';
 import { Logo } from '@/components/logo';
 import { Container } from '@/components/section';
-import { PRIMARY_BUTTON, SECONDARY_BUTTON } from '@/components/ui';
+import { PRIMARY_BUTTON_FULL, SECONDARY_BUTTON_SM } from '@/components/ui';
 import { useCurrentPage } from '@/lib/current-page';
 import { type Locale, useMessages } from '@/lib/i18n';
 import { CTA_TARGET, isCurrent, NAV, navHref } from '@/lib/nav';
 import { pagePath } from '@/lib/page-registry';
 
-const LINK =
-  'rounded-input px-3 py-2 text-sm font-medium text-muted-fg motion-safe:transition-colors motion-safe:duration-200 hover:text-fg aria-[current=page]:text-fg aria-[current=page]:underline aria-[current=page]:decoration-cta aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8';
-
 function closeMenu(event: MouseEvent<HTMLElement>) {
   event.currentTarget.closest('details')?.removeAttribute('open');
+}
+
+function closeOnEscape(event: KeyboardEvent<HTMLDetailsElement>) {
+  if (event.key !== 'Escape' || !event.currentTarget.open) return;
+  event.currentTarget.open = false;
+  event.currentTarget.querySelector('summary')?.focus();
+}
+
+// Focus never wanders behind the open menu: leaving it closes it.
+function closeOnFocusOut(event: FocusEvent<HTMLDetailsElement>) {
+  const next = event.relatedTarget;
+  if (next instanceof Node && !event.currentTarget.contains(next)) {
+    event.currentTarget.open = false;
+  }
 }
 
 export function SiteHeader({ locale }: { locale: Locale }) {
@@ -28,65 +39,73 @@ export function SiteHeader({ locale }: { locale: Locale }) {
   }));
 
   return (
-    <header className="sticky top-0 z-10 border-b border-hairline bg-bg/85 backdrop-blur">
-      <Container className="flex items-center justify-between gap-4 py-3">
+    <header className="sticky top-0 z-30 border-b border-hairline bg-bg">
+      <Container className="flex h-(--header-h) items-center gap-4 md:gap-6">
         <a
           href={home}
           aria-label={nav.home}
-          className="flex items-center gap-2.5 whitespace-nowrap rounded-input font-semibold"
+          className="flex min-h-11 shrink-0 items-center rounded-input"
         >
           <Logo />
-          Zenet Labs
         </a>
-        <nav aria-label={nav.primary} className="hidden items-center md:flex">
+        <nav
+          aria-label={nav.primary}
+          className="hidden items-center gap-1 md:flex lg:ml-4"
+        >
           {links.map((link) => (
             <a
               key={link.href}
               href={link.href}
               aria-current={link.current ? 'page' : undefined}
-              className={LINK}
+              className="nav-link"
             >
               {link.label}
             </a>
           ))}
         </nav>
-        <div className="flex items-center gap-2 sm:gap-3">
-          <LanguageSwitch locale={locale} />
+        <div className="ml-auto flex items-center gap-3">
+          <LanguageSwitch locale={locale} className="max-md:hidden" />
           <CtaLink
             cta="header"
             href={cta}
-            className={`${SECONDARY_BUTTON} max-lg:hidden`}
+            className={`${SECONDARY_BUTTON_SM} max-lg:hidden`}
           >
             {nav.cta}
           </CtaLink>
-          <details className="group md:hidden">
-            <summary className="flex min-h-10 cursor-pointer list-none items-center rounded-input border border-border px-2.5 text-sm font-medium [&::-webkit-details-marker]:hidden">
-              {nav.menu}
+          <details
+            className="md:hidden"
+            onKeyDown={closeOnEscape}
+            onBlur={closeOnFocusOut}
+          >
+            <summary className="menu-toggle">
+              <span className="sr-only">{nav.menu}</span>
+              <span aria-hidden="true" className="menu-bar" />
+              <span aria-hidden="true" className="menu-bar" />
             </summary>
-            <nav
-              aria-label={nav.primary}
-              className="absolute inset-x-0 top-full grid gap-1 border-b border-hairline bg-bg px-6 py-4 shadow-raised"
-            >
-              {links.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  aria-current={link.current ? 'page' : undefined}
-                  onClick={closeMenu}
-                  className="rounded-input py-3 text-base font-medium"
-                >
-                  {link.label}
-                </a>
-              ))}
+            <div className="menu-panel">
+              <nav aria-label={nav.primary}>
+                {links.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    aria-current={link.current ? 'page' : undefined}
+                    onClick={closeMenu}
+                    className="menu-link"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </nav>
               <CtaLink
                 cta="header_menu"
                 href={cta}
                 onClick={closeMenu}
-                className={`${PRIMARY_BUTTON} mt-2`}
+                className={`${PRIMARY_BUTTON_FULL} mt-8`}
               >
                 {nav.cta}
               </CtaLink>
-            </nav>
+              <LanguageSwitch locale={locale} className="mt-4 -ml-3" />
+            </div>
           </details>
         </div>
       </Container>

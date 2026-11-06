@@ -31,32 +31,32 @@ for (const url of [...PAGES, ...CALCULATOR_RESULTS]) {
 
 type Switch = readonly [
   from: string,
-  label: 'ES' | 'EN',
+  label: 'Español' | 'English',
   to: string,
   lang: string,
 ];
 
 const SWITCHES: ReadonlyArray<Switch> = [
   ...PAIRS.flatMap((pair): Switch[] => [
-    [pair.en, 'ES', pair.es, 'es'],
-    [pair.es, 'EN', pair.en, 'en'],
+    [pair.en, 'Español', pair.es, 'es'],
+    [pair.es, 'English', pair.en, 'en'],
   ]),
-  ['/privacy?x=1', 'ES', '/es/privacidad?x=1', 'es'],
+  ['/privacy?x=1', 'Español', '/es/privacidad?x=1', 'es'],
   ...HOLDED_PAGES.map(
-    (path): Switch => [path, 'EN', '/services/integrations', 'en'],
+    (path): Switch => [path, 'English', '/services/integrations', 'en'],
   ),
-  [VERIFACTU_PAGE, 'EN', '/', 'en'],
-  [SECTOR_PAGE, 'EN', '/', 'en'],
-  ['/es/aviso-legal', 'EN', '/', 'en'],
-  ['/es/aviso-legal?x=1', 'EN', '/', 'en'],
+  [VERIFACTU_PAGE, 'English', '/', 'en'],
+  [SECTOR_PAGE, 'English', '/', 'en'],
+  ['/es/aviso-legal', 'English', '/', 'en'],
+  ['/es/aviso-legal?x=1', 'English', '/', 'en'],
   [
     '/es/servicios/integraciones/holded-hubspot?x=1',
-    'EN',
+    'English',
     '/services/integrations',
     'en',
   ],
-  ['/nope', 'ES', '/es', 'es'],
-  ['/es/nope', 'EN', '/', 'en'],
+  ['/nope', 'Español', '/es', 'es'],
+  ['/es/nope', 'English', '/', 'en'],
 ];
 
 for (const [from, label, to, lang] of SWITCHES) {

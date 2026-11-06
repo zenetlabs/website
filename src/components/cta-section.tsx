@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { CtaLink } from '@/components/cta-link';
 import { Container } from '@/components/section';
 import { sectionFrame } from '@/components/section-frame';
-import { LEAD, PRIMARY_BUTTON_LG, TEXT_LINK } from '@/components/ui';
+import { LEAD, PRIMARY_BUTTON_FULL, TEXT_LINK } from '@/components/ui';
 import type { Locale } from '@/lib/i18n';
 import { CTA_TARGET, navHref } from '@/lib/nav';
 import type { CtaId } from '@/lib/track';
@@ -32,7 +32,7 @@ export function CtaSection({
           <CtaLink
             cta={cta}
             href={navHref(locale, CTA_TARGET)}
-            className={PRIMARY_BUTTON_LG}
+            className={PRIMARY_BUTTON_FULL}
           >
             {copy.button}
           </CtaLink>

@@ -53,7 +53,7 @@ function ServicesHub() {
       <section data-ground="paper">
         <Container className="py-12 md:py-24">
           <h1 className="max-w-4xl">
-            <EmphasisTitle parts={hub.title} marker />
+            <EmphasisTitle parts={hub.title} />
           </h1>
           <p className={`mt-6 ${LEAD}`}>{hub.lead}</p>
         </Container>

@@ -6,7 +6,7 @@ import {
   EYEBROW,
   H3,
   LEAD,
-  PRIMARY_BUTTON_LG,
+  PRIMARY_BUTTON_FULL,
   TEXT_LINK,
 } from '@/components/ui';
 import type {
@@ -82,7 +82,7 @@ export function HeroHeading({
   return (
     <>
       <h1 id="service-title" className={`${top}max-w-4xl`}>
-        <EmphasisTitle parts={title} marker />
+        <EmphasisTitle parts={title} />
       </h1>
       <p className={`mt-6 ${LEAD}`}>{lead}</p>
     </>
@@ -96,7 +96,6 @@ export function FactList({
     id: string;
     label: string;
     value: string;
-    mono?: boolean;
     highlight?: boolean;
   }[];
 }) {
@@ -105,11 +104,7 @@ export function FactList({
       {facts.map((fact) => (
         <div key={fact.id} className={fact.highlight ? 'fact-highlight' : ''}>
           <dt className={EYEBROW}>{fact.label}</dt>
-          <dd
-            className={`mt-1.5 text-ui-m md:text-base ${fact.mono ? 'font-mono tabular-nums' : ''}`}
-          >
-            {fact.value}
-          </dd>
+          <dd className="mt-1.5 text-ui-m md:text-base">{fact.value}</dd>
         </div>
       ))}
     </dl>
@@ -149,7 +144,6 @@ export function FactsHero({
               id: 'price',
               label: labels.price,
               value: `${formatPriceSummary(locale, services[serviceId].prices)} (${labels.taxNote})`,
-              mono: true,
               highlight: true,
             },
             { id: 'timeline', label: labels.timeline, value: facts.timeline },
@@ -160,7 +154,7 @@ export function FactsHero({
           <CtaLink
             cta="page_hero"
             href={navHref(locale, CTA_TARGET)}
-            className={PRIMARY_BUTTON_LG}
+            className={PRIMARY_BUTTON_FULL}
           >
             {button}
           </CtaLink>
@@ -281,15 +275,12 @@ export function DataTable({
   columns,
   rows,
   iconColumn,
-  dataColumns = [],
 }: {
   labelledBy: string;
   columns: readonly string[];
   rows: readonly { id: string; cells: readonly string[] }[];
   iconColumn?: number;
-  dataColumns?: readonly number[];
 }) {
-  const dataSet = new Set(dataColumns);
   return (
     <table aria-labelledby={labelledBy} className="data-table">
       <thead>
@@ -318,7 +309,7 @@ export function DataTable({
               <td
                 key={columns[index + 1]}
                 data-label={columns[index + 1]}
-                className={`py-0.5 pr-4 text-fg-soft sm:py-4 ${dataSet.has(index + 1) ? 'font-mono tabular-nums' : ''}`}
+                className="py-0.5 pr-4 text-fg-soft sm:py-4"
               >
                 {iconColumn === index + 1 ? (
                   <span

@@ -4,8 +4,8 @@
   "description": "We connect your ERP, shop, CRM and WhatsApp and put AI agents on the manual work, so your team stops copying data by hand. Fixed-price diagnostic.",
   "start_url": "/",
   "display": "browser",
-  "background_color": "#f6f4ee",
-  "theme_color": "#f6f4ee",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "icons": [
     { "src": "/icons/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/icons/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" },

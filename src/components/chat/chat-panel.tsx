@@ -109,7 +109,7 @@ function ChatHeader({
         >
           {copy.title}
         </h2>
-        <span className="rounded-input border border-border px-1.5 py-0.5 font-mono text-xs">
+        <span className="rounded-input border border-border px-1.5 py-0.5 text-label font-semibold">
           {copy.badge}
         </span>
       </div>
@@ -127,7 +127,7 @@ function ChatHeader({
           type="button"
           aria-label={copy.close}
           onClick={onClose}
-          className="inline-flex size-11 items-center justify-center rounded-input hover:bg-surface"
+          className="inline-flex size-11 items-center justify-center rounded-input pointer-fine:hover:bg-tint"
         >
           <svg
             aria-hidden="true"
@@ -179,7 +179,7 @@ function ChatLog({
               </a>
             </li>
           ) : item.kind === 'notice' ? (
-            <li key={item.id} className="text-xs text-muted-fg">
+            <li key={item.id} className="text-ui-s text-muted-fg">
               {item.text}
             </li>
           ) : (
@@ -287,7 +287,7 @@ function ChatAlerts({
 function ChatStatusLine({ copy, state }: { copy: ChatCopy; state: ChatState }) {
   const status = statusText(state, copy);
   return (
-    <p role="status" className="min-h-6 px-4 text-xs text-muted-fg">
+    <p role="status" className="min-h-6 px-4 text-ui-s text-muted-fg">
       {status}
       {status === '' &&
       state.remaining !== null &&
@@ -441,7 +441,7 @@ export function ChatPanel({
         />
         <p
           id={noticeId}
-          className="border-b border-hairline px-4 py-2 text-xs leading-snug text-muted-fg"
+          className="border-b border-hairline px-4 py-2 text-ui-s leading-snug text-muted-fg"
         >
           {copy.notice}{' '}
           <a href={pagePath(locale, 'privacy')} className={TEXT_LINK}>

@@ -41,7 +41,7 @@ export function CaseStudyPage({
       <header>
         <Container className="py-12 md:py-24">
           <HeroHeading title={copy.title} lead={copy.lead} />
-          <p className="mt-6 font-mono text-ui-s tabular-nums text-muted-fg">
+          <p className="mt-6 text-ui-s text-muted-fg">
             {copy.labels.published}{' '}
             <time dateTime={copy.published}>
               {dayMonthYear(copy.published)}

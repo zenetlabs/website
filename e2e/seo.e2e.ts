@@ -207,20 +207,14 @@ test('robots and sitemap are served', async ({ request }) => {
   expect(text).toContain('Disallow: /internal/');
 });
 
-test('page HTML preloads only the serif and body fonts', async ({
-  request,
-}) => {
+test('page HTML preloads the one face, once', async ({ request }) => {
   const html = await (await request.get('/')).text();
-  const preloads = (html.match(/<link[^>]*>/g) ?? []).filter((tag) =>
-    tag.includes('rel="preload"'),
+  const preloads = (html.match(/<link[^>]*>/g) ?? []).filter(
+    (tag) => tag.includes('rel="preload"') && tag.includes('as="font"'),
   );
-  expect(preloads).toHaveLength(3);
-  expect(
-    preloads.filter(
-      (tag) =>
-        !tag.includes('instrument-serif') && !tag.includes('inter-latin'),
-    ),
-  ).toEqual([]);
+  expect(preloads).toHaveLength(1);
+  expect(preloads[0]).toContain('schibsted-grotesk-latin-wght-normal');
+  expect(preloads[0]).toContain('crossorigin="anonymous"');
 });
 
 test('every page renders a distinct title', async ({ request }) => {
