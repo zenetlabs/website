@@ -1,10 +1,10 @@
 # Owner checklist
 
-As of 2026-11-01 (R13 final QA). The canonical copy of this list; `~/vault/projects/zenetlabs-website/owner-checklist.md` is a scrubbed snapshot. Procedures are in the [runbook](RUNBOOK.md); this file only says what needs you, where, and what it unblocks.
+As of 2026-11-01 (R13 final QA); booking went live on 2026-11-06 (see the Booking item and RB 9). The canonical copy of this list; `~/vault/projects/zenetlabs-website/owner-checklist.md` is a scrubbed snapshot. Procedures are in the [runbook](RUNBOOK.md); this file only says what needs you, where, and what it unblocks.
 
 The `TODO(albert)` appendix is a snapshot: its line numbers go stale as files change. Regenerate it with `git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'`.
 
-Everything below needs the owner (a login, a decision or a value only you hold). Ordered by priority. "RB" is a section of the [runbook](RUNBOOK.md). Placeholders such as `<store-id>` are never replaced with real values in a document. Production state on the date above: every optional feature but GA4 is dark (booking, calculator, assistant, voice), WebMCP is on, GA4 measures consenting visitors only, and Cloudflare Web Analytics is the cookieless traffic source of truth.
+Everything below needs the owner (a login, a decision or a value only you hold). Ordered by priority. "RB" is a section of the [runbook](RUNBOOK.md). Placeholders such as `<store-id>` are never replaced with real values in a document. Production state on the date above: booking and GA4 are live (calculator, assistant and voice are dark), WebMCP is on, GA4 measures consenting visitors only, and Cloudflare Web Analytics is the cookieless traffic source of truth.
 
 ## Already done (no action)
 
@@ -41,7 +41,7 @@ All items are `TODO(albert)` markers listed in the appendix. Groups:
 Each one: do the prerequisites, then the flip PR in RB 9 (one flag per PR, one at a time). Suggested order: Access, entity address and legal review first; then GA4 (so launches are measured); booking; calculator; assistant; voice. The WebMCP origin-trial token can go in at any time.
 
 - **GA4.** The code is live with the measurement ID. Property settings per [analytics.md](analytics.md) section 5 (14-month retention, Google signals off, enhanced measurement without form interactions and video, data processing terms, the `method` and `cta_id` dimensions, `generate_lead` and `book_meeting` as key events, the Search Console link, history-change page views and site search off, account-level data sharing off, data redaction for email and query parameters). After the deploy: the Tag Assistant and cookie checks, and keep Cloudflare Zaraz and the Google tag gateway off. Review the consent copy (`consent.ts`).
-- **Booking.** G1 to G11: Google Cloud project, Calendar API, service account with a JSON key, domain-wide delegation for `calendar.events.owned` and `calendar.freebusy` on the booking user, Meet enabled, a test calendar, the key bundle (with `subject`, `calendar_id` and `test_calendar_id`) pasted into `ZENETLABS_PROD_GOOGLE_CALENDAR` (RB 6), then `/api/health` shows `booking:true`. Review `book.ts`, the call windows and the 14-day horizon (`booking-rules.ts`), the "free, no commitment" wording, and do the `[TEST]` acceptance booking on a preview alias built with the flag on. Calendar events are deleted automatically 24 months after the booking (the 03:00 tick, RB 8). Every booking now needs the visitor's click on an emailed link, so: **the cancel link** in each owner email (`Cancel this booking: …`) opens a page with the booking and one button, "Cancel the call and email the visitor"; one click on the link and one on the button deletes the event (Google tells the guest) and sends our cancellation email; opening the link alone never cancels. A re-sent owner email carries a new link and only the newest works. **The Resend quota**: confirmation emails are capped at 40 a day site-wide, 3 per address and 5 per connection (RB 7), well inside Resend's daily limit for the plan; check the plan's daily and monthly quota before the flip and raise the site cap only with it. Key hygiene: rotate by creating a new key, updating the secret and deleting the old key; revoke by deleting the key or the delegation entry.
+- **Booking.** Done 2026-11-06: the owner steps and the preview acceptance passed, and the flag is on. What remains is the owner's own real booking after the deploy (RB 9). The steps for reference: G1 to G11: Google Cloud project, Calendar API, service account with a JSON key, domain-wide delegation for `calendar.events.owned` and `calendar.freebusy` on the booking user, Meet enabled, a test calendar, the key bundle (with `subject`, `calendar_id` and `test_calendar_id`) pasted into `ZENETLABS_PROD_GOOGLE_CALENDAR` (RB 6), then `/api/health` shows `booking:true`. Review `book.ts`, the call windows and the 14-day horizon (`booking-rules.ts`), the "free, no commitment" wording, and do the `[TEST]` acceptance booking on a preview alias built with the flag on. Calendar events are deleted automatically 24 months after the booking (the 03:00 tick, RB 8). Every booking now needs the visitor's click on an emailed link, so: **the cancel link** in each owner email (`Cancel this booking: …`) opens a page with the booking and one button, "Cancel the call and email the visitor"; one click on the link and one on the button deletes the event (Google tells the guest) and sends our cancellation email; opening the link alone never cancels. A re-sent owner email carries a new link and only the newest works. **The Resend quota**: confirmation emails are capped at 40 a day site-wide, 3 per address and 5 per connection (RB 7), well inside Resend's daily limit for the plan; check the plan's daily and monthly quota before the flip and raise the site cap only with it. Key hygiene: rotate by creating a new key, updating the secret and deleting the old key; revoke by deleting the key or the delegation entry.
 - **Calculator.** Review every coefficient, cap, the discount and uplift rules, the maintenance thresholds, the "Request a call" wording and the privacy sentence (`pricing-rules.ts`). Flip in RB 9.
 - **Assistant.** The account is on Workers Paid: raise `dailyNeuronBudget` to the spend you want; optionally create an AI Gateway (logs off, cache off; send the name); review the prompt, widget copy, notice, retention and budget; run the question set on a preview alias; then flip. If the first deploy with the `AI` binding fails with an authentication error naming AI, add Account, Workers AI, Read to the deploy token.
 - **Voice** (needs booking first). ElevenLabs account on a plan with enough minutes, DPA accepted and training opt-outs checked; an API key restricted to Agents with a credit limit into `ZENETLABS_PROD_ELEVENLABS_API_KEY`; a tool secret into `ZENETLABS_PROD_ELEVENLABS_TOOL_SECRET`; `pnpm voice:plan` then `pnpm voice:apply` (prints the two agent ids); optionally the GitHub `production` environment secret `ELEVENLABS_API_KEY` so every deploy re-syncs the agents; Bot Fight Mode off for `zenetlabs.com`; review the spoken messages, caps (30 calls a day, 5 minutes each, up to about US$360 a month at the cap) and the model; confirm the ElevenLabs DPA and EU-US data transfer wording on the privacy pages; then flip.
@@ -62,25 +62,24 @@ Each one: do the prerequisites, then the flip PR in RB 9 (one flag per PR, one a
 
 ## Appendix: every `TODO(albert)` in the repo
 
-210 markers in 60 files. Regenerate before each review session with:
+212 markers in 64 files. Regenerate before each review session with:
 
 ```sh
 git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'
 ```
 
-### Site config (11)
+### Site config (10)
 
-- `site.config.ts:43` set true after reviewing src/content/pricing-rules.ts
-- `site.config.ts:45` set true once the Google Calendar secret exists and /api/health reports booking:true (docs/ai-assistant.md "Booking activation")
-- `site.config.ts:47` set true after the model bake-off passes (docs/ai-assistant.md "Activation")
-- `site.config.ts:52` optional WebMCP origin-trial token for https://zenetlabs.com (docs/ai-assistant.md "WebMCP")
-- `site.config.ts:56` set true once the ElevenLabs agents exist and /api/health reports voice:true (docs/ai-assistant.md "Voice activation"); needs booking.published first
-- `site.config.ts:58` the agent ids printed by pnpm voice:apply
-- `site.config.ts:128` confirm the lead notification address
-- `site.config.ts:142` confirm the model after the bake-off (pnpm eval:chat against a preview alias)
-- `site.config.ts:144` AI Gateway name (docs/ai-assistant.md "AI Gateway"); null calls Workers AI directly
-- `site.config.ts:146` set the daily neuron budget to the spend you want (Workers Paid)
-- `site.config.ts:153` the most voice calls a UTC day can start, previews included, across both locales. At most 30 x 5 minutes = 150 minutes a day: about US$12 a day at US$...
+- `site.config.ts:42` set true after reviewing src/content/pricing-rules.ts
+- `site.config.ts:45` set true after the model bake-off passes (docs/ai-assistant.md "Activation")
+- `site.config.ts:50` optional WebMCP origin-trial token for https://zenetlabs.com (docs/ai-assistant.md "WebMCP")
+- `site.config.ts:54` set true once the ElevenLabs agents exist and /api/health reports voice:true (docs/ai-assistant.md "Voice activation"); needs booking.published first
+- `site.config.ts:56` the agent ids printed by pnpm voice:apply
+- `site.config.ts:148` confirm the lead notification address
+- `site.config.ts:169` confirm the model after the bake-off (pnpm eval:chat against a preview alias)
+- `site.config.ts:171` AI Gateway name (docs/ai-assistant.md "AI Gateway"); null calls Workers AI directly
+- `site.config.ts:173` set the daily neuron budget to the spend you want (Workers Paid)
+- `site.config.ts:180` the most voice calls a UTC day can start, previews included, across both locales. At most 30 x 5 minutes = 150 minutes a day: about US$12 a day at US$...
 
 ### Calculator pricing rules (43)
 
@@ -128,7 +127,7 @@ git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'
 - `src/content/pricing-rules.ts:88` (a coefficient or value to confirm; see the line)
 - `src/content/pricing-rules.ts:89` (a coefficient or value to confirm; see the line)
 
-### Service pages and the services hub (58)
+### Service pages and the services hub (66)
 
 - `src/content/en/service-pages/agents.ts:1` review this page: timelines, the case, the FAQ answers
 - `src/content/en/service-pages/agents.ts:23` confirm the timeline
@@ -188,6 +187,14 @@ git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'
 - `src/content/es/service-pages/training.ts:94` confirm the case
 - `src/content/es/services-hub.ts:20` review the "consultoría pequeña" claim
 - `src/content/es/services.ts:79` tier names and scope
+- `src/content/en/service-pages/diagnostic.ts:1` review this page: the steps, the case, the FAQ answers
+- `src/content/en/service-pages/diagnostic.ts:90` confirm the case
+- `src/content/en/service-pages/maintenance.ts:1` review this page: the tiers, the case, the FAQ answers
+- `src/content/en/service-pages/maintenance.ts:91` confirm the case
+- `src/content/es/service-pages/diagnostic.ts:1` review this page: the steps, the case, the FAQ answers
+- `src/content/es/service-pages/diagnostic.ts:91` confirm the case
+- `src/content/es/service-pages/maintenance.ts:1` review this page: the tiers, the case, the FAQ answers
+- `src/content/es/service-pages/maintenance.ts:91` confirm the case
 
 ### Es landing pages (Holded, Verifactu, travel agencies) (30)
 
@@ -253,21 +260,21 @@ git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'
 - `src/routes/{-$locale}/-legal/cookies-es.tsx:1` counsel sign-off of the 2026-11-05 draft
 - `src/routes/{-$locale}/-legal/legal-notice-es.tsx:1` counsel sign-off of the 2026-11-05 draft
 - `src/routes/{-$locale}/-legal/privacy-en.tsx:1` counsel sign-off of the 2026-11-05 draft
-- `src/routes/{-$locale}/-legal/privacy-en.tsx:343` counsel to confirm whether GDPR Art. 3(2) reaches the English pages and, if it does, whether the Art. 27(2) exemption applies or an EU representative...
+- `src/routes/{-$locale}/-legal/privacy-en.tsx:360` counsel to confirm whether GDPR Art. 3(2) reaches the English pages and, if it does, whether the Art. 27(2) exemption applies or an EU representative...
 - `src/routes/{-$locale}/-legal/privacy-es.tsx:1` counsel sign-off of the 2026-11-05 draft
 - `src/routes/{-$locale}/-legal/privacy-extras-en.tsx:1` counsel sign-off of the 2026-11-05 draft
-- `src/routes/{-$locale}/-legal/privacy-extras-en.tsx:178` confirm ElevenLabs' DPA covers the plan you are on and whether ElevenLabs Inc. is certified under the EU–US Data Privacy Framework; if it is, add it h...
+- `src/routes/{-$locale}/-legal/privacy-extras-en.tsx:182` confirm ElevenLabs' DPA covers the plan you are on and whether ElevenLabs Inc. is certified under the EU–US Data Privacy Framework; if it is, add it h...
 - `src/routes/{-$locale}/-legal/privacy-extras-es.tsx:1` counsel sign-off of the 2026-11-05 draft
-- `src/routes/{-$locale}/-legal/privacy-extras-es.tsx:181` confirmar que el DPA de ElevenLabs cubre el plan contratado y si ElevenLabs Inc. está certificada en el Marco de Privacidad de Datos UE-EE. UU.; si lo...
+- `src/routes/{-$locale}/-legal/privacy-extras-es.tsx:184` confirmar que el DPA de ElevenLabs cubre el plan contratado y si ElevenLabs Inc. está certificada en el Marco de Privacidad de Datos UE-EE. UU.; si lo...
 
 ### Assistant, voice and WebMCP copy and rules (10)
 
-- `src/content/en/chat.ts:3` review the widget copy
+- `src/content/en/chat.ts:4` review the widget copy
 - `src/content/en/voice.ts:4` review the voice copy
-- `src/content/en/webmcp.ts:3` review the WebMCP tool titles, the agent-facing notes and the confirmation dialog copy
-- `src/content/es/chat.ts:3` review the widget copy
+- `src/content/en/webmcp.ts:4` review the WebMCP tool titles, the agent-facing notes and the confirmation dialog copy
+- `src/content/es/chat.ts:4` review the widget copy
 - `src/content/es/voice.ts:4` revisar el texto de voz
-- `src/content/es/webmcp.ts:3` review the WebMCP tool titles, the agent-facing notes and the confirmation dialog copy
+- `src/content/es/webmcp.ts:4` review the WebMCP tool titles, the agent-facing notes and the confirmation dialog copy
 - `src/server/chat/prompt.ts:13` review the assistant's rules and tone
 - `src/server/voice/agent-config.ts:18` review the spoken messages. Neither promises a booking while
 - `src/server/voice/prompt.ts:12` review the voice rules and tone
@@ -275,24 +282,24 @@ git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'
 
 ### Home, pricing, about, FAQ, founder, booking and emails (21)
 
-- `src/content/booking-rules.ts:14` confirm the call windows (Europe/Madrid wall clock, ISO weekdays 1-7).
-- `src/content/booking-rules.ts:16` confirm the 14-day booking horizon.
+- `src/content/booking-rules.ts:15` confirm the call windows (Europe/Madrid wall clock, ISO weekdays 1-7).
+- `src/content/booking-rules.ts:17` confirm the 14-day booking horizon.
 - `src/content/en/about.ts:15` confirm the studio description
 - `src/content/en/about.ts:28` confirm
 - `src/content/en/about.ts:40` confirm
-- `src/content/en/book.ts:3` review the copy, including "free, no commitment" and the call being the step before the paid diagnostic
+- `src/content/en/book.ts:4` review the copy, including "free, no commitment" and the call being the step before the paid diagnostic
 - `src/content/en/faq.ts:1` review answers
 - `src/content/en/founder.ts:11` founder photo (WebP ≤ 40 KB, 2× the rendered size) under public/, then set { src, width, height }
 - `src/content/en/founder.ts:13` LinkedIn / GitHub URLs
-- `src/content/en/home.ts:124` confirm the founder section title
+- `src/content/en/home.ts:125` confirm the founder section title
 - `src/content/en/pricing.ts:22` confirm every list
 - `src/content/en/pricing.ts:84` confirm
 - `src/content/en/pricing.ts:86` confirm
-- `src/content/es/book.ts:3` revisar el texto, incluido "gratis, sin compromiso" y que la llamada sea el paso previo al diagnóstico de pago
+- `src/content/es/book.ts:4` revisar el texto, incluido "gratis, sin compromiso" y que la llamada sea el paso previo al diagnóstico de pago
 - `src/content/es/faq.ts:1` review answers
 - `src/content/es/founder.ts:11` founder photo (WebP ≤ 40 KB, 2× the rendered size) under public/, then set { src, width, height }
 - `src/content/es/founder.ts:13` LinkedIn / GitHub URLs
 - `src/content/es/home.ts:82` confirm Holded shows its declaración responsable for the current version
 - `src/content/es/pricing.ts:22` confirm every list
-- `src/server/lead-emails.ts:221` review the booking confirmation copy
-- `src/server/lead-emails.ts:249` review the confirmation copy and the two-working-days promise
+- `src/server/lead-emails.ts:238` review the booking confirmation copy
+- `src/server/lead-emails.ts:267` review the confirmation copy and the two-working-days promise

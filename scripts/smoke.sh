@@ -157,6 +157,11 @@ attempt "tools manifest lists get_pricing" body_contains "${SITE}/api/tools" '"g
 attempt "405 GET /api/tools/get_pricing" status_is 405 "${SITE}/api/tools/get_pricing"
 attempt "get_pricing answers 200" post_json_status_is 200 "${SITE}/api/tools/get_pricing" '{}'
 attempt "check_availability answers 200 (ok or unavailable)" post_json_status_is 200 "${SITE}/api/tools/check_availability" '{}'
+if grep -qF '"booking":true' <<<"$(curl -s --max-time 20 "${SITE}/api/health")"; then
+  attempt "tools manifest lists book_meeting" body_contains "${SITE}/api/tools" '"book_meeting"'
+  attempt "200 ${SITE}/book" status_is 200 "${SITE}/book"
+  attempt "200 ${SITE}/es/reservar" status_is 200 "${SITE}/es/reservar"
+fi
 attempt "book_meeting without Origin is 403" post_json_status_is 403 "${SITE}/api/tools/book_meeting" '{}'
 attempt "book_meeting with a wrong bearer is 401" post_json_status_is 401 "${SITE}/api/tools/book_meeting" '{}' -H 'Authorization: Bearer smoke-check'
 attempt "get_pricing with a wrong bearer is 401" post_json_status_is 401 "${SITE}/api/tools/get_pricing" '{}' -H 'Authorization: Bearer smoke-check'

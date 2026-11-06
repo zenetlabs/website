@@ -115,11 +115,19 @@ describe('runNavigate', () => {
       ok: false,
       error: 'unknown_target',
     });
-    expect(runNavigate({ page: 'book' }, run.value)).toEqual({
+    expect(runNavigate({ page: 'calculator' }, run.value)).toEqual({
       ok: false,
       error: 'unknown_target',
     });
     expect(run.tasks).toHaveLength(0);
+  });
+
+  it('offers the booking page now that it is published', () => {
+    const run = deps('/');
+    expect(runNavigate({ page: 'book' }, run.value)).toEqual({
+      ok: true,
+      result: { url: '/book' },
+    });
   });
 
   it('only ever produces same-origin paths', () => {

@@ -82,10 +82,10 @@ export const PAGES: Record<
 > &
   Record<ServicePageId, ServicePageEntry> &
   Record<LandingPageId, LandingPageEntry> = {
-  home: { slugs: { en: '/', es: '/' }, lastmod: '2026-11-05' },
+  home: { slugs: { en: '/', es: '/' }, lastmod: '2026-11-06' },
   services: {
     slugs: { en: '/services', es: '/servicios' },
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   diagnostic: {
     slugs: {
@@ -95,7 +95,7 @@ export const PAGES: Record<
     kind: 'service',
     parent: 'services',
     service: 'diagnostic',
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   automation: {
     slugs: {
@@ -105,7 +105,7 @@ export const PAGES: Record<
     kind: 'service',
     parent: 'services',
     service: 'integration',
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   integrations: {
     slugs: {
@@ -115,14 +115,14 @@ export const PAGES: Record<
     kind: 'service',
     parent: 'services',
     service: 'integration',
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   agents: {
     slugs: { en: '/services/ai-agents', es: '/servicios/agentes-de-ia' },
     kind: 'service',
     parent: 'services',
     service: 'agent',
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   software: {
     slugs: {
@@ -132,7 +132,7 @@ export const PAGES: Record<
     kind: 'service',
     parent: 'services',
     service: 'web',
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   training: {
     slugs: {
@@ -142,7 +142,7 @@ export const PAGES: Record<
     kind: 'service',
     parent: 'services',
     service: 'training',
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   maintenance: {
     slugs: {
@@ -152,72 +152,72 @@ export const PAGES: Record<
     kind: 'service',
     parent: 'services',
     service: 'maintenance',
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   holdedPrestashop: {
     slugs: { es: '/servicios/integraciones/holded-prestashop' },
     route: '/services/integrations/holded-prestashop',
     parent: 'integrations',
     service: 'integration',
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   holdedWoocommerce: {
     slugs: { es: '/servicios/integraciones/holded-woocommerce' },
     route: '/services/integrations/holded-woocommerce',
     parent: 'integrations',
     service: 'integration',
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   holdedHubspot: {
     slugs: { es: '/servicios/integraciones/holded-hubspot' },
     route: '/services/integrations/holded-hubspot',
     parent: 'integrations',
     service: 'integration',
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   verifactu: {
     slugs: { es: '/verifactu-integracion' },
     route: '/verifactu',
     service: 'integration',
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   travelAgencies: {
     slugs: { es: '/sectores/agencias-de-viaje' },
     route: '/industries/travel-agencies',
     service: 'integration',
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   viatsyCase: {
     slugs: { en: '/case-studies/viatsy', es: '/casos/viatsy' },
     parent: 'cases',
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   cases: {
     slugs: { en: '/case-studies', es: '/casos' },
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   contact: {
     slugs: { en: '/contact', es: '/contacto' },
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   pricing: {
     slugs: { en: '/pricing', es: '/precios' },
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   calculator: {
     slugs: { en: '/pricing/calculator', es: '/precios/calculadora' },
     parent: 'pricing',
     flag: 'calculator',
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   about: {
     slugs: { en: '/about', es: '/sobre-nosotros' },
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   book: {
     slugs: { en: '/book', es: '/reservar' },
     flag: 'booking',
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-06',
   },
   privacy: {
     slugs: { en: '/privacy', es: '/privacidad' },

@@ -10,10 +10,10 @@ Conventions: `<store-id>`, `<secret-id>`, `<version-id>`, `<alias>`, `<booking-i
 |---|---|
 | App | TanStack Start SSR on the Worker `prod-zenet-web` (`src/server.ts` is the entry: host and legacy-path 301s first, then the app). English at `/`, Spanish at `/es`. |
 | Domains | 8 custom domains: apex and `www` of `zenetlabs.com`, `zenettech.com`, `zenettechnology.com` and `sabatemartinez.com`. Every host but `zenetlabs.com` answers a 301 to it. |
-| Database | D1 `prod-zenet-web` (EU jurisdiction), binding `DB`, migrations in `migrations/` (0001 to 0005). |
+| Database | D1 `prod-zenet-web` (EU jurisdiction), binding `DB`, migrations in `migrations/` (0001 to 0006). |
 | Analytics | Cloudflare Web Analytics (cookieless, always on). GA4 is on, consent only (`ga4Id` set; `docs/analytics.md`). |
 | Email | Outbound through Resend on `send.zenetlabs.com`; inbound is Google Workspace. |
-| Third parties | Workers AI (binding `AI`, assistant), Google Calendar (booking), ElevenLabs (voice). All three are dark in production. |
+| Third parties | Workers AI (binding `AI`, assistant), Google Calendar (booking), ElevenLabs (voice). Booking is live in production (2026-11-06); the assistant and voice are dark. |
 | Cron | One trigger, `*/10 * * * *`, production only (section 8). |
 | Config | Public per-env values in `site.config.ts` (build time, by `CLOUDFLARE_ENV`); secrets in the Secrets Store, read per request. |
 
@@ -311,7 +311,7 @@ Every recipe below was dry-run on 2026-11-01: the flag was set in the production
 
 | Flag | File | Production | Gates | Kill switch (section 10) |
 |---|---|---|---|---|
-| `booking.published` | `site.config.ts` | `false` | `/book` and `/es/reservar`, the booking tools, `CTA_TARGET` | secret to `unconfigured`, or the flag |
+| `booking.published` | `site.config.ts` | `true` (since 2026-11-06) | `/book` and `/es/reservar`, the booking tools, `CTA_TARGET` | secret to `unconfigured`, or the flag |
 | `calculator.published` | `site.config.ts` | `false` | both calculator URLs, links to them, `estimate_project` | the flag |
 | `ga4Id` | `site.config.ts` | set (`null` turns GA4 off) | banner, consent, GA4, the legal-page variants | the flag |
 | `assistant.published` | `site.config.ts` | `false` | the launcher, the panel, `POST /api/chat`, the privacy section | the flag or the budget |
@@ -328,8 +328,8 @@ Every recipe ends the same way: after the deploy run `bash scripts/smoke.sh`, ch
 
 1. Owner: G1 to G11 ([owner checklist](owner-checklist.md), P2), the secret `ZENETLABS_PROD_GOOGLE_CALENDAR` edited (section 6), `curl -s https://zenetlabs.com/api/health` shows `"booking":true` (booking stays dark while the flag is false).
 2. Acceptance first, on a preview alias built with the flag on (a non-live host uses the test calendar and marks rows `is_test`): `CLOUDFLARE_ENV=production pnpm build` with the flag set, `pnpm exec wrangler versions upload --config dist/server/wrangler.json --preview-alias <alias>`, then in the Orca browser (real Turnstile): a `[TEST] Acceptance` request on `/book` with a mailbox the owner reads, the pending panel, the verify email in the inbox (not spam) with a link to the **alias** origin; `curl -s` and `curl -sI` the link and check the row stays pending (`SELECT status, confirmed_at FROM bookings WHERE is_test=1`); open it, press Confirm, check the event on the test calendar with Meet, the booked email and the owner email with the cancel line; repeat on `/es/reservar` and use the owner's cancel link (event deleted, Google's and our cancellation emails); re-POST a used Turnstile token with `curl` (`captcha`); resend once for the cooldown and the rotation; a disposable address gets `email_not_accepted`. Then clean up (section 5) and **re-upload a dark build under the same alias**.
-3. The flip PR: production `booking: { published: true }`. Update the tests that pin dark: `src/site-config.test.ts`, `src/lib/{llms,markdown-response,nav,navigate-client,page-registry,seo}.test.ts`, `src/routes/{locale-layout,robots-sitemap}.test.ts`. Regenerate the voice agent file (`VITEST_MAX_WORKERS=2 pnpm exec vitest run src/server/voice/agent-config.test.ts -u`; the agents gain the booking tool).
-4. Bumps: `lastmod` for `book` and for every page whose `<main>` changes (the CTA now points to `/book`): all registry pages except privacy, cookies and the aviso legal (25 pages). No `CONSENT_VERSION` bump: the privacy text does not depend on this flag. The header changes on every page (CTA) but is not page content.
+3. The flip PR: production `booking: { published: true }`. Update the tests that pin dark: `src/site-config.test.ts`, `src/lib/{llms,markdown-response,nav,navigate-client,page-registry}.test.ts`, `src/routes/{locale-layout,robots-sitemap}.test.ts`. Regenerate the voice agent file (`VITEST_MAX_WORKERS=2 pnpm exec vitest run src/server/voice/agent-config.test.ts -u`; the agents gain the booking tool).
+4. Bumps: `lastmod` for `book` and for every page whose `<main>` changes (the CTA now points to `/book`): all registry pages except privacy, cookies and the aviso legal (21 pages). No `CONSENT_VERSION` bump: the privacy text does not depend on this flag. The header changes on every page (CTA) but is not page content.
 5. After the deploy: `/book` and `/es/reservar` answer 200 and are in the sitemap and llms files; the manifest lists six tools; `check_availability` returns slots; CTAs go to `/book`; one real booking by the owner as proof, then delete the event; Lighthouse on `/book` and `/es/reservar`.
 
 ### `calculator.published` (level `high`: it bumps `CONSENT_VERSION`)

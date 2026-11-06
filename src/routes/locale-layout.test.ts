@@ -37,9 +37,9 @@ describe('{-$locale} layout', () => {
   );
 
   it.each(['/book', '/es/reservar'])(
-    'answers 404 for %s while booking is unpublished',
+    'serves %s once booking is published',
     async (path) => {
-      expect(hasNotFound(await load(path))).toBe(true);
+      expect(hasNotFound(await load(path))).toBe(false);
     },
   );
 

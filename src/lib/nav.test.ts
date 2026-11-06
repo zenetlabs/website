@@ -11,10 +11,10 @@ describe('navHref', () => {
   });
 
   it.each([
-    ['en', '/contact'],
-    ['es', '/es/contacto'],
+    ['en', '/book'],
+    ['es', '/es/reservar'],
   ] as const satisfies readonly (readonly [Locale, string])[])(
-    'points the CTA in %s at the contact page',
+    'points the CTA in %s at the booking page',
     (locale, expected) => {
       expect(navHref(locale, CTA_TARGET)).toBe(expected);
     },
@@ -39,7 +39,6 @@ describe('ctaTarget', () => {
 
   it('falls back to the contact page while booking is off', () => {
     expect(ctaTarget(flags(false))).toEqual({ page: 'contact' });
-    expect(CTA_TARGET).toEqual(ctaTarget(flags(false)));
   });
 });
 

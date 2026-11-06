@@ -165,7 +165,7 @@ describe.each(locales)('LLMS_TXT %s', (locale) => {
 
   it('links the service pages first among the commercial pages', () => {
     const pages = hrefs(section(text, headings.pages));
-    expect(pages).toHaveLength(locale === 'en' ? 16 : 22);
+    expect(pages).toHaveLength(locale === 'en' ? 17 : 23);
     expect(pages.slice(1, 9)).toEqual([
       markdownUrl(locale, 'services'),
       ...SERVICE_PAGE_IDS.map((page) => markdownUrl(locale, page)),
@@ -544,10 +544,17 @@ describe.each(locales)('the booking page in the llms files (%s)', (locale) => {
     calculator: { published: false },
     booking: { published: true },
   };
+  const UNPUBLISHED = {
+    calculator: { published: false },
+    booking: { published: false },
+  };
   const { book } = SERVICE_BODIES[locale];
 
-  it('is absent while unpublished', () => {
-    for (const text of [LLMS_TXT[locale], LLMS_FULL[locale]]) {
+  it('is absent while unpublished', async () => {
+    for (const text of [
+      await buildLlmsTxt(locale, undefined, UNPUBLISHED),
+      await buildLlmsFull(locale, undefined, UNPUBLISHED),
+    ]) {
       expect(text).not.toContain(pageUrl(locale, 'book'));
       expect(text).not.toContain(markdownUrl(locale, 'book'));
       expect(text).not.toContain(book.llms);

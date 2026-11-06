@@ -31,9 +31,9 @@ describe('siteConfig', () => {
     expect(siteConfig('production').calculator.published).toBe(false);
   });
 
-  it('publishes booking locally but not in production until the calendar exists', () => {
+  it('publishes booking locally and in production', () => {
     expect(siteConfig(undefined).booking.published).toBe(true);
-    expect(siteConfig('production').booking.published).toBe(false);
+    expect(siteConfig('production').booking.published).toBe(true);
   });
 
   it('publishes the assistant locally but not in production until the bake-off passes', () => {

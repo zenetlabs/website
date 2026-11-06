@@ -201,8 +201,8 @@ describe('the calculator page', () => {
 
 describe('pagesIn and slugForms', () => {
   it('lists the pages present in each locale', () => {
-    expect(pagesIn('en')).toHaveLength(16);
-    expect(pagesIn('es')).toHaveLength(22);
+    expect(pagesIn('en')).toHaveLength(17);
+    expect(pagesIn('es')).toHaveLength(23);
     expect(pagesIn('en')).toEqual([
       'home',
       'services',
@@ -212,6 +212,7 @@ describe('pagesIn and slugForms', () => {
       'contact',
       'pricing',
       'about',
+      'book',
       'privacy',
       'cookies',
     ]);
@@ -225,6 +226,7 @@ describe('pagesIn and slugForms', () => {
       'contact',
       'pricing',
       'about',
+      'book',
       'privacy',
       'cookies',
       'legalNotice',
@@ -633,7 +635,7 @@ describe('the booking page', () => {
     expect(isPublished('book', off)).toBe(false);
   });
 
-  it('is off in the production build the tests run against', () => {
-    expect(isPublished('book')).toBe(false);
+  it('is on in the production build the tests run against', () => {
+    expect(isPublished('book')).toBe(true);
   });
 });

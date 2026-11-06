@@ -105,7 +105,7 @@ Nothing reaches the calendar, and the owner hears nothing, until the visitor cli
 
 ### Booking activation
 
-`booking.published` in `site.config.ts` (true locally, false in production) gates the whole feature: the `/book` page (404, and out of the sitemap, llms and `CTA_TARGET`) and the booking API (`check_availability` and `book_meeting` answer `not_configured`, and the page loads no Google). So production stays dark even after the real secret exists. The ordered activation recipe (the secret, the health check, the `[TEST] Acceptance` booking on a preview alias, the flip PR and its checks) is in [RUNBOOK.md](RUNBOOK.md) section 9, `booking.published`. Owner steps G1-G11 (Google Cloud, delegation, the secret bundle) are in the [owner checklist](owner-checklist.md), P2 Booking.
+`booking.published` in `site.config.ts` (true locally, and true in production since 2026-11-06) gates the whole feature: the `/book` page (404 when off, and then out of the sitemap, llms and `CTA_TARGET`, which falls back to the contact page) and the booking API (`check_availability` and `book_meeting` answer `not_configured` when off, and the page loads no Google). The secret is a separate switch: without a valid bundle the page shows the contact form and the tools answer `unavailable`. The ordered activation recipe (the secret, the health check, the `[TEST] Acceptance` booking on a preview alias, the flip PR and its checks) is in [RUNBOOK.md](RUNBOOK.md) section 9, `booking.published`. Owner steps G1-G11 (Google Cloud, delegation, the secret bundle) are in the [owner checklist](owner-checklist.md), P2 Booking.
 
 ### Failure handling
 
