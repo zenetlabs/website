@@ -60,7 +60,7 @@ test('the home markdown keeps content and drops chrome', async ({
   });
   const body = await response.text();
   for (const expected of [
-    '# Stop doing *by hand* what your tools can do on their own.',
+    '# Stop doing *by hand* what your tools can do.',
     '## What we do, and *what it costs*',
     'S$3,000',
     "What do you do, and what don't you do?\n\nWe connect the tools",

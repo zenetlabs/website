@@ -3,7 +3,6 @@ import type { Locale } from '@/lib/i18n';
 import { isRecord } from '@/lib/is-record';
 import type { NavigateSection } from '@/lib/navigate';
 import { PAGE_IDS, type PageId } from '@/lib/page-registry';
-import { HOUR_MS } from '@/lib/time';
 
 export type ChatError = GuardError | 'session' | 'session-full' | 'budget';
 
@@ -21,13 +20,6 @@ const CHAT_ERRORS: Record<ChatError, true> = {
   budget: true,
   unavailable: true,
 };
-
-export const CHAT_LIMITS = {
-  messages: 20,
-  messageChars: 1000,
-  idleMs: 2 * HOUR_MS,
-  absoluteMs: 24 * HOUR_MS,
-} as const;
 
 export type Proposal = { slot: string; topic: string };
 

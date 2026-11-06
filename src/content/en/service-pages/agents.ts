@@ -33,7 +33,7 @@ export const agents = {
   cta: {
     title: 'Pick the first job for an agent',
     text: 'Tell us which task piles up every day. In the diagnostic we check whether an agent can do it reliably and what it would cost to build and run.',
-    button: 'Book a diagnostic',
+    button: 'Book a call',
   },
   useCases: {
     title: {

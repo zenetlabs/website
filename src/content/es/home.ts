@@ -1,5 +1,7 @@
+import { assistantIntro } from '@/content/es/assistant-intro';
 import { cases } from '@/content/es/cases';
 import { companies } from '@/content/es/companies';
+import { diagnosticPlan } from '@/content/es/diagnostic-plan';
 import { verifactuDates } from '@/content/es/verifactu';
 import type { HomeContent } from '@/content/types';
 
@@ -8,30 +10,40 @@ export const home = {
     title: {
       before: 'Deja de hacer ',
       emphasis: 'a mano',
-      after: ' lo que tus herramientas pueden hacer solas.',
+      after: ' lo que puede hacerse solo.',
     },
     lead: 'Conectamos las herramientas que ya usa tu empresa (ERP, tienda online, CRM, WhatsApp, Excel) y ponemos agentes de IA a hacer el trabajo repetitivo, para que tu equipo deje de pasar datos a mano.',
-    primary: 'Reserva un diagnóstico',
+    fact: 'Diagnóstico a precio cerrado por {price}, que se descuenta del proyecto si sigues en 60 días.',
+    primary: 'Reservar una llamada',
     secondary: 'Ver precios',
     audience: 'Para pymes de 10 a 100 personas',
-    diagnostic: 'Diagnóstico',
   },
-  proof: {
-    title: 'Una ejecución de un agente',
-    caption: 'Ejemplo ilustrativo',
-    description:
-      'Una ejecución de un agente: cuadra las facturas de proveedores con los pedidos, responde a las consultas sobre pedidos y prepara el informe semanal de operaciones; después se detiene y pide a una persona que apruebe una devolución.',
-    lines: [
-      'Cuadró las facturas de proveedores con los pedidos',
-      'Respondió a las consultas sobre pedidos',
-      'Preparó el informe semanal de operaciones',
-    ],
-    approval: {
-      title: 'Necesita tu aprobación',
-      detail: 'Una devolución espera a que una persona decida.',
-      approve: 'Aprobar',
-      hold: 'Retener',
+  desk: {
+    label: 'Pregunta al asistente',
+    intro: assistantIntro,
+    human: {
+      title: 'Pregúntanos',
+      welcome:
+        'Pregúntanos lo que quieras sobre tus herramientas y tus procesos. Te responde una persona por correo, normalmente en un día laborable.',
+      label: 'Tu pregunta para nosotros',
+      placeholder: 'Escribe tu pregunta',
     },
+    call: {
+      text: '¿Prefieres hablar? Nuestro asistente de voz es una IA, no una persona: responde tus dudas y te reserva una llamada.',
+      button: 'Llamar al agente',
+    },
+    slots: {
+      title: 'Reserva una llamada de 30 minutos',
+      meta: '30 minutos por Google Meet',
+      group: 'Próximas horas libres',
+      timesIn: 'Hora de {zone}',
+      seeAll: 'Ver todas las horas',
+      seeAvailable: 'Ver horas disponibles',
+      unavailable:
+        'La reserva en línea no está disponible ahora mismo. Envíanos un mensaje y te proponemos una hora.',
+      message: 'Enviar un mensaje',
+    },
+    handoff: 'Trabajas con quien lo construye.',
   },
   companies: {
     title: 'Nuestras propias empresas ya funcionan con agentes',
@@ -94,8 +106,10 @@ export const home = {
     lead: 'Todo proyecto empieza con un diagnóstico a precio cerrado. Precios en euros, IVA no incluido.',
     more: 'Ver todos los precios',
     calculator: 'Calcula tu proyecto',
-    startHere: 'Empieza aquí',
-    book: 'Reserva el diagnóstico',
+    book: 'Reservar el diagnóstico',
+    oneOff: 'Pago único',
+    timeline: '1–2 semanas',
+    plan: { title: 'Tu plan con precio', items: diagnosticPlan },
   },
   process: {
     title: {
@@ -138,14 +152,6 @@ export const home = {
     actors: { tool: 'Tus herramientas', agent: 'Agente', human: 'Una persona' },
     items: cases,
   },
-  founder: {
-    title: {
-      before: 'Trabajas con ',
-      emphasis: 'quien lo construye',
-      after: '',
-    },
-    more: 'Más sobre Albert',
-  },
   faq: {
     title: { before: 'Lo que ', emphasis: 'más', after: ' nos preguntan' },
     groups: [
@@ -167,6 +173,20 @@ export const home = {
     voice: {
       text: '¿Prefieres hablar? Nuestro asistente de voz es una IA, no una persona: responde tus dudas y te reserva una llamada.',
       button: 'Habla con el asistente',
+    },
+  },
+  doors: {
+    ask: {
+      title: 'Pregunta al agente',
+      text: 'Sobre nuestros servicios, precios o cómo trabajamos.',
+    },
+    call: {
+      title: 'Llamar al agente',
+      text: 'Nuestro asistente de voz es una IA, no una persona.',
+    },
+    write: {
+      title: 'Escríbenos',
+      text: 'Usa el formulario de contacto.',
     },
   },
 } satisfies HomeContent;

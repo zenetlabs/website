@@ -21,17 +21,28 @@ export type CtaId =
   | 'services'
   | 'contact_book'
   | 'start_here'
-  | 'sticky';
+  | 'sticky'
+  | 'desk_slot'
+  | 'desk_times'
+  | 'desk_contact'
+  | 'close_contact'
+  | 'close_ask'
+  | 'close_call'
+  | 'desk_call';
+
+// Where a chat was opened from: the floating launcher, the home desk, or the
+// Ask door in the home close.
+export type ChatEntry = 'launcher' | 'desk' | 'close';
 
 type ParamEvents = {
   generate_lead: { method: LeadMethod };
   cta_click: { cta_id: CtaId };
   calculator_complete: { project_type: ProjectType };
+  chat_open: { entry: ChatEntry };
 };
 type PlainEvent =
   | 'book_request'
   | 'book_meeting'
-  | 'chat_open'
   | 'chat_message'
   | 'voice_call_start'
   | 'pricing_view'

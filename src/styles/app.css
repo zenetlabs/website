@@ -34,6 +34,7 @@
   --color-tool-soft: var(--tool-soft);
   --color-human: var(--human);
   --color-human-soft: var(--human-soft);
+  --color-human-ring: var(--human-ring);
   --color-focus: var(--focus);
 
   --radius-input: var(--input-radius);
@@ -85,9 +86,9 @@
   --text-label--letter-spacing: 0.03em;
 
   --spacing-gutter: 1.5rem;
-  --spacing-section: clamp(4.5rem, 2.6rem + 6.4vw, 7.5rem);
+  --spacing-section: clamp(3.5rem, 2rem + 6.4vw, 7.5rem);
   --spacing-section-compact: clamp(3rem, 2.2rem + 3.2vw, 5rem);
-  --spacing-section-band: clamp(4.5rem, 2.4rem + 7.4vw, 8rem);
+  --spacing-section-band: clamp(3.5rem, 1.8rem + 7.4vw, 8rem);
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
@@ -284,6 +285,83 @@
     --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 2v6M15 2v6'/%3E%3Cpath d='M6 8h12v4a6 6 0 01-12 0z'/%3E%3Cpath d='M12 18v4'/%3E%3C/svg%3E");
   }
 
+  .icon-calendar {
+    --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM4 10h16M8 3v4M16 3v4'/%3E%3C/svg%3E");
+  }
+
+  .icon-send {
+    --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 19V5M6 11l6-6 6 6'/%3E%3C/svg%3E");
+  }
+
+  .icon-wave {
+    --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4'/%3E%3C/svg%3E");
+  }
+
+  .icon-phone {
+    --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2'/%3E%3C/svg%3E");
+  }
+
+  .icon-app {
+    --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 9h18M7 6.5h.01M10 6.5h.01'/%3E%3C/svg%3E");
+  }
+
+  /* The home hero: copy on 5 columns, the desk on 7, one screen tall from lg */
+  .hero-grid {
+    @apply grid grid-cols-[minmax(0,1fr)] gap-8 pt-9 pb-10 md:gap-10 md:py-16 lg:min-h-[calc(100svh-var(--header-h))] lg:grid-cols-12 lg:items-center lg:gap-6 lg:py-14;
+  }
+
+  .tier-summary {
+    @apply mt-2 max-w-[34em] text-ui-m text-fg-soft max-sm:hidden;
+  }
+
+  .tier-note {
+    @apply mt-1 block text-ui-s text-fg-soft max-sm:hidden;
+  }
+
+  .plan-list {
+    @apply mt-4 grid gap-2.5 text-ui-s md:gap-3 md:text-ui-m;
+  }
+
+  .hero-fact {
+    @apply mt-4 max-w-[34em] text-ui-m text-fg-soft md:mt-5;
+  }
+
+  .hero-actions {
+    @apply mt-6 flex flex-wrap items-center gap-3 md:mt-8;
+  }
+
+  .offer-links {
+    @apply mt-8 flex flex-wrap gap-x-8 gap-y-3 md:mt-10;
+  }
+
+  .hero-audience {
+    @apply mt-6 text-ui-s text-muted-fg max-sm:hidden;
+  }
+
+  .price-from {
+    @apply block text-ui-s font-normal text-muted-fg;
+  }
+
+  .door-text {
+    @apply block text-ui-s font-normal text-fg-soft;
+  }
+
+  .offer-head {
+    @apply grid gap-5 lg:grid-cols-12 lg:items-end;
+  }
+
+  .job-check {
+    @apply mr-1.5 align-[-0.125em] text-agent;
+  }
+
+  .offer-alongside {
+    @apply mt-4 grid gap-10 border-t border-hairline pt-10 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:gap-14;
+  }
+
+  .tier-list {
+    @apply mt-4 grid auto-cols-fr grid-flow-col gap-x-4 md:mt-5 md:gap-x-6;
+  }
+
   [data-ground="paper"] + [data-ground="paper"] {
     border-top: 1px solid var(--hairline);
   }
@@ -421,7 +499,7 @@
   }
 
   .faq-summary {
-    @apply py-2 text-ui-m font-medium md:py-5 md:text-lg;
+    @apply py-1.5 text-ui-m font-medium md:py-5 md:text-lg;
   }
 
   .faq-answer {
@@ -458,6 +536,12 @@
 
   .company-link {
     @apply flex flex-col items-center gap-2 rounded-input md:items-start;
+  }
+
+  @media (max-width: 767px) {
+    .company-link {
+      --logo-h: 1rem;
+    }
   }
 
   .choice {
@@ -680,7 +764,7 @@
     transition: border-color var(--duration-hover) ease;
   }
 
-  .voice-door > svg {
+  .voice-door > .icon {
     @apply size-5 text-agent;
   }
 
@@ -709,6 +793,31 @@
     .launcher:hover {
       @apply bg-agent-press;
     }
+
+    .desk-chip:hover,
+    .slot-chip:hover {
+      @apply border-agent bg-agent-soft;
+    }
+
+    .desk-send:hover {
+      @apply bg-cta-hover;
+    }
+
+    .desk-call-button:hover {
+      @apply bg-agent-press;
+    }
+
+    .offer-card:hover {
+      @apply border-line-strong;
+    }
+
+    .hover-line:hover {
+      @apply decoration-fg;
+    }
+
+    .handoff:hover {
+      @apply border-line-strong;
+    }
   }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -735,17 +844,316 @@
     }
 
     .launcher:active,
-    .voice-door:active {
+    .voice-door:active,
+    .desk-chip:active,
+    .slot-chip:active,
+    .desk-call-button:active {
       scale: 0.97;
+    }
+
+    .desk-send:active {
+      scale: 0.94;
+    }
+
+    .desk-chip,
+    .slot-chip {
+      transition:
+        border-color var(--duration-hover) ease,
+        background-color var(--duration-hover) ease,
+        scale var(--duration-press) var(--ease-out);
+    }
+
+    .desk-send,
+    .desk-call-button {
+      transition:
+        background-color var(--duration-press) ease-out,
+        scale var(--duration-press) var(--ease-out);
+    }
+
+    .slot-more > .icon {
+      transition: translate var(--duration-hover) var(--ease-out);
     }
   }
 
   @media (hover: hover) and (pointer: fine) and (
       prefers-reduced-motion: no-preference
     ) {
-    .door:hover .door-arrow {
+    .door:hover .door-arrow,
+    .slot-more:hover > .icon {
       translate: 3px 0;
     }
+  }
+
+  /* The Agent Desk: the home hero's working product object */
+  .desk-wrap {
+    @apply relative lg:pb-16;
+  }
+
+  .desk {
+    @apply overflow-hidden rounded-card border border-hairline bg-surface shadow-raised;
+  }
+
+  .desk-head {
+    @apply flex items-center gap-3 border-b border-hairline px-5 py-3 md:px-6 md:py-3.5;
+  }
+
+  .desk-mark,
+  .flow-tile[data-actor="agent"]::before {
+    background: var(--agent-soft) url("/logo/logo.svg") center / 55% no-repeat;
+  }
+
+  .desk-mark {
+    @apply size-9 shrink-0 rounded-inner;
+  }
+
+  .desk-name {
+    @apply text-ui-l font-semibold tracking-normal;
+  }
+
+  .desk-badge {
+    @apply rounded-full bg-agent-soft px-2 py-0.5 text-label font-bold text-agent;
+  }
+
+  .desk-body {
+    @apply grid grid-cols-[minmax(0,1fr)] gap-3 px-5 py-4 md:px-6 md:py-5;
+  }
+
+  .desk-bubble {
+    @apply max-w-[34em] rounded-inner rounded-tl-sm bg-agent-soft px-4 py-3 text-ui-l;
+  }
+
+  /* One swipeable line of chips on a phone, wrapping from `sm` */
+  .desk-chips {
+    @apply -mx-5 flex gap-2 overflow-x-auto overscroll-x-contain px-5 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0;
+    scrollbar-width: none;
+  }
+
+  @media (max-width: 639px) {
+    .desk-chips {
+      mask-image: linear-gradient(
+        to right,
+        black calc(100% - 2.5rem),
+        transparent
+      );
+    }
+  }
+
+  .desk-chips > li {
+    @apply shrink-0;
+  }
+
+  .desk-chip {
+    @apply inline-flex min-h-11 items-center rounded-full border border-line-strong px-4 text-ui-s font-medium text-fg select-none;
+    transition:
+      border-color var(--duration-hover) ease,
+      background-color var(--duration-hover) ease;
+  }
+
+  .desk-composer {
+    @apply flex items-center gap-2 rounded-input border border-border bg-surface p-1.5 pl-4;
+    transition:
+      border-color var(--duration-hover) ease,
+      box-shadow var(--duration-hover) ease;
+  }
+
+  .desk-composer:focus-within {
+    border-color: var(--agent);
+    box-shadow: 0 0 0 3px var(--agent-soft);
+  }
+
+  .desk-composer:has(:focus-visible) {
+    outline: 2px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  .desk-input {
+    @apply min-h-11 min-w-0 flex-1 bg-transparent text-ui-l outline-hidden;
+  }
+
+  .desk-send {
+    @apply grid size-11 shrink-0 place-items-center rounded-input bg-cta text-cta-fg select-none;
+    transition: background-color var(--duration-press) ease-out;
+  }
+
+  .desk-call {
+    @apply grid gap-3 border-t border-hairline px-5 py-4 sm:grid-cols-[auto_1fr_auto] sm:items-center md:px-6;
+  }
+
+  .desk-wave {
+    @apply grid size-11 place-items-center rounded-full bg-agent-soft text-agent max-sm:hidden;
+  }
+
+  .desk-call-button {
+    @apply inline-flex min-h-13 items-center justify-center gap-2.5 rounded-button bg-agent px-5 font-semibold text-agent-fg select-none;
+    transition: background-color var(--duration-press) ease-out;
+  }
+
+  .desk-rail {
+    @apply grid grid-cols-[minmax(0,1fr)] gap-3 border-t border-hairline bg-tint px-5 py-4 md:px-6;
+  }
+
+  .slot-card {
+    @apply grid grid-cols-[minmax(0,1fr)] gap-4;
+  }
+
+  /* Never wraps from `sm`: a longer day and zone truncate instead of adding a line */
+  .desk-rail-head {
+    @apply flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 sm:flex-nowrap;
+  }
+
+  .desk-rail-head > h3 {
+    @apply sm:shrink-0;
+  }
+
+  /* A box of fixed width (the rest of the row): new text swaps inside it, so it never moves */
+  .desk-rail-meta {
+    @apply min-w-0 flex-1 truncate text-right text-ui-s text-muted-fg max-sm:basis-full max-sm:text-left;
+  }
+
+  /* One row the same height in every state, so the slots arrive without a shift */
+  .slot-ready {
+    @apply grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto];
+  }
+
+  .slot-row {
+    @apply grid min-h-13 grid-cols-3 gap-2;
+  }
+
+  .slot-chip {
+    @apply inline-flex min-h-13 items-center justify-center rounded-input border border-line-strong bg-surface px-2 font-semibold select-none;
+    transition:
+      border-color var(--duration-hover) ease,
+      background-color var(--duration-hover) ease;
+  }
+
+  /* All times: a full-width outlined button on a phone, a link beside the chips from `sm` */
+  .slot-more {
+    @apply inline-flex min-h-13 items-center justify-center gap-1.5 rounded-button border border-fg px-2 font-semibold sm:border-transparent sm:text-link;
+  }
+
+  .slot-alt {
+    @apply flex min-h-13 items-center sm:hidden;
+  }
+
+  .handoff {
+    @apply mt-3 flex items-center gap-3.5 rounded-card border border-hairline bg-surface px-4 py-3 lg:absolute lg:bottom-0 lg:-left-10 lg:mt-0 lg:max-w-md lg:rounded-full lg:py-3 lg:pr-7 lg:pl-3 lg:shadow-raised;
+  }
+
+  .monogram {
+    @apply grid size-12 shrink-0 place-items-center rounded-full border-2 border-human-ring bg-human-soft font-semibold text-human;
+  }
+
+  /* Tool, agent and person tiles joined by wires: the flow rows in the offer and the jobs */
+  .flow-row {
+    @apply flex items-center;
+  }
+
+  .flow-tile {
+    @apply relative grid size-12 shrink-0 place-items-center rounded-inner border border-hairline bg-surface;
+  }
+
+  .flow-tile::before {
+    content: "";
+    @apply size-6;
+    background: var(--tool-icon) center / contain no-repeat;
+  }
+
+  .flow-tile[data-actor="agent"] {
+    @apply border-transparent bg-agent-soft;
+  }
+
+  .flow-tile[data-actor="agent"]::before {
+    @apply size-full rounded-inner;
+    background-size: 50%;
+  }
+
+  .flow-tile[data-actor="app"] {
+    @apply border-transparent bg-tool-soft text-tool;
+  }
+
+  .flow-tile[data-actor="app"]::before,
+  .flow-tile[data-actor="human"]::before {
+    display: none;
+  }
+
+  .flow-tile[data-actor="human"] {
+    @apply rounded-full border-2 border-human-ring bg-human-soft text-human;
+  }
+
+  .flow-wire {
+    @apply h-0 w-6 shrink-0 border-t-2 border-dashed border-line-strong md:w-8;
+  }
+
+  .flow-wire[data-to="human"] {
+    @apply border-human-ring;
+  }
+
+  /* The diagnostic as an entry ticket: a perforation between the offer and its stub */
+  .ticket {
+    @apply relative grid overflow-hidden rounded-ticket bg-agent-soft lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)];
+  }
+
+  .ticket-stub {
+    @apply border-t-2 border-dashed border-highlight px-5 py-5 md:p-10 lg:border-t-0 lg:border-l-2;
+  }
+
+  /* Sized by the ticket's own width, so the price never clips (down to 320px) */
+  .ticket-offer {
+    container-type: inline-size;
+  }
+
+  .ticket-price {
+    @apply mt-2 text-agent;
+    font-size: clamp(2.75rem, 24cqi, 8rem);
+    font-weight: 650;
+    letter-spacing: -0.045em;
+    line-height: 0.95;
+  }
+
+  .meta-pill {
+    @apply inline-flex rounded-full bg-surface px-3 py-1 text-ui-s font-semibold;
+  }
+
+  /* The three builds: a swipeable row below `lg`, three columns from it */
+  .offer-row {
+    @apply -mx-gutter flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-gutter pb-1 lg:mx-0 lg:grid lg:snap-none lg:grid-cols-3 lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0;
+    scroll-padding-inline: var(--spacing-gutter);
+    scrollbar-width: thin;
+  }
+
+  .offer-row > li {
+    @apply w-[min(20rem,82%)] shrink-0 snap-start lg:w-auto;
+  }
+
+  .offer-card {
+    @apply flex flex-col gap-3 rounded-card border border-hairline bg-surface p-5 md:gap-4 md:p-8;
+  }
+
+  .card-price {
+    font-size: clamp(2.25rem, 1.9rem + 1.2vw, 3rem);
+    font-weight: 650;
+    letter-spacing: -0.035em;
+    line-height: 1;
+  }
+
+  .card-price-range {
+    font-size: clamp(2rem, 1.7rem + 0.9vw, 2.5rem);
+    white-space: nowrap;
+  }
+
+  .tier-price {
+    @apply text-2xl md:text-[1.75rem];
+    font-weight: 650;
+    letter-spacing: -0.025em;
+  }
+
+  .hover-line {
+    @apply underline decoration-transparent underline-offset-4;
+    transition: text-decoration-color var(--duration-hover) ease;
+  }
+
+  .job-card {
+    @apply flex flex-col gap-3 rounded-card border border-hairline bg-surface p-5 md:gap-4 md:p-7;
   }
 
   .sticky-cta {
@@ -851,7 +1259,7 @@ html:has([data-chat-launcher]) [data-sticky-cta] {
   padding-inline-end: var(--launcher-reserve);
 }
 
-/* "Reserva un diagnóstico" stays on one line beside the launcher on 320px screens */
+/* "Reservar una llamada" stays on one line beside the launcher on 320px screens */
 @media (max-width: 359px) {
   [data-sticky-cta] > a {
     padding-inline: 0.75rem;
@@ -870,4 +1278,10 @@ html:has([data-consent-banner]) [data-sticky-cta],
 html:has(header details[open]) [data-sticky-cta],
 html:has([data-voice-panel][open]) [data-sticky-cta] {
   visibility: hidden;
+}
+
+/* The Spanish headline runs longer: one step smaller at desktop sizes.
+   Unlayered, so it wins over the display utility. */
+html[lang="es"] h1.text-display-1 {
+  font-size: clamp(2.625rem, 1.75rem + 3.6vw, 4rem);
 }

@@ -13,16 +13,20 @@ function timesText(copy: BookPageContent['picker'], count: number): string {
     : copy.times.other.replace('{n}', String(count));
 }
 
+// `preselect` is a slot start from the home desk (`/book?slot=`); it is
+// checked only when it is still in the fetched list, and its day opens.
 export function SlotPicker({
   slots,
   zone,
   locale,
   copy,
+  preselect = null,
 }: {
   slots: readonly PageSlot[];
   zone: string;
   locale: Locale;
   copy: BookPageContent['picker'];
+  preselect?: number | null;
 }) {
   return (
     <div className="grid border-b border-hairline">
@@ -33,7 +37,10 @@ export function SlotPicker({
         return (
           <details
             key={date}
-            open={index < OPEN_DAYS}
+            open={
+              index < OPEN_DAYS ||
+              entries.some(({ slot }) => slot.start === preselect)
+            }
             className="border-t border-hairline"
           >
             <summary className="flex min-h-12 cursor-pointer items-center justify-between gap-4 font-medium">
@@ -50,6 +57,7 @@ export function SlotPicker({
                     type="radio"
                     name="slot"
                     value={new Date(slot.start).toISOString()}
+                    defaultChecked={slot.start === preselect}
                     required
                   />
                   {formatTimeParts(locale, parts)}

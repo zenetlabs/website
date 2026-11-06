@@ -32,7 +32,7 @@ export const automation = {
   cta: {
     title: 'Find out what you can automate',
     text: 'Tell us which process eats the most hours. The diagnostic maps it, costs it and tells you honestly whether automation pays off.',
-    button: 'Book a diagnostic',
+    button: 'Book a call',
   },
   useCases: {
     title: {

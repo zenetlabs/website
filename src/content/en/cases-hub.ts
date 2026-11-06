@@ -28,6 +28,6 @@ export const casesHub = {
   cta: {
     title: 'Start with the diagnostic',
     text: 'Tell us what your team does by hand and we will reply personally.',
-    button: 'Book a diagnostic',
+    button: 'Book a call',
   },
 } satisfies CasesHubContent;

@@ -40,9 +40,10 @@ async function openChat(page: Page, locale: 'en' | 'es', path?: string) {
 }
 
 async function say(page: Page, locale: 'en' | 'es', text: string) {
-  const box = page.getByLabel(COPY[locale].inputLabel);
+  const panel = page.locator('dialog[data-chat-panel]');
+  const box = panel.getByLabel(COPY[locale].inputLabel);
   await box.fill(text);
-  const send = page.getByRole('button', {
+  const send = panel.getByRole('button', {
     name: COPY[locale].send,
     exact: true,
   });

@@ -1,3 +1,4 @@
+import { diagnosticPlan } from '@/content/en/diagnostic-plan';
 import type { PricingPageContent } from '@/content/types';
 
 export const pricingPage = {
@@ -22,12 +23,7 @@ export const pricingPage = {
   // TODO(albert): confirm every list
   details: {
     diagnostic: {
-      includes: [
-        'Interviews with the people who do the work',
-        'A map of your tools and how data moves between them',
-        'Hours spent by hand, process by process',
-        'A prioritised plan with a price and timeline for each phase',
-      ],
+      includes: diagnosticPlan,
       timeline: '1–2 weeks',
     },
     integration: {
@@ -102,6 +98,6 @@ export const pricingPage = {
   cta: {
     title: 'Start with the diagnostic',
     text: 'Tell us what your team does by hand and we will reply personally.',
-    button: 'Book a diagnostic',
+    button: 'Book a call',
   },
 } satisfies PricingPageContent;

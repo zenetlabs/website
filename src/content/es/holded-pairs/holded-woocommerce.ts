@@ -32,7 +32,7 @@ export const holdedWoocommerce = {
   cta: {
     title: 'Cuéntanos cómo vende tu tienda',
     text: 'Dinos cuántos pedidos tienes al mes, qué plan de Holded usas y qué sigue haciéndose a mano. En el diagnóstico confirmamos qué se puede conectar y cuánto cuesta.',
-    button: 'Reserva un diagnóstico',
+    button: 'Reservar una llamada',
   },
   sync: {
     title: {

@@ -143,7 +143,7 @@ export const viatsyCase = {
   cta: {
     title: 'Want the same for your business?',
     text: "Tell us which work still eats your team's hours. The diagnostic maps it, costs it and tells you honestly what is worth automating.",
-    button: 'Book a diagnostic',
+    button: 'Book a call',
   },
   related: ['agents', 'automation'],
 } satisfies CasePageContent;

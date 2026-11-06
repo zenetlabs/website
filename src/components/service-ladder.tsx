@@ -1,23 +1,5 @@
 import type { ReactNode } from 'react';
-import { CtaLink } from '@/components/cta-link';
-import { Section } from '@/components/section';
-import {
-  FEATURED_BADGE,
-  H3,
-  SECONDARY_BUTTON,
-  TEXT_LINK,
-} from '@/components/ui';
-import type { HomeContent, Services } from '@/content/types';
-import type { Locale } from '@/lib/i18n';
-import { formatPriceSummary } from '@/lib/money';
-import { CTA_TARGET, navHref } from '@/lib/nav';
-import {
-  isPublished,
-  pagePath,
-  type SiteFlags,
-  serviceHref,
-} from '@/lib/page-registry';
-import { SITE } from '@/lib/site';
+import { FEATURED_BADGE, H3 } from '@/components/ui';
 
 export function ServiceRow({
   href,
@@ -63,67 +45,5 @@ export function ServiceRow({
       </a>
       {featured?.action}
     </li>
-  );
-}
-
-export function ServiceLadder({
-  copy,
-  services,
-  locale,
-  site = SITE,
-}: {
-  copy: HomeContent['services'];
-  services: Services;
-  locale: Locale;
-  site?: SiteFlags;
-}) {
-  const pricing = pagePath(locale, 'pricing');
-
-  return (
-    <Section id="services" title={copy.title} lead={copy.lead} variant="tint">
-      <ul className="grid border-t border-hairline">
-        {Object.values(services).map((service) => (
-          <ServiceRow
-            key={service.id}
-            dense
-            href={serviceHref(locale, service.id)}
-            name={service.name}
-            summary={service.summary}
-            price={formatPriceSummary(locale, service.prices)}
-            featured={
-              service.id === 'diagnostic'
-                ? {
-                    badge: copy.startHere,
-                    action: (
-                      <p className="pt-1 pb-5">
-                        <CtaLink
-                          cta="start_here"
-                          href={navHref(locale, CTA_TARGET)}
-                          className={`${SECONDARY_BUTTON} max-sm:w-full`}
-                        >
-                          {copy.book}
-                        </CtaLink>
-                      </p>
-                    ),
-                  }
-                : undefined
-            }
-          />
-        ))}
-      </ul>
-      <p className="mt-8 flex flex-wrap gap-x-8 gap-y-3 md:mt-10">
-        <a href={pricing} className={`font-medium ${TEXT_LINK}`}>
-          {copy.more} →
-        </a>
-        {isPublished('calculator', site) ? (
-          <a
-            href={pagePath(locale, 'calculator')}
-            className={`font-medium ${TEXT_LINK}`}
-          >
-            {copy.calculator} →
-          </a>
-        ) : null}
-      </p>
-    </Section>
   );
 }

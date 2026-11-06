@@ -108,6 +108,6 @@ export const faq = [
     id: 'start',
     group: 'trust',
     question: 'How do we start?',
-    answer: `Book a diagnostic with the form on this page or write to ${PUBLIC_EMAIL}. We reply personally, agree the scope on a short call and, one to two weeks later, you have a costed plan. If you go ahead within 60 days, the diagnostic fee is credited to the project.`,
+    answer: `Book a call, use the contact form or write to ${PUBLIC_EMAIL}. We reply personally, agree the scope on a short call and, one to two weeks later, you have a costed plan. If you go ahead within 60 days, the diagnostic fee is credited to the project.`,
   },
 ] satisfies readonly HomeFaqItem[];

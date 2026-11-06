@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { CalculatorCallout } from '@/components/calculator-callout';
-import { ServiceLadder } from '@/components/service-ladder';
+import { OfferSystem } from '@/components/offer-system';
 import { home as enHome } from '@/content/en/home';
 import { pricingPage as enPricing } from '@/content/en/pricing';
 import { pricingPage as esPricing } from '@/content/es/pricing';
@@ -52,9 +52,9 @@ describe('the calculator, published', () => {
     },
   );
 
-  it('links to it from the home ladder only while published', () => {
+  it('links to it from the home offer only while published', () => {
     const { rerender } = render(
-      <ServiceLadder
+      <OfferSystem
         copy={enHome.services}
         services={SERVICES.en}
         locale="en"
@@ -65,7 +65,7 @@ describe('the calculator, published', () => {
       screen.getByRole('link', { name: `${enHome.services.calculator} →` }),
     ).toHaveAttribute('href', pagePath('en', 'calculator'));
     rerender(
-      <ServiceLadder
+      <OfferSystem
         copy={enHome.services}
         services={SERVICES.en}
         locale="en"

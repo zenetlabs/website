@@ -1,5 +1,6 @@
 import { createRouter } from '@tanstack/react-router';
 import { localizedRewrite, type PageId } from '@/lib/page-registry';
+import { parseSearch, stringifySearch } from '@/lib/search-codec';
 import { routeTree } from '@/routeTree.gen';
 
 export function getRouter() {
@@ -8,6 +9,8 @@ export function getRouter() {
     rewrite: localizedRewrite,
     scrollRestoration: true,
     defaultPreload: 'intent',
+    parseSearch,
+    stringifySearch,
   });
 }
 

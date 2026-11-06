@@ -1,3 +1,4 @@
+import { diagnosticPlan } from '@/content/es/diagnostic-plan';
 import type { PricingPageContent } from '@/content/types';
 
 export const pricingPage = {
@@ -17,17 +18,12 @@ export const pricingPage = {
     timeline: 'Plazo',
     more: 'Más sobre',
     startHere: 'Empieza aquí',
-    book: 'Reserva el diagnóstico',
+    book: 'Reservar el diagnóstico',
   },
   // TODO(albert): confirm every list
   details: {
     diagnostic: {
-      includes: [
-        'Entrevistas con quienes hacen el trabajo',
-        'Mapa de tus herramientas y de cómo se mueven los datos entre ellas',
-        'Horas dedicadas a mano, proceso a proceso',
-        'Plan priorizado con precio y plazo para cada fase',
-      ],
+      includes: diagnosticPlan,
       timeline: '1–2 semanas',
     },
     integration: {
@@ -100,6 +96,6 @@ export const pricingPage = {
   cta: {
     title: 'Empieza por el diagnóstico',
     text: 'Cuéntanos qué hace tu equipo a mano y te responderemos personalmente.',
-    button: 'Reserva un diagnóstico',
+    button: 'Reservar una llamada',
   },
 } satisfies PricingPageContent;

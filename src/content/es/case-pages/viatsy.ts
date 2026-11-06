@@ -147,7 +147,7 @@ export const viatsyCase = {
   cta: {
     title: '¿Quieres lo mismo en tu empresa?',
     text: 'Cuéntanos qué trabajo se sigue comiendo las horas de tu equipo. El diagnóstico lo analiza, le pone precio y te dice con franqueza qué compensa automatizar.',
-    button: 'Reserva un diagnóstico',
+    button: 'Reservar una llamada',
   },
   related: ['agents', 'automation', 'travelAgencies'],
 } satisfies CasePageContent;

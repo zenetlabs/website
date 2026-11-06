@@ -66,6 +66,6 @@ export const aboutPage = {
   cta: {
     title: 'Cuéntanos qué hace tu equipo a mano',
     text: 'Te responde una persona y acordamos contigo el siguiente paso.',
-    button: 'Reserva un diagnóstico',
+    button: 'Reservar una llamada',
   },
 } satisfies AboutPageContent;

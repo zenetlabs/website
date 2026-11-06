@@ -57,11 +57,22 @@ function formatAmount(locale: Locale, price: Price): string {
     : `${formatNumber(locale, min)}${RANGE}${formatMoney(locale, max)}`;
 }
 
-export function formatPrice(locale: Locale, price: Price): string {
+// The pieces of one price, for layouts that set the amount larger than its words.
+export function priceParts(
+  locale: Locale,
+  price: Price,
+): { from: string; amount: string; unit: string } {
   const words = WORDS[locale];
-  const lead = price.qualifier === 'from' ? words.from : '';
-  const tail = price.unit === 'month' ? words.month : '';
-  return `${lead}${formatAmount(locale, price)}${tail}`;
+  return {
+    from: price.qualifier === 'from' ? words.from : '',
+    amount: formatAmount(locale, price),
+    unit: price.unit === 'month' ? words.month : '',
+  };
+}
+
+export function formatPrice(locale: Locale, price: Price): string {
+  const { from, amount, unit } = priceParts(locale, price);
+  return `${from}${amount}${unit}`;
 }
 
 function isTier(price: Price, first: Price): boolean {

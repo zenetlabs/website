@@ -97,7 +97,7 @@ test.describe('reduced motion', () => {
       expect(await page.evaluate(() => document.getAnimations().length)).toBe(
         0,
       );
-      await expect(page.locator('[data-approval]')).toBeVisible();
+      await expect(page.locator('[data-desk]')).toBeVisible();
     });
   }
 });

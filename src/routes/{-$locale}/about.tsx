@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { CompanyMark } from '@/components/companies-strip';
 import { CtaSection } from '@/components/cta-section';
-import { FounderPortrait } from '@/components/founder-section';
+import { FounderPortrait } from '@/components/founder-portrait';
 import { RichText } from '@/components/rich-text';
 import { Container, EmphasisTitle } from '@/components/section';
 import { sectionFrame } from '@/components/section-frame';

@@ -1,0 +1,31 @@
+import type { BookingZone } from '@/content/booking-rules';
+
+// Loaded on its own by the home desk after idle, so the names never ride up front.
+export const zoneNames = {
+  'Pacific/Honolulu': 'Honolulú',
+  'America/Los_Angeles': 'Los Ángeles',
+  'America/Denver': 'Denver',
+  'America/Mexico_City': 'Ciudad de México',
+  'America/Chicago': 'Chicago',
+  'America/New_York': 'Nueva York',
+  'America/Bogota': 'Bogotá',
+  'America/Sao_Paulo': 'São Paulo',
+  'America/Argentina/Buenos_Aires': 'Buenos Aires',
+  UTC: 'UTC',
+  'Europe/London': 'Londres',
+  'Europe/Madrid': 'Madrid',
+  'Europe/Berlin': 'Berlín',
+  'Europe/Athens': 'Atenas',
+  'Europe/Moscow': 'Moscú',
+  'Africa/Lagos': 'Lagos',
+  'Africa/Johannesburg': 'Johannesburgo',
+  'Asia/Dubai': 'Dubái',
+  'Asia/Kolkata': 'Bombay y Delhi',
+  'Asia/Bangkok': 'Bangkok',
+  'Asia/Singapore': 'Singapur',
+  'Asia/Hong_Kong': 'Hong Kong',
+  'Asia/Tokyo': 'Tokio',
+  'Australia/Perth': 'Perth',
+  'Australia/Sydney': 'Sídney',
+  'Pacific/Auckland': 'Auckland',
+} satisfies Record<BookingZone, string>;

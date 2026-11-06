@@ -105,4 +105,39 @@ describe('SlotPicker', () => {
     rerender(<SlotPicker slots={[]} zone="UTC" locale="en" copy={en.picker} />);
     expect(container.querySelector('details')).toBeNull();
   });
+
+  it('checks the slot the desk linked to and opens its day', () => {
+    const late = SLOTS.at(-1);
+    if (late === undefined) throw new Error('no slots');
+    const { container } = render(
+      <SlotPicker
+        slots={SLOTS}
+        zone="Europe/Madrid"
+        locale="en"
+        copy={en.picker}
+        preselect={late.start}
+      />,
+    );
+    const checked = container.querySelectorAll('input:checked');
+    expect(checked).toHaveLength(1);
+    expect(checked[0]).toHaveAttribute(
+      'value',
+      new Date(late.start).toISOString(),
+    );
+    expect(checked[0]?.closest('details')).toHaveAttribute('open');
+  });
+
+  it('ignores a linked slot that is no longer free', () => {
+    const { container } = render(
+      <SlotPicker
+        slots={SLOTS}
+        zone="Europe/Madrid"
+        locale="en"
+        copy={en.picker}
+        preselect={1}
+      />,
+    );
+    expect(container.querySelectorAll('input:checked')).toHaveLength(0);
+    expect(container.querySelectorAll('details[open]')).toHaveLength(2);
+  });
 });

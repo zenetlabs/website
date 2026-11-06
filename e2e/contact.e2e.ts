@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { attemptsFor, sentFor, uniqueEmail } from './fakes';
-import { gotoHydrated } from './helpers';
+import { CONTACT_PAIR, gotoHydrated } from './helpers';
 
 const TURNSTILE_SCRIPT = 'script[src*="challenges.cloudflare.com"]';
 
@@ -22,7 +22,7 @@ async function waitForToken(page: Page) {
 test('the contact card inside the band keeps the page surface', async ({
   page,
 }) => {
-  await gotoHydrated(page, '/');
+  await gotoHydrated(page, CONTACT_PAIR.en);
   const form = page.getByRole('form', { name: 'Contact form' });
   const colours = await form.evaluate((node) => {
     const card = node.parentElement;
@@ -47,7 +47,7 @@ test('the contact card inside the band keeps the page surface', async ({
 });
 
 test('required fields and consent block the submit', async ({ page }) => {
-  await gotoHydrated(page, '/');
+  await gotoHydrated(page, CONTACT_PAIR.en);
   const form = page.getByRole('form', { name: 'Contact form' });
   await expect(form.getByLabel('Name')).toHaveJSProperty('required', true);
 
@@ -81,7 +81,7 @@ test('required fields and consent block the submit', async ({ page }) => {
 test('Turnstile mounts only after the first focus in the form', async ({
   page,
 }) => {
-  await gotoHydrated(page, '/');
+  await gotoHydrated(page, CONTACT_PAIR.en);
   await page.waitForTimeout(500);
   await expect(page.locator(TURNSTILE_SCRIPT)).toHaveCount(0);
   await expect(page.locator('input[name="cf-turnstile-response"]')).toHaveCount(
@@ -97,7 +97,7 @@ test('a filled honeypot gets a silent success and sends nothing', async ({
   page,
 }) => {
   const email = uniqueEmail('honeypot');
-  await gotoHydrated(page, '/');
+  await gotoHydrated(page, CONTACT_PAIR.en);
   await page.getByLabel('Name').focus();
   await fillForm(page, email);
   await page
@@ -116,7 +116,7 @@ test('a real submit with test keys is accepted and emailed', async ({
   page,
 }) => {
   const email = uniqueEmail('contact');
-  await gotoHydrated(page, '/');
+  await gotoHydrated(page, CONTACT_PAIR.en);
   await page.getByLabel('Name').focus();
   await fillForm(page, email);
   await waitForToken(page);
@@ -137,7 +137,7 @@ test('a rejected submit shows the alert with the mailto fallback', async ({
       body: JSON.stringify({ ok: false, error: 'rate' }),
     }),
   );
-  await gotoHydrated(page, '/');
+  await gotoHydrated(page, CONTACT_PAIR.en);
   await page.getByLabel('Name').focus();
   await fillForm(page);
   await waitForToken(page);

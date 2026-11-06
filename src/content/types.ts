@@ -5,6 +5,7 @@ import type {
   Urgency,
   Volume,
 } from '@/lib/calculator-answers';
+import type { NavigateSection } from '@/lib/navigate';
 import type { LandingPageId, PageId, ServicePageId } from '@/lib/page-registry';
 import type { PortfolioKey } from '@/lib/portfolio';
 import type { WebMcpToolName } from '@/lib/webmcp/names';
@@ -147,18 +148,13 @@ export type HomeContent = {
   hero: {
     title: TitleParts;
     lead: string;
+    // `{price}` is the diagnostic's price from the ladder.
+    fact: string;
     primary: string;
     secondary: string;
     audience: string;
-    diagnostic: string;
   };
-  proof: {
-    title: string;
-    caption: string;
-    description: string;
-    lines: readonly [string, string, string];
-    approval: ApprovalCopy;
-  };
+  desk: DeskCopy;
   companies: { title: string; items: CompanyCopy };
   problems: SectionCopy & {
     todayLabel: string;
@@ -179,8 +175,10 @@ export type HomeContent = {
   services: SectionCopy & {
     more: string;
     calculator: string;
-    startHere: string;
     book: string;
+    oneOff: string;
+    timeline: string;
+    plan: { title: string; items: readonly string[] };
   };
   process: SectionCopy & {
     steps: readonly {
@@ -195,7 +193,6 @@ export type HomeContent = {
     actors: Record<FlowActor, string>;
     items: readonly CaseStudy[];
   };
-  founder: SectionCopy & { more: string };
   faq: SectionCopy & { groups: readonly FaqGroup[] };
   contact: SectionCopy & {
     mail: string;
@@ -204,6 +201,46 @@ export type HomeContent = {
     // Present only while voice is published; the loader drops it otherwise.
     voice?: { text: string; button: string };
   };
+  // The doors in the closing band. `call` is present only while voice is
+  // published; the loader drops it otherwise.
+  doors: {
+    ask: DoorCopy;
+    call?: DoorCopy;
+    write: DoorCopy;
+  };
+};
+
+export type DoorCopy = { title: string; text: string };
+
+export type AssistantIntro = {
+  title: string;
+  badge: string;
+  welcome: string;
+  welcomeBooking: string;
+  suggestions: readonly [string, string];
+  inputLabel: string;
+  placeholder: string;
+  send: string;
+};
+
+export type DeskCopy = {
+  label: string;
+  intro: AssistantIntro;
+  // The desk while the assistant is dark: a person answers by email.
+  human: { title: string; welcome: string; label: string; placeholder: string };
+  // Present only while voice is published; the loader drops it otherwise.
+  call?: { text: string; button: string };
+  slots: {
+    title: string;
+    meta: string;
+    group: string;
+    timesIn: string;
+    seeAll: string;
+    seeAvailable: string;
+    unavailable: string;
+    message: string;
+  };
+  handoff: string;
 };
 
 export type VoiceCopy = {
@@ -744,7 +781,7 @@ export type ChatCopy = {
     form: string;
   };
   pages: Record<PageId, string>;
-  sections: Record<'services' | 'cases' | 'faq', string>;
+  sections: Record<NavigateSection, string>;
   booking: {
     title: string;
     when: string;

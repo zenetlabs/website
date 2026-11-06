@@ -6,8 +6,9 @@ function relative(path: string, max: number): string {
   return isRelativePath(path) ? path.slice(0, max) : '';
 }
 
-// A booking link's token (?confirm=) must never be kept as the first-touch page.
-const PRIVATE_PARAMS = ['confirm', 'outcome'];
+// A booking link's token (?confirm=) and a question typed into the home desk
+// (/contact?message=) must never be kept as the first-touch page.
+const PRIVATE_PARAMS = ['confirm', 'outcome', 'message'];
 
 function withoutPrivate(path: string): string {
   const query = path.indexOf('?');

@@ -34,6 +34,15 @@ describe('currentVisit', () => {
     expect(currentVisit().landing).toBe('/es/reservar');
   });
 
+  it('never keeps a desk question as the landing page or the referrer', () => {
+    navigationEntry(
+      'http://localhost:4173/contact?message=Our+supplier+invoices+are+PDFs&utm_source=news',
+    );
+    expect(currentVisit().landing).toBe('/contact?utm_source=news');
+    setReferrer(`${location.origin}/es/contacto?message=hola`);
+    expect(currentVisit().referrer).toBe(`${location.origin}/es/contacto`);
+  });
+
   it('strips the token from a same-origin referrer and keeps a foreign one whole', () => {
     navigationEntry('http://localhost:4173/');
     setReferrer(

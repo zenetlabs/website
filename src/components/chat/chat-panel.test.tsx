@@ -7,7 +7,7 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatPanel } from '@/components/chat/chat-panel';
 import { chatCopy as en } from '@/content/en/chat';
 import { chatCopy as es } from '@/content/es/chat';
@@ -17,7 +17,7 @@ import { resetChat } from '@/lib/chat-store';
 const postChat = vi.hoisted(() => vi.fn());
 const track = vi.hoisted(() => vi.fn());
 const push = vi.hoisted(() => vi.fn());
-const widget = vi.hoisted(() => ({ ready: true }));
+const widget = vi.hoisted(() => ({ ready: true, fail: false }));
 const voice = vi.hoisted(() => ({ available: false, openVoice: vi.fn() }));
 
 vi.mock('@/lib/chat-client', () => ({ postChat }));
@@ -41,6 +41,7 @@ vi.mock('@marsidev/react-turnstile', async () => {
     Turnstile: ({
       ref,
       onWidgetLoad,
+      onError,
     }: {
       ref: React.Ref<{
         reset: () => void;
@@ -48,13 +49,15 @@ vi.mock('@marsidev/react-turnstile', async () => {
         getResponsePromise: () => Promise<string>;
       }>;
       onWidgetLoad: () => void;
+      onError: () => void;
     }) => {
       useImperativeHandle(ref, () => ({
         reset: () => {},
         execute: () => {},
         getResponsePromise: async () => 'tok',
       }));
-      if (widget.ready) queueMicrotask(onWidgetLoad);
+      if (widget.fail) queueMicrotask(onError);
+      else if (widget.ready) queueMicrotask(onWidgetLoad);
       return null;
     },
   };
@@ -117,6 +120,7 @@ beforeEach(() => {
   track.mockReset();
   push.mockReset();
   widget.ready = true;
+  widget.fail = false;
   voice.available = false;
   voice.openVoice.mockReset();
   resetChat('en');
@@ -316,9 +320,10 @@ describe('when the assistant cannot answer', () => {
       expect(
         within(alert).getByRole('link', { name: en.fallback.book }),
       ).toHaveAttribute('href', '/book');
+      // The contact link carries what the visitor asked, so it is not lost.
       expect(
         within(alert).getByRole('link', { name: en.fallback.form }),
-      ).toHaveAttribute('href', '/contact');
+      ).toHaveAttribute('href', '/contact?message=hello');
       expect(
         within(alert).getByRole('link', { name: 'hello@zenetlabs.com' }),
       ).toHaveAttribute('href', 'mailto:hello@zenetlabs.com');
@@ -411,5 +416,130 @@ describe('Talk instead', () => {
     await userEvent.click(screen.getByRole('button', { name: es.talk }));
     expect(onClose).toHaveBeenCalled();
     expect(voice.openVoice).toHaveBeenCalledWith('es', expect.any(Function));
+  });
+});
+
+describe('opened from the home desk', () => {
+  type Played = { frames: unknown; options: unknown };
+
+  function stubMotion(reduce: boolean): Played[] {
+    const played: Played[] = [];
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((query: string) => ({
+        matches: query.includes('reduce') ? reduce : true,
+      })),
+    );
+    vi.spyOn(HTMLElement.prototype, 'animate').mockImplementation(
+      (frames, options) => {
+        played.push({ frames, options });
+        return new Animation();
+      },
+    );
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(
+      DOMRect.fromRect({ x: 900, y: 200, width: 416, height: 640 }),
+    );
+    return played;
+  }
+
+  function desk(): Element {
+    const element = document.createElement('section');
+    document.body.appendChild(element);
+    Object.defineProperty(element, 'getBoundingClientRect', {
+      value: () =>
+        DOMRect.fromRect({ x: 600, y: 160, width: 760, height: 560 }),
+    });
+    return element;
+  }
+
+  function openFromDesk(initialMessage: string | null) {
+    return render(
+      <ChatPanel
+        locale="en"
+        copy={en}
+        booking
+        initialMessage={initialMessage}
+        from={desk()}
+        onClose={vi.fn()}
+      />,
+    );
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('sends the desk message once the challenge is ready, like a typed one', async () => {
+    stubMotion(true);
+    postChat.mockResolvedValue(
+      ok({ t: 'session', id: 'a' }, { t: 'done', remaining: 19 }),
+    );
+    openFromDesk('How much does an AI agent cost?');
+    await waitFor(() => expect(postChat).toHaveBeenCalledTimes(1));
+    expect(postChat.mock.calls[0]?.[0]).toMatchObject({
+      message: 'How much does an AI agent cost?',
+      turnstileToken: 'tok',
+    });
+    expect(track).toHaveBeenCalledWith('chat_message');
+  });
+
+  it('keeps the desk message in the composer until the challenge can carry it', async () => {
+    stubMotion(true);
+    widget.ready = false;
+    openFromDesk('Can you read our PDFs?');
+    expect(await screen.findByLabelText(en.inputLabel)).toHaveValue(
+      'Can you read our PDFs?',
+    );
+    expect(postChat).not.toHaveBeenCalled();
+  });
+
+  it('keeps the text and offers the contact form with it when the challenge fails', async () => {
+    stubMotion(true);
+    widget.fail = true;
+    openFromDesk('Can you read our PDFs?');
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(en.errorCaptcha);
+    expect(
+      within(alert).getByRole('link', { name: en.fallback.form }),
+    ).toHaveAttribute(
+      'href',
+      `/contact?${new URLSearchParams({ message: 'Can you read our PDFs?' })}`,
+    );
+    expect(screen.getByLabelText(en.inputLabel)).toHaveValue(
+      'Can you read our PDFs?',
+    );
+  });
+
+  it('opens empty when the desk had no message', async () => {
+    stubMotion(true);
+    openFromDesk(null);
+    await screen.findByLabelText(en.inputLabel);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(postChat).not.toHaveBeenCalled();
+  });
+
+  it('grows from the desk box with a transform', () => {
+    const played = stubMotion(false);
+    openFromDesk(null);
+    const { frames, options } = played[0] ?? {};
+    expect(frames).toEqual([
+      expect.objectContaining({
+        transform: 'translate(-300px, -40px) scale(1.8269230769230769, 0.875)',
+      }),
+      expect.objectContaining({ transform: 'none' }),
+    ]);
+    expect(options).toMatchObject({
+      duration: 260,
+      easing: 'cubic-bezier(0.23, 1, 0.32, 1)',
+    });
+  });
+
+  it('swaps instantly under reduced motion', () => {
+    const played = stubMotion(true);
+    openFromDesk(null);
+    expect(played).toEqual([]);
   });
 });

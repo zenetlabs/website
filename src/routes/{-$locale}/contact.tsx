@@ -5,11 +5,13 @@ import { Container, EmphasisTitle } from '@/components/section';
 import { LEAD } from '@/components/ui';
 import { VoiceCallout } from '@/components/voice-button';
 import { loadContactContent } from '@/content/load';
+import { messageParam } from '@/lib/contact-message';
 import { contactStructuredData } from '@/lib/page-structured-data';
 import { contentHead } from '@/lib/pages';
 
 export const Route = createFileRoute('/{-$locale}/contact')({
   staticData: { page: 'contact' },
+  validateSearch: (raw: Record<string, unknown>) => raw,
   loader: ({ context }) => loadContactContent(context.locale),
   head: ({ match, loaderData }) =>
     loaderData
@@ -22,6 +24,7 @@ export const Route = createFileRoute('/{-$locale}/contact')({
 
 function Contact() {
   const page = Route.useLoaderData();
+  const message = messageParam(Route.useSearch());
   const { voice, ...form } = page.form;
 
   return (
@@ -36,6 +39,7 @@ function Contact() {
       </section>
       <ContactSection
         copy={form}
+        prefill={message === null ? undefined : { message, method: 'form' }}
         after={
           voice ? (
             <VoiceCallout text={voice.text} button={voice.button} />

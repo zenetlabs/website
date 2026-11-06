@@ -22,7 +22,7 @@ describe('StickyZone', () => {
     const bar = container.querySelector('[data-sticky-cta]');
     expect(bar).not.toBeNull();
     expect(container.firstElementChild?.lastElementChild).toBe(bar);
-    const link = screen.getByRole('link', { name: 'Book a diagnostic' });
+    const link = screen.getByRole('link', { name: 'Book a call' });
     expect(link).toHaveAttribute('href', navHref('en', CTA_TARGET));
     expect(link).toHaveAttribute('data-cta', 'sticky');
   });

@@ -20,18 +20,21 @@ import {
 } from '@/components/ui';
 import { challengeToken } from '@/components/use-challenge';
 import type { ChatCopy } from '@/content/types';
-import { CHAT_LIMITS } from '@/lib/chat-events';
+import { CHAT_LIMITS } from '@/lib/assistant-limits';
 import {
   addNotice,
   type ChatItem,
   type ChatState,
+  chatIdle,
   dismissProposal,
   ensureLocale,
+  hasChatSession,
   send,
   useChatState,
 } from '@/lib/chat-store';
 import type { Locale } from '@/lib/i18n';
 import { pagePath } from '@/lib/page-registry';
+import { isPlainClick } from '@/lib/plain-click';
 import { noop } from '@/lib/time';
 import { openVoice, voiceAvailable } from '@/lib/voice-entry';
 
@@ -47,6 +50,67 @@ const FALLBACK: ReadonlySet<string> = new Set([
 ]);
 
 type NavigateItem = Extract<ChatItem, { kind: 'navigate' }>;
+
+// The one orchestrated motion on the site: from the home desk, the panel grows
+// out of the desk's own box (a transform-only FLIP), or rises as a sheet on a
+// phone. Interruptible: closing mid-flight reverses from where it is.
+const GROW_EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
+const SHEET_EASE = 'cubic-bezier(0.32, 0.72, 0, 1)';
+const GROW_MS = 260;
+const SHEET_MS = 300;
+const CLOSE_MS = 200;
+
+type Motion = { frames: Keyframe[]; easing: string; duration: number };
+
+function prefersReducedMotion(): boolean {
+  return matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function onScreen(box: DOMRect): boolean {
+  return box.bottom > 0 && box.top < innerHeight && box.width > 0;
+}
+
+function motionFrom(
+  dialog: HTMLDialogElement,
+  from: Element | null,
+): Motion | null {
+  if (from === null || !from.isConnected || prefersReducedMotion()) {
+    return null;
+  }
+  const origin = from.getBoundingClientRect();
+  if (!onScreen(origin)) return null;
+  if (!matchMedia('(min-width: 768px)').matches) {
+    return {
+      frames: [{ transform: 'translateY(100%)' }, { transform: 'none' }],
+      easing: SHEET_EASE,
+      duration: SHEET_MS,
+    };
+  }
+  const box = dialog.getBoundingClientRect();
+  if (box.width === 0 || box.height === 0) return null;
+  const x = origin.left - box.left;
+  const y = origin.top - box.top;
+  const scaleX = origin.width / box.width;
+  const scaleY = origin.height / box.height;
+  return {
+    frames: [
+      {
+        transformOrigin: '0 0',
+        transform: `translate(${x}px, ${y}px) scale(${scaleX}, ${scaleY})`,
+      },
+      { transformOrigin: '0 0', transform: 'none' },
+    ],
+    easing: GROW_EASE,
+    duration: GROW_MS,
+  };
+}
+
+// The content stays hidden while the box is scaled, then settles in place.
+const CONTENT_FRAMES: Keyframe[] = [
+  { opacity: 0 },
+  { opacity: 0, offset: 0.55 },
+  { opacity: 1 },
+];
 
 function Speaker({ children }: { children: ReactNode }) {
   return <span className="sr-only">{children}: </span>;
@@ -69,16 +133,6 @@ function statusText(state: ChatState, copy: ChatCopy): string {
     return toolLabel(copy, state.tool);
   }
   return state.status === 'writing' ? copy.writing : '';
-}
-
-function isPlainClick(event: MouseEvent<HTMLAnchorElement>): boolean {
-  return (
-    event.button === 0 &&
-    !event.metaKey &&
-    !event.ctrlKey &&
-    !event.shiftKey &&
-    !event.altKey
-  );
 }
 
 function isSendKey(event: KeyboardEvent<HTMLTextAreaElement>): boolean {
@@ -236,18 +290,29 @@ function ChatSuggestions({
   );
 }
 
+function lastUserText(state: ChatState): string | null {
+  const item = state.items.findLast((entry) => entry.kind === 'user');
+  return item?.kind === 'user' ? item.text : null;
+}
+
 function ChatAlerts({
   copy,
   locale,
   booking,
   state,
+  unsent,
+  challengeFailed,
 }: {
   copy: ChatCopy;
   locale: Locale;
   booking: boolean;
   state: ChatState;
+  unsent: string | null;
+  challengeFailed: boolean;
 }) {
   const showFallback = state.failure !== null && FALLBACK.has(state.failure);
+  // The contact link carries what the visitor typed, so it is never lost.
+  const message = unsent ?? lastUserText(state);
   return (
     <>
       {showFallback || state.cut ? (
@@ -266,6 +331,7 @@ function ChatAlerts({
             locale={locale}
             booking={booking}
             labels={copy.fallback}
+            message={message}
             className="mt-2"
           />
         </div>
@@ -275,10 +341,17 @@ function ChatAlerts({
           {copy.errorRate}
         </p>
       ) : null}
-      {state.failure === 'captcha' ? (
-        <p role="alert" className="mt-3 text-sm">
-          {copy.errorCaptcha}
-        </p>
+      {state.failure === 'captcha' || challengeFailed ? (
+        <div role="alert" className="mt-3 text-sm">
+          <p>{copy.errorCaptcha}</p>
+          <ContactLinks
+            locale={locale}
+            booking={booking}
+            labels={copy.fallback}
+            message={message}
+            className="mt-2"
+          />
+        </div>
       ) : null}
     </>
   );
@@ -360,23 +433,36 @@ export function ChatPanel({
   locale,
   copy,
   booking,
+  initialMessage = null,
+  from = null,
   onClose,
 }: {
   locale: Locale;
   copy: ChatCopy;
   booking: boolean;
+  initialMessage?: string | null;
+  from?: Element | null;
   onClose: () => void;
 }) {
   const state = useChatState();
   const router = useRouter();
-  const [draft, setDraft] = useState('');
+  // The desk's message waits in the composer until it is sent, so a slow or
+  // failed challenge never loses it.
+  const [draft, setDraft] = useState(initialMessage ?? '');
   const [ready, setReady] = useState(false);
+  const [challengeFailed, setChallengeFailed] = useState(false);
   const [zone] = useState(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone,
   );
   const widget = useRef<TurnstileInstance>(undefined);
-  const dialog = useRef<HTMLDialogElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
+  const content = useRef<HTMLDivElement>(null);
+  const pendingMessage = useRef(initialMessage);
+  const motion = useRef<Motion | null>(null);
+  const running = useRef<Animation[]>([]);
+  const closing = useRef(false);
+  const opened = useRef(false);
   const titleId = useId();
   const noticeId = useId();
   const inputId = useId();
@@ -393,6 +479,73 @@ export function ChatPanel({
 
   function submit(text: string) {
     if (!canSendText(text)) return;
+    sendText(text);
+  }
+
+  // The desk's message goes out like a typed one once a session or a
+  // Turnstile token can carry it. While a reply is still streaming it stays
+  // in the composer for the visitor to send.
+  function sendPending() {
+    const text = pendingMessage.current;
+    if (text === null) return;
+    pendingMessage.current = null;
+    if (chatIdle()) sendText(text);
+  }
+
+  function play(dialog: HTMLDialogElement, reverse: boolean): Animation[] {
+    const current = motion.current;
+    if (current === null) return [];
+    const options: KeyframeAnimationOptions = {
+      duration: reverse ? CLOSE_MS : current.duration,
+      easing: current.easing,
+      direction: reverse ? 'reverse' : 'normal',
+    };
+    const played = [
+      dialog.animate(current.frames, options),
+      dialog.animate([{ opacity: 0 }, { opacity: 1 }], {
+        ...options,
+        pseudoElement: '::backdrop',
+      }),
+    ];
+    const inner = content.current;
+    if (inner) played.push(inner.animate(CONTENT_FRAMES, options));
+    return played;
+  }
+
+  function openPanel(dialog: HTMLDialogElement) {
+    ensureLocale(locale);
+    dialog.showModal();
+    input.current?.focus();
+    motion.current = motionFrom(dialog, from);
+    running.current = play(dialog, false);
+    if (hasChatSession()) sendPending();
+  }
+
+  // A close while the panel is still growing turns the same motion around;
+  // after that it shrinks back into the desk where it is now, or closes at
+  // once when the desk has scrolled away.
+  function dismiss() {
+    const dialog = dialogRef.current;
+    if (!dialog || closing.current) return;
+    const inFlight = running.current.filter(
+      (animation) => animation.playState === 'running',
+    );
+    if (inFlight.length === 0 && motion.current !== null) {
+      motion.current = motionFrom(dialog, from);
+    }
+    if (motion.current === null) {
+      dialog.close();
+      return;
+    }
+    closing.current = true;
+    const back = inFlight.length > 0 ? inFlight : play(dialog, true);
+    for (const animation of inFlight) animation.reverse();
+    void Promise.all(back.map((animation) => animation.finished))
+      .catch(() => undefined)
+      .then(() => dialog.close());
+  }
+
+  function sendText(text: string) {
     setDraft('');
     void send(text, {
       locale,
@@ -407,19 +560,25 @@ export function ChatPanel({
   function navigate(item: NavigateItem, event: MouseEvent<HTMLAnchorElement>) {
     if (!isPlainClick(event)) return;
     event.preventDefault();
-    dialog.current?.close();
+    dialogRef.current?.close();
     router.history.push(item.href);
   }
 
   return (
     <dialog
       ref={(element) => {
-        dialog.current = element;
-        if (element && !element.open) {
-          ensureLocale(locale);
-          element.showModal();
-          input.current?.focus();
+        dialogRef.current = element;
+        // Once per mount: a render between close() and the close event must
+        // not open it again.
+        if (element && !opened.current) {
+          opened.current = true;
+          openPanel(element);
         }
+      }}
+      onCancel={(event) => {
+        if (motion.current === null) return;
+        event.preventDefault();
+        dismiss();
       }}
       onClose={onClose}
       aria-labelledby={titleId}
@@ -428,16 +587,16 @@ export function ChatPanel({
       data-chat-state={state.status}
       className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none border-0 bg-bg p-0 text-fg md:inset-auto md:right-4 md:bottom-4 md:h-[min(40rem,85dvh)] md:w-[26rem] md:rounded-card md:border md:border-border backdrop:bg-bg/60"
     >
-      <div className="flex h-full flex-col">
+      <div ref={content} className="flex h-full flex-col">
         <ChatHeader
           copy={copy}
           titleId={titleId}
           canTalk={voiceAvailable(locale)}
           onTalk={() => {
-            dialog.current?.close();
+            dialogRef.current?.close();
             openVoice(locale, (href) => router.history.push(href));
           }}
-          onClose={() => dialog.current?.close()}
+          onClose={dismiss}
         />
         <p
           id={noticeId}
@@ -448,45 +607,51 @@ export function ChatPanel({
             {copy.privacyLink}
           </a>
         </p>
-        <div className="flex-1 overflow-y-auto px-4 py-3">
-          <ChatLog
-            copy={copy}
-            welcome={welcome}
-            state={state}
-            onNavigate={navigate}
-          />
-          {state.items.length === 0 ? (
-            <ChatSuggestions
-              suggestions={suggestions}
-              canSend={canSend}
-              onPick={submit}
+        {/* Reversed, so the newest message and the streaming reply stay in
+            view as the conversation grows; short logs still start at the top. */}
+        <div className="flex flex-1 flex-col-reverse overflow-y-auto px-4 py-3">
+          <div className="mb-auto">
+            <ChatLog
+              copy={copy}
+              welcome={welcome}
+              state={state}
+              onNavigate={navigate}
             />
-          ) : null}
-          {state.proposal === null ? null : (
-            <div className="mt-3">
-              <BookingCard
-                proposal={state.proposal}
-                copy={copy.booking}
-                locale={locale}
-                zone={zone}
-                sessionId={state.sessionId}
-                onDone={(when) => {
-                  addNotice(copy.booking.done.replace('{when}', when));
-                  input.current?.focus();
-                }}
-                onCancel={() => {
-                  dismissProposal();
-                  input.current?.focus();
-                }}
+            {state.items.length === 0 ? (
+              <ChatSuggestions
+                suggestions={suggestions}
+                canSend={canSend}
+                onPick={submit}
               />
-            </div>
-          )}
-          <ChatAlerts
-            copy={copy}
-            locale={locale}
-            booking={booking}
-            state={state}
-          />
+            ) : null}
+            {state.proposal === null ? null : (
+              <div className="mt-3">
+                <BookingCard
+                  proposal={state.proposal}
+                  copy={copy.booking}
+                  locale={locale}
+                  zone={zone}
+                  sessionId={state.sessionId}
+                  onDone={(when) => {
+                    addNotice(copy.booking.done.replace('{when}', when));
+                    input.current?.focus();
+                  }}
+                  onCancel={() => {
+                    dismissProposal();
+                    input.current?.focus();
+                  }}
+                />
+              </div>
+            )}
+            <ChatAlerts
+              copy={copy}
+              locale={locale}
+              booking={booking}
+              state={state}
+              unsent={draft.trim() === '' ? null : draft.trim()}
+              challengeFailed={challengeFailed}
+            />
+          </div>
         </div>
         <ChatStatusLine copy={copy} state={state} />
         <ChatComposer
@@ -504,8 +669,11 @@ export function ChatPanel({
           locale={locale}
           instance={widget}
           onToken={noop}
-          onError={noop}
-          onLoad={() => setReady(true)}
+          onError={() => setChallengeFailed(true)}
+          onLoad={() => {
+            setReady(true);
+            sendPending();
+          }}
           options={{ appearance: 'interaction-only', execution: 'execute' }}
         />
       </div>

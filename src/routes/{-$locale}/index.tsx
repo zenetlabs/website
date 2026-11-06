@@ -1,13 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Cases } from '@/components/cases';
 import { CompaniesStrip } from '@/components/companies-strip';
-import { ContactSection } from '@/components/contact-section';
 import { Faq } from '@/components/faq';
-import { FounderSection } from '@/components/founder-section';
 import { Hero } from '@/components/hero';
+import { HomeClose } from '@/components/home-close';
+import { OfferSystem } from '@/components/offer-system';
 import { Problems } from '@/components/problems';
 import { Process } from '@/components/process';
-import { ServiceLadder } from '@/components/service-ladder';
 import { StickyZone } from '@/components/sticky-cta';
 import { VerifactuStrip } from '@/components/verifactu-strip';
 import { loadHomeContent } from '@/content/load';
@@ -34,30 +32,34 @@ function Home() {
     <>
       <Hero
         copy={home.hero}
-        proof={home.proof}
+        desk={home.desk}
         diagnosticPrice={formatPriceSummary(locale, services.diagnostic.prices)}
+        founder={founder}
         locale={locale}
       />
       <StickyZone locale={locale}>
-        <CompaniesStrip copy={home.companies} />
-        <Problems copy={home.problems} />
-        {home.verifactu ? (
-          <VerifactuStrip copy={home.verifactu} locale={locale} />
-        ) : null}
-        <ServiceLadder
-          copy={home.services}
-          services={services}
+        <CompaniesStrip
+          copy={home.companies}
+          more={home.cases.more}
           locale={locale}
         />
+        <Problems copy={home.problems} />
+        <OfferSystem copy={home.services} services={services} locale={locale} />
         <Process
           copy={home.process}
           price={formatPriceSummary(locale, services.diagnostic.prices)}
         />
-        <Cases copy={home.cases} locale={locale} />
-        <FounderSection copy={home.founder} founder={founder} locale={locale} />
+        {home.verifactu ? (
+          <VerifactuStrip copy={home.verifactu} locale={locale} />
+        ) : null}
         <Faq copy={home.faq} items={faq} />
       </StickyZone>
-      <ContactSection copy={home.contact} />
+      <HomeClose
+        copy={home.contact}
+        doors={home.doors}
+        slots={home.desk.slots}
+        locale={locale}
+      />
     </>
   );
 }

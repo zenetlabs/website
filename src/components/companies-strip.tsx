@@ -1,6 +1,9 @@
 import { Container } from '@/components/section';
 import { sectionFrame } from '@/components/section-frame';
+import { TEXT_LINK } from '@/components/ui';
 import type { HomeContent } from '@/content/types';
+import type { Locale } from '@/lib/i18n';
+import { pagePath } from '@/lib/page-registry';
 import { PORTFOLIO } from '@/lib/portfolio';
 
 export function CompanyMark({
@@ -25,8 +28,16 @@ export function CompanyMark({
   );
 }
 
-export function CompaniesStrip({ copy }: { copy: HomeContent['companies'] }) {
-  const { ground, bg } = sectionFrame('tint');
+export function CompaniesStrip({
+  copy,
+  more,
+  locale,
+}: {
+  copy: HomeContent['companies'];
+  more?: string;
+  locale: Locale;
+}) {
+  const { ground, bg } = sectionFrame('default');
 
   return (
     <section
@@ -35,17 +46,27 @@ export function CompaniesStrip({ copy }: { copy: HomeContent['companies'] }) {
       data-ground={ground}
       className={bg}
     >
-      <Container className="py-10 md:py-12">
-        <h2
-          id="companies-title"
-          className="font-sans text-ui-l font-medium text-fg-soft"
-        >
-          {copy.title}
-        </h2>
-        <ul className="mt-6 flex flex-wrap justify-between gap-x-3 gap-y-5">
+      <Container className="py-7 md:py-12">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+          <h2
+            id="companies-title"
+            className="font-sans text-ui-l font-medium text-fg-soft"
+          >
+            {copy.title}
+          </h2>
+          {more ? (
+            <a
+              href={pagePath(locale, 'cases')}
+              className={`inline-flex min-h-11 items-center font-medium ${TEXT_LINK}`}
+            >
+              {more} →
+            </a>
+          ) : null}
+        </div>
+        <ul className="mt-3 flex flex-wrap justify-between gap-x-3 gap-y-1 md:mt-6 md:gap-y-5">
           {PORTFOLIO.map(({ key, name, href, logo }) => (
             <li key={key}>
-              <a href={href} className="company-link">
+              <a href={href} className="company-link min-h-11 justify-center">
                 <CompanyMark name={name} logo={logo} />
                 <span className="text-ui-s text-muted-fg max-md:sr-only">
                   {copy.items[key].category}

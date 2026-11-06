@@ -27,7 +27,7 @@ export const diagnostic = {
   cta: {
     title: 'Book your diagnostic',
     text: 'Tell us which tools you use and what your team still does by hand. We reply personally and agree the scope on a short call.',
-    button: 'Book a diagnostic',
+    button: 'Book a call',
   },
   useCases: {
     title: {

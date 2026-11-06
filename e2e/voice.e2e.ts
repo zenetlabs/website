@@ -35,17 +35,22 @@ test.use({
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 const COPY = { en, es } as const;
 const HOME = { en: '/', es: '/es' } as const;
+// The desk's call door: a link to the contact page that starts the call once hydrated.
 const BUTTON = {
-  en: enHome.contact.voice?.button ?? '',
-  es: esHome.contact.voice?.button ?? '',
+  en: enHome.desk.call?.button ?? '',
+  es: esHome.desk.call?.button ?? '',
 };
+
+function callDoor(page: Page, locale: 'en' | 'es') {
+  return page.getByRole('link', { name: BUTTON[locale], exact: true });
+}
 // Only the page's own code may load before the click; the panel, the store and the SDK wait for it.
 const VOICE_CHUNK =
   /\/assets\/(?:voice-(?:open|panel|store|sdk|fake|client|device|tools)|livekit)[\w-]*\.js/;
 
 async function openPanel(page: Page, locale: 'en' | 'es') {
   await gotoHydrated(page, HOME[locale]);
-  await page.getByRole('button', { name: BUTTON[locale] }).click();
+  await callDoor(page, locale).click();
   const dialog = page.getByRole('dialog', { name: COPY[locale].title });
   await expect(dialog).toBeVisible();
   return dialog;
@@ -65,15 +70,13 @@ test.beforeEach(async () => {
 });
 
 for (const locale of ['en', 'es'] as const) {
-  test(`${HOME[locale]} shows the button after hydration and loads no panel, SDK or session call before the click`, async ({
+  test(`${HOME[locale]} shows the desk call door and loads no panel, SDK or session call before the click`, async ({
     page,
   }) => {
     const requested: string[] = [];
     page.on('request', (request) => requested.push(request.url()));
     await gotoHydrated(page, HOME[locale]);
-    await expect(
-      page.getByRole('button', { name: BUTTON[locale] }),
-    ).toBeVisible();
+    await expect(callDoor(page, locale)).toBeVisible();
     await page.waitForTimeout(2500);
     expect(requested.filter((url) => VOICE_CHUNK.test(url))).toEqual([]);
     expect(requested.filter((url) => url.includes('/api/voice'))).toEqual([]);
@@ -86,15 +89,19 @@ for (const locale of ['en', 'es'] as const) {
 test.describe('without JavaScript', () => {
   test.use({ javaScriptEnabled: false });
 
-  test('the home page has no voice button and keeps the mail and the form', async ({
+  test('the home page hides every call door and keeps the mail and the form link', async ({
     page,
   }) => {
     await page.goto('/');
-    await expect(page.locator('[data-voice-button]')).toHaveCount(0);
+    const doors = page.locator('[data-voice-button]');
+    expect(await doors.count()).toBeGreaterThan(0);
+    for (const door of await doors.all()) await expect(door).toBeHidden();
     await expect(
       page.getByRole('link', { name: 'hello@zenetlabs.com' }).first(),
     ).toBeVisible();
-    await expect(page.locator('#contact form')).toHaveCount(1);
+    await expect(
+      page.locator('#contact a[href="/contact"][data-cta="close_contact"]'),
+    ).toBeVisible();
   });
 });
 
@@ -159,7 +166,7 @@ test.describe('on a phone', () => {
     await gotoHydrated(page, '/');
     await page.locator('#faq').scrollIntoViewIfNeeded();
     await expect(page.locator('[data-sticky-cta]')).toBeVisible();
-    await page.getByRole('button', { name: BUTTON.en }).click();
+    await callDoor(page, 'en').click();
     await expect(page.locator('dialog[data-voice-panel]')).toBeVisible();
     await expect(page.locator('[data-sticky-cta]')).toBeHidden();
   });
@@ -393,7 +400,7 @@ test('runs end to end with the keyboard alone, and Escape ends the call and retu
   page,
 }) => {
   await gotoHydrated(page, '/');
-  const button = page.getByRole('button', { name: BUTTON.en });
+  const button = callDoor(page, 'en');
   await button.focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('dialog', { name: en.title })).toBeVisible();

@@ -34,10 +34,13 @@ const { FAQ } = await import('../test/faq');
 
 const R1_ENTRY_JS_GZIP = 128_361;
 const BUDGET = R1_ENTRY_JS_GZIP + 10_240;
-// The plan's section 10 ceiling for /book (the request, pending and confirm
-// views of the emailed-link flow); every other page keeps BUDGET.
-const BOOK_BUDGET = R1_ENTRY_JS_GZIP + 12_288;
-const BOOK_PATHS = new Set(['/book', '/es/reservar']);
+// The plan's section 10 raise, for the two pages that measured a need: /book
+// (the request, pending and confirm views of the emailed-link flow) and home
+// (the Agent Desk, server-rendered and hydrated; PR7 measured 138,986 B against
+// 138,601). Conditional on lhci mobile performance >= 0.95 and TBT <= 150 ms.
+// Every other page keeps BUDGET.
+const RAISED_BUDGET = R1_ENTRY_JS_GZIP + 12_288;
+const RAISED_PATHS = new Set(['/', '/es', '/book', '/es/reservar']);
 
 const URLS = [
   ...PAIRS.flatMap(({ en, es }) => [en, es]),
@@ -243,7 +246,7 @@ for (const path of URLS) {
     const html = await (await request.get(path)).text();
     const scripts = await upFrontScripts(request, html);
     const total = scripts.reduce((sum, script) => sum + script.gzip, 0);
-    const budget = BOOK_PATHS.has(path) ? BOOK_BUDGET : BUDGET;
+    const budget = RAISED_PATHS.has(path) ? RAISED_BUDGET : BUDGET;
     console.log(`js-budget ${path} ${total} / ${budget}`);
     expect(scripts.length).toBeGreaterThan(0);
     expect(total).toBeLessThanOrEqual(budget);

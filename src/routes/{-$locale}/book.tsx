@@ -12,6 +12,7 @@ import { loadBookConfirmCopy, loadBookContent } from '@/content/load';
 import type { BookingConfirmCopy } from '@/content/types';
 import { bookAvailability, bookConfirmation } from '@/lib/book-availability';
 import type { PageAvailability } from '@/lib/booking-client';
+import { detectedZone } from '@/lib/browser-zone';
 import type { ConfirmView } from '@/lib/confirm-view';
 import { contentRouteOptions } from '@/lib/content-route';
 import type { Locale } from '@/lib/i18n';
@@ -92,14 +93,12 @@ function noSubscription() {
   return () => {};
 }
 
-let detectedZone: string | null | undefined;
-
-function browserZone(): string | null {
-  if (detectedZone === undefined) {
-    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    detectedZone = canonicalZone(zone);
-  }
-  return detectedZone;
+function requestedSlot(search: Record<string, unknown>): number | null {
+  const { slot } = search;
+  const start = typeof slot === 'string' ? Number(slot) : slot;
+  return typeof start === 'number' && Number.isSafeInteger(start)
+    ? start
+    : null;
 }
 
 function requestedZone(search: Record<string, unknown>): string | null {
@@ -114,7 +113,7 @@ function Book() {
   const navigate = Route.useNavigate();
   const detected = useSyncExternalStore(
     noSubscription,
-    browserZone,
+    detectedZone,
     () => null,
   );
   const zone = requestedZone(search) ?? detected ?? DEFAULT_ZONE[locale];
@@ -185,6 +184,7 @@ function Book() {
                 locale={locale}
                 zone={zone}
                 slots={availability.slots}
+                preselect={requestedSlot(search)}
               />
             </div>
           </Container>

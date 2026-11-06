@@ -141,6 +141,14 @@ function snapshot(): ChatState {
   return state;
 }
 
+export function hasChatSession(): boolean {
+  return state.sessionId !== null;
+}
+
+export function chatIdle(): boolean {
+  return state.status === 'idle';
+}
+
 export function useChatState(): ChatState {
   return useSyncExternalStore(subscribe, snapshot, snapshot);
 }

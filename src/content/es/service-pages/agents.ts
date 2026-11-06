@@ -33,7 +33,7 @@ export const agents = {
   cta: {
     title: 'Elige la primera tarea para un agente',
     text: 'Cuéntanos qué tarea se acumula cada día. En el diagnóstico comprobamos si un agente puede hacerla con fiabilidad y cuánto costaría montarlo y mantenerlo.',
-    button: 'Reserva un diagnóstico',
+    button: 'Reservar una llamada',
   },
   useCases: {
     title: {

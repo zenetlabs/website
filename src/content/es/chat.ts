@@ -1,29 +1,25 @@
+import { assistantIntro } from '@/content/es/assistant-intro';
 import { bookingPending } from '@/content/es/booking-pending';
 import type { ChatCopy } from '@/content/types';
 
 // TODO(albert): review the widget copy
 export const chatCopy = {
-  title: 'Asistente de Zenet Labs',
+  title: assistantIntro.title,
   talk: 'Mejor por voz',
-  badge: 'IA',
+  badge: assistantIntro.badge,
   notice:
     'Estás hablando con un asistente de IA, no con una persona: sus respuestas las genera automáticamente un modelo de IA. Responde con el contenido de esta web y puede equivocarse; los precios salen solo de nuestra lista oficial. Guardamos esta conversación 30 días para responderte y evitar abusos, o 24 meses junto a tu consulta si reservas una llamada o envías el formulario de contacto. No compartas contraseñas ni datos personales sensibles.',
   privacyLink: 'Política de privacidad',
-  welcome:
-    '¡Hola! Pregúntame por nuestros servicios, precios o cómo trabajamos.',
-  welcomeBooking:
-    ' También puedo buscarte hueco para una llamada de 30 minutos.',
-  suggestions: [
-    '¿Cuánto cuesta un agente de IA?',
-    '¿Qué incluye el diagnóstico de automatización?',
-  ],
+  welcome: assistantIntro.welcome,
+  welcomeBooking: assistantIntro.welcomeBooking,
+  suggestions: assistantIntro.suggestions,
   suggestionBooking: 'Reservar una llamada de 30 minutos',
   logLabel: 'Conversación',
   you: 'Tú',
   assistant: 'Asistente (IA)',
-  inputLabel: 'Tu mensaje',
-  placeholder: 'Escribe tu pregunta',
-  send: 'Enviar',
+  inputLabel: assistantIntro.inputLabel,
+  placeholder: assistantIntro.placeholder,
+  send: assistantIntro.send,
   close: 'Cerrar el asistente',
   verifying: 'Comprobando que no eres un bot…',
   writing: 'El asistente está escribiendo…',
@@ -80,7 +76,6 @@ export const chatCopy = {
   },
   sections: {
     services: 'Servicios',
-    cases: 'Casos',
     faq: 'Preguntas frecuentes',
   },
   booking: {
