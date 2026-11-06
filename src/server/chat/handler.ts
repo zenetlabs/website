@@ -5,11 +5,11 @@ import {
   streamText,
 } from 'ai';
 import { DEFAULT_ZONE } from '@/content/booking-rules';
-import { loadPricingContent } from '@/content/load';
+import { loadHomeContent, loadPricingContent } from '@/content/load';
 import { CHAT_LIMITS } from '@/lib/assistant-limits';
 import type { ChatError, ChatEvent, Proposal } from '@/lib/chat-events';
 import type { Locale } from '@/lib/i18n';
-import { pagePath } from '@/lib/page-registry';
+import { isPublished, type PageId, pagePath } from '@/lib/page-registry';
 import { isLiveHost } from '@/lib/redirects';
 import { canonicalZone } from '@/lib/slots';
 import { noop, utcDay } from '@/lib/time';
@@ -18,15 +18,30 @@ import {
   guardSentence,
   numbersIn,
   officialAmounts,
+  replacesReply,
   SentenceBuffer,
+  saysUnknown,
+  tidySentence,
   toolNumbers,
+  UNKNOWN_FALLBACK,
+  UNLISTED_TOOL,
 } from '@/server/chat/guard';
+import {
+  bookingIntent,
+  faqTopic,
+  messageIntent,
+  requestedDays,
+  unlistedTool,
+} from '@/server/chat/intent';
+import { replyLanguage } from '@/server/chat/language';
 import {
   systemPrompt,
   turnContext,
   VISITOR_BOUNDARY,
 } from '@/server/chat/prompt';
+import { relatedPage } from '@/server/chat/related-page';
 import { chatRequestSchema, splitTest } from '@/server/chat/schema';
+import { slotsOf, toolSlots } from '@/server/chat/slot-guard';
 import {
   claimTurn,
   countAddressTurn,
@@ -45,7 +60,7 @@ import {
   reservationFor,
   type TurnUsage,
 } from '@/server/chat/usage';
-import type { Limiter } from '@/server/rate-limit';
+import { ipBucket, type Limiter } from '@/server/rate-limit';
 import { gate, verifyHuman } from '@/server/request';
 import { errorName, jsonError } from '@/server/responses';
 
@@ -75,6 +90,14 @@ const STATUS = {
 
 function reject(error: ChatError): Response {
   return jsonError(error, STATUS[error]);
+}
+
+// A refusal before the session exists leaves no row behind, so it is logged
+// with its stage: otherwise "the assistant can't reply" has no trace at all.
+// A rate refusal is the limiter doing its job, and the noisiest, so it is not.
+function refused(error: ChatError, stage: string): Response {
+  if (error !== 'rate') console.warn('chat: refused', { stage, code: error });
+  return reject(error);
 }
 
 const encoder = new TextEncoder();
@@ -144,72 +167,174 @@ function usageOf(step: StepUsage): TurnUsage {
   };
 }
 
+const ANNOUNCEMENT_WORDS = 15;
+
+// Text that only announces the page ("I've opened our pricing page for you."):
+// one short sentence, so the answer is still to come.
+function onlyAnnounces(text: string): boolean {
+  const trimmed = text.trim();
+  const sentences = trimmed.split(/[.!?…]+(?:\s+|$)/).filter(Boolean);
+  return (
+    sentences.length <= 1 && trimmed.split(/\s+/).length <= ANNOUNCEMENT_WORDS
+  );
+}
+
+// A step that wrote its answer and only opened a page is the whole reply:
+// navigate returns nothing to read, and a further step only restates the text.
+function answeredAndOpened({
+  steps,
+}: {
+  steps: ReadonlyArray<{
+    text: string;
+    toolCalls: ReadonlyArray<{ toolName: string }>;
+  }>;
+}): boolean {
+  const last = steps.at(-1);
+  return (
+    last !== undefined &&
+    last.text.trim() !== '' &&
+    !onlyAnnounces(last.text) &&
+    last.toolCalls.length > 0 &&
+    last.toolCalls.every((call) => call.toolName === 'navigate')
+  );
+}
+
 async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
   const { deps, locale } = turn;
   const started = Date.now();
   const names = chatToolNames(deps.site);
-  const [past, { services }, system] = await Promise.all([
-    history(deps.db, turn.sessionId),
-    loadPricingContent(locale),
-    systemPrompt(locale, deps.site, names),
-  ]);
+  const language = replyLanguage(turn.message, locale);
+  const [past, { services }, system, { faq }, { faq: replyFaq }] =
+    await Promise.all([
+      history(deps.db, turn.sessionId),
+      loadPricingContent(locale),
+      systemPrompt(locale, deps.site, names),
+      loadHomeContent(locale),
+      loadHomeContent(language),
+    ]);
   const allowed = new Set([
     ...officialAmounts(services),
     ...toolNumbers(past.messages),
   ]);
+  const now = deps.now();
+  const booking = isPublished('book', deps.site);
+  const slots = toolSlots(past.messages);
+  // With booking dark there is no calendar to offer from, and no slot check.
+  const calendar = booking ? { slots, now } : undefined;
+  // A visitor who asks for a call gets the calendar on the first step, not a
+  // question about whether to look at it.
+  const forceAvailability =
+    booking && slots.length === 0 && bookingIntent(turn.message);
+  // The market's FAQ answers the market questions; who owns the code is the
+  // same everywhere, so it is quoted in the language of the reply.
+  const answerOf = (id: string, entries = faq) =>
+    entries.find((entry) => entry.id === id)?.answer ?? null;
+  const topic = faqTopic(turn.message);
+  const ownership = answerOf('ownership', replyFaq);
+  const tool = unlistedTool(turn.message, answerOf('tools') ?? '');
+  const toolCopy = UNLISTED_TOOL[language];
+  const unlisted =
+    tool === null
+      ? undefined
+      : {
+          name: tool,
+          answer: `${toolCopy.answer(tool)} ${booking ? toolCopy.booking : toolCopy.contact}`,
+        };
+  const facts =
+    ownership === null
+      ? undefined
+      : { ownership, ...(unlisted ? { unlisted } : {}) };
+  // The refusal sentence belongs to off-topic and injection messages only.
+  const refusal = messageIntent(turn.message) !== 'on-topic';
+  let refusalDropped = false;
   // The time and the messages left change every turn, so they ride with the
   // visitor's message and the system prompt stays one cacheable prefix.
   const context = turnContext({
     locale,
-    now: deps.now(),
+    now,
     timeZone: turn.timeZone,
     page: turn.page,
     remaining: turn.remaining,
+    language,
+    official:
+      topic === null
+        ? null
+        : answerOf(topic, topic === 'ownership' ? replyFaq : faq),
+    topic,
+    booking,
+    unlisted: unlisted ?? null,
   });
 
   outcome.promptChars = system.length + context.length;
   outcome.historyChars = past.chars;
   const buffer = new SentenceBuffer();
-  let pricingOffered = false;
+  const offered = new Set<PageId>();
   // After a leak the model is read to its end and ignored: aborting a stream in
   // flight makes the SDK throw inside its own pipeline.
   let stopped = false;
+  // After a replaced sentence the rest of the model's text is dropped; its
+  // tool calls still run.
+  let muted = false;
 
-  const say = (text: string) => {
-    if (text === '') return;
+  // A new step's text starts a new paragraph: steps are streamed back to back.
+  let newStep = false;
+  // What earlier steps said this turn, so a step that restates it adds nothing.
+  // Repeats inside one step stay (the same time under two days of a list).
+  const earlier = new Set<string>();
+  let current: string[] = [];
+  const say = (raw: string) => {
+    if (raw === '') return;
+    const joined =
+      newStep && outcome.shown !== '' && !/\s$/.test(outcome.shown);
+    const sentence = tidySentence(raw, joined ? '\n' : outcome.shown);
+    const key = sentence.trim().toLowerCase().replace(/\s+/g, ' ');
+    if (key !== '' && earlier.has(key)) return;
+    current.push(key);
+    const text = joined ? `\n\n${sentence.trimStart()}` : sentence;
+    newStep = false;
     outcome.shown += text;
     outcome.firstTextMs ??= Date.now() - started;
     turn.emit({ t: 'text', v: text });
   };
-  const offerPricing = () => {
-    if (pricingOffered) return;
-    pricingOffered = true;
-    turn.emit({
-      t: 'navigate',
-      page: 'pricing',
-      href: pagePath(locale, 'pricing'),
-    });
+  const offer = (page: PageId, href = pagePath(locale, page)) => {
+    if (offered.has(page)) return;
+    offered.add(page);
+    turn.emit({ t: 'navigate', page, href });
   };
   const speak = (sentence: string) => {
-    if (stopped) return;
+    if (stopped || muted) return;
     const guarded = guardSentence(sentence, {
       locale,
       allowed,
       previous: outcome.shown,
+      language,
+      calendar,
+      facts,
+      refusal,
     });
-    if (guarded.guard !== null) outcome.guards += 1;
+    if (guarded.guard === 'refusal') refusalDropped = true;
+    if (guarded.guard !== null) {
+      outcome.guards += 1;
+      console.log('chat: guard', {
+        session: turn.sessionId,
+        kind: guarded.guard,
+      });
+    }
     say(guarded.text);
-    if (guarded.guard === 'price') offerPricing();
+    if (guarded.guard === 'price') offer('pricing');
+    if (guarded.guard === 'slot' || guarded.guard === 'time') offer('book');
     if (guarded.guard === 'leak') stopped = true;
+    else if (replacesReply(guarded.guard)) muted = true;
   };
 
   const pending: { proposal: Proposal | null } = { proposal: null };
   const tools = chatTools({
     locale,
     timeZone: turn.timeZone,
+    requestedDays: requestedDays(turn.message, now, turn.timeZone),
     site: deps.site,
     run: {
-      now: deps.now(),
+      now,
       channel: 'chat',
       hostname: turn.hostname,
       consentAt: null,
@@ -218,7 +343,9 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
       deps,
     },
     onNavigate: (event) => {
-      if (!stopped) turn.emit({ t: 'navigate', ...event });
+      if (stopped) return;
+      offered.add(event.page);
+      turn.emit({ t: 'navigate', ...event });
     },
     onProposal: (next) => {
       pending.proposal = next;
@@ -241,9 +368,16 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
     ],
     tools: aiTools(tools),
     activeTools: names,
-    stopWhen: [isStepCount(MAX_STEPS), () => stopped],
-    prepareStep: ({ stepNumber }) =>
-      stepNumber >= MAX_STEPS - 1 ? { toolChoice: 'none' } : {},
+    stopWhen: [isStepCount(MAX_STEPS), () => stopped, answeredAndOpened],
+    prepareStep: ({ stepNumber }) => {
+      if (stepNumber >= MAX_STEPS - 1) return { toolChoice: 'none' };
+      if (stepNumber === 0 && forceAvailability) {
+        return {
+          toolChoice: { type: 'tool', toolName: 'check_availability' },
+        };
+      }
+      return {};
+    },
     maxOutputTokens: MAX_OUTPUT_TOKENS,
     temperature: 0.2,
     onError: noop,
@@ -262,6 +396,11 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
     }
     if (stopped) continue;
     switch (part.type) {
+      case 'text-start':
+        newStep = true;
+        for (const key of current) earlier.add(key);
+        current = [];
+        break;
       case 'text-delta':
         for (const sentence of buffer.push(part.text)) speak(sentence);
         break;
@@ -274,6 +413,9 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
         break;
       case 'tool-result':
         for (const value of numbersIn(part.output)) allowed.add(value);
+        if (part.toolName === 'check_availability') {
+          slots.push(...slotsOf(part.output));
+        }
         break;
       case 'tool-error':
         console.error('chat: tool failed', {
@@ -296,6 +438,19 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
   if (!stopped) speak(buffer.flush());
   if (pending.proposal !== null && !stopped) {
     turn.emit({ t: 'confirm_booking', proposal: pending.proposal });
+  }
+  const related = stopped ? null : relatedPage(turn.message, locale, deps.site);
+  if (related !== null && offered.size === 0) offer(related.page, related.href);
+  if (!stopped) {
+    const fallback = UNKNOWN_FALLBACK[language];
+    if (refusalDropped && outcome.shown.trim() === '') {
+      say(booking ? fallback.booking : fallback.contact);
+    }
+    const askPerson =
+      tool !== null || topic === 'where' || saysUnknown(outcome.shown);
+    if (askPerson && offered.size === 0) {
+      offer(booking ? 'book' : 'contact');
+    }
   }
   if (!outcome.failed) {
     try {
@@ -425,7 +580,7 @@ async function withinAddressShare(
   try {
     return await countAddressTurn(deps.db, {
       secret: secret.value,
-      address: ip ?? 'unknown',
+      address: ip === null ? 'unknown' : ipBucket(ip),
       day,
       limit: deps.server.assistant.perAddressDailyTurns,
     });
@@ -448,7 +603,7 @@ export async function handleChatPost(
     maxBytes: MAX_BODY_BYTES,
     secret: deps.turnstileSecret,
   });
-  if (gated.status === 'rejected') return reject(gated.error);
+  if (gated.status === 'rejected') return refused(gated.error, 'gate');
   const { input, ip } = gated;
   const sessionId = input.sessionId ?? crypto.randomUUID();
   const { hostname } = new URL(request.url);
@@ -467,14 +622,16 @@ export async function handleChatPost(
       return undefined;
     }),
   ]);
-  if (model === undefined || spent === undefined) return reject('unavailable');
+  if (model === undefined || spent === undefined) {
+    return refused('unavailable', 'setup');
+  }
   if (model === null) {
     console.error('chat: model unavailable', { code: 'unconfigured' });
     return reject('unavailable');
   }
   if (spent >= dailyNeuronBudget) {
     await refuse(deps.db, day).catch(noop);
-    return reject('budget');
+    return refused('budget', 'daily-budget');
   }
 
   let used: number;
@@ -490,10 +647,10 @@ export async function handleChatPost(
       testingKeys: deps.server.turnstile.testingKeys,
       now,
     });
-    if (failure !== null) return reject(failure);
+    if (failure !== null) return refused(failure, 'turnstile');
   }
   if (!(await withinAddressShare(deps, await gated.secret, ip, day))) {
-    return reject('budget');
+    return refused('budget', 'address-share');
   }
   if (input.turnstileToken !== undefined) {
     try {
@@ -513,8 +670,10 @@ export async function handleChatPost(
   } else {
     try {
       const claim = await claimTurn(deps.db, sessionId, now);
-      if (claim.status !== 'ok') return reject(claim.status);
-      if (claim.session.locale !== input.locale) return reject('invalid');
+      if (claim.status !== 'ok') return refused(claim.status, 'claim');
+      if (claim.session.locale !== input.locale) {
+        return refused('invalid', 'claim');
+      }
       used = claim.session.userMessages;
     } catch (error) {
       console.error('chat: session failed', { code: errorName(error) });
@@ -524,11 +683,11 @@ export async function handleChatPost(
 
   // Set the turn's expected cost aside, atomically, so turns running at the
   // same time cannot all pass the budget check above.
-  const reserved = reservationFor(modelId);
+  const reserved = reservationFor(modelId, MAX_STEPS);
   try {
     if (!(await reserveNeurons(deps.db, day, reserved, dailyNeuronBudget))) {
       await refuse(deps.db, day);
-      return reject('budget');
+      return refused('budget', 'reservation');
     }
   } catch (error) {
     console.error('chat: reservation failed', { code: errorName(error) });

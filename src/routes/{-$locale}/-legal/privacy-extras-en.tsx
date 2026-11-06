@@ -29,8 +29,9 @@ export function AssistantSection() {
       </p>
       <p>
         To limit abuse we also count how many questions each connection asks in
-        a day. For that we keep a keyed one-way fingerprint of your IP address:
-        it cannot be turned back into the address and it is not linked to your
+        a day. For that we keep a keyed fingerprint of your IP address (or of
+        its network block, for IPv6): it is pseudonymised, we can't read the
+        address from it without our key, and it is not linked to your
         conversation. Each day's fingerprint is deleted at 03:00 UTC two days
         later, so it is kept for about 51 hours at most.
       </p>

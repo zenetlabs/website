@@ -13,7 +13,7 @@ Conventions: `<store-id>`, `<secret-id>`, `<version-id>`, `<alias>`, `<booking-i
 | Database | D1 `prod-zenet-web` (EU jurisdiction), binding `DB`, migrations in `migrations/` (0001 to 0006). |
 | Analytics | Cloudflare Web Analytics (cookieless, always on). GA4 is on, consent only (`ga4Id` set; `docs/analytics.md`). |
 | Email | Outbound through Resend on `send.zenetlabs.com`; inbound is Google Workspace. |
-| Third parties | Workers AI (binding `AI`, assistant), Google Calendar (booking), ElevenLabs (voice). Booking is live in production (2026-11-06); the assistant and voice are dark. |
+| Third parties | Workers AI (binding `AI`, assistant), Google Calendar (booking), ElevenLabs (voice). Booking and the assistant are live in production (2026-11-06); voice is dark. |
 | Cron | One trigger, `*/10 * * * *`, production only (section 8). |
 | Config | Public per-env values in `site.config.ts` (build time, by `CLOUDFLARE_ENV`); secrets in the Secrets Store, read per request. |
 
@@ -314,7 +314,7 @@ Every recipe below was dry-run on 2026-11-01: the flag was set in the production
 | `booking.published` | `site.config.ts` | `true` (since 2026-11-06) | `/book` and `/es/reservar`, the booking tools, `CTA_TARGET` | secret to `unconfigured`, or the flag |
 | `calculator.published` | `site.config.ts` | `false` | both calculator URLs, links to them, `estimate_project` | the flag |
 | `ga4Id` | `site.config.ts` | set (`null` turns GA4 off) | banner, consent, GA4, the legal-page variants | the flag |
-| `assistant.published` | `site.config.ts` | `false` | the launcher, the panel, `POST /api/chat`, the privacy section | the flag or the budget |
+| `assistant.published` | `site.config.ts` | `true` (2026-11-06) | the launcher, the panel, `POST /api/chat`, the privacy section | the flag or the budget |
 | `voice.published` and `voice.agents` | `site.config.ts` | `false`, ids `null` | the voice callout, the mint, the bearer tools, `microphone=(self)` | ElevenLabs, or the flag |
 | `webmcp.published`, `webmcp.originTrialToken` | `site.config.ts` | `true`, `null` | the WebMCP chunk, the origin-trial meta tag | the flag |
 | `access` | `site.config.ts` (`productionServer`) | set (team domain and AUD) | `/internal/*` (404 without it) | set it back to `null` |
@@ -352,9 +352,10 @@ Every recipe ends the same way: after the deploy run `bash scripts/smoke.sh`, ch
 
 1. Owner: raise `dailyNeuronBudget` to the spend wanted (the account is on Workers Paid), optional AI Gateway name, review the prompt and copy ([owner checklist](owner-checklist.md), P2). If a deploy with the `AI` binding fails naming AI, add Account, Workers AI, Read to the deploy token.
 2. Preview check with the flag on (`--preview-alias <alias>`), the 11 EN and 11 ES question set by hand, read the transcripts, delete the test sessions, **re-upload dark**.
+   - One address gets 40 chat turns a UTC day (`perAddressDailyTurns`, table `chat_ip_usage`, IPv6 counted by /64), and a preview alias shares production D1, so two full runs in a day hit it: turns then answer `budget` ("can't reply right now", logged `chat: refused {stage: 'address-share'}`). **With the assistant live, real visitors' counters share that table: never delete a whole day.** Only right after a test run, find the single row whose `turns` equals the number of turns the run sent, then delete exactly that row. The key is an HMAC of the address, so the count is the only handle. First `pnpm exec wrangler d1 execute DB --remote --env production --command "SELECT key, turns FROM chat_ip_usage WHERE day = '<YYYY-MM-DD UTC>' ORDER BY turns DESC"`; if exactly one row has the run's count, `... --command "DELETE FROM chat_ip_usage WHERE day = '<YYYY-MM-DD UTC>' AND key = '<key from the SELECT>'"`. If several rows match, delete nothing and wait for the next UTC day.
 3. The flip PR: production `assistant: { published: true }`; update `src/site-config.test.ts` (the only failing test in the dry run). Set `dailyNeuronBudget` and `aiGatewayName` if decided.
 4. Bumps: the assistant privacy section now renders, so `CONSENT_VERSION`, the `updated` date of both privacy pages, `PAGES.privacy.lastmod` and the `legal.test.tsx` date.
-5. After the deploy: health `assistant:true`; the smoke chat lines switch to the 400 and 403 pair; one `[TEST]` chat on production, then delete the session; an `ai_usage` row appears; CPU in `wrangler tail`.
+5. After the deploy: health `assistant:true`; the smoke chat lines switch to the 400 and 403 pair (they follow `/api/health`; deploy-prod sets `EXPECT_ASSISTANT=1`, which also fails the smoke if the assistant is dark); one `[TEST]` chat on production, then delete the session; an `ai_usage` row appears; CPU in `wrangler tail`.
 
 ### `voice.published` (level `high`; needs `booking.published` first)
 

@@ -176,6 +176,34 @@ test('replaces an invented price, offers the pricing page, keeps the chat across
   );
 });
 
+test('answers once and opens the Holded page when it answers and navigates in one step (es)', async ({
+  page,
+}) => {
+  await openChat(page, 'es');
+  await say(page, 'es', '¿Conectáis Holded con PrestaShop?');
+  const reply = page.locator('[data-ai-generated="true"]').last();
+  await expect(reply).toHaveText(
+    `${es.assistant}: Sí, conectamos Holded con PrestaShop. ¿Te interesa hacer el diagnóstico primero?`,
+  );
+  await expect(
+    page.getByRole('link', {
+      name: es.open.replace('{label}', es.pages.holdedPrestashop),
+    }),
+  ).toBeVisible();
+});
+
+test('an on-topic question answered with the refusal gets "no information" and a call instead', async ({
+  page,
+}) => {
+  await openChat(page, 'en');
+  await say(page, 'en', 'Do you have an office in Tokyo?');
+  const log = page.getByRole('log');
+  await expect(log).toContainText("I don't have that information here.");
+  await expect(log).not.toContainText(
+    'I can only help with questions about Zenet Labs.',
+  );
+});
+
 test('resets the conversation when the language changes', async ({ page }) => {
   await openChat(page, 'en');
   await say(page, 'en', 'How much does an AI agent cost?');
@@ -277,6 +305,23 @@ test.describe('booking from the chat', () => {
 
   test.beforeEach(async () => {
     await googleReset();
+  });
+
+  test('replaces a time the calendar never returned with the nearest real ones', async ({
+    page,
+  }) => {
+    await openChat(page, 'en');
+    await say(page, 'en', 'Book me at a fake time');
+    const log = page.getByRole('log');
+    await expect(log).toContainText("I can't confirm that time");
+    await expect(log).toContainText('The nearest free ones are:');
+    await expect(log).not.toContainText('3:17');
+    await expect(log).not.toContainText('great time');
+    await expect(
+      page.getByRole('link', {
+        name: en.open.replace('{label}', en.pages.book),
+      }),
+    ).toBeVisible();
   });
 
   test('proposes a slot, holds it through the card, and books it from the email as a chat lead', async ({

@@ -245,7 +245,12 @@ attempt "robots disallows internal" body_contains "${SITE}/robots.txt" 'Disallow
 attempt "405 GET /api/lead" status_is 405 "${SITE}/api/lead"
 attempt "400 POST /api/lead {}" post_status_is 400 "${SITE}/api/lead"
 attempt "405 GET /api/chat" status_is 405 "${SITE}/api/chat"
+# The chat lines follow /api/health, so a rollback to a dark build stays green.
+# EXPECT_ASSISTANT=1 (set by deploy-prod) also requires the assistant to be live.
 # None of these reach the model, so the smoke test costs no neurons.
+if [ "${EXPECT_ASSISTANT:-0}" = 1 ]; then
+  attempt "api health reports the assistant live" body_contains "${SITE}/api/health" '"assistant":true'
+fi
 if grep -qF '"assistant":true' <<<"$(curl -s --max-time 20 "${SITE}/api/health")"; then
   attempt "400 POST /api/chat {}" post_status_is 400 "${SITE}/api/chat"
   attempt "403 POST /api/chat without Origin" post_json_status_is 403 "${SITE}/api/chat" '{}'

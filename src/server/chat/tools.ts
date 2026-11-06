@@ -5,18 +5,21 @@ import type { Locale } from '@/lib/i18n';
 import { isRecord } from '@/lib/is-record';
 import { type NavigateSection, resolveNavigation } from '@/lib/navigate';
 import type { PageId, SiteFlags } from '@/lib/page-registry';
+import { zonedDay } from '@/lib/slot-format';
 import { bookingInputSchema } from '@/server/booking-schema';
 import { errorName } from '@/server/responses';
 import { navigateInput } from '@/server/tools/navigate';
 import { offeredTools } from '@/server/tools/registry';
 import type {
   ClientTool,
+  RunResult,
   ServerTool,
   Tool,
   ToolContext,
 } from '@/server/tools/types';
 
 const SLOTS_FOR_MODEL = 8;
+const SLOTS_PER_DAY = 3;
 
 const CHAT_BOOK_DESCRIPTION: Record<Locale, string> = {
   en: 'Proposes a free 30-minute call at a slot returned by check_availability. Nothing is booked yet: the visitor fills in their details in a card, then gets an email and books the call only by pressing Confirm in it.',
@@ -32,6 +35,8 @@ export type NavigateEvent = {
 export type ChatToolContext = {
   locale: Locale;
   timeZone: string;
+  // The days the visitor's message names; they win over the model's from/to.
+  requestedDays?: { from: string; to: string } | null;
   site: SiteFlags;
   run: ToolContext;
   onNavigate: (event: NavigateEvent) => void;
@@ -42,23 +47,62 @@ export function chatToolNames(site: SiteFlags): string[] {
   return offeredTools(site).map((def) => def.name);
 }
 
-// The model never chooses the language: the page does, and the schema it sees has no locale.
+// The model never chooses the language or the time zone: the page and the
+// browser do, and the schema it sees has neither.
 function modelInput(schema: z.ZodType): z.ZodType {
-  return schema instanceof z.ZodObject && 'locale' in schema.shape
-    ? schema.omit({ locale: true })
-    : schema;
+  if (!(schema instanceof z.ZodObject)) return schema;
+  const view =
+    'locale' in schema.shape ? schema.omit({ locale: true }) : schema;
+  return 'timeZone' in view.shape ? view.omit({ timeZone: true }) : view;
 }
 
-const slotsView = z.object({ slots: z.array(z.unknown()) }).loose();
+const slotsView = z
+  .object({
+    timeZone: z.string(),
+    slots: z.array(z.object({ start: z.string() }).loose()),
+  })
+  .loose();
+
+function dayOf(start: string, zone: string): string {
+  const instant = Date.parse(start);
+  return Number.isNaN(instant) ? start : zonedDay(instant, zone);
+}
+
+// At most eight slots, three a day first, so the model sees several days and
+// not only the first morning.
+function spreadSlots<T extends { start: string }>(
+  slots: readonly T[],
+  zone: string,
+): T[] {
+  const picked = new Set<T>();
+  const perDay = new Map<string, number>();
+  for (const slot of slots) {
+    if (picked.size >= SLOTS_FOR_MODEL) break;
+    const day = dayOf(slot.start, zone);
+    const count = perDay.get(day) ?? 0;
+    if (count < SLOTS_PER_DAY) {
+      perDay.set(day, count + 1);
+      picked.add(slot);
+    }
+  }
+  for (const slot of slots) {
+    if (picked.size >= SLOTS_FOR_MODEL) break;
+    picked.add(slot);
+  }
+  return slots.filter((slot) => picked.has(slot));
+}
 
 // What the model reads: no URLs (the page links are the navigate button's job)
-// and at most eight slots.
+// and a spread of at most eight slots.
 function modelView(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(modelView);
   if (!isRecord(value)) return value;
   const slots = slotsView.safeParse(value);
   const base = slots.success
-    ? { ...slots.data, slots: slots.data.slots.slice(0, SLOTS_FOR_MODEL) }
+    ? {
+        ...slots.data,
+        slots: spreadSlots(slots.data.slots, slots.data.timeZone),
+      }
     : value;
   return Object.fromEntries(
     Object.entries(base)
@@ -90,6 +134,39 @@ function offeredSlots(messages: readonly ModelMessage[]): number[] {
   });
 }
 
+const freeSlotsSchema = z.object({
+  status: z.literal('ok'),
+  slots: z.array(z.unknown()),
+});
+
+function isEmptyRange(raw: Record<string, unknown>, result: unknown): boolean {
+  const parsed = freeSlotsSchema.safeParse(result);
+  return (
+    ('from' in raw || 'to' in raw) &&
+    parsed.success &&
+    parsed.data.slots.length === 0
+  );
+}
+
+// A day with nothing free answers with the nearest free slots instead, marked
+// so the model says the asked day is full rather than offering it.
+async function availabilityFor(
+  def: ServerTool,
+  raw: Record<string, unknown>,
+  ctx: ChatToolContext,
+): Promise<RunResult> {
+  const asked = await def.run(raw, ctx.run);
+  if (!asked.ok || !isEmptyRange(raw, asked.result)) return asked;
+  const { locale, timeZone } = raw;
+  const nearest = await def.run({ locale, timeZone }, ctx.run);
+  return nearest.ok && isRecord(nearest.result)
+    ? {
+        ok: true,
+        result: { ...nearest.result, requestedDays: 'no_free_times' },
+      }
+    : asked;
+}
+
 async function runRegistryTool(
   def: ServerTool,
   input: unknown,
@@ -98,13 +175,15 @@ async function runRegistryTool(
   const raw = {
     ...(isRecord(input) ? input : {}),
     locale: ctx.locale,
-    ...(def.name === 'check_availability' &&
-    !(isRecord(input) && 'timeZone' in input)
-      ? { timeZone: ctx.timeZone }
+    ...(def.name === 'check_availability'
+      ? { timeZone: ctx.timeZone, ...(ctx.requestedDays ?? {}) }
       : {}),
   };
   try {
-    const outcome = await def.run(raw, ctx.run);
+    const outcome =
+      def.name === 'check_availability'
+        ? await availabilityFor(def, raw, ctx)
+        : await def.run(raw, ctx.run);
     return outcome.ok ? modelView(outcome.result) : { status: 'invalid_input' };
   } catch (error) {
     console.error('chat: tool failed', {

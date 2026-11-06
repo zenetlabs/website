@@ -3,6 +3,7 @@ import type { ModelMessage } from 'ai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import type { Proposal } from '@/lib/chat-events';
+import { zonedDay } from '@/lib/slot-format';
 import { clearBusyCache } from '@/server/booking';
 import {
   type ChatTool,
@@ -132,6 +133,13 @@ describe('what the model is shown', () => {
     }
   });
 
+  it('has no time zone in check_availability: the browser decides it', () => {
+    const { check_availability: check } = chatTools(context());
+    const text = JSON.stringify(check && z.toJSONSchema(check.inputSchema));
+    expect(text).toContain('from');
+    expect(text).not.toContain('timeZone');
+  });
+
   it('proposes a booking from a slot and a topic only: no name, email or company', () => {
     const { book_meeting: book } = chatTools(context());
     const text = JSON.stringify(book && z.toJSONSchema(book.inputSchema));
@@ -176,6 +184,60 @@ describe('registry tools run in process', () => {
       .parse(result);
     expect(parsed.timeZone).toBe('Asia/Tokyo');
     expect(parsed.slots).toHaveLength(8);
+  });
+
+  const slotsResult = z
+    .object({
+      status: z.literal('ok'),
+      timeZone: z.string(),
+      slots: z.array(z.object({ start: z.string() })),
+      requestedDays: z.literal('no_free_times').optional(),
+    })
+    .loose();
+  const daysOf = (slots: readonly { start: string }[]) =>
+    slots.map((slot) => zonedDay(Date.parse(slot.start), 'Asia/Tokyo'));
+
+  // The tool returns at most 30 slots, two days' worth here: the first eight
+  // alone would all fall on the first day.
+  it('spreads the eight slots over the days returned', async () => {
+    const result = slotsResult.parse(
+      await run(chatTools(context()), 'check_availability', {}),
+    );
+    const days = daysOf(result.slots);
+    expect(days).toHaveLength(8);
+    expect(new Set(days).size).toBeGreaterThanOrEqual(2);
+  });
+
+  it('keeps the visitor time zone whatever the model passes', async () => {
+    const result = slotsResult.parse(
+      await run(chatTools(context()), 'check_availability', {
+        timeZone: 'Europe/London',
+      }),
+    );
+    expect(result.timeZone).toBe('Asia/Tokyo');
+  });
+
+  it('returns only the asked day when it has free slots', async () => {
+    const result = slotsResult.parse(
+      await run(chatTools(context()), 'check_availability', {
+        from: '2027-01-06',
+        to: '2027-01-06',
+      }),
+    );
+    expect(result.requestedDays).toBeUndefined();
+    expect(new Set(daysOf(result.slots))).toEqual(new Set(['2027-01-06']));
+  });
+
+  it('answers a full day with the nearest free slots, marked as such', async () => {
+    const result = slotsResult.parse(
+      await run(chatTools(context()), 'check_availability', {
+        from: '2027-01-10',
+        to: '2027-01-10',
+      }),
+    );
+    expect(result.requestedDays).toBe('no_free_times');
+    expect(result.slots.length).toBeGreaterThan(0);
+    expect(daysOf(result.slots)).not.toContain('2027-01-10');
   });
 
   it('answers unavailable, not an error, when the calendar fails', async () => {

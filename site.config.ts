@@ -42,8 +42,7 @@ const production: SiteConfig = {
   // TODO(albert): set true after reviewing src/content/pricing-rules.ts
   calculator: { published: false },
   booking: { published: true },
-  // TODO(albert): set true after the model bake-off passes (docs/ai-assistant.md "Activation")
-  assistant: { published: false },
+  assistant: { published: true },
   // Read-only tools plus a Turnstile-gated, visitor-confirmed booking, and nothing loads where the browser lacks WebMCP.
   webmcp: {
     published: true,
@@ -88,10 +87,19 @@ export type BookingServerConfig = {
 // (local and CI only; production refuses them).
 export type TurnstileServerConfig = { testingKeys: boolean };
 
-export type ChatModelId =
-  | '@cf/zai-org/glm-4.7-flash'
-  | '@cf/google/gemma-4-26b-a4b-it'
-  | '@cf/meta/llama-4-scout-17b-16e-instruct';
+// The Workers AI models the assistant can run on, each with its settings in
+// src/server/chat/model.ts and its neuron rate in src/server/chat/usage.ts.
+export const CHAT_MODELS = [
+  '@cf/zai-org/glm-4.7-flash',
+  '@cf/google/gemma-4-26b-a4b-it',
+  '@cf/meta/llama-4-scout-17b-16e-instruct',
+] as const;
+
+export type ChatModelId = (typeof CHAT_MODELS)[number];
+
+function isChatModel(value: string): value is ChatModelId {
+  return CHAT_MODELS.some((model) => model === value);
+}
 
 export type AssistantServerConfig = {
   model: ChatModelId | 'fake';
@@ -166,12 +174,10 @@ const productionServer: ServerConfig = {
   },
   turnstile: { testingKeys: false },
   assistant: {
-    // TODO(albert): confirm the model after the bake-off (pnpm eval:chat against a preview alias)
     model: '@cf/zai-org/glm-4.7-flash',
     // TODO(albert): AI Gateway name (docs/ai-assistant.md "AI Gateway"); null calls Workers AI directly
     aiGatewayName: null,
-    // TODO(albert): set the daily neuron budget to the spend you want (Workers Paid)
-    dailyNeuronBudget: 8_000,
+    dailyNeuronBudget: 100_000,
     // Two full 20-message sessions a day from one address; the same limit for every visitor behind a shared one.
     perAddressDailyTurns: 40,
   },
@@ -182,8 +188,22 @@ const productionServer: ServerConfig = {
   },
 };
 
-export function serverConfig(env: string | undefined): ServerConfig {
+// `chatModel` (the CHAT_MODEL build variable) swaps the production model for
+// a preview bake-off without a code change; local builds keep the fake.
+export function serverConfig(
+  env: string | undefined,
+  { chatModel }: { chatModel?: string | undefined } = {},
+): ServerConfig {
   if (!env) return localServer;
-  if (env === 'production') return productionServer;
-  throw new Error(`Unknown CLOUDFLARE_ENV: ${env}`);
+  if (env !== 'production') throw new Error(`Unknown CLOUDFLARE_ENV: ${env}`);
+  if (!chatModel) return productionServer;
+  if (!isChatModel(chatModel)) {
+    throw new Error(
+      `Unknown CHAT_MODEL: ${chatModel} (one of ${CHAT_MODELS.join(', ')})`,
+    );
+  }
+  return {
+    ...productionServer,
+    assistant: { ...productionServer.assistant, model: chatModel },
+  };
 }

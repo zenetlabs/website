@@ -2,6 +2,12 @@ import type { ModelMessage } from 'ai';
 import type { ServiceId, Services } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { PUBLIC_EMAIL } from '@/lib/site';
+import {
+  type OfferedSlot,
+  slotFallback,
+  slotViolation,
+} from '@/server/chat/slot-guard';
+import { fold, hasWord } from '@/server/chat/text';
 
 export const CANARY = 'ZL-ASSIST';
 
@@ -21,12 +27,151 @@ export const PRICE_FALLBACK: Record<Locale, string> = {
   es: 'No puedo confirmarte esa cifra aquí; los precios oficiales están en nuestra página de precios.',
 };
 
+// When the reply had nothing left once a misplaced refusal was taken out.
+export const UNKNOWN_FALLBACK: Record<
+  Locale,
+  { booking: string; contact: string }
+> = {
+  en: {
+    booking: `I don't have that information here. You can book a call or write to ${PUBLIC_EMAIL}.`,
+    contact: `I don't have that information here. You can use the contact form or write to ${PUBLIC_EMAIL}.`,
+  },
+  es: {
+    booking: `No tengo esa información aquí. Puedes reservar una llamada o escribir a ${PUBLIC_EMAIL}.`,
+    contact: `No tengo esa información aquí. Puedes usar el formulario de contacto o escribir a ${PUBLIC_EMAIL}.`,
+  },
+};
+
+// A product the official tool list does not name: what the reply says instead
+// of claiming it. The call offer follows from the booking flag.
+export const UNLISTED_TOOL: Record<
+  Locale,
+  { answer: (name: string) => string; booking: string; contact: string }
+> = {
+  en: {
+    answer: (name) =>
+      `${name} isn't on our list of tools. If it has an API or a reliable export, the diagnostic confirms whether it can be connected.`,
+    booking: 'You can book a call to check it.',
+    contact: `You can write to ${PUBLIC_EMAIL} to check it.`,
+  },
+  es: {
+    answer: (name) =>
+      `${name} no está en nuestra lista. Si tiene API o exportación fiable, el diagnóstico confirma si se puede conectar.`,
+    booking: 'Puedes reservar una llamada para verlo.',
+    contact: `Puedes escribir a ${PUBLIC_EMAIL} para verlo.`,
+  },
+};
+
+const UNKNOWN_ANSWER =
+  /(?<!\p{L})(?:don't|do not) (?:know|have (?:that|this) information)(?!\p{L})|(?<!\p{L})no lo se(?!\p{L})|(?<!\p{L})no (?:tengo|dispongo de) (?:esa|esta) informacion(?!\p{L})/u;
+
+// A reply that says it doesn't know, so it gets a way to ask a person.
+export function saysUnknown(text: string): boolean {
+  return UNKNOWN_ANSWER.test(fold(text).replace(/[’‘]/g, "'"));
+}
+
 const EMAIL_REPLACEMENT: Record<Locale, string> = {
   en: 'your email',
   es: 'tu email',
 };
 
-type GuardKind = 'price' | 'link' | 'email' | 'leak';
+// `time` is a time with no day the visitor can see: the sentence is replaced
+// but the reply goes on, since it may be office hours, not an offer.
+export type GuardKind =
+  | 'price'
+  | 'slot'
+  | 'time'
+  | 'claim'
+  | 'refusal'
+  | 'link'
+  | 'email'
+  | 'leak';
+
+// A guard that replaced the whole sentence: the rest of the reply is dropped,
+// so nothing the model wrote around the bad claim follows the canned text.
+export function replacesReply(guard: GuardKind | null): boolean {
+  return (
+    guard === 'price' ||
+    guard === 'slot' ||
+    guard === 'claim' ||
+    guard === 'leak'
+  );
+}
+
+// "I own the code", "somos los dueños del código": the FAQ says the client
+// owns both. The thing owned must be named next to the claim.
+const OWNED = `(?:the |your |all |any |this )?(?:source code|code|data|software|ip|intellectual property)`;
+const OWNERSHIP_CLAIM = [
+  new RegExp(
+    String.raw`\b(?:i|we|zenet(?: labs)?) (?:own|owns|retain (?:ownership of|the rights to)) ${OWNED}\b`,
+  ),
+  /\b(?:code|data|software|ip) (?:belongs?|belonging) to (?:us|me|zenet)\b/,
+  /\b(?:code|data|software) (?:is|are|remains?|stays?) (?:ours|mine)\b/,
+  /\b(?:somos|soy) (?:los |el |la )?(?:duen[oa]s?|propietari[oa]s?) (?:del|de los|de la|de tu|de tus) (?:codigo|datos|software)\b/,
+  /\b(?:codigo|datos|software) (?:nos|me) pertenecen?\b/,
+  /\b(?:codigo|datos|software) (?:es|son|sigue siendo|siguen siendo|queda|quedan) (?:nuestr[oa]s?|mi[oa]s?)\b/,
+];
+
+const SUPPORT_CLAIM =
+  /(?<!\p{L})(?:yes|we (?:work|integrate|connect)|we can (?:connect|integrate)|we support|trabajamos|conectamos|integramos)(?!\p{L})/u;
+// Folded, "sí" (yes) would read as "si" (if), so it is read with its accent.
+const SI = /(?<!\p{L})sí(?!\p{L})/u;
+const DENIAL =
+  /(?<!\p{L})(?:no|not|isn't|is not|never|nunca)(?!\p{L})|n't(?!\p{L})/u;
+
+function denies(sentence: string): boolean {
+  return DENIAL.test(fold(sentence).replace(/[’‘]/g, "'"));
+}
+
+// "Sí, trabajamos con SAP Business One": a product off the list, claimed.
+function claimsSupport(sentence: string, name: string): boolean {
+  const text = fold(sentence);
+  const claim = SUPPORT_CLAIM.test(text) || SI.test(sentence.toLowerCase());
+  return hasWord(text, fold(name)) && claim && !denies(sentence);
+}
+
+function claimsOwnership(sentence: string): boolean {
+  const text = fold(sentence);
+  return (
+    OWNERSHIP_CLAIM.some((pattern) => pattern.test(text)) && !denies(sentence)
+  );
+}
+
+const REFUSAL_LINES = Object.values(REFUSAL).map(
+  (line) => new RegExp(`${line.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'iu'),
+);
+const LEFTOVER =
+  /^[\s,.;:!?¡¿-]*(?:sorry|lo siento|perdona|disculpa)?[\s,.;:!?¡¿-]*$/i;
+
+// The refusal sentence, said where it does not belong, taken out of the
+// sentence; what is left of it stands.
+function withoutRefusal(sentence: string): string | null {
+  for (const line of REFUSAL_LINES) {
+    if (!line.test(sentence)) continue;
+    const rest = sentence.replace(line, '');
+    return LEFTOVER.test(rest) ? '' : rest.trimStart();
+  }
+  return null;
+}
+
+const LOWER_AFTER_STOP = /([!?…]\s+[¿¡"«“(]*|[.!?…]\s*[¿¡])(\p{Ll})/gu;
+const LOWER_START = /^(\s*[¿¡"«“(]*)(\p{Ll})/u;
+
+// A sentence glued to the one before it ("primero?¿te interesa") or started
+// in lower case where a new sentence begins. `previous` is the text already
+// shown; a new paragraph or a question before it starts a sentence. After a
+// full stop only an opening ¿ or ¡ does, since "e.g. a" is not a new sentence.
+export function tidySentence(sentence: string, previous: string): string {
+  const spaced = sentence.replace(/([.!?…])([¿¡])/g, '$1 $2');
+  const fresh =
+    previous.trim() === '' ||
+    /(?:[!?…]|\n)\s*$/.test(previous) ||
+    (/\.\s*$/.test(previous) && /^\s*[¿¡]/.test(spaced));
+  const upper = (_: string, lead: string, letter: string) =>
+    `${lead}${letter.toUpperCase()}`;
+  const head = fresh ? spaced.replace(LOWER_START, upper) : spaced;
+  return head.replace(LOWER_AFTER_STOP, upper);
+}
 
 const MAX_SENTENCE = 400;
 const TERMINATORS = new Set(['.', '!', '?', '…']);
@@ -194,7 +339,7 @@ function stripMarkup(text: string): string {
 }
 
 // The unicode hyphens and minus signs all read as "-" for a check, never in the output.
-function fold(text: string): string {
+function foldDashes(text: string): string {
   return text.replace(/[\u2010-\u2015\u2212]/g, '-').toLowerCase();
 }
 
@@ -222,12 +367,12 @@ function stripLinks(text: string): string {
 
 const LEAK_MARKERS = new RegExp(
   [CANARY, ...Object.values(RULES_PHRASE)]
-    .map((marker) => fold(marker).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .map((marker) => foldDashes(marker).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     .join('|'),
 );
 
 function isLeak(sentence: string): boolean {
-  return LEAK_MARKERS.test(fold(sentence));
+  return LEAK_MARKERS.test(foldDashes(sentence));
 }
 
 function isForeign(address: string): boolean {
@@ -241,29 +386,96 @@ function trailing(sentence: string): string {
 
 type Guarded = { text: string; guard: GuardKind | null };
 
+// The slots check_availability returned in this conversation; without them
+// the slot check is off.
+type Calendar = { slots: readonly OfferedSlot[]; now: number };
+
+// Facts the reply must not turn around, with the official text that replaces
+// a sentence that does; `refusal: false` when the message was on topic, so the
+// refusal sentence has no place in the reply.
+type Facts = {
+  ownership: string;
+  // A product the visitor named that the official tool list does not.
+  unlisted?: { name: string; answer: string };
+};
+
 // `previous` is what the visitor already saw just before this sentence, so a
-// currency sign at the end of it still counts for the number that starts this one.
+// currency sign at the end of it still counts for the number that starts this
+// one, and a time takes its day from the last date in it. `language` is the
+// reply's language (canned text); `locale` sets the currency.
 export function guardSentence(
   sentence: string,
   {
     locale,
     allowed,
     previous = '',
-  }: { locale: Locale; allowed: Allowed; previous?: string },
+    language = locale,
+    calendar,
+    facts,
+    refusal = true,
+  }: {
+    locale: Locale;
+    allowed: Allowed;
+    previous?: string;
+    language?: Locale;
+    calendar?: Calendar;
+    facts?: Facts;
+    refusal?: boolean;
+  },
 ): Guarded {
   const clean = stripMarkup(normalise(sentence));
   const tail = trailing(clean);
   if (isLeak(clean)) {
-    return { text: `${REFUSAL[locale]}${tail}`, guard: 'leak' };
+    return { text: `${REFUSAL[language]}${tail}`, guard: 'leak' };
   }
-  const before = normalise(previous).slice(-PREVIOUS_CHARS);
+  if (!refusal) {
+    const rest = withoutRefusal(clean);
+    if (rest === '') return { text: '', guard: 'refusal' };
+    if (rest !== null) {
+      const kept = guardSentence(rest, {
+        locale,
+        allowed,
+        previous,
+        language,
+        calendar,
+        facts,
+        refusal,
+      });
+      return { text: kept.text, guard: kept.guard ?? 'refusal' };
+    }
+  }
+  if (facts !== undefined && claimsOwnership(clean)) {
+    return { text: `${facts.ownership}${tail}`, guard: 'claim' };
+  }
+  if (
+    facts?.unlisted !== undefined &&
+    claimsSupport(clean, facts.unlisted.name)
+  ) {
+    return { text: `${facts.unlisted.answer}${tail}`, guard: 'claim' };
+  }
+  const shown = normalise(previous);
+  const before = shown.slice(-PREVIOUS_CHARS);
   if (priceViolation(clean, before, locale, allowed)) {
-    return { text: `${PRICE_FALLBACK[locale]}${tail}`, guard: 'price' };
+    return { text: `${PRICE_FALLBACK[language]}${tail}`, guard: 'price' };
+  }
+  // Until check_availability has answered in this session there is nothing to
+  // compare with, so the slot check waits for it.
+  const slot =
+    calendar === undefined || calendar.slots.length === 0
+      ? null
+      : slotViolation(clean, { ...calendar, previous: shown });
+  if (slot !== null) {
+    const text = slotFallback(
+      language,
+      calendar?.slots ?? [],
+      calendar?.now ?? 0,
+    );
+    return { text: `${text}${tail}`, guard: slot === 'date' ? 'slot' : 'time' };
   }
   const kept: string[] = [];
   const foreignEmail = (clean.match(EMAIL) ?? []).some(isForeign);
   const masked = clean.replace(EMAIL, (address) => {
-    if (isForeign(address)) return EMAIL_REPLACEMENT[locale];
+    if (isForeign(address)) return EMAIL_REPLACEMENT[language];
     kept.push(address);
     return `\ue000${kept.length - 1}\ue001`;
   });
