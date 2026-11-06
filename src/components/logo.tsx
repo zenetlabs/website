@@ -1,25 +1,19 @@
-export function Logo({ className }: { className?: string }) {
+// The full brand lockup as an image, so it costs no JavaScript: the mark in its
+// brand colours and an ink wordmark, or a white one under a dark forced-colours theme.
+export function Logo() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 124 144"
-      width={24}
-      height={28}
-      aria-hidden="true"
-      className={className}
-    >
-      <path
-        className="fill-brand-amber"
-        d="M0 36v24l20.666 12L0 84v24l62.002 36v-24l-20.67-12 20.67-12V72L0 36Z"
+    <picture>
+      <source
+        media="(forced-colors: active) and (prefers-color-scheme: dark)"
+        srcSet="/logo/lockup-white.svg"
       />
-      <path
-        className="fill-brand-blue"
-        d="M62.002 72v24l20.666-12v48l20.666-12V72L124 60V36L62.002 72Z"
+      <img
+        src="/logo/lockup.svg"
+        alt=""
+        width={107}
+        height={32}
+        className="h-8 w-auto md:h-9"
       />
-      <path
-        className="fill-brand-teal"
-        d="m0 36 62.002 36 20.666-12L62 48h41.333L124 36 62.002 0l-20.67 12 20.67 12H20.666L0 36Z"
-      />
-    </svg>
+    </picture>
   );
 }

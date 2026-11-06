@@ -1,7 +1,7 @@
 import { CtaLink } from '@/components/cta-link';
 import { ProofPanel } from '@/components/proof-panel';
 import { Container, EmphasisTitle } from '@/components/section';
-import { LEAD, PRIMARY_BUTTON_LG, TEXT_LINK } from '@/components/ui';
+import { LEAD, PRIMARY_BUTTON_FULL, TEXT_LINK } from '@/components/ui';
 import type { HomeContent } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { CTA_TARGET, navHref } from '@/lib/nav';
@@ -23,14 +23,14 @@ export function Hero({
       <Container className="grid gap-12 py-12 md:py-20 lg:grid-cols-12 lg:items-start lg:gap-10">
         <div className="lg:col-span-7">
           <h1 className="text-display-1">
-            <EmphasisTitle parts={copy.title} marker />
+            <EmphasisTitle parts={copy.title} />
           </h1>
           <p className={`mt-6 ${LEAD}`}>{copy.lead}</p>
           <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-5">
             <CtaLink
               cta="hero"
               href={navHref(locale, CTA_TARGET)}
-              className={PRIMARY_BUTTON_LG}
+              className={PRIMARY_BUTTON_FULL}
             >
               {copy.primary}
             </CtaLink>
@@ -44,7 +44,7 @@ export function Hero({
           </div>
           <p className="mt-6 text-ui-s text-muted-fg">
             {copy.audience} · {copy.diagnostic}{' '}
-            <span className="font-mono tabular-nums">{diagnosticPrice}</span>
+            <span className="font-semibold text-fg">{diagnosticPrice}</span>
           </p>
         </div>
         <div className="lg:col-span-5">

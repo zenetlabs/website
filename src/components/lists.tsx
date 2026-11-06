@@ -42,7 +42,7 @@ export function MetricList({
       {measured.map((metric) => (
         <div key={metric.id}>
           <dt className="text-sm text-muted-fg">{metric.label}</dt>
-          <dd className="font-display text-3xl">
+          <dd className="text-3xl font-semibold tracking-tight">
             {formatNumber(locale, metric.value)}
             {metric.unit}
           </dd>

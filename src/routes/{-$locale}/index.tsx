@@ -51,7 +51,6 @@ function Home() {
         />
         <Process
           copy={home.process}
-          variant="band"
           price={formatPriceSummary(locale, services.diagnostic.prices)}
         />
         <Cases copy={home.cases} locale={locale} />

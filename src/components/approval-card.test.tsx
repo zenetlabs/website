@@ -11,7 +11,7 @@ describe('ApprovalCard parity', () => {
     const own = card.container.firstElementChild;
     card.unmount();
     const { container } = render(<ProofPanel copy={home.proof} />);
-    const inline = container.querySelector('.proof-approval');
+    const inline = container.querySelector('[data-approval]');
     expect(inline?.innerHTML).toBe(own?.innerHTML);
     for (const token of own?.classList ?? []) {
       expect(inline?.classList.contains(token)).toBe(true);

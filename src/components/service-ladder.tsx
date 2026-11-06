@@ -50,13 +50,13 @@ export function ServiceRow({
           </span>
         ) : null}
         <Heading
-          className={`${H3} underline decoration-transparent underline-offset-4 group-hover:decoration-fg md:col-span-4`}
+          className={`${H3} underline decoration-transparent underline-offset-4 pointer-fine:group-hover:decoration-fg md:col-span-4`}
         >
           {name}
         </Heading>
         <p className="service-summary">{summary}</p>
         <p
-          className={`order-2 font-mono tabular-nums md:order-none md:col-span-3 md:text-right ${featured ? 'text-lg md:text-xl' : 'text-ui-s md:text-ui-m'}`}
+          className={`order-2 font-semibold md:order-none md:col-span-3 md:text-right ${featured ? 'text-lg md:text-xl' : 'text-ui-s md:text-ui-m'}`}
         >
           {price}
         </p>
@@ -80,13 +80,7 @@ export function ServiceLadder({
   const pricing = pagePath(locale, 'pricing');
 
   return (
-    <Section
-      id="services"
-      title={copy.title}
-      lead={copy.lead}
-      variant="tint"
-      width="wide"
-    >
+    <Section id="services" title={copy.title} lead={copy.lead} variant="tint">
       <ul className="grid border-t border-hairline">
         {Object.values(services).map((service) => (
           <ServiceRow

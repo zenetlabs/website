@@ -189,7 +189,7 @@ test('the language switch goes between the twins of one service page', async ({
   await page
     .getByRole('navigation', { name: 'Language' })
     .first()
-    .getByRole('link', { name: 'ES' })
+    .getByRole('link', { name: 'Español' })
     .click();
   await expect(page).toHaveURL(agents.es);
   await expect(page.locator('html')).toHaveAttribute('lang', 'es');

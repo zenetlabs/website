@@ -216,7 +216,10 @@ test('the language switch keeps the answers and shows the other currency', async
 }) => {
   await gotoHydrated(page, `${CALCULATOR_PAIR.en}?${answersQuery(G2)}`);
   expect(await totalText(page)).toContain(oracle('en', G2).total);
-  await page.getByRole('link', { name: 'ES', exact: true }).first().click();
+  await page
+    .getByRole('link', { name: 'Español', exact: true })
+    .first()
+    .click();
   await page.waitForURL(`**${CALCULATOR_PAIR.es}?${answersQuery(G2)}`);
   await expect(page.locator('#estimate dl dd').first()).toContainText(
     oracle('es', G2).total,

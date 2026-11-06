@@ -32,7 +32,7 @@ export function FounderPortrait({ founder }: { founder: Founder }) {
   return (
     <span
       aria-hidden="true"
-      className="flex size-20 shrink-0 items-center justify-center rounded-full border border-border bg-surface font-display text-3xl md:size-24 md:text-4xl"
+      className="flex size-20 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-3xl font-semibold md:size-24 md:text-4xl"
     >
       {initials(founder.name)}
     </span>
@@ -65,7 +65,7 @@ export function FounderSection({
           <h2 id="founder-title" className="max-w-3xl text-h2-compact">
             <EmphasisTitle parts={copy.title} />
           </h2>
-          <p className="mt-5 font-display text-h3">{founder.name}</p>
+          <p className="mt-5 text-h3">{founder.name}</p>
           <p className="mt-1 text-ui-s text-muted-fg">{founder.role}</p>
           <p className={`mt-3 ${LEAD} max-md:text-ui-m`}>
             <RichText parts={founder.bio} />

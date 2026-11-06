@@ -490,28 +490,25 @@ test.describe('book_meeting confirmation', () => {
     { width: 412, height: 915 },
     { width: 1280, height: 900 },
   ]) {
-    for (const colorScheme of ['light', 'dark'] as const) {
-      test(`the open dialog has no axe violations at ${viewport.width}px ${colorScheme}`, async ({
-        page,
-      }) => {
-        await page.setViewportSize(viewport);
-        await page.emulateMedia({ colorScheme });
-        await installModelContext(page);
-        await gotoHydrated(page, '/');
-        await registered(page);
-        const slot = await offeredSlot(page);
-        const call = startCall(page, 'book_meeting', { slot, topic: TOPIC });
-        const dialog = page.getByRole('dialog', { name: DIALOG.en.title });
-        await expect(dialog).toBeVisible();
-        await settleAnimations(page);
-        const results = await new AxeBuilder({ page })
-          .withTags(TAGS)
-          .exclude('iframe[src*="challenges.cloudflare.com"]')
-          .analyze();
-        expect(results.violations).toEqual([]);
-        await dialog.getByRole('button', { name: DIALOG.en.cancel }).click();
-        await call;
-      });
-    }
+    test(`the open dialog has no axe violations at ${viewport.width}px`, async ({
+      page,
+    }) => {
+      await page.setViewportSize(viewport);
+      await installModelContext(page);
+      await gotoHydrated(page, '/');
+      await registered(page);
+      const slot = await offeredSlot(page);
+      const call = startCall(page, 'book_meeting', { slot, topic: TOPIC });
+      const dialog = page.getByRole('dialog', { name: DIALOG.en.title });
+      await expect(dialog).toBeVisible();
+      await settleAnimations(page);
+      const results = await new AxeBuilder({ page })
+        .withTags(TAGS)
+        .exclude('iframe[src*="challenges.cloudflare.com"]')
+        .analyze();
+      expect(results.violations).toEqual([]);
+      await dialog.getByRole('button', { name: DIALOG.en.cancel }).click();
+      await call;
+    });
   }
 });

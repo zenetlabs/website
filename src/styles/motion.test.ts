@@ -27,18 +27,18 @@ describe('motion policy', () => {
     expect(CSS).not.toMatch(/scroll-behavior:\s*smooth/);
   });
 
-  it('plays the proof panel entrance only without a reduced-motion request', () => {
-    const entrance = blockAfter(
-      '@media (prefers-reduced-motion: no-preference)',
+  it('animates nothing on load: the one keyframe set is the menu opening', () => {
+    expect(
+      [...CSS.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]),
+    ).toEqual(['menu-in']);
+    const gated = blockAfter(
+      '@media (prefers-reduced-motion: no-preference) {\n  details[open] > .menu-panel',
     );
-    expect(entrance).toMatch(/\.proof-in\s*\{[^}]*animation:\s*proof-in/);
-    expect(CSS.replace(entrance, '')).not.toMatch(/animation:\s*proof-in/);
-  });
-
-  it('starts the entrance from the final state, so removing it shows the result', () => {
-    const keyframes = blockAfter('@keyframes proof-in');
-    expect(keyframes).toMatch(/from\s*\{/);
-    expect(keyframes).not.toMatch(/\bto\s*\{|100%/);
+    expect(gated).toMatch(
+      /details\[open\] > \.menu-panel\s*\{[^}]*animation:\s*menu-in/,
+    );
+    expect(CSS.replace(gated, '')).not.toMatch(/animation:\s*menu-in/);
+    expect(blockAfter('@keyframes menu-in')).not.toMatch(/\bto\s*\{|100%/);
   });
 
   it('removes keyframes but adds no blanket transition under reduced motion', () => {
@@ -50,11 +50,11 @@ describe('motion policy', () => {
 
   it('keeps button colour changes under reduced motion and gates the press scale', () => {
     expect(PRIMARY_BUTTON).toMatch(
-      /(?<!motion-safe:)transition-\[background-color,border-color\]/,
+      /(?<!motion-safe:)transition-\[background-color,border-color,color\]/,
     );
     expect(PRIMARY_BUTTON).toContain('motion-safe:active:scale-[0.97]');
     expect(PRIMARY_BUTTON).toContain(
-      'motion-safe:transition-[background-color,border-color,scale]',
+      'motion-safe:transition-[background-color,border-color,color,scale]',
     );
     expect(PRIMARY_BUTTON).not.toMatch(/(?<!motion-safe:)active:scale/);
   });
@@ -62,5 +62,15 @@ describe('motion policy', () => {
   it('uses the Emil ease-out curve and never an ease-in', () => {
     expect(CSS).toContain('--ease-out: cubic-bezier(0.23, 1, 0.32, 1)');
     expect(CSS).not.toMatch(/ease-in(?!-out)/);
+  });
+
+  it('keeps press and hover feedback under 300ms', () => {
+    for (const [, value] of CSS.matchAll(/--duration-[\w-]+:\s*(\d+)ms/g)) {
+      expect(Number(value)).toBeLessThan(300);
+    }
+  });
+
+  it('gates hover effects behind a fine pointer', () => {
+    expect(PRIMARY_BUTTON).not.toMatch(/(?<!pointer-fine:)hover:/);
   });
 });

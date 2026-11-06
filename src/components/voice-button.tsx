@@ -1,5 +1,4 @@
 import { useHydrated, useRouter } from '@tanstack/react-router';
-import { SECONDARY_BUTTON } from '@/components/ui';
 import { useLocale } from '@/lib/i18n';
 import { openVoice, prefetchVoice, voiceAvailable } from '@/lib/voice-entry';
 
@@ -12,8 +11,8 @@ function Callout({ text, button }: CalloutProps) {
   if (!hydrated || !voiceAvailable(locale)) return null;
   const prefetch = () => prefetchVoice(locale);
   return (
-    <div className="mt-8 grid max-w-md gap-3">
-      <p className="text-muted-fg">{text}</p>
+    <div className="mt-8 grid max-w-md gap-4">
+      <p className="text-ui-m text-muted-fg">{text}</p>
       <button
         type="button"
         data-voice-button
@@ -22,7 +21,7 @@ function Callout({ text, button }: CalloutProps) {
         onFocus={prefetch}
         onTouchStart={prefetch}
         onClick={() => openVoice(locale, (href) => router.history.push(href))}
-        className={`${SECONDARY_BUTTON} justify-self-start gap-2`}
+        className="voice-door"
       >
         <svg
           aria-hidden="true"
@@ -34,8 +33,7 @@ function Callout({ text, button }: CalloutProps) {
           strokeLinecap="round"
           strokeLinejoin="round"
         >
-          <rect x="9" y="3" width="6" height="11" rx="3" />
-          <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+          <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2" />
         </svg>
         {button}
       </button>

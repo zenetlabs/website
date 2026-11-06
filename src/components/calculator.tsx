@@ -261,7 +261,7 @@ export function EstimatePanel({
           <dl className="mt-6 grid gap-5">
             <div>
               <dt className={EYEBROW}>{result.labels.total}</dt>
-              <dd className={`mt-1 tabular-nums ${H3}`}>
+              <dd className={`mt-1 ${H3}`}>
                 {rangeText(locale, estimate.total, estimate.currency)}
                 <span className="block font-sans text-ui-s text-muted-fg">
                   {copy.taxNote}
@@ -290,7 +290,7 @@ export function EstimatePanel({
             {estimate.lines.map((line) => (
               <li key={line.id} className="border-t border-hairline pt-3">
                 <span className="block">{services[line.id].name}</span>
-                <span className="block font-mono tabular-nums">
+                <span className="block font-semibold">
                   {rangeText(locale, line, estimate.currency)}
                 </span>
                 <span className="block text-ui-s text-muted-fg">
@@ -299,9 +299,7 @@ export function EstimatePanel({
               </li>
             ))}
           </ul>
-          <p className="mt-4 font-mono text-ui-s tabular-nums">
-            {adjustmentsText(result, estimate)}
-          </p>
+          <p className="mt-4 text-ui-s">{adjustmentsText(result, estimate)}</p>
           <p className="mt-2 text-ui-s text-muted-fg">
             {roundingText(locale, result, estimate)}
           </p>

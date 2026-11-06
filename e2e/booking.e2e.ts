@@ -506,12 +506,9 @@ test('an expired link says so, and every confirm state passes axe', async ({
   await expect(
     page.getByRole('heading', { name: "This link doesn't work" }),
   ).toBeVisible();
-  for (const colorScheme of ['light', 'dark'] as const) {
-    await page.emulateMedia({ colorScheme });
-    await settleAnimations(page);
-    const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
-    expect(results.violations).toEqual([]);
-  }
+  await settleAnimations(page);
+  const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
+  expect(results.violations).toEqual([]);
 });
 
 test('a slot taken meanwhile gives the alert, one refresh and keeps what was typed', async ({
@@ -635,25 +632,20 @@ test.describe('when Google fails', () => {
     expect(status).toBe('unavailable');
   });
 
-  test('the Spanish fallback is accessible in light and dark', async ({
-    page,
-  }) => {
-    for (const colorScheme of ['light', 'dark'] as const) {
-      await page.emulateMedia({ colorScheme });
-      await unavailablePage(page, '/es/reservar');
-      await page.waitForSelector('body[data-hydrated="true"]');
-      await settleAnimations(page);
-      await expect(
-        page.getByRole('heading', {
-          name: 'La reserva en línea no está disponible ahora mismo',
-        }),
-      ).toBeVisible();
-      const results = await new AxeBuilder({ page })
-        .withTags(TAGS)
-        .exclude('iframe[src*="challenges.cloudflare.com"]')
-        .analyze();
-      expect(results.violations).toEqual([]);
-    }
+  test('the Spanish fallback is accessible', async ({ page }) => {
+    await unavailablePage(page, '/es/reservar');
+    await page.waitForSelector('body[data-hydrated="true"]');
+    await settleAnimations(page);
+    await expect(
+      page.getByRole('heading', {
+        name: 'La reserva en línea no está disponible ahora mismo',
+      }),
+    ).toBeVisible();
+    const results = await new AxeBuilder({ page })
+      .withTags(TAGS)
+      .exclude('iframe[src*="challenges.cloudflare.com"]')
+      .analyze();
+    expect(results.violations).toEqual([]);
   });
 });
 
@@ -672,20 +664,15 @@ test('the header CTA points at the booking page in both languages', async ({
   );
 });
 
-test('the open page is accessible with a picked time, in light and dark', async ({
-  page,
-}) => {
-  for (const colorScheme of ['light', 'dark'] as const) {
-    await page.emulateMedia({ colorScheme });
-    await gotoHydrated(page, '/es/reservar');
-    await page.locator('input[name="slot"]').first().check();
-    await settleAnimations(page);
-    const results = await new AxeBuilder({ page })
-      .withTags(TAGS)
-      .exclude('iframe[src*="challenges.cloudflare.com"]')
-      .analyze();
-    expect(results.violations).toEqual([]);
-  }
+test('the open page is accessible with a picked time', async ({ page }) => {
+  await gotoHydrated(page, '/es/reservar');
+  await page.locator('input[name="slot"]').first().check();
+  await settleAnimations(page);
+  const results = await new AxeBuilder({ page })
+    .withTags(TAGS)
+    .exclude('iframe[src*="challenges.cloudflare.com"]')
+    .analyze();
+  expect(results.violations).toEqual([]);
 });
 
 test('no client file carries Google endpoints or key material', () => {

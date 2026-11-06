@@ -27,30 +27,66 @@ function axe(page: Page) {
     .analyze();
 }
 
+// Light only: the site ships one scheme, so a dark emulation would test the same page twice.
 for (const viewport of VIEWPORTS) {
-  for (const colorScheme of ['light', 'dark'] as const) {
-    test.describe(`${viewport.width}px ${colorScheme}`, () => {
-      test.use({ viewport, colorScheme });
+  test.describe(`${viewport.width}px`, () => {
+    test.use({ viewport });
 
-      for (const url of URLS) {
-        test(`${url} has no axe violations`, async ({ page }) => {
-          await gotoHydrated(page, url);
-          await settleAnimations(page);
-          const results = await axe(page);
-          expect(results.violations).toEqual([]);
-          if (url === '/') {
-            const ran = [...results.passes, ...results.incomplete].map(
-              (rule) => rule.id,
-            );
-            expect(ran, 'the WCAG 2.2 target-size rule must run').toContain(
-              'target-size',
-            );
-          }
-        });
-      }
-    });
-  }
+    for (const url of URLS) {
+      test(`${url} has no axe violations`, async ({ page }) => {
+        await gotoHydrated(page, url);
+        await settleAnimations(page);
+        const results = await axe(page);
+        expect(results.violations).toEqual([]);
+        if (url === '/') {
+          const ran = [...results.passes, ...results.incomplete].map(
+            (rule) => rule.id,
+          );
+          expect(ran, 'the WCAG 2.2 target-size rule must run').toContain(
+            'target-size',
+          );
+        }
+      });
+    }
+  });
 }
+
+test.describe('mobile menu', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test('opens with Enter, has no axe violations and closes with Escape', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/');
+    const summary = page.locator('header details summary');
+    await summary.focus();
+    await page.keyboard.press('Enter');
+    const menu = page.locator('header details .menu-panel');
+    await expect(menu).toBeVisible();
+    expect((await axe(page)).violations).toEqual([]);
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+    await expect(summary).toBeFocused();
+  });
+
+  test('closes when Tab leaves it, so focus never lands behind it', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/');
+    await page.locator('header details summary').click();
+    const menu = page.locator('header details .menu-panel');
+    await expect(menu).toBeVisible();
+    await menu.getByRole('link').last().focus();
+    await page.keyboard.press('Tab');
+    await expect(menu).toBeHidden();
+    expect(
+      await page.evaluate(
+        () => document.activeElement?.closest('header details') ?? null,
+      ),
+    ).toBeNull();
+  });
+});
 
 test.describe('reduced motion', () => {
   test.use({ reducedMotion: 'reduce' });
@@ -61,7 +97,7 @@ test.describe('reduced motion', () => {
       expect(await page.evaluate(() => document.getAnimations().length)).toBe(
         0,
       );
-      await expect(page.locator('.proof-approval')).toBeVisible();
+      await expect(page.locator('[data-approval]')).toBeVisible();
     });
   }
 });

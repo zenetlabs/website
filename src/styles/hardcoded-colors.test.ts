@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { THEME_COLOR_DARK, THEME_COLOR_LIGHT } from '@/lib/theme-colors';
+import { THEME_COLOR } from '@/lib/theme-colors';
 import { scopes } from '../../test/css-scopes';
 
 const SRC = join(process.cwd(), 'src');
@@ -70,8 +70,20 @@ describe('colour guard', () => {
     expect(findViolations(clean)).toEqual([]);
   });
 
-  it('keeps the theme-color pair equal to the --bg tokens', () => {
-    const { light, dark } = scopes(readFileSync(TOKENS, 'utf8'));
-    expect([light.bg, dark.bg]).toEqual([THEME_COLOR_LIGHT, THEME_COLOR_DARK]);
+  it('keeps the theme-color equal to the --bg token', () => {
+    expect(scopes(readFileSync(TOKENS, 'utf8')).light.bg).toBe(THEME_COLOR);
+  });
+
+  it('keeps the web manifest colours equal to the theme colour', () => {
+    const manifest: unknown = JSON.parse(
+      readFileSync(
+        join(process.cwd(), 'public', 'manifest.webmanifest'),
+        'utf8',
+      ),
+    );
+    expect(manifest).toMatchObject({
+      theme_color: THEME_COLOR,
+      background_color: THEME_COLOR,
+    });
   });
 });

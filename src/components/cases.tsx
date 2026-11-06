@@ -24,11 +24,7 @@ export function Cases({
               key={item.id}
               className={`case-item ${featured ? 'lg:col-span-7' : 'lg:col-span-5'}`}
             >
-              <h3
-                className={
-                  featured ? 'font-display text-h2-compact' : `${H3} lg:mt-1`
-                }
-              >
+              <h3 className={featured ? 'text-h2-compact' : `${H3} lg:mt-1`}>
                 {item.name}
               </h3>
               <p className="mt-1 text-ui-s text-muted-fg">{item.tag}</p>

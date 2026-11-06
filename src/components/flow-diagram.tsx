@@ -18,7 +18,7 @@ export function FlowDiagram({
             data-actor={step.actor}
             className="rounded-input p-3 md:p-4"
           >
-            <p className="flex items-center gap-2 font-mono text-label font-medium uppercase text-fg-soft">
+            <p className="flex items-center gap-2 text-ui-s font-semibold text-fg-soft">
               <span aria-hidden="true" className={`icon icon-${step.actor}`} />
               {actors[step.actor]}
             </p>

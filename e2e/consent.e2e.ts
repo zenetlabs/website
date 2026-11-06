@@ -436,7 +436,7 @@ test.describe('events', () => {
 
     await page
       .getByRole('navigation', { name: 'Language', exact: true })
-      .getByRole('link', { name: 'ES' })
+      .getByRole('link', { name: 'Español' })
       .click();
     await page.waitForURL(BOOKING_PUBLISHED ? '**/es/reservar' : '**/es');
     expect(entries).toContainEqual(['event', 'language_switch', undefined]);
@@ -449,7 +449,7 @@ test.describe('events', () => {
     await page.locator('a[data-cta="hero"]').click();
     await page
       .getByRole('navigation', { name: 'Language', exact: true })
-      .getByRole('link', { name: 'ES' })
+      .getByRole('link', { name: 'Español' })
       .click();
     await page.waitForURL(BOOKING_PUBLISHED ? '**/es/reservar' : '**/es');
     await settled(page);
@@ -540,36 +540,33 @@ test.describe('accessibility', () => {
   ];
 
   for (const viewport of VIEWPORTS) {
-    for (const colorScheme of ['light', 'dark'] as const) {
-      test(`banner and dialog have no axe violations at ${viewport.width}px ${colorScheme}`, async ({
-        browser,
-      }) => {
-        const context = await browser.newContext({
-          viewport,
-          colorScheme,
-          storageState: { cookies: [], origins: [] },
-        });
-        const page = await context.newPage();
-        await watch(page);
-        await gotoHydrated(page, '/');
-        await expect(page.locator(BANNER)).toBeVisible();
-        await settleAnimations(page);
-        const scan = () =>
-          new AxeBuilder({ page })
-            .withTags(TAGS)
-            .exclude('iframe[src*="challenges.cloudflare.com"]')
-            .analyze();
-        expect((await scan()).violations).toEqual([]);
-
-        await page
-          .locator(BANNER)
-          .getByRole('button', { name: LABELS.en.settings })
-          .click();
-        await expect(page.getByRole('dialog')).toBeVisible();
-        expect((await scan()).violations).toEqual([]);
-        await context.close();
+    test(`banner and dialog have no axe violations at ${viewport.width}px`, async ({
+      browser,
+    }) => {
+      const context = await browser.newContext({
+        viewport,
+        storageState: { cookies: [], origins: [] },
       });
-    }
+      const page = await context.newPage();
+      await watch(page);
+      await gotoHydrated(page, '/');
+      await expect(page.locator(BANNER)).toBeVisible();
+      await settleAnimations(page);
+      const scan = () =>
+        new AxeBuilder({ page })
+          .withTags(TAGS)
+          .exclude('iframe[src*="challenges.cloudflare.com"]')
+          .analyze();
+      expect((await scan()).violations).toEqual([]);
+
+      await page
+        .locator(BANNER)
+        .getByRole('button', { name: LABELS.en.settings })
+        .click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+      expect((await scan()).violations).toEqual([]);
+      await context.close();
+    });
   }
 
   test('keyboard: the banner is next after the skip link, and Settings opens a modal that returns focus', async ({

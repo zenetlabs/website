@@ -2,6 +2,12 @@
 @import "./fonts.css";
 @import "./tokens.css";
 
+/* Test fixtures carry deliberate off-system class strings (dark:, print:, palette colours) */
+@source not "../**/*.test.ts";
+@source not "../**/*.test.tsx";
+@source not "../../e2e";
+@source not "../../test";
+
 @theme inline {
   --color-bg: var(--bg);
   --color-tint: var(--bg-tint);
@@ -10,6 +16,7 @@
   --color-fg-soft: var(--fg-soft);
   --color-muted-fg: var(--muted-fg);
   --color-hairline: var(--hairline);
+  --color-line-strong: var(--line-strong);
   --color-border: var(--border);
   --color-accent: var(--accent);
   --color-accent-fg: var(--accent-fg);
@@ -20,61 +27,67 @@
   --color-highlight: var(--highlight);
   --color-highlight-soft: var(--highlight-soft);
   --color-agent: var(--agent);
+  --color-agent-press: var(--agent-press);
+  --color-agent-fg: var(--agent-fg);
   --color-agent-soft: var(--agent-soft);
   --color-tool: var(--tool);
   --color-tool-soft: var(--tool-soft);
   --color-human: var(--human);
   --color-human-soft: var(--human-soft);
   --color-focus: var(--focus);
-  --color-brand-navy: var(--brand-navy);
-  --color-brand-amber: var(--brand-amber);
-  --color-brand-teal: var(--brand-teal);
-  --color-brand-blue: var(--brand-blue);
 
   --radius-input: var(--input-radius);
+  --radius-button: var(--button-radius);
+  --radius-inner: var(--inner-radius);
   --radius-card: var(--card-radius);
-  --shadow-card: var(--card-shadow);
+  --radius-ticket: var(--ticket-radius);
   --shadow-raised: var(--raised-shadow);
+  --shadow-band: var(--band-lift);
 
-  --font-display:
-    "Instrument Serif", "Instrument Serif Fallback", ui-serif, Georgia, serif;
   --font-sans:
-    "Inter Variable", "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-mono:
-    "JetBrains Mono Variable", "JetBrains Mono Fallback", ui-monospace,
-    monospace;
+    "Schibsted Grotesk Variable", "Schibsted Grotesk Fallback", ui-sans-serif,
+    system-ui, sans-serif;
 }
 
 @theme {
-  --text-display-1: clamp(2.75rem, 1.9rem + 4.2vw, 5rem);
+  --text-display-1: clamp(2.625rem, 1.75rem + 3.6vw, 4.5rem);
   --text-display-1--line-height: 1;
-  --text-display-1--letter-spacing: -0.02em;
-  --text-display-2: clamp(2.5rem, 1.9rem + 3vw, 4.25rem);
-  --text-display-2--line-height: 1.04;
-  --text-display-2--letter-spacing: -0.02em;
-  --text-h2: clamp(1.875rem, 1.5rem + 2vw, 3.25rem);
-  --text-h2--line-height: 1.08;
-  --text-h2--letter-spacing: -0.01em;
-  --text-h2-compact: clamp(1.75rem, 1.5rem + 1.2vw, 2.5rem);
-  --text-h2-compact--line-height: 1.1;
-  --text-h2-compact--letter-spacing: -0.01em;
-  --text-h3: clamp(1.5rem, 1.35rem + 0.5vw, 1.75rem);
-  --text-h3--line-height: 1.15;
-  --text-lead: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
+  --text-display-1--letter-spacing: -0.038em;
+  --text-display-1--font-weight: 650;
+  --text-display-2: clamp(2.5rem, 1.6rem + 3.7vw, 4.5rem);
+  --text-display-2--line-height: 1.02;
+  --text-display-2--letter-spacing: -0.038em;
+  --text-display-2--font-weight: 650;
+  --text-h2: clamp(2.375rem, 1.7rem + 2.6vw, 4rem);
+  --text-h2--line-height: 1.02;
+  --text-h2--letter-spacing: -0.036em;
+  --text-h2--font-weight: 650;
+  --text-h2-compact: clamp(1.875rem, 1.5rem + 1.5vw, 2.75rem);
+  --text-h2-compact--line-height: 1.06;
+  --text-h2-compact--letter-spacing: -0.03em;
+  --text-h2-compact--font-weight: 650;
+  --text-h3: clamp(1.3125rem, 1.2rem + 0.3vw, 1.5rem);
+  --text-h3--line-height: 1.25;
+  --text-h3--letter-spacing: -0.012em;
+  --text-h3--font-weight: 650;
+  --text-lead: clamp(1.0625rem, 0.95rem + 0.4vw, 1.25rem);
   --text-lead--line-height: 1.5;
-  --text-ui-l: 1rem;
-  --text-ui-l--line-height: 1.5;
-  --text-ui-m: 0.9375rem;
+  --text-base: 1.0625rem;
+  --text-base--line-height: 1.55;
+  --text-ui-l: 1.0625rem;
+  --text-ui-l--line-height: 1.4;
+  --text-ui-m: 1rem;
   --text-ui-m--line-height: 1.5;
-  --text-ui-s: 0.875rem;
-  --text-ui-s--line-height: 1.5;
-  --text-label: 0.75rem;
-  --text-label--line-height: 1.4;
-  --text-label--letter-spacing: 0.08em;
+  --text-ui-s: 0.9375rem;
+  --text-ui-s--line-height: 1.45;
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.3;
+  --text-label--letter-spacing: 0.03em;
 
-  --spacing-section: clamp(2.25rem, 0.8rem + 6vw, 7rem);
-  --spacing-section-compact: clamp(2rem, 1.5rem + 2.5vw, 4rem);
-  --spacing-section-band: clamp(3rem, 1.05rem + 8vw, 8.5rem);
+  --spacing-gutter: 1.5rem;
+  --spacing-section: clamp(4.5rem, 2.6rem + 6.4vw, 7.5rem);
+  --spacing-section-compact: clamp(3rem, 2.2rem + 3.2vw, 5rem);
+  --spacing-section-band: clamp(4.5rem, 2.4rem + 7.4vw, 8rem);
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
@@ -85,14 +98,18 @@
     color: var(--fg);
     font-family: var(--font-sans);
     font-size: 16px;
-    line-height: 1.5;
-    scrollbar-color: var(--border) transparent;
-    scroll-padding-top: 5rem;
-    --duration-press: 140ms;
-    --duration-hover: 180ms;
-    --stagger: 60ms;
+    line-height: 1.55;
+    font-variant-numeric: lining-nums proportional-nums;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    text-size-adjust: 100%;
+    scrollbar-color: var(--line-strong) transparent;
+    scroll-padding-top: 6rem;
+    --header-h: 4rem;
+    --duration-press: 160ms;
+    --duration-hover: 160ms;
     --logo-h: 1.25rem;
-    --launcher-reserve: 10.5rem;
+    --launcher-reserve: 5.5rem;
     --consent-reserve: 12.5rem;
   }
 
@@ -104,16 +121,33 @@
 
   @media (min-width: 768px) {
     html {
-      font-size: 17px;
-      line-height: 1.6;
+      --header-h: 4.5rem;
       --logo-h: 2rem;
       --consent-reserve: 11rem;
+      --spacing-gutter: 2.5rem;
     }
   }
 
   @media (min-width: 1024px) {
     html {
       --consent-reserve: 9.5rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    html {
+      --spacing-gutter: 4rem;
+    }
+  }
+
+  body {
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+  }
+
+  @media (min-width: 1024px) {
+    body {
+      font-size: 1.125rem;
     }
   }
 
@@ -132,15 +166,15 @@
   }
 
   h1,
-  h2 {
-    font-family: var(--font-display);
-    font-weight: 400;
-  }
-
-  h1,
   h2,
   h3 {
+    font-weight: 650;
     text-wrap: balance;
+  }
+
+  h1 em,
+  h2 em {
+    font-style: normal;
   }
 
   p,
@@ -151,7 +185,8 @@
   }
 
   a {
-    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.22em;
   }
 
   h1 {
@@ -168,30 +203,33 @@
 
   :focus-visible {
     outline: 2px solid var(--focus);
-    outline-offset: 2px;
+    outline-offset: 3px;
   }
 
   ::selection {
     background-color: var(--highlight);
     color: var(--on-highlight);
   }
-}
 
-@keyframes proof-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
+  input,
+  textarea {
+    caret-color: var(--agent);
+    accent-color: var(--agent);
+  }
+
+  ::placeholder {
+    color: var(--muted-fg);
+    opacity: 1;
+  }
+
+  button,
+  summary,
+  [role="button"] {
+    touch-action: manipulation;
   }
 }
 
 @layer components {
-  .marker {
-    background-image: linear-gradient(var(--highlight), var(--highlight));
-    background-repeat: no-repeat;
-    background-size: 100% 0.12em;
-    background-position: 0 92%;
-  }
-
   .dot-grid {
     background-image: radial-gradient(var(--hairline) 1px, transparent 1px);
     background-size: 24px 24px;
@@ -230,6 +268,10 @@
     --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14'/%3E%3Cpath d='M5 12h14'/%3E%3C/svg%3E");
   }
 
+  .icon-arrow {
+    --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E");
+  }
+
   .icon-human {
     --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 12a4 4 0 100-8 4 4 0 000 8z'/%3E%3Cpath d='M4 20c0-4 3.6-6 8-6s8 2 8 6'/%3E%3C/svg%3E");
   }
@@ -265,7 +307,7 @@
     top: 2.1rem;
     bottom: -1.1rem;
     width: 1px;
-    background: var(--border);
+    background: var(--line-strong);
   }
 
   .timeline > li:last-child::before {
@@ -285,8 +327,7 @@
     border-radius: 9999px;
     background: var(--bg);
     color: var(--agent);
-    font: 500 0.75rem / 1 var(--font-mono);
-    font-variant-numeric: tabular-nums;
+    font: 650 0.8125rem / 1 var(--font-sans);
   }
 
   @media (min-width: 768px) {
@@ -346,7 +387,7 @@
     top: -0.875rem;
     width: 1px;
     height: 0.875rem;
-    background: var(--border);
+    background: var(--line-strong);
   }
 
   @media (min-width: 768px) {
@@ -420,13 +461,16 @@
   }
 
   .choice {
-    @apply flex min-h-12 cursor-pointer items-start gap-3 rounded-input border border-border px-4 py-2.5 text-ui-m;
+    @apply flex min-h-12 cursor-pointer items-start gap-3 rounded-input border border-line-strong bg-surface px-4 py-2.5 text-ui-m;
+    transition:
+      border-color var(--duration-hover) ease,
+      background-color var(--duration-hover) ease;
   }
 
   .choice:has(:checked) {
-    border-color: var(--fg);
-    background-color: var(--highlight-soft);
-    box-shadow: inset 0 0 0 1px var(--fg);
+    border-color: var(--agent);
+    background-color: var(--agent-soft);
+    box-shadow: inset 0 0 0 1px var(--agent);
   }
 
   .choice:has(:disabled) {
@@ -440,7 +484,7 @@
   }
 
   .choice > input {
-    @apply mt-0.5 size-5 shrink-0 accent-accent;
+    @apply mt-0.5 size-5 shrink-0 accent-agent;
   }
 
   .choice > input:focus-visible {
@@ -451,10 +495,10 @@
     margin-top: 0;
   }
 
-  @media (hover: hover) {
+  @media (hover: hover) and (pointer: fine) {
     .choice:hover:not(:has(:checked, :disabled)) {
-      background-color: var(--bg-tint);
-      transition: background-color var(--duration-hover) ease-out;
+      border-color: var(--agent);
+      background-color: var(--agent-soft);
     }
   }
 
@@ -515,7 +559,7 @@
 
     .data-table td[data-label]::before {
       content: attr(data-label) / "";
-      @apply mr-2 font-mono text-label font-medium uppercase text-muted-fg;
+      @apply mr-2 text-ui-s font-semibold text-muted-fg;
     }
   }
 
@@ -524,7 +568,7 @@
   }
 
   .price-chip {
-    @apply mt-2 border border-border font-mono text-ui-s tabular-nums;
+    @apply mt-2 bg-agent-soft text-ui-s font-semibold text-agent;
   }
 
   .step-text {
@@ -552,8 +596,8 @@
   .logo-wordmark {
     display: flex;
     align-items: center;
-    font-family: var(--font-display);
     font-size: var(--logo-h);
+    font-weight: 650;
     line-height: 1;
   }
 
@@ -569,6 +613,141 @@
     }
   }
 
+  /* Chrome. Kept here rather than as utility strings so the markup ships no extra JavaScript. */
+  .nav-link {
+    @apply inline-flex min-h-11 items-center rounded-input px-3 font-medium text-fg-soft;
+    transition:
+      color var(--duration-hover) ease,
+      background-color var(--duration-hover) ease;
+  }
+
+  .nav-link[aria-current="page"] {
+    @apply text-fg underline decoration-agent decoration-2 underline-offset-8;
+  }
+
+  .menu-toggle {
+    @apply grid size-11 cursor-pointer list-none place-content-center gap-1.5 rounded-input border border-line-strong bg-bg;
+  }
+
+  .menu-toggle::-webkit-details-marker {
+    display: none;
+  }
+
+  .menu-bar {
+    @apply block h-0.5 w-4.5 rounded-full bg-fg;
+  }
+
+  details[open] > .menu-toggle > .menu-bar:nth-child(2) {
+    @apply translate-y-1 rotate-45;
+  }
+
+  details[open] > .menu-toggle > .menu-bar:nth-child(3) {
+    @apply -translate-y-1 -rotate-45;
+  }
+
+  .menu-panel {
+    @apply fixed inset-x-0 bottom-0 overflow-y-auto overscroll-contain bg-bg px-gutter pt-4;
+    top: calc(var(--header-h) + 1px);
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+  }
+
+  .menu-link {
+    @apply flex min-h-14 items-center border-b border-hairline text-h3;
+  }
+
+  .menu-link[aria-current="page"] {
+    @apply text-agent;
+  }
+
+  .footer-link {
+    @apply inline-flex min-h-11 items-center text-fg-soft md:min-h-9;
+  }
+
+  .door {
+    @apply flex min-h-16 items-center justify-between gap-4 rounded-inner border border-line-strong bg-surface px-5 font-semibold;
+    transition:
+      border-color var(--duration-hover) ease,
+      background-color var(--duration-hover) ease;
+  }
+
+  .door-arrow {
+    @apply size-5 shrink-0 text-agent;
+  }
+
+  /* The voice call on the band: a raised door, signal teal only on its icon */
+  .voice-door {
+    @apply inline-flex min-h-13 items-center gap-3 justify-self-start rounded-button border border-hairline bg-surface px-5 font-semibold text-fg select-none;
+    transition: border-color var(--duration-hover) ease;
+  }
+
+  .voice-door > svg {
+    @apply size-5 text-agent;
+  }
+
+  .launcher {
+    @apply fixed right-6 bottom-[calc(0.625rem+env(safe-area-inset-bottom))] z-30 inline-flex size-13 items-center justify-center gap-2 rounded-button border border-transparent bg-agent text-ui-m font-semibold text-agent-fg shadow-raised select-none lg:bottom-6 lg:w-auto lg:px-4.5 print:hidden;
+    transition: background-color var(--duration-press) ease-out;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .nav-link:hover {
+      @apply bg-tint text-fg;
+    }
+
+    .footer-link:hover {
+      @apply text-fg underline;
+    }
+
+    .door:hover {
+      @apply border-agent bg-agent-soft;
+    }
+
+    .voice-door:hover {
+      @apply border-agent;
+    }
+
+    .launcher:hover {
+      @apply bg-agent-press;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .menu-bar {
+      transition:
+        translate var(--duration-press) var(--ease-out),
+        rotate var(--duration-press) var(--ease-out);
+    }
+
+    .door-arrow {
+      transition: translate var(--duration-hover) var(--ease-out);
+    }
+
+    .launcher {
+      transition:
+        background-color var(--duration-press) ease-out,
+        scale var(--duration-press) var(--ease-out);
+    }
+
+    .voice-door {
+      transition:
+        border-color var(--duration-hover) ease,
+        scale var(--duration-press) var(--ease-out);
+    }
+
+    .launcher:active,
+    .voice-door:active {
+      scale: 0.97;
+    }
+  }
+
+  @media (hover: hover) and (pointer: fine) and (
+      prefers-reduced-motion: no-preference
+    ) {
+    .door:hover .door-arrow {
+      translate: 3px 0;
+    }
+  }
+
   .sticky-cta {
     position: sticky;
     bottom: 0;
@@ -576,8 +755,13 @@
     display: flex;
     box-sizing: border-box;
     height: calc(4.5rem + env(safe-area-inset-bottom));
-    margin-top: calc(-1 * var(--spacing-section));
-    padding: 0.75rem 1.5rem env(safe-area-inset-bottom);
+    align-items: center;
+    /* Tucks the bar into the last section's bottom padding; no deeper than the
+       smallest hero bottom padding, so the bar never covers a hero link while it
+       waits at the top of its zone */
+    margin-top: -2.25rem;
+    padding: 0.625rem var(--spacing-gutter)
+      calc(0.625rem + env(safe-area-inset-bottom));
     border-top: 1px solid var(--hairline);
     background-color: var(--bg);
   }
@@ -587,18 +771,26 @@
       display: none;
     }
   }
+}
 
-  @media (prefers-reduced-motion: no-preference) {
-    .proof-in {
-      animation: proof-in 360ms var(--ease-out) both;
-      animation-delay: calc(var(--i, 0) * var(--stagger));
-    }
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}
+
+/* Only on an open menu: a closed <details> would otherwise start it in hidden content */
+@media (prefers-reduced-motion: no-preference) {
+  details[open] > .menu-panel {
+    animation: menu-in 200ms var(--ease-out);
   }
 }
 
 @media (forced-colors: active) {
   .icon,
   .tick-item::before,
+  .menu-bar,
   .logo {
     background-color: CanvasText;
     forced-color-adjust: none;
@@ -615,9 +807,10 @@
 }
 
 /* The launcher is fixed bottom-right. These rules are unlayered so they beat its utilities.
-   It gets no scroll-padding-bottom of its own, only body padding to keep the last footer
-   links clear: it is small, and the banner and voice panel below are what cover content. */
-body:has([data-chat-launcher]) {
+   It gets no scroll-padding-bottom of its own, only footer padding (on the footer's own
+   ground) to keep the last footer links clear: it is small, and the banner and voice
+   panel below are what cover content. */
+html:has([data-chat-launcher]) body > footer {
   padding-bottom: 5rem;
 }
 
@@ -627,12 +820,14 @@ html:has([data-consent-banner]) [data-chat-launcher] {
   translate: 0 calc(-1 * var(--consent-reserve));
 }
 
-html:has([data-consent-banner]):has([data-chat-launcher]) {
-  scroll-padding-bottom: calc(var(--consent-reserve) + 5rem);
+@media (max-width: 767px) {
+  html:has(header details[open]) [data-chat-launcher] {
+    visibility: hidden;
+  }
 }
 
-body:has([data-consent-banner]):has([data-chat-launcher]) {
-  padding-bottom: calc(var(--consent-reserve) + 5rem);
+html:has([data-consent-banner]):has([data-chat-launcher]) {
+  scroll-padding-bottom: calc(var(--consent-reserve) + 5rem);
 }
 
 /* The voice panel is non-modal and fixed to the bottom: the chat launcher gives
@@ -654,6 +849,21 @@ html:has([data-consent-banner]) [data-voice-panel] {
    consent banner and the voice panel without changing layout. */
 html:has([data-chat-launcher]) [data-sticky-cta] {
   padding-inline-end: var(--launcher-reserve);
+}
+
+/* "Reserva un diagnóstico" stays on one line beside the launcher on 320px screens */
+@media (max-width: 359px) {
+  [data-sticky-cta] > a {
+    padding-inline: 0.75rem;
+    font-size: 1rem;
+  }
+}
+
+/* The open mobile menu covers the page below the header; the page under it stays put. */
+@media (max-width: 767px) {
+  html:has(header details[open]) {
+    overflow: hidden;
+  }
 }
 
 html:has([data-consent-banner]) [data-sticky-cta],

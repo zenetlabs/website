@@ -28,13 +28,10 @@ describe.each([
     ).not.toContainElement(caption);
   });
 
-  it('staggers each line and then the approval block in order', () => {
+  it('lists each line, then one approval block', () => {
     const { container } = render(<ProofPanel copy={copy} />);
-    const steps = [...container.querySelectorAll<HTMLElement>('.proof-in')].map(
-      (element) => Number(element.style.getPropertyValue('--i')),
-    );
-    expect(steps).toEqual([0, 1, 2, copy.lines.length + 1]);
-    expect(container.querySelectorAll('.proof-approval')).toHaveLength(1);
+    expect(container.querySelectorAll('li')).toHaveLength(copy.lines.length);
+    expect(container.querySelectorAll('[data-approval]')).toHaveLength(1);
   });
 
   it('invents no figures', () => {

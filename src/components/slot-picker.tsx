@@ -5,7 +5,7 @@ import { formatDayParts, formatTimeParts } from '@/lib/slot-format';
 import { groupByDay } from '@/lib/slots';
 
 const OPEN_DAYS = 2;
-const CHIP = 'choice items-center font-mono tabular-nums';
+const CHIP = 'choice items-center font-semibold';
 
 function timesText(copy: BookPageContent['picker'], count: number): string {
   return count === 1

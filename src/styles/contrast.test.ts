@@ -34,8 +34,8 @@ const SCOPES = scopes(TOKENS_CSS);
 
 const TEXT = 4.5;
 const GRAPHIC = 3;
-const PAGE: readonly Scope[] = ['light', 'dark'];
-const BAND: readonly Scope[] = ['bandLight', 'bandDark'];
+const PAGE: readonly Scope[] = ['light'];
+const BAND: readonly Scope[] = ['band'];
 
 const PAIRS: ReadonlyArray<
   readonly [string, string, number, readonly Scope[]]
@@ -48,20 +48,23 @@ const PAIRS: ReadonlyArray<
   ['muted-fg', 'bg', TEXT, PAGE],
   ['muted-fg', 'bg-tint', TEXT, PAGE],
   ['muted-fg', 'surface', TEXT, PAGE],
+  ['muted-fg', 'agent-soft', TEXT, PAGE],
   ['accent-fg', 'accent', TEXT, PAGE],
   ['on-highlight', 'highlight', TEXT, PAGE],
   ['link', 'bg', TEXT, PAGE],
   ['link', 'bg-tint', TEXT, PAGE],
   ['link', 'surface', TEXT, PAGE],
-  ['link', 'highlight-soft', TEXT, ['light']],
+  ['link', 'highlight-soft', TEXT, PAGE],
   ['agent', 'bg', TEXT, PAGE],
   ['agent', 'bg-tint', TEXT, PAGE],
   ['agent', 'agent-soft', TEXT, PAGE],
-  ['tool', 'bg-tint', TEXT, ['light']],
-  ['tool', 'surface', TEXT, ['light']],
+  ['agent-fg', 'agent', TEXT, PAGE],
+  ['agent-fg', 'agent-press', TEXT, PAGE],
+  ['tool', 'bg-tint', TEXT, PAGE],
+  ['tool', 'surface', TEXT, PAGE],
   ['tool', 'tool-soft', TEXT, PAGE],
-  ['tool', 'bg', TEXT, ['dark']],
-  ['human', 'human-soft', GRAPHIC, PAGE],
+  ['human', 'human-soft', TEXT, PAGE],
+  ['human', 'bg', TEXT, PAGE],
   ['fg', 'human-soft', TEXT, PAGE],
   ['fg', 'highlight-soft', TEXT, PAGE],
   ['muted-fg', 'highlight-soft', TEXT, PAGE],
@@ -70,6 +73,7 @@ const PAIRS: ReadonlyArray<
   ['fg-soft', 'agent-soft', TEXT, PAGE],
   ['cta-fg', 'cta', TEXT, PAGE],
   ['cta-fg', 'cta-hover', TEXT, PAGE],
+  ['bg', 'fg', TEXT, PAGE],
   ['fg', 'bg', TEXT, BAND],
   ['fg-soft', 'bg', TEXT, BAND],
   ['muted-fg', 'bg', TEXT, BAND],
@@ -78,11 +82,20 @@ const PAIRS: ReadonlyArray<
   ['muted-fg', 'surface', TEXT, BAND],
   ['link', 'bg', TEXT, BAND],
   ['agent', 'bg', TEXT, BAND],
+  ['agent', 'surface', TEXT, BAND],
   ['tool', 'bg', TEXT, BAND],
+  ['human', 'bg', TEXT, BAND],
   ['cta-fg', 'cta', TEXT, BAND],
+  ['cta-fg', 'cta-hover', TEXT, BAND],
   ['accent-fg', 'accent', TEXT, BAND],
+  ['on-highlight', 'highlight', TEXT, BAND],
+  ['bg', 'fg', TEXT, BAND],
   ['border', 'bg', GRAPHIC, [...PAGE, ...BAND]],
+  ['border', 'bg-tint', GRAPHIC, PAGE],
+  ['border', 'surface', GRAPHIC, BAND],
   ['focus', 'bg', GRAPHIC, [...PAGE, ...BAND]],
+  ['focus', 'bg-tint', GRAPHIC, PAGE],
+  ['focus', 'surface', GRAPHIC, BAND],
 ];
 
 function tokenValue(scope: Scope, token: string): string {
@@ -108,8 +121,12 @@ describe('token contrast', () => {
   });
 
   it('keeps the page grounds apart from the band', () => {
-    expect(SCOPES.light.bg).not.toBe(SCOPES.bandLight.bg);
-    expect(SCOPES.dark.bg).not.toBe(SCOPES.bandDark.bg);
+    expect(SCOPES.light.bg).not.toBe(SCOPES.band.bg);
+  });
+
+  it('ships one light scheme and no dark variant', () => {
+    expect(TOKENS_CSS).not.toMatch(/prefers-color-scheme/);
+    expect(TOKENS_CSS).toMatch(/color-scheme:\s*light;/);
   });
 
   it('restores in .scope-page every property .band overrides', () => {

@@ -140,7 +140,7 @@ describe('HeroHeading and FactList', () => {
         <FactList
           facts={[
             { id: 'a', label: 'A', value: '1' },
-            { id: 'b', label: 'B', value: '2', mono: true },
+            { id: 'b', label: 'B', value: '2' },
           ]}
         />
       </>,
@@ -149,7 +149,7 @@ describe('HeroHeading and FactList', () => {
       titleText(pair.hero.title),
     );
     expect(screen.getByText('Lead')).toBeInTheDocument();
-    expect(container.querySelectorAll('dd')[1]).toHaveClass('font-mono');
+    expect(container.querySelectorAll('dd')[1]).toHaveTextContent('2');
   });
 });
 

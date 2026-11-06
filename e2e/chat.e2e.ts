@@ -79,24 +79,21 @@ test('does not link the chat chunks from the page head', async ({
 });
 
 for (const locale of ['en', 'es'] as const) {
-  for (const colorScheme of ['light', 'dark'] as const) {
-    test(`opens in ${locale} (${colorScheme}) with the AI notice, focus in the box and no axe violations`, async ({
-      page,
-    }) => {
-      await page.emulateMedia({ colorScheme });
-      const dialog = await openChat(page, locale);
-      const copy = COPY[locale];
-      await expect(dialog.getByText(copy.badge, { exact: true })).toBeVisible();
-      await expect(dialog).toContainText(copy.notice.slice(0, 40));
-      await expect(page.getByLabel(copy.inputLabel)).toBeFocused();
-      await settleAnimations(page);
-      const results = await new AxeBuilder({ page })
-        .withTags(TAGS)
-        .exclude('iframe[src*="challenges.cloudflare.com"]')
-        .analyze();
-      expect(results.violations).toEqual([]);
-    });
-  }
+  test(`opens in ${locale} with the AI notice, focus in the box and no axe violations`, async ({
+    page,
+  }) => {
+    const dialog = await openChat(page, locale);
+    const copy = COPY[locale];
+    await expect(dialog.getByText(copy.badge, { exact: true })).toBeVisible();
+    await expect(dialog).toContainText(copy.notice.slice(0, 40));
+    await expect(page.getByLabel(copy.inputLabel)).toBeFocused();
+    await settleAnimations(page);
+    const results = await new AxeBuilder({ page })
+      .withTags(TAGS)
+      .exclude('iframe[src*="challenges.cloudflare.com"]')
+      .analyze();
+    expect(results.violations).toEqual([]);
+  });
 }
 
 test('traps focus in the dialog, closes on Escape and returns focus to the launcher', async ({
