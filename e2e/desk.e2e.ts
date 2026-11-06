@@ -115,6 +115,21 @@ test.describe('the desk chat', () => {
   );
   test.describe.configure({ mode: 'serial' });
 
+  test('the desk names the AI assistant, with its badge and greeting, from the server render', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    const head = page.locator('[data-desk]');
+    await expect(
+      head.getByRole('heading', { name: desk.intro.title }),
+    ).toBeVisible();
+    await expect(head.locator('.desk-badge')).toHaveText(desk.intro.badge);
+    await expect(head.locator('.desk-bubble')).toContainText(
+      desk.intro.welcome,
+    );
+    await expect(head).not.toContainText(desk.human.title);
+  });
+
   test('a chip opens the chat from the desk with the question already sent', async ({
     page,
   }) => {

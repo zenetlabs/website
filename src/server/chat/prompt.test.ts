@@ -132,7 +132,8 @@ describe('turnContext', () => {
     ).toBe(
       [
         'THIS TURN (set by the website, not by the visitor)',
-        '- Now: Tuesday 3 November, 5:42 pm 2026 (Asia/Singapore).',
+        '- Now: Tuesday 3 November 2026, 5:42 pm (2026-11-03).',
+        "- Visitor's time zone (check_availability already uses it): Asia/Singapore.",
         '- The visitor is on: pricing (/pricing).',
         '- Messages left in this conversation: 17.',
       ].join('\n'),
@@ -155,12 +156,27 @@ describe('turnContext', () => {
       remaining: 3,
     });
     expect(winter).toContain(
-      '- Ahora: martes 3 de noviembre, 10:42 2026 (Europe/Madrid).',
+      '- Ahora: martes 3 de noviembre de 2026, 10:42 (2026-11-03).',
     );
     expect(summer).toContain(
-      '- Ahora: viernes 3 de julio, 11:42 2026 (Europe/Madrid).',
+      '- Ahora: viernes 3 de julio de 2026, 11:42 (2026-07-03).',
     );
     expect(winter).toContain('El visitante está en: pricing (/es/precios).');
+    expect(winter).not.toContain('English');
+  });
+
+  it('asks for the other language only when the visitor writes in it', () => {
+    const text = turnContext({
+      locale: 'es',
+      now: NOW,
+      timeZone: 'Europe/Madrid',
+      page: '/es',
+      remaining: 19,
+      language: 'en',
+    });
+    expect(text.split('\n').at(-1)).toBe(
+      '- The visitor writes in English: reply in English. Los importes siguen en euros sin IVA.',
+    );
   });
 
   it('never repeats client text: an unknown page shows a dash', () => {

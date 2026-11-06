@@ -10,6 +10,8 @@ import {
   REFUSAL,
   RULES_PHRASE,
   SentenceBuffer,
+  saysUnknown,
+  tidySentence,
   toolNumbers,
 } from '@/server/chat/guard';
 
@@ -380,6 +382,153 @@ describe('links and domains', () => {
     'keeps %s',
     (text) => {
       expect(guardSentence(`We use ${text}.`, EN).guard).toBeNull();
+    },
+  );
+});
+
+describe('ownership claims', () => {
+  const OWNERSHIP = 'You do. The code we write for you is yours once paid.';
+  const facts = { ownership: OWNERSHIP };
+
+  it.each([
+    'I own the code I write for you once the project is paid.',
+    'We own the code until the project ends.',
+    'The code stays ours until you pay.',
+    'Somos los dueños del código hasta que se paga el proyecto.',
+    'El código es nuestro hasta el último pago.',
+    'Los datos nos pertenecen.',
+  ])('replaces %j with the official answer', (sentence) => {
+    expect(guardSentence(`${sentence} `, { ...EN, facts })).toEqual({
+      text: `${OWNERSHIP} `,
+      guard: 'claim',
+    });
+  });
+
+  it.each([
+    'You own the code and the data.',
+    'We use our own test set built from your cases.',
+    'El código es tuyo una vez pagado el proyecto.',
+    'Tus datos se quedan en tus sistemas.',
+    'Zenet owns the delivery of the project end to end.',
+    'We own the result with you, from the diagnostic on.',
+    'El código no nos pertenece: es tuyo.',
+    'Los datos son tuyos y el servidor es nuestro.',
+    "We don't own the code: you do.",
+  ])('keeps %j', (sentence) => {
+    expect(guardSentence(sentence, { ...EN, facts }).guard).toBeNull();
+  });
+});
+
+describe('a refusal where it does not belong', () => {
+  it('drops a refusal that is the whole sentence', () => {
+    expect(guardSentence(`${REFUSAL.en} `, { ...EN, refusal: false })).toEqual({
+      text: '',
+      guard: 'refusal',
+    });
+    expect(
+      guardSentence(`Sorry, ${REFUSAL.es.toLowerCase()}`, {
+        ...EN,
+        refusal: false,
+      }),
+    ).toEqual({ text: '', guard: 'refusal' });
+  });
+
+  it('keeps what follows a refusal used as a prefix', () => {
+    expect(
+      guardSentence(`${REFUSAL.en} The diagnostic comes first.`, {
+        ...EN,
+        refusal: false,
+      }),
+    ).toEqual({ text: 'The diagnostic comes first.', guard: 'refusal' });
+  });
+
+  it('still checks what is left', () => {
+    expect(
+      guardSentence(`${REFUSAL.en} It costs S$999.`, {
+        ...EN,
+        refusal: false,
+      }).guard,
+    ).toBe('price');
+  });
+
+  it('keeps the refusal for off-topic and injection messages', () => {
+    expect(guardSentence(REFUSAL.en, EN)).toEqual({
+      text: REFUSAL.en,
+      guard: null,
+    });
+  });
+});
+
+describe('tidySentence', () => {
+  it.each([
+    [
+      '¿te interesa hacer el diagnóstico primero?',
+      '',
+      '¿Te interesa hacer el diagnóstico primero?',
+    ],
+    ['¿te interesa?', 'Cuesta 4.000 €. ', '¿Te interesa?'],
+    ['puedo ayudarte.', 'Hola. ¿Usáis Holded? ', 'Puedo ayudarte.'],
+    ['primero?¿te interesa?', '', 'Primero? ¿Te interesa?'],
+    ['Sí, lo hacemos.¿te interesa?', '', 'Sí, lo hacemos. ¿Te interesa?'],
+    [
+      'lunes 9 de noviembre, 08:00\n',
+      'Tengo estos huecos:\n',
+      'Lunes 9 de noviembre, 08:00\n',
+    ],
+  ])('tidies %j after %j', (sentence, previous, expected) => {
+    expect(tidySentence(sentence, previous)).toBe(expected);
+  });
+
+  it.each([
+    ['a shop', 'e.g. '],
+    ['and more.', 'It connects the shop. '],
+    ['8:00 am\n', 'Monday 9 November:\n- '],
+  ])('leaves %j after %j alone', (sentence, previous) => {
+    expect(tidySentence(sentence, previous)).toBe(sentence);
+  });
+});
+
+describe('a product off the tool list, claimed', () => {
+  const unlisted = {
+    name: 'SAP Business One',
+    answer: 'SAP Business One no está en nuestra lista.',
+  };
+  const facts = { ownership: 'You do.', unlisted };
+
+  it.each([
+    'Sí, trabajamos con SAP Business One si tiene API.',
+    'Conectamos SAP Business One con tu tienda.',
+    'Yes, we work with SAP Business One.',
+  ])('replaces %j', (sentence) => {
+    expect(guardSentence(sentence, { ...ES, facts })).toEqual({
+      text: unlisted.answer,
+      guard: 'claim',
+    });
+  });
+
+  it.each([
+    'SAP Business One no está en nuestra lista, pero el diagnóstico lo confirma.',
+    'Trabajamos sobre todo con Holded y PrestaShop.',
+    "SAP Business One isn't on our list.",
+  ])('keeps %j', (sentence) => {
+    expect(guardSentence(sentence, { ...ES, facts }).guard).toBeNull();
+  });
+});
+
+describe('saysUnknown', () => {
+  it.each([
+    "I don't know that.",
+    'I don’t have that information.',
+    'No lo sé.',
+    'No tengo esa información aquí.',
+  ])('reads %j as not knowing', (text) => {
+    expect(saysUnknown(text)).toBe(true);
+  });
+
+  it.each(['No lo ser', 'I know that well.', 'Lo sé.'])(
+    'does not read %j as not knowing',
+    (text) => {
+      expect(saysUnknown(text)).toBe(false);
     },
   );
 });

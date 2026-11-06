@@ -40,6 +40,7 @@ type Labels = {
   timeline: string;
   includes: string;
   market: string;
+  diagnosticApart: (price: string) => string;
   contact: (booking: boolean) => string;
   operator: (name: string, country: string) => string;
 };
@@ -62,6 +63,8 @@ const LABELS: Record<Locale, Labels> = {
     includes: 'Includes',
     market:
       "Prices on this site are in Singapore dollars (S$) and exclude GST. The Spanish site, for clients in Spain, lists its own prices in euros; don't quote them here.",
+    diagnosticApart: (price) =>
+      `Project prices never include the automation diagnostic: it is a separate fixed price (${price}), paid first, and credited to the project if you continue in time.`,
     contact: (booking) =>
       `Contact: ${PUBLIC_EMAIL}, the contact page${booking ? ', or a 30-minute call' : ''}.`,
     operator: (name, country) => `Operated by ${name}, ${country}.`,
@@ -83,6 +86,8 @@ const LABELS: Record<Locale, Labels> = {
     includes: 'Incluye',
     market:
       'Los precios de esta web son en euros y no incluyen el IVA. La web en inglés, para Singapur, tiene sus propios precios en dólares de Singapur; no los cites aquí.',
+    diagnosticApart: (price) =>
+      `Ningún precio de proyecto incluye el diagnóstico de automatización: es un precio fijo aparte (${price}), que se paga antes, y se descuenta del proyecto si sigues adelante a tiempo.`,
     contact: (booking) =>
       `Contacto: ${PUBLIC_EMAIL}, la página de contacto${booking ? ' o una llamada de 30 minutos' : ''}.`,
     operator: (name, country) => `Opera ${name}, ${country}.`,
@@ -136,6 +141,9 @@ async function landingLeads(
   return Promise.all([...services, ...holded, ...sector]);
 }
 
+// The page says "the dates in the table"; the visitor of the chat sees no table.
+const VERIFACTU_PENDING = `El ${verifactuDates.announcedOn}, Hacienda anunció que modificará el reglamento para aplicar estas obligaciones a partir de ${verifactuDates.announcedTo}. Hasta que esa modificación se publique en el BOE, siguen valiendo el ${verifactuDates.companies} para las sociedades y el ${verifactuDates.others} para el resto.`;
+
 async function verifactuLines(locale: Locale, site: SiteFlags) {
   if (locale !== 'es' || !pagesIn(locale, site).includes('verifactu'))
     return [];
@@ -144,9 +152,9 @@ async function verifactuLines(locale: Locale, site: SiteFlags) {
   return [
     `- ${hub.landing.verifactu ?? 'Verifactu'}: ${copy.hero.lead}`,
     ...deadlines.rows.map((row) => `- ${row.who}: ${row.date}`),
-    `- ${deadlines.announced}`,
+    `- ${VERIFACTU_PENDING}`,
     `- ${deadlines.producers}`,
-    `- ${deadlines.checked} (${verifactuDates.checkedOn})`,
+    `- ${deadlines.checked}`,
   ];
 }
 
@@ -186,6 +194,9 @@ export async function buildKnowledge(
       ];
       return parts.filter(Boolean).join(' ');
     }),
+    labels.diagnosticApart(
+      formatPriceSummary(locale, services.diagnostic.prices),
+    ),
     page.taxNote,
   ]);
   const process = section(

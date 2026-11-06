@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { serverConfig, siteConfig } from '../site.config';
+import { CHAT_MODELS, serverConfig, siteConfig } from '../site.config';
 
 const CLOUDFLARE_TEST_KEY = /^[123]x0+/;
 const GA4_ID = /^G-[A-Z0-9]{4,16}$/;
@@ -36,9 +36,9 @@ describe('siteConfig', () => {
     expect(siteConfig('production').booking.published).toBe(true);
   });
 
-  it('publishes the assistant locally but not in production until the bake-off passes', () => {
+  it('publishes the assistant locally and in production', () => {
     expect(siteConfig(undefined).assistant.published).toBe(true);
-    expect(siteConfig('production').assistant.published).toBe(false);
+    expect(siteConfig('production').assistant.published).toBe(true);
   });
 
   it('ships WebMCP on everywhere, with no origin-trial token yet', () => {
@@ -116,11 +116,7 @@ describe('serverConfig', () => {
 });
 
 describe('assistant server config', () => {
-  const REAL_MODELS = [
-    '@cf/zai-org/glm-4.7-flash',
-    '@cf/google/gemma-4-26b-a4b-it',
-    '@cf/meta/llama-4-scout-17b-16e-instruct',
-  ];
+  const REAL_MODELS: readonly string[] = CHAT_MODELS;
 
   it('uses the scripted model locally, so nothing calls Workers AI', () => {
     expect(serverConfig(undefined).assistant.model).toBe('fake');
@@ -131,13 +127,27 @@ describe('assistant server config', () => {
     expect(REAL_MODELS).toContain(serverConfig('production').assistant.model);
   });
 
-  it('keeps the daily budget under the Free-plan cap while no gateway or plan upgrade exists', () => {
-    const { dailyNeuronBudget, aiGatewayName } =
-      serverConfig('production').assistant;
-    if (aiGatewayName === null) {
-      expect(dailyNeuronBudget).toBeGreaterThan(0);
-      expect(dailyNeuronBudget).toBeLessThanOrEqual(10_000);
-    }
+  it('sets a positive daily budget of 100,000 neurons in production (Workers Paid)', () => {
+    expect(serverConfig('production').assistant.dailyNeuronBudget).toBe(
+      100_000,
+    );
+  });
+
+  it('runs a preview on another candidate model through CHAT_MODEL, and refuses an unknown one', () => {
+    expect(
+      serverConfig('production', { chatModel: '@cf/google/gemma-4-26b-a4b-it' })
+        .assistant.model,
+    ).toBe('@cf/google/gemma-4-26b-a4b-it');
+    expect(serverConfig('production', { chatModel: '' }).assistant.model).toBe(
+      serverConfig('production').assistant.model,
+    );
+    expect(
+      serverConfig(undefined, { chatModel: '@cf/google/gemma-4-26b-a4b-it' })
+        .assistant.model,
+    ).toBe('fake');
+    expect(() =>
+      serverConfig('production', { chatModel: '@cf/acme/unknown' }),
+    ).toThrow(/Unknown CHAT_MODEL/);
   });
 
   it('accepts only a well-formed gateway name', () => {

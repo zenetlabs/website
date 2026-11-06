@@ -393,7 +393,7 @@ describe('consent version', () => {
   ])('%s is dated like CONSENT_VERSION', (_name, Page, date) => {
     const body = text(<Page title="t" entity={SINGAPORE} />);
     expect(body).toContain(date);
-    expect(CONSENT_VERSION).toBe('2026-11-06');
+    expect(CONSENT_VERSION).toBe('2026-11-06.2');
   });
 });
 
@@ -404,7 +404,8 @@ const ASSISTANT_EN = [
   'does not use this content to train models',
   'database in the European Union',
   'do not store your IP address',
-  'keyed one-way fingerprint of your IP address',
+  'keyed fingerprint of your IP address',
+  "we can't read the address from it without our key",
   'about 51 hours at most',
   'not sent to the AI model',
   'a person reads every booking and enquiry',
@@ -421,7 +422,8 @@ const ASSISTANT_ES = [
   'no usa este contenido para entrenar modelos',
   'base de datos en la Unión Europea',
   'no guardamos con ellas tu dirección IP',
-  'huella unidireccional con clave de tu dirección IP',
+  'huella con clave de tu',
+  'no podemos leer la dirección a partir de ella sin nuestra clave',
   'unas 51 horas como máximo',
   'no se envían al modelo de IA',
   'una persona lee cada reserva y cada consulta',

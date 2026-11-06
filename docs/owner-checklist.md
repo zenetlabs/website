@@ -1,10 +1,10 @@
 # Owner checklist
 
-As of 2026-11-01 (R13 final QA); booking went live on 2026-11-06 (see the Booking item and RB 9). The canonical copy of this list; `~/vault/projects/zenetlabs-website/owner-checklist.md` is a scrubbed snapshot. Procedures are in the [runbook](RUNBOOK.md); this file only says what needs you, where, and what it unblocks.
+As of 2026-11-01 (R13 final QA); booking and the assistant went live on 2026-11-06 (see the Booking and Assistant items and RB 9). The canonical copy of this list; `~/vault/projects/zenetlabs-website/owner-checklist.md` is a scrubbed snapshot. Procedures are in the [runbook](RUNBOOK.md); this file only says what needs you, where, and what it unblocks.
 
 The `TODO(albert)` appendix is a snapshot: its line numbers go stale as files change. Regenerate it with `git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'`.
 
-Everything below needs the owner (a login, a decision or a value only you hold). Ordered by priority. "RB" is a section of the [runbook](RUNBOOK.md). Placeholders such as `<store-id>` are never replaced with real values in a document. Production state on the date above: booking and GA4 are live (calculator, assistant and voice are dark), WebMCP is on, GA4 measures consenting visitors only, and Cloudflare Web Analytics is the cookieless traffic source of truth.
+Everything below needs the owner (a login, a decision or a value only you hold). Ordered by priority. "RB" is a section of the [runbook](RUNBOOK.md). Placeholders such as `<store-id>` are never replaced with real values in a document. Production state on the date above: booking, the assistant and GA4 are live (calculator and voice are dark), WebMCP is on, GA4 measures consenting visitors only, and Cloudflare Web Analytics is the cookieless traffic source of truth.
 
 ## Already done (no action)
 
@@ -43,7 +43,7 @@ Each one: do the prerequisites, then the flip PR in RB 9 (one flag per PR, one a
 - **GA4.** The code is live with the measurement ID. Property settings per [analytics.md](analytics.md) section 5 (14-month retention, Google signals off, enhanced measurement without form interactions and video, data processing terms, the `method` and `cta_id` dimensions, `generate_lead` and `book_meeting` as key events, the Search Console link, history-change page views and site search off, account-level data sharing off, data redaction for email and query parameters). After the deploy: the Tag Assistant and cookie checks, and keep Cloudflare Zaraz and the Google tag gateway off. Review the consent copy (`consent.ts`).
 - **Booking.** Done 2026-11-06: the owner steps and the preview acceptance passed, and the flag is on. What remains is the owner's own real booking after the deploy (RB 9). The steps for reference: G1 to G11: Google Cloud project, Calendar API, service account with a JSON key, domain-wide delegation for `calendar.events.owned` and `calendar.freebusy` on the booking user, Meet enabled, a test calendar, the key bundle (with `subject`, `calendar_id` and `test_calendar_id`) pasted into `ZENETLABS_PROD_GOOGLE_CALENDAR` (RB 6), then `/api/health` shows `booking:true`. Review `book.ts`, the call windows and the 14-day horizon (`booking-rules.ts`), the "free, no commitment" wording, and do the `[TEST]` acceptance booking on a preview alias built with the flag on. Calendar events are deleted automatically 24 months after the booking (the 03:00 tick, RB 8). Every booking now needs the visitor's click on an emailed link, so: **the cancel link** in each owner email (`Cancel this booking: …`) opens a page with the booking and one button, "Cancel the call and email the visitor"; one click on the link and one on the button deletes the event (Google tells the guest) and sends our cancellation email; opening the link alone never cancels. A re-sent owner email carries a new link and only the newest works. **The Resend quota**: confirmation emails are capped at 40 a day site-wide, 3 per address and 5 per connection (RB 7), well inside Resend's daily limit for the plan; check the plan's daily and monthly quota before the flip and raise the site cap only with it. Key hygiene: rotate by creating a new key, updating the secret and deleting the old key; revoke by deleting the key or the delegation entry.
 - **Calculator.** Review every coefficient, cap, the discount and uplift rules, the maintenance thresholds, the "Request a call" wording and the privacy sentence (`pricing-rules.ts`). Flip in RB 9.
-- **Assistant.** The account is on Workers Paid: raise `dailyNeuronBudget` to the spend you want; optionally create an AI Gateway (logs off, cache off; send the name); review the prompt, widget copy, notice, retention and budget; run the question set on a preview alias; then flip. If the first deploy with the `AI` binding fails with an authentication error naming AI, add Account, Workers AI, Read to the deploy token.
+- **Assistant.** Done 2026-11-06: the bake-off kept `@cf/zai-org/glm-4.7-flash`, the 22-question acceptance passed on a preview, the daily budget is 100,000 neurons (about US$1.10 a day) and the flag is on. What remains: optionally an AI Gateway (logs off, cache off; send the name), the weekly transcript and `ai_usage` skim (RB), and the review of the prompt and widget copy `TODO(albert)` items. For reference, the steps were: raise `dailyNeuronBudget`; review the prompt, widget copy, notice, retention and budget; run the question set on a preview alias; then flip. If the first deploy with the `AI` binding fails with an authentication error naming AI, add Account, Workers AI, Read to the deploy token.
 - **Voice** (needs booking first). ElevenLabs account on a plan with enough minutes, DPA accepted and training opt-outs checked; an API key restricted to Agents with a credit limit into `ZENETLABS_PROD_ELEVENLABS_API_KEY`; a tool secret into `ZENETLABS_PROD_ELEVENLABS_TOOL_SECRET`; `pnpm voice:plan` then `pnpm voice:apply` (prints the two agent ids); optionally the GitHub `production` environment secret `ELEVENLABS_API_KEY` so every deploy re-syncs the agents; Bot Fight Mode off for `zenetlabs.com`; review the spoken messages, caps (30 calls a day, 5 minutes each, up to about US$360 a month at the cap) and the model; confirm the ElevenLabs DPA and EU-US data transfer wording on the privacy pages; then flip.
 - **WebMCP origin-trial token** (optional): register at the Chrome Origin Trials console for `https://zenetlabs.com`, put the token in `webmcp.originTrialToken` (`low` PR), record the expiry.
 
@@ -62,24 +62,21 @@ Each one: do the prerequisites, then the flip PR in RB 9 (one flag per PR, one a
 
 ## Appendix: every `TODO(albert)` in the repo
 
-212 markers in 64 files. Regenerate before each review session with:
+209 markers in 64 files. Regenerate before each review session with:
 
 ```sh
 git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'
 ```
 
-### Site config (10)
+### Site config (7)
 
 - `site.config.ts:42` set true after reviewing src/content/pricing-rules.ts
-- `site.config.ts:45` set true after the model bake-off passes (docs/ai-assistant.md "Activation")
-- `site.config.ts:50` optional WebMCP origin-trial token for https://zenetlabs.com (docs/ai-assistant.md "WebMCP")
-- `site.config.ts:54` set true once the ElevenLabs agents exist and /api/health reports voice:true (docs/ai-assistant.md "Voice activation"); needs booking.published first
-- `site.config.ts:56` the agent ids printed by pnpm voice:apply
-- `site.config.ts:148` confirm the lead notification address
-- `site.config.ts:169` confirm the model after the bake-off (pnpm eval:chat against a preview alias)
-- `site.config.ts:171` AI Gateway name (docs/ai-assistant.md "AI Gateway"); null calls Workers AI directly
-- `site.config.ts:173` set the daily neuron budget to the spend you want (Workers Paid)
-- `site.config.ts:180` the most voice calls a UTC day can start, previews included, across both locales. At most 30 x 5 minutes = 150 minutes a day: about US$12 a day at US$...
+- `site.config.ts:49` optional WebMCP origin-trial token for https://zenetlabs.com (docs/ai-assistant.md "WebMCP")
+- `site.config.ts:53` set true once the ElevenLabs agents exist and /api/health reports voice:true (docs/ai-assistant.md "Voice activation"); needs booking.published first
+- `site.config.ts:55` the agent ids printed by pnpm voice:apply
+- `site.config.ts:156` confirm the lead notification address
+- `site.config.ts:178` AI Gateway name (docs/ai-assistant.md "AI Gateway"); null calls Workers AI directly
+- `site.config.ts:186` the most voice calls a UTC day can start, previews included, across both locales. At most 30 x 5 minutes = 150 minutes a day: about US$12 a day at US$...
 
 ### Calculator pricing rules (43)
 

@@ -29,10 +29,11 @@ export function AssistantSection() {
       </p>
       <p>
         Para limitar los abusos contamos también cuántas preguntas hace cada
-        conexión al día. Para ello guardamos una huella unidireccional con clave
-        de tu dirección IP: no se puede convertir de nuevo en la dirección y no
-        está vinculada a tu conversación. La huella de cada día se borra a las
-        03:00 (hora UTC) de pasado mañana, es decir, unas 51 horas como máximo.
+        conexión al día. Para ello guardamos una huella con clave de tu
+        dirección IP (o de su bloque de red, si es IPv6): está seudonimizada, no
+        podemos leer la dirección a partir de ella sin nuestra clave y no está
+        vinculada a tu conversación. La huella de cada día se borra a las 03:00
+        (hora UTC) de pasado mañana, es decir, unas 51 horas como máximo.
       </p>
       <p>
         El asistente puede equivocarse. Los precios y las fechas salen solo de

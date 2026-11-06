@@ -5,12 +5,16 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { serverConfig, siteConfig } from './site.config.ts';
 
+const server = serverConfig(process.env.CLOUDFLARE_ENV, {
+  chatModel: process.env.CHAT_MODEL,
+});
+
 export default defineConfig({
   resolve: { tsconfigPaths: true },
   define: {
     __SITE__: JSON.stringify(siteConfig(process.env.CLOUDFLARE_ENV)),
     __GA4_ID__: JSON.stringify(siteConfig(process.env.CLOUDFLARE_ENV).ga4Id),
-    __SERVER__: JSON.stringify(serverConfig(process.env.CLOUDFLARE_ENV)),
+    __SERVER__: JSON.stringify(server),
     __ASSISTANT__: JSON.stringify(
       siteConfig(process.env.CLOUDFLARE_ENV).assistant.published,
     ),
@@ -26,9 +30,7 @@ export default defineConfig({
     __VOICE_FAKE__: JSON.stringify(
       siteConfig(process.env.CLOUDFLARE_ENV).voice.fakeSdk,
     ),
-    __CHAT_FAKE__: JSON.stringify(
-      serverConfig(process.env.CLOUDFLARE_ENV).assistant.model === 'fake',
-    ),
+    __CHAT_FAKE__: JSON.stringify(server.assistant.model === 'fake'),
   },
   build: { modulePreload: false },
   plugins: [

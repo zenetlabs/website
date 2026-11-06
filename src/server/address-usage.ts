@@ -1,8 +1,9 @@
 import { toHex } from '@/lib/hex';
 
 // Per-day counters keyed by a fingerprint of the visitor's IP address. The
-// fingerprint is an HMAC of `day|address`, so it cannot be turned back into the
-// address, and nothing links it to a session, a booking or a lead.
+// fingerprint is an HMAC of `day|address`: pseudonymised (the address can't be
+// read from it without the key), and nothing links it to a session, a booking
+// or a lead.
 export type UsageTable = 'chat_ip_usage' | 'booking_ip_usage';
 
 const COLUMN = { chat_ip_usage: 'turns', booking_ip_usage: 'sends' } as const;

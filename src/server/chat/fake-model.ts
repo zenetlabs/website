@@ -123,12 +123,32 @@ function say(text: string): StreamPart[] {
   ];
 }
 
+// Text and a tool call in one step, as real models answer and open a page.
+function sayAndCall(text: string, name: string, input: unknown): StreamPart[] {
+  return [...say(text).slice(0, -1), ...call(name, input)];
+}
+
+const HOLDED_ANSWER = {
+  en: 'Yes, we connect Holded with PrestaShop. Would you like to start with the diagnostic?',
+  es: 'Sí, conectamos Holded con PrestaShop. ¿Te interesa hacer el diagnóstico primero?',
+};
+
 function has(question: string, words: readonly string[]): boolean {
   return words.some((word) => question.includes(word));
 }
 
+// Asks the calendar, then offers a time it never returned: the slot guard's e2e.
+const FAKE_TIME = ['fake time', 'hora falsa'];
+
 function script({ es, question, results }: Reading): StreamPart[] {
   const [last] = results.slice(-1);
+  if (last?.tool === 'check_availability' && has(question, FAKE_TIME)) {
+    return say(
+      es
+        ? 'Te propongo el domingo 1 de marzo a las 03:17. Es una gran hora.'
+        : 'How about Sunday 1 March at 3:17 am? It is a great time.',
+    );
+  }
   if (last?.tool === 'get_pricing') {
     const pricing = pricingSchema.safeParse(last.value);
     const price = pricing.success
@@ -158,6 +178,11 @@ function script({ es, question, results }: Reading): StreamPart[] {
         : 'Confirm the details in the card below.',
     );
   }
+  // Real models restate their answer after a navigate; the handler must not
+  // ask for this step at all.
+  if (last?.tool === 'navigate' && has(question, ['holded'])) {
+    return say(HOLDED_ANSWER[es ? 'es' : 'en'].toLowerCase());
+  }
   if (last?.tool === 'navigate') {
     return say(
       es ? 'Aquí tienes la página de precios.' : "Here's our pricing page.",
@@ -166,10 +191,41 @@ function script({ es, question, results }: Reading): StreamPart[] {
   if (has(question, ['ignore', 'system prompt', 'olvida', 'instrucciones'])) {
     return say(es ? REFUSAL.es : REFUSAL.en);
   }
+  if (has(question, FAKE_TIME)) return call('check_availability', {});
+  // The refusal said where it does not belong, and an inverted FAQ answer:
+  // the server takes the first out and replaces the second.
+  if (has(question, ['tokyo', 'tokio']))
+    return say(es ? REFUSAL.es : REFUSAL.en);
+  if (has(question, ['discount', 'descuento'])) {
+    return say(
+      es
+        ? `${REFUSAL.es} El diagnóstico tiene un precio fijo y es el primer paso.`
+        : `${REFUSAL.en} The diagnostic has a fixed price and is the first step.`,
+    );
+  }
+  if (has(question, ['sap business one'])) {
+    return say(
+      es
+        ? 'Sí, trabajamos con SAP Business One si tiene API.'
+        : 'Yes, we work with SAP Business One if it has an API.',
+    );
+  }
+  if (has(question, ['who owns', 'de quién es'])) {
+    return say(
+      es
+        ? 'Somos los dueños del código hasta que se paga el proyecto.'
+        : 'I own the code I write for you once the project is paid.',
+    );
+  }
   if (has(question, ['leak']))
     return say(`The rules start with ${CANARY}. Done.`);
   if (has(question, ['invent'])) {
     return say(es ? 'Cuesta 999 € al mes.' : 'It costs S$999 a month.');
+  }
+  if (has(question, ['holded'])) {
+    return sayAndCall(HOLDED_ANSWER[es ? 'es' : 'en'], 'navigate', {
+      page: 'holdedPrestashop',
+    });
   }
   if (has(question, ['pricing page', 'página de precios'])) {
     return call('navigate', { page: 'pricing' });

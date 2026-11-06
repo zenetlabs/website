@@ -14,7 +14,8 @@ export const NO_USAGE: TurnUsage = {
 
 type Rate = { input: number; cachedInput?: number; output: number };
 
-// Neurons per million tokens. Cloudflare pricing page, checked 2026-10-30.
+// Neurons per million tokens (US$0.011 per 1,000 neurons). Cloudflare pricing
+// page, checked 2026-11-06.
 const NEURONS_PER_M: Record<ChatModelId, Rate> = {
   '@cf/zai-org/glm-4.7-flash': { input: 5_500, output: 36_400 },
   '@cf/google/gemma-4-26b-a4b-it': { input: 9_091, output: 27_273 },
@@ -40,12 +41,12 @@ export function estimateTokens(chars: number): number {
   return Math.ceil(chars / 3);
 }
 
-// What a turn is expected to cost, set aside before it runs: two steps that
-// each send a 9,000-token prompt, and a full-length answer. Most turns cost
-// less; the day's total is corrected afterwards.
-export function reservationFor(model: string): number {
+// What a turn is expected to cost, set aside before it runs: `steps` model
+// calls that each send a 9,000-token prompt, and a full-length answer. Most
+// turns cost less; the day's total is corrected afterwards.
+export function reservationFor(model: string, steps: number): number {
   return neuronsFor(model, {
-    inputTokens: 18_000,
+    inputTokens: 9_000 * steps,
     cachedInputTokens: 0,
     outputTokens: 600,
   });

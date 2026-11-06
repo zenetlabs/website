@@ -62,6 +62,24 @@ describe.each(locales)('buildKnowledge(%s)', (locale) => {
     );
   });
 
+  it('says the diagnostic is apart from every project price', async () => {
+    const text = await buildKnowledge(locale, LIVE);
+    const { services } = await loadPricingContent(locale);
+    const price = formatPriceSummary(locale, services.diagnostic.prices);
+    expect(text).toContain(
+      locale === 'en'
+        ? `Project prices never include the automation diagnostic: it is a separate fixed price (${price})`
+        : `Ningún precio de proyecto incluye el diagnóstico de automatización: es un precio fijo aparte (${price})`,
+    );
+  });
+
+  it('points at nothing the chat visitor cannot see', async () => {
+    const text = await buildKnowledge(locale, LIVE);
+    expect(text).not.toMatch(
+      /the table|la tabla|this page|esta página|form on this|formulario de esta/i,
+    );
+  });
+
   it('quotes only its own market currency', async () => {
     const text = await buildKnowledge(locale, LIVE);
     if (locale === 'es') {
@@ -79,6 +97,9 @@ describe('buildKnowledge differences', () => {
     const en = await buildKnowledge('en', LIVE);
     expect(es).toContain('VERIFACTU');
     expect(es).toContain('1 de enero de 2027');
+    expect(es).toContain(
+      'siguen valiendo el 1 de enero de 2027 para las sociedades y el 1 de julio de 2027 para el resto',
+    );
     expect(es).toContain('holdedPrestashop');
     expect(en).not.toContain('VERIFACTU');
   });

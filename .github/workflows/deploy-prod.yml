@@ -98,6 +98,8 @@ jobs:
           args: --config dist/server/wrangler.json
           api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       - name: Smoke test
+        env:
+          EXPECT_ASSISTANT: '1'
         run: bash scripts/smoke.sh
       - name: Sync ElevenLabs agents
         if: ${{ env.HAS_ELEVENLABS == 'true' }}
