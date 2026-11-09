@@ -1,4 +1,5 @@
-import { FlowSection } from '@/components/flow-section';
+import { CompanyMark } from '@/components/companies-strip';
+import { FlowDiagram } from '@/components/flow-diagram';
 import { BulletList, MetricList } from '@/components/lists';
 import {
   FactList,
@@ -9,6 +10,7 @@ import {
 } from '@/components/page-blocks';
 import { Process } from '@/components/process';
 import { Container, Section } from '@/components/section';
+import { sectionFrame } from '@/components/section-frame';
 import { StickyZone } from '@/components/sticky-cta';
 import { PROSE } from '@/components/ui';
 import type {
@@ -18,6 +20,11 @@ import type {
 } from '@/content/types';
 import { hubNames } from '@/lib/crumb-names';
 import type { Locale } from '@/lib/i18n';
+import { portfolioOf } from '@/lib/portfolio';
+
+const TINT = sectionFrame('tint');
+
+const VIATSY = portfolioOf('viatsy');
 
 function dayMonthYear(iso: string): string {
   return iso.split('-').reverse().join('/');
@@ -38,23 +45,37 @@ export function CaseStudyPage({
 }) {
   return (
     <>
-      <header>
-        <Container className="py-12 md:py-24">
-          <HeroHeading title={copy.title} lead={copy.lead} />
-          <p className="mt-6 text-ui-s text-muted-fg">
-            {copy.labels.published}{' '}
-            <time dateTime={copy.published}>
-              {dayMonthYear(copy.published)}
-            </time>
-            {lastmod === copy.published ? null : (
-              <>
-                {' · '}
-                {copy.labels.updated}{' '}
-                <time dateTime={lastmod}>{dayMonthYear(lastmod)}</time>
-              </>
-            )}
-          </p>
-          <FactList facts={copy.facts} />
+      <header data-ground={TINT.ground} className={TINT.bg}>
+        <Container className="page-hero">
+          <div className="lg:col-span-7">
+            <span className="case-mark">
+              <CompanyMark name={VIATSY.name} logo={VIATSY.logo} />
+            </span>
+            <HeroHeading title={copy.title} lead={copy.lead} />
+            <p className="mt-6 text-ui-s text-muted-fg">
+              {copy.labels.published}{' '}
+              <time dateTime={copy.published}>
+                {dayMonthYear(copy.published)}
+              </time>
+              {lastmod === copy.published ? null : (
+                <>
+                  {' · '}
+                  {copy.labels.updated}{' '}
+                  <time dateTime={lastmod}>{dayMonthYear(lastmod)}</time>
+                </>
+              )}
+            </p>
+          </div>
+          <div id="flow" className="lg:col-span-5">
+            <FlowDiagram
+              steps={copy.flow.steps}
+              actors={hub.labels.actors}
+              caption={copy.flow.caption}
+            />
+          </div>
+          <div className="lg:col-span-12">
+            <FactList facts={copy.facts} />
+          </div>
         </Container>
       </header>
       <StickyZone locale={locale}>
@@ -68,7 +89,6 @@ export function CaseStudyPage({
         <Section id="built" title={copy.built.title}>
           <UseCaseList items={copy.built.items} locale={locale} />
         </Section>
-        <FlowSection copy={copy.flow} actors={hub.labels.actors} />
         <Process id="operations" copy={copy.operations} />
         <Section id="results" title={copy.results.title} variant="tint">
           <BulletList

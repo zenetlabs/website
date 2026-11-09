@@ -1,19 +1,17 @@
 import type { ReactNode } from 'react';
+import { CompanyMark } from '@/components/companies-strip';
 import { CtaLink } from '@/components/cta-link';
 import { CtaSection } from '@/components/cta-section';
-import { Container, EmphasisTitle } from '@/components/section';
-import {
-  EYEBROW,
-  H3,
-  LEAD,
-  PRIMARY_BUTTON_FULL,
-  TEXT_LINK,
-} from '@/components/ui';
+import { BulletList } from '@/components/lists';
+import { Container, EmphasisTitle, Section } from '@/components/section';
+import { sectionFrame } from '@/components/section-frame';
+import { EYEBROW, H3, LEAD, PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
 import type {
   Card,
   PageCta,
   PageFacts,
   PageHero,
+  ServicePageContent,
   ServicePageLabels,
   Services,
   TitleParts,
@@ -30,7 +28,59 @@ import {
   type ServicePageId,
   serviceOf,
 } from '@/lib/page-registry';
+import { portfolioOf } from '@/lib/portfolio';
 import { PUBLIC_EMAIL } from '@/lib/site';
+
+const TINT = sectionFrame('tint');
+
+// A service page's proof: the company it runs at (its logo), what changed
+// there, and the way to the full case and the hub.
+export function CaseCallout({
+  copy,
+  locale,
+  names,
+}: {
+  copy: ServicePageContent['case'];
+  locale: Locale;
+  names: Names;
+}) {
+  const company = copy.company ? portfolioOf(copy.company) : undefined;
+  return (
+    <Section id="case" title={copy.title} variant="tint">
+      <div className="case-callout">
+        <div className="lg:col-span-7">
+          {company ? (
+            <CompanyMark name={company.name} logo={company.logo} />
+          ) : null}
+          <p className={company ? 'mt-4 text-fg-soft md:mt-5' : 'text-fg-soft'}>
+            {copy.text}
+          </p>
+          <p className="mt-5 flex flex-wrap gap-x-5 gap-y-3 md:mt-6 md:gap-x-8">
+            {copy.page ? (
+              <a
+                href={pagePath(locale, copy.page)}
+                className={`font-medium ${TEXT_LINK}`}
+              >
+                {crumbName(names, copy.page)} →
+              </a>
+            ) : null}
+            <a
+              href={pagePath(locale, 'cases')}
+              className={`font-medium ${TEXT_LINK}`}
+            >
+              {crumbName(names, 'cases')} →
+            </a>
+          </p>
+        </div>
+        <BulletList
+          items={copy.points}
+          marker="tick"
+          className="lg:col-span-5"
+        />
+      </div>
+    </Section>
+  );
+}
 
 export function Breadcrumb({
   page,
@@ -73,44 +123,54 @@ export function HeroHeading({
   title,
   lead,
   afterBreadcrumb = false,
+  actions,
 }: {
   title: TitleParts;
   lead: string;
   afterBreadcrumb?: boolean;
+  actions?: ReactNode;
 }) {
-  const top = afterBreadcrumb ? 'mt-10 ' : '';
+  const top = afterBreadcrumb ? 'mt-6 md:mt-10 ' : '';
   return (
     <>
       <h1 id="service-title" className={`${top}max-w-4xl`}>
         <EmphasisTitle parts={title} />
       </h1>
-      <p className={`mt-6 ${LEAD}`}>{lead}</p>
+      {actions}
+      <p className={`mt-4 md:mt-6 ${LEAD}`}>{lead}</p>
     </>
   );
 }
 
+type Fact = {
+  id: string;
+  label: string;
+  value: string;
+  highlight?: boolean;
+};
+
 export function FactList({
   facts,
+  variant = 'strip',
 }: {
-  facts: readonly {
-    id: string;
-    label: string;
-    value: string;
-    highlight?: boolean;
-  }[];
+  facts: readonly Fact[];
+  variant?: 'strip' | 'card';
 }) {
   return (
-    <dl className="facts">
+    <dl className={variant === 'card' ? 'facts-card' : 'facts'}>
       {facts.map((fact) => (
-        <div key={fact.id} className={fact.highlight ? 'fact-highlight' : ''}>
+        <div key={fact.id} data-highlight={fact.highlight ? '' : undefined}>
           <dt className={EYEBROW}>{fact.label}</dt>
-          <dd className="mt-1.5 text-ui-m md:text-base">{fact.value}</dd>
+          <dd className="fact-value">{fact.value}</dd>
         </div>
       ))}
     </dl>
   );
 }
 
+// The hero of a service or landing page, on the tint ground: the offer and its
+// actions on the left, and on the right the page's figure (the flow it runs)
+// or, without one, its facts as a card. With a figure the facts run below.
 export function FactsHero({
   page,
   locale,
@@ -120,6 +180,7 @@ export function FactsHero({
   facts,
   button,
   breadcrumb,
+  figure,
 }: {
   page: ServicePageId | LandingPageId;
   locale: Locale;
@@ -129,42 +190,60 @@ export function FactsHero({
   facts: PageFacts;
   button: string;
   breadcrumb?: ReactNode;
+  figure?: ReactNode;
 }) {
   const serviceId = serviceOf(page);
+  const list: readonly Fact[] = [
+    { id: 'who', label: labels.who, value: facts.who },
+    {
+      id: 'price',
+      label: labels.price,
+      value: `${formatPriceSummary(locale, services[serviceId].prices)} (${labels.taxNote})`,
+      highlight: true,
+    },
+    { id: 'timeline', label: labels.timeline, value: facts.timeline },
+    { id: 'start', label: labels.start, value: facts.start },
+  ];
 
   return (
-    <section aria-labelledby="service-title">
-      <Container className="py-12 md:py-24">
-        {breadcrumb}
-        <HeroHeading {...hero} afterBreadcrumb={breadcrumb !== undefined} />
-        <FactList
-          facts={[
-            { id: 'who', label: labels.who, value: facts.who },
-            {
-              id: 'price',
-              label: labels.price,
-              value: `${formatPriceSummary(locale, services[serviceId].prices)} (${labels.taxNote})`,
-              highlight: true,
-            },
-            { id: 'timeline', label: labels.timeline, value: facts.timeline },
-            { id: 'start', label: labels.start, value: facts.start },
-          ]}
-        />
-        <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
-          <CtaLink
-            cta="page_hero"
-            href={navHref(locale, CTA_TARGET)}
-            className={PRIMARY_BUTTON_FULL}
-          >
-            {button}
-          </CtaLink>
-          <a
-            href={pagePath(locale, 'pricing')}
-            className={`font-medium ${TEXT_LINK}`}
-          >
-            {labels.pricing} →
-          </a>
+    <section
+      aria-labelledby="service-title"
+      data-ground={TINT.ground}
+      className={TINT.bg}
+    >
+      <Container className="page-hero">
+        <div className="lg:col-span-7">
+          {breadcrumb}
+          <HeroHeading
+            {...hero}
+            afterBreadcrumb={breadcrumb !== undefined}
+            actions={
+              <div className="page-hero-actions">
+                <CtaLink
+                  cta="page_hero"
+                  href={navHref(locale, CTA_TARGET)}
+                  className={PRIMARY_BUTTON}
+                >
+                  {button}
+                </CtaLink>
+                <a
+                  href={pagePath(locale, 'pricing')}
+                  className={`font-medium ${TEXT_LINK}`}
+                >
+                  {labels.pricing} →
+                </a>
+              </div>
+            }
+          />
         </div>
+        <div className="lg:col-span-5">
+          {figure ?? <FactList facts={list} variant="card" />}
+        </div>
+        {figure ? (
+          <div className="lg:col-span-12">
+            <FactList facts={list} />
+          </div>
+        ) : null}
       </Container>
     </section>
   );
@@ -212,29 +291,24 @@ export function RelatedLinks({
       aria-labelledby="related-title"
       className="border-t border-hairline"
     >
-      <Container className="py-10 md:py-14">
+      <Container className="py-7 md:py-14">
         <h2 id="related-title" className="text-h2-compact">
           {labels.related}
         </h2>
         <ul className="related-links">
-          {pages.map((target) => (
-            <li key={target}>
-              <a
-                href={pagePath(locale, target)}
-                className={`font-medium ${TEXT_LINK}`}
-              >
-                {crumbName(names, target)}
+          {[
+            ...pages.map((target) => ({
+              href: pagePath(locale, target),
+              name: crumbName(names, target),
+            })),
+            { href: pagePath(locale, 'services'), name: labels.allServices },
+          ].map(({ href, name }) => (
+            <li key={href}>
+              <a href={href} className="hover-line font-medium">
+                {name}
               </a>
             </li>
           ))}
-          <li>
-            <a
-              href={pagePath(locale, 'services')}
-              className={`font-medium ${TEXT_LINK}`}
-            >
-              {labels.allServices}
-            </a>
-          </li>
         </ul>
       </Container>
     </section>
@@ -267,62 +341,5 @@ export function UseCaseList({
         </li>
       ))}
     </ul>
-  );
-}
-
-export function DataTable({
-  labelledBy,
-  columns,
-  rows,
-  iconColumn,
-}: {
-  labelledBy: string;
-  columns: readonly string[];
-  rows: readonly { id: string; cells: readonly string[] }[];
-  iconColumn?: number;
-}) {
-  return (
-    <table aria-labelledby={labelledBy} className="data-table">
-      <thead>
-        <tr>
-          {columns.map((column) => (
-            <th
-              key={column}
-              scope="col"
-              className={`pb-3 pr-4 font-normal ${EYEBROW}`}
-            >
-              {column}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map(({ id, cells: [first, ...rest] }) => (
-          <tr key={id} className="border-t border-hairline">
-            <th
-              scope="row"
-              className="py-0.5 pr-4 text-left font-medium sm:w-[34%] sm:py-4"
-            >
-              {first}
-            </th>
-            {rest.map((cell, index) => (
-              <td
-                key={columns[index + 1]}
-                data-label={columns[index + 1]}
-                className="py-0.5 pr-4 text-fg-soft sm:py-4"
-              >
-                {iconColumn === index + 1 ? (
-                  <span
-                    aria-hidden="true"
-                    className="icon icon-tool mr-2 align-[-0.15em] text-tool"
-                  />
-                ) : null}
-                {cell}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
   );
 }

@@ -61,6 +61,26 @@ export const training = {
       },
     ],
   },
+  flow: {
+    title: { before: 'Un taller, ', emphasis: 'paso a paso', after: '' },
+    caption: 'Un taller, sobre un proceso vuestro',
+    steps: [
+      {
+        actor: 'tool',
+        label:
+          'Partimos de una tarea que tu equipo hace hoy, como contestar correos',
+        tool: 'gmail',
+      },
+      {
+        actor: 'agent',
+        label: 'El equipo construye un asistente para ella durante el taller',
+      },
+      {
+        actor: 'human',
+        label: 'La mentoría mensual revisa lo que construye el equipo',
+      },
+    ],
+  },
   how: {
     title: {
       before: 'De un taller a ',

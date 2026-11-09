@@ -73,7 +73,11 @@ export const agents = {
     },
     caption: 'An enquiry, from inbox to reply',
     steps: [
-      { actor: 'tool', label: 'An enquiry arrives by email or WhatsApp' },
+      {
+        actor: 'tool',
+        label: 'An enquiry arrives by email or WhatsApp',
+        tool: 'whatsapp',
+      },
       {
         actor: 'agent',
         label: 'The agent looks up what it needs and drafts the reply',
@@ -123,6 +127,7 @@ export const agents = {
   // TODO(albert): confirm the case
   case: {
     page: 'viatsyCase',
+    company: 'viatsy',
     title: { before: 'First replies at ', emphasis: 'Viatsy', after: '' },
     text: 'Viatsy receives travel enquiries on several channels, and each one needs a tailored answer. An agent drafts the first reply and the proposal, and the team reviews them before anything is sent.',
     points: [

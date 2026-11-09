@@ -9,6 +9,7 @@ const price = formatPrice('es', row);
 const diagnostic = formatPriceSummary('es', services.diagnostic.prices);
 
 export const holdedPrestashop = {
+  shop: { name: 'PrestaShop', tool: 'prestashop' },
   meta: {
     metaTitle: 'Integración de Holded con PrestaShop | Zenet Labs',
     description:
@@ -47,36 +48,43 @@ export const holdedPrestashop = {
         id: 'orders',
         data: 'Pedidos, como factura, ticket o pedido de venta',
         direction: 'De PrestaShop a Holded',
+        to: 'holded',
         when: 'En cuanto el pedido pasa al estado que elijas, por ejemplo «Pago aceptado»',
       },
       {
         id: 'customers',
         data: 'Clientes, con NIF y dirección de facturación',
         direction: 'De PrestaShop a Holded',
+        to: 'holded',
         when: 'Con su primer pedido; si ya existen, se reutilizan',
       },
       {
         id: 'refunds',
         data: 'Devoluciones y reembolsos, como factura rectificativa',
         direction: 'De PrestaShop a Holded',
+        to: 'holded',
         when: 'Al registrarse la devolución',
       },
       {
         id: 'stock',
         data: 'Stock por referencia (SKU)',
         direction: 'De Holded a PrestaShop, o en los dos sentidos',
+        to: 'shop',
+        both: true,
         when: 'Cada vez que cambia en Holded',
       },
       {
         id: 'payments',
         data: 'Cobros',
         direction: 'De PrestaShop a Holded',
+        to: 'holded',
         when: 'Con el pedido, con su forma de pago',
       },
       {
         id: 'products',
         data: 'Productos nuevos',
         direction: 'De PrestaShop a Holded',
+        to: 'holded',
         when: 'Al darlos de alta en la tienda',
       },
     ],

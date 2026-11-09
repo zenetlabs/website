@@ -1,3 +1,4 @@
+import { slotsCopy } from '@/content/es/slots';
 import type { ContactPageContent } from '@/content/types';
 
 export const contactPage = {
@@ -12,14 +13,10 @@ export const contactPage = {
     emphasis: 'a mano',
     after: '',
   },
-  lead: 'Envía el formulario o escríbenos. Una persona lee cada mensaje, te responde personalmente y acuerda contigo el siguiente paso.',
+  lead: 'Cuéntanos qué herramientas usas. Una persona lee cada mensaje, te responde personalmente y acuerda contigo el siguiente paso.',
+  slots: slotsCopy,
   form: {
-    title: {
-      before: 'Reserva tu ',
-      emphasis: 'diagnóstico de automatización',
-      after: '.',
-    },
-    lead: 'Cuéntanos qué herramientas usas y qué sigue haciendo tu equipo a mano.',
+    title: { before: '', emphasis: 'Escríbenos', after: '' },
     mail: '¿Prefieres el correo? Escribe a',
     human: 'Te responde una persona, personalmente.',
     book: '¿Prefieres una llamada? Elige una hora',

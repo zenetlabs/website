@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { FounderPortrait } from '@/components/founder-portrait';
+import { FounderPortrait } from '@/components/companies-strip';
 import { CONTENT } from '@/lib/content';
 
 describe('FounderPortrait', () => {

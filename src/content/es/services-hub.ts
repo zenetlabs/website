@@ -1,4 +1,5 @@
 import { casesName, contactName, viatsyCaseName } from '@/content/es/case-name';
+import { diagnosticPlan } from '@/content/es/diagnostic-plan';
 import { services } from '@/content/es/services';
 import type { ServicesHubContent } from '@/content/types';
 import { formatPriceSummary } from '@/lib/money';
@@ -77,6 +78,7 @@ export const servicesHub = {
   },
   startHere: 'Empieza aquí',
   book: 'Reservar el diagnóstico',
+  plan: { title: 'Lo que te entrega el diagnóstico', items: diagnosticPlan },
   also: {
     title: 'Mantenimiento y crecimiento',
     lead: 'Cuando tu proyecto ya funciona, el mantenimiento hace que siga funcionando y el trabajo de crecimiento ayuda a que te encuentren los clientes adecuados.',

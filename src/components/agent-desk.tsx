@@ -1,6 +1,6 @@
 import { useHydrated } from '@tanstack/react-router';
 import { type FormEvent, type MouseEvent, useRef } from 'react';
-import { FounderPortrait } from '@/components/founder-portrait';
+import { FounderPortrait } from '@/components/companies-strip';
 import { SlotRail } from '@/components/next-slots';
 import { CallLink } from '@/components/voice-button';
 import type { DeskCopy, Founder } from '@/content/types';

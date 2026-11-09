@@ -35,7 +35,11 @@ export const viatsy = {
   flow: {
     caption: 'De la consulta a la propuesta',
     steps: [
-      { actor: 'tool', label: 'Llega una consulta por correo o WhatsApp' },
+      {
+        actor: 'tool',
+        label: 'Llega una consulta por correo o WhatsApp',
+        tool: 'whatsapp',
+      },
       {
         actor: 'agent',
         label: 'El agente redacta la respuesta y la propuesta',

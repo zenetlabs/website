@@ -5,7 +5,12 @@ import es from '@/i18n/es.json';
 import { type Locale, locales } from '@/lib/i18n';
 import { formatPriceSummary } from '@/lib/money';
 import { CTA_TARGET, navHref } from '@/lib/nav';
-import { pagePath, type ServicePageId, serviceOf } from '@/lib/page-registry';
+import {
+  pagePath,
+  SERVICE_PAGE_IDS,
+  type ServicePageId,
+  serviceOf,
+} from '@/lib/page-registry';
 import { PUBLIC_EMAIL } from '@/lib/site';
 import { titleText } from '@/lib/title-text';
 import { SERVICES } from '../../test/page-content';
@@ -204,45 +209,46 @@ describe('ServicePage links into R5 pages', () => {
 describe('ServicePage flow and approval', () => {
   it.each(
     locales.flatMap((locale) =>
-      (['automation', 'integrations', 'agents'] as const).map(
-        (page) => [locale, page] as const,
-      ),
+      SERVICE_PAGE_IDS.map((page) => [locale, page] as const),
     ),
-  )('draws the three-step flow with actor names on %s %s', (locale, page) => {
+  )('draws the three-step flow in the hero on %s %s', (locale, page) => {
     const { container, copy, hub } = view(locale, page);
-    const steps = [...container.querySelectorAll('#flow ol.flow > li')];
+    const hero = container.querySelector(
+      'section[aria-labelledby="service-title"]',
+    );
+    const steps = [...(hero?.querySelectorAll('ol.flow-steps > li') ?? [])];
+    expect(steps).toHaveLength(3);
     expect(
-      steps.map((step) => step.querySelector('p:last-child')?.textContent),
+      steps.map((step) => step.querySelector('.flow-step-label')?.textContent),
     ).toEqual(copy.flow?.steps.map((step) => step.label));
     for (const [index, step] of steps.entries()) {
       const actor = copy.flow?.steps[index]?.actor;
+      expect(step.getAttribute('data-actor')).toBe(actor);
       expect(step.textContent).toContain(actor ? hub.labels.actors[actor] : '');
     }
+    expect(hero?.querySelector('figcaption')?.textContent).toBe(
+      copy.flow?.caption,
+    );
   });
 
-  it('shows the approval card on agents only', () => {
+  it('shows the approval card under the person on agents only', () => {
     const agents = view('en', 'agents');
     expect(
-      agents.container.querySelector('#flow figure:nth-of-type(2)'),
+      agents.container.querySelector('.flow-steps > [data-actor="human"]'),
     ).toHaveTextContent('Needs your approval');
     cleanup();
     for (const page of ['automation', 'integrations'] as const) {
       const { container } = view('en', page);
-      expect(container.querySelectorAll('#flow figure')).toHaveLength(1);
+      expect(container.textContent).not.toContain('Needs your approval');
       cleanup();
     }
-  });
-
-  it('has no flow section on a page without one', () => {
-    const { container } = view('en', 'training');
-    expect(container.querySelector('#flow')).toBeNull();
   });
 });
 
 describe('ServicePage layout', () => {
   it('highlights the price fact', () => {
     const { container, labels } = view('en', 'agents');
-    const highlighted = container.querySelectorAll('.fact-highlight');
+    const highlighted = container.querySelectorAll('.facts [data-highlight]');
     expect(highlighted).toHaveLength(1);
     expect(highlighted[0]?.querySelector('dt')?.textContent).toBe(labels.price);
   });

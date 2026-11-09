@@ -1,18 +1,18 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { CtaLink } from '@/components/cta-link';
 import { CtaSection } from '@/components/cta-section';
-import { Container, EmphasisTitle } from '@/components/section';
+import { OfferCard, Ticket, Tiers } from '@/components/offer-system';
+import { PageIntro } from '@/components/page-intro';
+import { Container } from '@/components/section';
 import { sectionFrame } from '@/components/section-frame';
-import { ServiceRow } from '@/components/service-ladder';
 import { StickyZone } from '@/components/sticky-cta';
-import { LEAD, SECONDARY_BUTTON } from '@/components/ui';
+import { LEAD } from '@/components/ui';
 import { loadServicesHubContent } from '@/content/load';
-import { formatPriceSummary } from '@/lib/money';
-import { CTA_TARGET, navHref } from '@/lib/nav';
+import type { HubCardPage } from '@/content/types';
+import { PAGE_FLOWS } from '@/lib/offer-flows';
 import {
   pagePath,
   SERVICE_PAGE_IDS,
-  serviceHref,
+  type ServicePageId,
   serviceOf,
 } from '@/lib/page-registry';
 import { servicesHubStructuredData } from '@/lib/page-structured-data';
@@ -32,96 +32,80 @@ export const Route = createFileRoute('/{-$locale}/services/')({
   component: ServicesHub,
 });
 
+function isHubCard(page: ServicePageId): page is HubCardPage {
+  return page !== 'diagnostic' && page !== 'maintenance';
+}
+
 function ServicesHub() {
   const { locale } = Route.useRouteContext();
   const { hub, services } = Route.useLoaderData();
   const pricing = pagePath(locale, 'pricing');
-  const { diagnostic } = services;
-  const main = SERVICE_PAGE_IDS.flatMap((page) => {
-    const card = hub.cards[page];
-    return 'summary' in card ? [{ page, ...card }] : [];
-  });
-  const also = Object.values(services).filter(
-    (service) =>
-      service.id !== diagnostic.id &&
-      !main.some(({ page }) => serviceOf(page) === service.id),
-  );
-  const alsoFrame = sectionFrame('compact');
+  const main = SERVICE_PAGE_IDS.filter(isHubCard);
+  const also = sectionFrame('tint');
 
   return (
     <>
       <section data-ground="paper">
-        <Container className="py-12 md:py-24">
-          <h1 className="max-w-4xl">
-            <EmphasisTitle parts={hub.title} />
-          </h1>
-          <p className={`mt-6 ${LEAD}`}>{hub.lead}</p>
+        <Container className="grid gap-6 pt-5 pb-6 md:gap-14 md:pt-14">
+          <PageIntro title={hub.title} lead={hub.lead} />
+          <Ticket
+            service={services.diagnostic}
+            locale={locale}
+            pills={[hub.startHere]}
+            book={hub.book}
+            plan={hub.plan}
+            heading="h2"
+          />
         </Container>
       </section>
+      {/* The bar waits until the ticket has offered its own booking button */}
       <StickyZone locale={locale}>
-        <Container className="pb-section-compact md:pb-12">
-          <ul className="grid border-t border-hairline">
-            <ServiceRow
-              heading="h2"
-              href={pagePath(locale, 'diagnostic')}
-              name={diagnostic.name}
-              summary={diagnostic.summary}
-              price={formatPriceSummary(locale, diagnostic.prices)}
-              featured={{
-                badge: hub.startHere,
-                action: (
-                  <p className="pt-1 pb-5">
-                    <CtaLink
-                      cta="start_here"
-                      href={navHref(locale, CTA_TARGET)}
-                      className={`${SECONDARY_BUTTON} max-sm:w-full`}
-                    >
-                      {hub.book}
-                    </CtaLink>
-                  </p>
-                ),
-              }}
-            />
-          </ul>
-        </Container>
-        <Container className="pb-section">
-          <ul className="grid border-t border-hairline">
-            {main.map(({ page, name, summary }) => (
-              <ServiceRow
-                key={page}
-                heading="h2"
-                href={pagePath(locale, page)}
-                name={name}
-                summary={summary}
-                price={formatPriceSummary(
-                  locale,
-                  services[serviceOf(page)].prices,
-                )}
-              />
-            ))}
-          </ul>
-        </Container>
+        <section aria-label={hub.meta.title} data-ground="paper">
+          <Container className="grid gap-6 pb-section">
+            <ul className="offer-row offer-row-hub">
+              {main.map((page) => {
+                const service = services[serviceOf(page)];
+                const { name, summary } = hub.cards[page];
+                return (
+                  <OfferCard
+                    key={page}
+                    service={service}
+                    flow={PAGE_FLOWS[page]}
+                    locale={locale}
+                    heading="h2"
+                    href={pagePath(locale, page)}
+                    name={name}
+                    summary={summary}
+                  />
+                );
+              })}
+            </ul>
+          </Container>
+        </section>
         <section
           aria-labelledby="also-title"
-          data-ground={alsoFrame.ground}
-          className={alsoFrame.bg}
+          data-ground={also.ground}
+          className={also.bg}
         >
-          <Container className={`${alsoFrame.pad} pb-section`}>
-            <h2 id="also-title" className="max-w-3xl text-h2-compact">
-              {hub.also.title}
-            </h2>
-            <p className={`mt-4 ${LEAD}`}>{hub.also.lead}</p>
-            <ul className="mt-8 grid border-t border-hairline md:mt-10">
-              {also.map((service) => (
-                <ServiceRow
-                  key={service.id}
-                  href={serviceHref(locale, service.id)}
-                  name={service.name}
-                  summary={service.summary}
-                  price={formatPriceSummary(locale, service.prices)}
+          <Container className={also.pad}>
+            <div className="offer-head">
+              <h2 id="also-title" className="max-w-[12em] lg:col-span-7">
+                {hub.also.title}
+              </h2>
+              <p className={`${LEAD} lg:col-span-5 lg:justify-self-end`}>
+                {hub.also.lead}
+              </p>
+            </div>
+            <div className="offer-alongside offer-alongside-care">
+              {(['maintenance', 'growth'] as const).map((id) => (
+                <Tiers
+                  key={id}
+                  service={services[id]}
+                  locale={locale}
+                  priceLabel={hub.labels.price}
                 />
               ))}
-            </ul>
+            </div>
           </Container>
         </section>
       </StickyZone>

@@ -1,8 +1,8 @@
 import { Faq } from '@/components/faq';
-import { FlowSection } from '@/components/flow-section';
-import { BulletList } from '@/components/lists';
+import { FlowDiagram } from '@/components/flow-diagram';
 import {
   Breadcrumb,
+  CaseCallout,
   FactsHero,
   GetStarted,
   RelatedLinks,
@@ -11,15 +11,14 @@ import {
 import { Process } from '@/components/process';
 import { Section } from '@/components/section';
 import { StickyZone } from '@/components/sticky-cta';
-import { CALLOUT_CARD, TEXT_LINK } from '@/components/ui';
 import type {
   ServicePageContent,
   Services,
   ServicesHubContent,
 } from '@/content/types';
-import { crumbName, hubNames } from '@/lib/crumb-names';
+import { hubNames } from '@/lib/crumb-names';
 import type { Locale } from '@/lib/i18n';
-import { pagePath, type ServicePageId } from '@/lib/page-registry';
+import type { ServicePageId } from '@/lib/page-registry';
 
 export function ServicePage({
   page,
@@ -54,6 +53,16 @@ export function ServicePage({
             label={hub.labels.breadcrumb}
           />
         }
+        figure={
+          copy.flow ? (
+            <FlowDiagram
+              steps={copy.flow.steps}
+              actors={hub.labels.actors}
+              caption={copy.flow.caption}
+              approval={copy.approval}
+            />
+          ) : undefined
+        }
       />
       <StickyZone locale={locale}>
         <Section
@@ -63,36 +72,8 @@ export function ServicePage({
         >
           <UseCaseList items={copy.useCases.items} locale={locale} />
         </Section>
-        {copy.flow ? (
-          <FlowSection
-            copy={copy.flow}
-            actors={hub.labels.actors}
-            approval={copy.approval}
-          />
-        ) : null}
         <Process id="how" copy={copy.how} />
-        <Section id="case" title={copy.case.title} variant="tint">
-          <div className={CALLOUT_CARD}>
-            <p className="text-fg-soft">{copy.case.text}</p>
-            <BulletList items={copy.case.points} className="mt-6" />
-            <p className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
-              {copy.case.page ? (
-                <a
-                  href={pagePath(locale, copy.case.page)}
-                  className={`font-medium ${TEXT_LINK}`}
-                >
-                  {crumbName(names, copy.case.page)} →
-                </a>
-              ) : null}
-              <a
-                href={pagePath(locale, 'cases')}
-                className={`font-medium ${TEXT_LINK}`}
-              >
-                {crumbName(names, 'cases')} →
-              </a>
-            </p>
-          </div>
-        </Section>
+        <CaseCallout copy={copy.case} locale={locale} names={names} />
         <Faq copy={copy.faq} items={copy.faq.items} />
         <RelatedLinks
           locale={locale}

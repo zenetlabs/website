@@ -63,6 +63,22 @@ export const software = {
       },
     ],
   },
+  flow: {
+    title: { before: 'Un portal, ', emphasis: 'paso a paso', after: '' },
+    caption: 'Una petición de cliente, de tu portal a tu equipo',
+    steps: [
+      {
+        actor: 'tool',
+        label: 'Un cliente envía una petición desde tu portal',
+      },
+      {
+        actor: 'tool',
+        label: 'Llega a HubSpot con los datos del cliente',
+        tool: 'hubspot',
+      },
+      { actor: 'human', label: 'Tu equipo la atiende desde una sola lista' },
+    ],
+  },
   how: {
     title: {
       before: 'Entregas pequeñas y ',

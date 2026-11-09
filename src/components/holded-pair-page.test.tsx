@@ -71,7 +71,7 @@ describe.each(HOLDED_PAGE_IDS)('HoldedPairPage (%s)', (page) => {
 });
 
 describe('HoldedPairPage table', () => {
-  it('labels each cell for the stacked mobile layout and marks the direction with an icon', () => {
+  it('labels each cell for the stacked mobile layout and draws the direction between the two tools', () => {
     const { container } = render(
       <HoldedPairPage
         page="holdedWoocommerce"
@@ -87,7 +87,24 @@ describe('HoldedPairPage table', () => {
       SPANISH.holdedWoocommerce.sync.columns.direction,
       SPANISH.holdedWoocommerce.sync.columns.when,
     ]);
-    expect(cells[0]?.querySelector('.icon-tool')).not.toBeNull();
-    expect(cells[1]?.querySelector('.icon-tool')).toBeNull();
+    const lane = cells[0]?.querySelector('.sync-lane');
+    expect(lane).toHaveAttribute('aria-hidden', 'true');
+    expect(lane).toHaveAttribute('data-to', 'holded');
+    expect(cells[0]).toHaveTextContent(
+      SPANISH.holdedWoocommerce.sync.rows[0]?.direction ?? '',
+    );
+    expect(cells[1]?.querySelector('.sync-lane')).toBeNull();
+    expect(container.querySelector('.sync-pair')).toHaveTextContent(
+      'WooCommerceHolded',
+    );
+  });
+
+  it('marks every row by the direction its text names', () => {
+    for (const page of HOLDED_PAGE_IDS) {
+      for (const row of SPANISH[page].sync.rows) {
+        expect(row.direction.endsWith('a Holded')).toBe(row.to === 'holded');
+        expect(row.direction.includes('dos sentidos')).toBe(row.both === true);
+      }
+    }
   });
 });

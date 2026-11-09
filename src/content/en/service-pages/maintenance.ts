@@ -59,6 +59,29 @@ export const maintenance = {
       },
     ],
   },
+  flow: {
+    title: {
+      before: 'When something breaks, ',
+      emphasis: 'step by step',
+      after: '',
+    },
+    caption: 'A tool changes, and the automation keeps working',
+    steps: [
+      {
+        actor: 'tool',
+        label: 'A tool changes or a step fails',
+        tool: 'xero',
+      },
+      {
+        actor: 'agent',
+        label: 'The automation retries and alerts us',
+      },
+      {
+        actor: 'human',
+        label: 'We fix it, and review it monthly',
+      },
+    ],
+  },
   how: {
     title: {
       before: 'How a plan ',
@@ -101,6 +124,7 @@ export const maintenance = {
       'Payment requests and reminders sent on schedule',
     ],
     page: 'viatsyCase',
+    company: 'viatsy',
   },
   faq: {
     title: {

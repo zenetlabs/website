@@ -1,8 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import {
   Breadcrumb,
-  DataTable,
+  CaseCallout,
   FactList,
   FactsHero,
   GetStarted,
@@ -207,22 +208,90 @@ describe('UseCaseList', () => {
   });
 });
 
-describe('DataTable', () => {
-  it('labels the columns and uses the first cell as the row header', () => {
-    const { container } = render(
-      <DataTable
-        labelledBy="x"
-        columns={['A', 'B']}
-        rows={[{ id: 'r', cells: ['head', 'cell'] }]}
+describe('FactsHero layout', () => {
+  function hero(figure?: ReactNode) {
+    const body = SERVICE_BODIES.en.pages.agents;
+    return render(
+      <FactsHero
+        page="agents"
+        locale="en"
+        services={SERVICES.en}
+        labels={SERVICE_BODIES.en.hub.labels}
+        hero={body.hero}
+        facts={body.facts}
+        button={body.cta.button}
+        figure={figure}
       />,
     );
-    expect(container.querySelector('table')).toHaveAttribute(
-      'aria-labelledby',
-      'x',
+  }
+
+  it('sets the facts as the hero card without a figure', () => {
+    const { container } = hero();
+    expect(container.querySelector('dl')?.className).toBe('facts-card');
+  });
+
+  it('puts the figure beside the copy and runs the facts below it', () => {
+    const { container } = hero(<figure data-testid="figure" />);
+    const figure = screen.getByTestId('figure');
+    const facts = container.querySelector('dl');
+    if (!(facts instanceof HTMLElement)) throw new Error('no facts');
+    expect(facts.className).toBe('facts');
+    expect(figure.compareDocumentPosition(facts)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
     );
-    expect(container.querySelectorAll('th[scope="col"]')).toHaveLength(2);
-    expect(container.querySelector('tbody th[scope="row"]')?.textContent).toBe(
-      'head',
+  });
+
+  it('places the actions between the heading and the lead', () => {
+    const { container } = hero();
+    const h1 = container.querySelector('h1');
+    const button = screen.getByRole('link', {
+      name: SERVICE_BODIES.en.pages.agents.cta.button,
+    });
+    const lead = screen.getByText(SERVICE_BODIES.en.pages.agents.hero.lead);
+    expect(h1?.compareDocumentPosition(button)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
     );
+    expect(button.compareDocumentPosition(lead)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+});
+
+describe('CaseCallout', () => {
+  it('names the company by its logo when the case has a page', () => {
+    const copy = SERVICE_BODIES.en.pages.automation.case;
+    const { container } = render(
+      <CaseCallout
+        copy={copy}
+        locale="en"
+        names={hubNames(SERVICE_BODIES.en.hub)}
+      />,
+    );
+    expect(container.querySelector('#case .logo')).not.toBeNull();
+    expect(container.querySelector('#case')).toHaveTextContent('Viatsy');
+    expect(container.querySelectorAll('#case .tick-item')).toHaveLength(
+      copy.points.length,
+    );
+  });
+
+  it('shows no logo without a company or case page, and still links the hub', () => {
+    const {
+      page: _page,
+      company: _company,
+      ...copy
+    } = SERVICE_BODIES.en.pages.automation.case;
+    const { container } = render(
+      <CaseCallout
+        copy={copy}
+        locale="en"
+        names={hubNames(SERVICE_BODIES.en.hub)}
+      />,
+    );
+    expect(container.querySelector('#case .logo')).toBeNull();
+    expect(
+      [...container.querySelectorAll('#case a')].map((a) =>
+        a.getAttribute('href'),
+      ),
+    ).toEqual([pagePath('en', 'cases')]);
   });
 });

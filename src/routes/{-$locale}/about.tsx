@@ -1,9 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { CompanyMark } from '@/components/companies-strip';
+import { CompanyMark, FounderPortrait } from '@/components/companies-strip';
 import { CtaSection } from '@/components/cta-section';
-import { FounderPortrait } from '@/components/founder-portrait';
+import { PageIntro } from '@/components/page-intro';
 import { RichText } from '@/components/rich-text';
-import { Container, EmphasisTitle } from '@/components/section';
+import { Container } from '@/components/section';
 import { sectionFrame } from '@/components/section-frame';
 import { StickyZone } from '@/components/sticky-cta';
 import { CARD, H3, LEAD, PROSE, TEXT_LINK } from '@/components/ui';
@@ -13,6 +13,8 @@ import { pagePath } from '@/lib/page-registry';
 import { breadcrumbStructuredData } from '@/lib/page-structured-data';
 import { contentHead } from '@/lib/pages';
 import { PORTFOLIO } from '@/lib/portfolio';
+
+const TINT = sectionFrame('tint');
 
 export const Route = createFileRoute('/{-$locale}/about')({
   staticData: { page: 'about' },
@@ -36,25 +38,21 @@ function About() {
   const { locale } = Route.useRouteContext();
   const { page, companies } = Route.useLoaderData();
   const { founder } = CONTENT[locale];
-  const vision = sectionFrame('tint');
 
   return (
     <>
-      <section data-ground="paper">
-        <Container className="py-12 md:py-24">
-          <h1 className="max-w-4xl">
-            <EmphasisTitle parts={page.title} />
-          </h1>
-          <p className={`mt-6 ${LEAD}`}>{page.lead}</p>
+      <section data-ground={TINT.ground} className={TINT.bg}>
+        <Container className="pt-8 pb-10 md:pt-14 md:pb-16">
+          <PageIntro title={page.title} lead={page.lead} />
         </Container>
       </section>
       <StickyZone locale={locale}>
         <section aria-labelledby="founder-title" data-ground="paper">
-          <Container className="grid gap-6 pb-section md:grid-cols-[auto_1fr] md:gap-14">
-            <FounderPortrait founder={founder} />
+          <Container className="founder-block">
+            <FounderPortrait founder={founder} className="founder-portrait" />
             <div>
               <h2 id="founder-title">{founder.name}</h2>
-              <p className="mt-2 text-ui-s text-muted-fg">{founder.role}</p>
+              <p className="mt-2 text-ui-l text-muted-fg">{founder.role}</p>
               <div className={`mt-6 grid gap-4 text-lg ${PROSE}`}>
                 {page.story.map((paragraph) => (
                   <p key={paragraph.id}>
@@ -65,14 +63,18 @@ function About() {
             </div>
           </Container>
         </section>
-        <section aria-labelledby="principles-title" data-ground="paper">
-          <Container className="py-section">
+        <section
+          aria-labelledby="principles-title"
+          data-ground={TINT.ground}
+          className={TINT.bg}
+        >
+          <Container className={TINT.pad}>
             <h2 id="principles-title">{page.principles.title}</h2>
-            <ul className="mt-8 grid gap-x-14 gap-y-8 md:mt-12 md:grid-cols-2 md:gap-y-10">
+            <ul className="principles">
               {page.principles.items.map((item) => (
-                <li key={item.id} className="border-t border-hairline pt-5">
+                <li key={item.id} className="job-card">
                   <h3 className={H3}>{item.title}</h3>
-                  <p className="mt-3 max-w-[60ch] text-fg-soft">{item.text}</p>
+                  <p className="text-ui-m text-fg-soft">{item.text}</p>
                 </li>
               ))}
             </ul>
@@ -82,7 +84,7 @@ function About() {
           <Container className="py-section">
             <h2 id="companies-title">{page.companies.title}</h2>
             <p className={`mt-4 md:mt-5 ${LEAD}`}>{page.companies.lead}</p>
-            <ul className="mt-8 grid grid-cols-2 gap-4 md:mt-12 md:gap-6 lg:grid-cols-3">
+            <ul className="mt-8 grid grid-cols-2 gap-4 md:mt-12 md:gap-6 lg:grid-cols-5">
               {PORTFOLIO.map(({ key, name, href, logo }) => (
                 <li key={key}>
                   <a
@@ -112,14 +114,12 @@ function About() {
         </section>
         <section
           aria-labelledby="vision-title"
-          data-ground={vision.ground}
-          className={vision.bg}
+          data-ground={TINT.ground}
+          className={TINT.bg}
         >
-          <Container className={vision.pad}>
+          <Container className={TINT.pad}>
             <h2 id="vision-title">{page.vision.title}</h2>
-            <p className="mt-5 max-w-[60ch] text-pretty text-h2-compact md:mt-8">
-              {page.vision.text}
-            </p>
+            <p className="vision-text">{page.vision.text}</p>
           </Container>
         </section>
       </StickyZone>

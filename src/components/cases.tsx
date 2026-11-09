@@ -1,12 +1,16 @@
+import { CompanyMark } from '@/components/companies-strip';
 import { FlowDiagram } from '@/components/flow-diagram';
 import { BulletList, MetricList } from '@/components/lists';
 import { MobileFold } from '@/components/mobile-fold';
 import { Section } from '@/components/section';
-import { H3, TEXT_LINK } from '@/components/ui';
+import { TEXT_LINK } from '@/components/ui';
 import type { HomeContent } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { pagePath } from '@/lib/page-registry';
+import { portfolioOf } from '@/lib/portfolio';
 
+// Viatsy as the feature, with the flow it runs; Taplany as its summary. Each
+// is named by its own logo.
 export function Cases({
   copy,
   locale,
@@ -16,34 +20,16 @@ export function Cases({
 }) {
   return (
     <Section id="cases" title={copy.title} lead={copy.lead}>
-      <ul className="grid gap-8 lg:grid-cols-12 lg:gap-x-14">
-        {copy.items.map((item, index) => {
-          const featured = index === 0;
-          return (
-            <li
-              key={item.id}
-              className={`case-item ${featured ? 'lg:col-span-7' : 'lg:col-span-5'}`}
-            >
-              <h3 className={featured ? 'text-h2-compact' : `${H3} lg:mt-1`}>
-                {item.name}
-              </h3>
-              <p className="mt-1 text-ui-s text-muted-fg">{item.tag}</p>
-              <p className="mt-3 text-ui-m text-fg-soft md:mt-4 md:text-base">
-                {item.context}
-              </p>
-              {item.flow ? (
-                <div className="mt-5">
-                  <FlowDiagram
-                    steps={item.flow.steps}
-                    actors={copy.actors}
-                    caption={item.flow.caption}
-                  />
-                </div>
-              ) : null}
+      <ul className="grid gap-6">
+        {copy.items.map((item) => {
+          const { logo } = portfolioOf(item.id);
+          const outcome = (
+            <>
               <MobileFold label={copy.automatedLabel}>
                 <BulletList
                   items={item.automated}
-                  className={`mt-3 text-ui-m md:text-base ${featured ? 'md:grid-cols-2 md:gap-x-8' : ''}`}
+                  marker="tick"
+                  className="mt-3 text-ui-m md:mt-0"
                 />
               </MobileFold>
               <MetricList
@@ -51,14 +37,46 @@ export function Cases({
                 locale={locale}
                 className="mt-6"
               />
-              {item.link ? (
-                <a
-                  href={pagePath(locale, item.link.page)}
-                  className={`mt-6 self-start font-medium ${TEXT_LINK}`}
-                >
-                  {item.link.label} →
-                </a>
-              ) : null}
+            </>
+          );
+          return (
+            <li
+              key={item.id}
+              className="case-item"
+              data-featured={item.flow ? '' : undefined}
+            >
+              <div className={item.flow ? 'lg:col-span-7' : 'lg:col-span-5'}>
+                <h3 className="case-name">
+                  <CompanyMark name={item.name} logo={logo} />
+                </h3>
+                <p className="mt-2 text-ui-s text-muted-fg md:mt-3">
+                  {item.tag}
+                </p>
+                <p className="mt-2 mb-4 max-w-[34em] text-ui-m text-fg-soft md:mt-3 md:mb-5 md:text-base">
+                  {item.context}
+                </p>
+                {item.flow ? outcome : null}
+                {item.link ? (
+                  <a
+                    href={pagePath(locale, item.link.page)}
+                    className={`mt-6 inline-block font-medium ${TEXT_LINK}`}
+                  >
+                    {item.link.label} →
+                  </a>
+                ) : null}
+              </div>
+              <div className={item.flow ? 'lg:col-span-5' : 'lg:col-span-7'}>
+                {item.flow ? (
+                  <FlowDiagram
+                    steps={item.flow.steps}
+                    actors={copy.actors}
+                    caption={item.flow.caption}
+                    className="flow-figure-flat"
+                  />
+                ) : (
+                  outcome
+                )}
+              </div>
             </li>
           );
         })}

@@ -10,11 +10,13 @@ import {
   typesOf,
 } from './helpers';
 
+// The catalogue order: the diagnostic ticket, the three builds as on the home
+// offer (integration, web, agent), then training, care and growth.
 const SERVICE_IDS = [
   'diagnostic',
   'integration',
-  'agent',
   'web',
+  'agent',
   'training',
   'maintenance',
   'growth',
@@ -38,12 +40,14 @@ const ABOUT = [
   { path: '/es/sobre-nosotros', cta: CTA.es },
 ] as const;
 
+// The diagnostic ticket links the booking CTA, then every block lists the
+// pages about it (the names are plain text: the links sit beside them).
 const CARD_LINKS: Record<string, (string | null)[][]> = {
   '/pricing': [
     [CTA.en, '/services/automation-diagnostic'],
     ['/services/ai-automation', '/services/integrations'],
-    ['/services/ai-agents'],
     ['/services/custom-software'],
+    ['/services/ai-agents'],
     ['/services/ai-training'],
     ['/services/maintenance'],
     [],
@@ -51,8 +55,8 @@ const CARD_LINKS: Record<string, (string | null)[][]> = {
   '/es/precios': [
     [CTA.es, '/es/servicios/diagnostico-de-automatizacion'],
     ['/es/servicios/automatizacion-de-procesos', '/es/servicios/integraciones'],
-    ['/es/servicios/agentes-de-ia'],
     ['/es/servicios/desarrollo-de-software-a-medida'],
+    ['/es/servicios/agentes-de-ia'],
     ['/es/servicios/formacion-ia-equipos'],
     ['/es/servicios/mantenimiento'],
     [],
@@ -64,12 +68,12 @@ for (const { path, tax, cta } of PRICING) {
     test('lists the seven services with their cards', async ({ page }) => {
       await gotoHydrated(page, path);
       const ids = await page
-        .locator('main article[data-service]')
+        .locator('main [data-service]')
         .evaluateAll((cards) =>
           cards.map((card) => card.getAttribute('data-service')),
         );
       expect(ids).toEqual(SERVICE_IDS);
-      await expect(page.locator('main article > div h2')).toHaveCount(7);
+      await expect(page.locator('main [data-service] h2')).toHaveCount(7);
       await expect(page.locator('h1')).toHaveCount(1);
       await expect(page.locator('main')).toContainText(tax);
     });
@@ -77,7 +81,7 @@ for (const { path, tax, cta } of PRICING) {
     test('links each card to its service pages', async ({ page }) => {
       await gotoHydrated(page, path);
       const hrefs = await page
-        .locator('main article')
+        .locator('main [data-service]')
         .evaluateAll((cards) =>
           cards.map((card) =>
             [...card.querySelectorAll('a')].map((a) => a.getAttribute('href')),

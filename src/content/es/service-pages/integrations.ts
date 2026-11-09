@@ -72,10 +72,15 @@ export const integrations = {
     title: { before: 'Una conexión, ', emphasis: 'paso a paso', after: '' },
     caption: 'Un negocio ganado, de HubSpot a Holded',
     steps: [
-      { actor: 'tool', label: 'Un negocio se marca como ganado en HubSpot' },
+      {
+        actor: 'tool',
+        label: 'Un negocio se marca como ganado en HubSpot',
+        tool: 'hubspot',
+      },
       {
         actor: 'tool',
         label: 'La integración crea el contacto y la factura en Holded',
+        tool: 'holded',
       },
       { actor: 'human', label: 'Ventas ve quién ha pagado' },
     ],
