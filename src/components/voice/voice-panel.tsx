@@ -2,11 +2,7 @@ import type { TurnstileInstance } from '@marsidev/react-turnstile';
 import { useId, useRef, useState } from 'react';
 import { ContactLinks } from '@/components/contact-links';
 import { LazyTurnstile } from '@/components/form-parts';
-import {
-  PRIMARY_BUTTON,
-  SECONDARY_BUTTON_SM,
-  TEXT_LINK,
-} from '@/components/ui';
+import { SECONDARY_BUTTON_SM, TEXT_LINK } from '@/components/ui';
 import { challengeToken } from '@/components/use-challenge';
 import type { VoiceCopy } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
@@ -62,13 +58,56 @@ function statusText(copy: VoiceCopy, state: VoiceState): string {
 
 function Fallback({ locale, copy }: { locale: Locale; copy: VoiceCopy }) {
   return (
-    <div className="grid gap-2 text-sm">
+    <div className="grid gap-2">
       <p>{copy.fallbackText}</p>
       <ContactLinks
         locale={locale}
         booking={isPublished('book', SITE)}
         labels={{ book: copy.fallbackBook, form: copy.fallbackForm }}
       />
+    </div>
+  );
+}
+
+// The chat's one-line notice, repeated on purpose: a module shared by the two
+// lazy panels costs 7 to 15 B on every budget-gated page.
+function VoiceNotice({
+  copy,
+  locale,
+  noticeId,
+  open,
+  onToggle,
+}: {
+  copy: VoiceCopy;
+  locale: Locale;
+  noticeId: string;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div
+      className="chat-notice -mx-4 md:-mx-5"
+      data-voice-notice={open ? 'open' : 'line'}
+    >
+      <p className="chat-notice-line">
+        <span>{copy.noticeShort}</span>
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={noticeId}
+          onClick={onToggle}
+          className="chat-notice-toggle"
+        >
+          {copy.noticeToggle}
+          <span aria-hidden="true" className="chat-chevron" />
+        </button>
+        <a href={pagePath(locale, 'privacy')} className={TEXT_LINK}>
+          {copy.privacyLink}
+        </a>
+      </p>
+      <p id={noticeId} hidden={!open} className="mt-2 text-pretty">
+        {copy.notice}
+      </p>
     </div>
   );
 }
@@ -86,6 +125,7 @@ export function VoicePanel({
 }) {
   const state = useVoiceState();
   const [ready, setReady] = useState(false);
+  const [noticeOpen, setNoticeOpen] = useState<boolean | null>(null);
   const [zone] = useState(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone,
   );
@@ -94,6 +134,8 @@ export function VoicePanel({
   const titleId = useId();
   const noticeId = useId();
   const busy = state.phase === 'connecting' || state.phase === 'live';
+  // The full disclosure is open before the first call, folded once one runs.
+  const notice = noticeOpen ?? state.phase === 'intro';
 
   // The button that was pressed leaves the page with its state, so focus goes
   // to the title, which stays and keeps Escape working from the keyboard.
@@ -139,28 +181,27 @@ export function VoicePanel({
       aria-describedby={noticeId}
       data-voice-panel
       data-voice-state={state.phase}
-      className="fixed inset-x-0 bottom-0 z-40 m-0 max-h-[85dvh] w-full max-w-none overflow-y-auto rounded-t-card border border-border bg-bg p-0 text-fg md:inset-auto md:right-4 md:bottom-4 md:w-[26rem] md:rounded-card print:hidden"
+      className="voice-panel"
     >
-      <div className="grid gap-3 p-4">
-        <header className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+      <div className="grid gap-4 p-4 md:p-5">
+        <header className="flex items-center gap-3">
+          <span aria-hidden="true" className="desk-mark" />
+          <div className="flex min-w-0 flex-1 items-center gap-2">
             <h2
               id={titleId}
               ref={title}
               tabIndex={-1}
-              className="font-sans text-base font-semibold leading-snug tracking-normal outline-hidden"
+              className="desk-name truncate outline-hidden"
             >
               {copy.title}
             </h2>
-            <span className="rounded-input border border-border px-1.5 py-0.5 text-label font-semibold">
-              {copy.badge}
-            </span>
+            <span className="desk-badge">{copy.badge}</span>
           </div>
           <button
             type="button"
             aria-label={copy.close}
             onClick={() => void close()}
-            className="inline-flex size-11 items-center justify-center rounded-input pointer-fine:hover:bg-tint"
+            className="chat-close"
           >
             <svg
               aria-hidden="true"
@@ -175,37 +216,54 @@ export function VoicePanel({
             </svg>
           </button>
         </header>
-        <p id={noticeId} className="text-ui-s leading-snug text-muted-fg">
-          {copy.notice}{' '}
-          <a href={pagePath(locale, 'privacy')} className={TEXT_LINK}>
-            {copy.privacyLink}
-          </a>
-        </p>
+        <VoiceNotice
+          copy={copy}
+          locale={locale}
+          noticeId={noticeId}
+          open={notice}
+          onToggle={() => setNoticeOpen(!notice)}
+        />
+        <div className="voice-stage" data-phase={state.phase}>
+          <span aria-hidden="true" className="voice-wave">
+            <span className="icon icon-wave" />
+          </span>
+          <div className="min-w-0">
+            <p
+              role="status"
+              className={
+                statusText(copy, state) === ''
+                  ? 'sr-only'
+                  : 'text-ui-m font-semibold'
+              }
+            >
+              {statusText(copy, state)}
+            </p>
+            {state.phase === 'intro' ? (
+              <p className="text-ui-s text-fg-soft">{copy.micNote}</p>
+            ) : null}
+          </div>
+        </div>
         {state.phase === 'intro' ? (
-          <>
-            <p className="text-ui-s text-muted-fg">{copy.micNote}</p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={!ready}
-                onClick={begin}
-                className={PRIMARY_BUTTON}
-              >
-                {copy.start}
-              </button>
-              <button
-                type="button"
-                onClick={() => void close()}
-                className={SECONDARY_BUTTON_SM}
-              >
-                {copy.cancel}
-              </button>
-            </div>
-          </>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={!ready}
+              aria-busy={!ready}
+              onClick={begin}
+              className="desk-call-button"
+            >
+              <span aria-hidden="true" className="icon icon-phone size-5" />
+              {copy.start}
+            </button>
+            <button
+              type="button"
+              onClick={() => void close()}
+              className={SECONDARY_BUTTON_SM}
+            >
+              {copy.cancel}
+            </button>
+          </div>
         ) : null}
-        <p role="status" className="min-h-5 text-sm">
-          {statusText(copy, state)}
-        </p>
         {busy ? (
           <div className="flex flex-wrap gap-2">
             {state.phase === 'live' ? (
@@ -231,11 +289,8 @@ export function VoicePanel({
           </div>
         ) : null}
         {state.phase === 'error' && state.failure !== null ? (
-          <div
-            role="alert"
-            className="grid gap-3 rounded-card border border-border p-3"
-          >
-            <p className="text-sm font-medium">
+          <div role="alert" className="chat-alert mt-0">
+            <p className="font-semibold text-fg">
               {failureText(copy, state.failure)}
             </p>
             <Fallback locale={locale} copy={copy} />
@@ -266,13 +321,14 @@ export function VoicePanel({
         {state.lines.length > 0 ? (
           <ol
             aria-label={copy.transcript}
-            className="grid max-h-56 gap-2 overflow-y-auto text-sm"
+            className="grid max-h-56 gap-2 overflow-y-auto overscroll-contain"
           >
             {state.lines.map((line) => (
               <li
                 key={line.id}
                 data-ai-generated={line.role === 'agent' ? 'true' : undefined}
-                className={`max-w-[90%] rounded-card px-3 py-2 ${line.role === 'user' ? 'ml-auto bg-accent text-accent-fg' : 'bg-surface'}`}
+                data-from={line.role === 'user' ? 'user' : 'agent'}
+                className="chat-msg"
               >
                 <span className="sr-only">
                   {line.role === 'user' ? copy.you : copy.assistant}:{' '}

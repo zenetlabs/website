@@ -40,8 +40,11 @@ export const bookPage = {
   },
   picker: {
     legend: 'Pick a time',
+    days: 'Day',
     times: { one: '1 time', other: '{n} times' },
     required: 'Pick a time first.',
+    chosen: 'Your call',
+    none: 'No time picked yet. Pick a day, then a time.',
   },
   form: {
     label: 'Booking form',

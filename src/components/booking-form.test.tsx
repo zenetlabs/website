@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BookingForm } from '@/components/booking-form';
@@ -18,6 +18,7 @@ const ATTRIBUTION = {
   page: '/book',
 };
 
+const widget = vi.hoisted(() => ({ solve: () => {}, fail: () => {} }));
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@tanstack/react-router')>()),
   useRouteContext: ({
@@ -30,6 +31,8 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
 vi.mock('@/lib/booking-client', () => ({ submitBooking, fetchAvailability }));
 vi.mock('@/lib/lead-client', () => ({ attribution }));
 vi.mock('@/lib/track', () => ({ track }));
+// The real widget is an iframe a disabled fieldset cannot reach: `widget`
+// answers from outside the DOM while the form is locked.
 vi.mock('@marsidev/react-turnstile', () => ({
   Turnstile: ({
     onSuccess,
@@ -37,16 +40,20 @@ vi.mock('@marsidev/react-turnstile', () => ({
   }: {
     onSuccess: (token: string) => void;
     onError: () => void;
-  }) => (
-    <>
-      <button type="button" onClick={() => onSuccess('tok_1')}>
-        solve challenge
-      </button>
-      <button type="button" onClick={onError}>
-        break challenge
-      </button>
-    </>
-  ),
+  }) => {
+    widget.solve = () => onSuccess('tok_1');
+    widget.fail = onError;
+    return (
+      <>
+        <button type="button" onClick={() => onSuccess('tok_1')}>
+          solve challenge
+        </button>
+        <button type="button" onClick={onError}>
+          break challenge
+        </button>
+      </>
+    );
+  },
 }));
 
 const FROM = Date.UTC(2027, 0, 12, 0);
@@ -97,9 +104,13 @@ beforeEach(() => {
 });
 
 describe('BookingForm', () => {
-  it('has a slot picker, labelled fields and the zone in the legend', () => {
+  it('has a slot picker, a summary of the chosen time and labelled fields', async () => {
+    const user = userEvent.setup();
     renderForm();
     expect(SLOT).toBeDefined();
+    expect(screen.getByText(en.picker.none)).toBeInTheDocument();
+    await pick(user, '5:00 pm');
+    expect(screen.getByText('Tuesday 12 January, 5:00 pm')).toBeInTheDocument();
     expect(screen.getByText('Times in Singapore')).toBeInTheDocument();
     expect(screen.getByLabelText('Name')).toBeRequired();
     expect(
@@ -116,20 +127,91 @@ describe('BookingForm', () => {
     );
   });
 
-  it('disables everything until hydrated, and the submit until Turnstile is solved', async () => {
+  it('disables everything until hydrated; then a submit waits for Turnstile, saying so', async () => {
     state.hydrated = false;
     const { unmount } = renderForm();
     expect(screen.getByLabelText('Name')).toBeDisabled();
     unmount();
     state.hydrated = true;
+    submitBooking.mockResolvedValue({ kind: 'rejected', reason: 'limit' });
     const user = userEvent.setup();
     renderForm();
     const submit = screen.getByRole('button', { name: 'Request this time' });
-    expect(submit).toBeDisabled();
-    expect(screen.queryByText('solve challenge')).not.toBeInTheDocument();
-    await user.click(screen.getByLabelText('Name'));
-    await user.click(await screen.findByText('solve challenge'));
     expect(submit).toBeEnabled();
+    expect(screen.queryByText('solve challenge')).not.toBeInTheDocument();
+    await pick(user, '5:00 pm');
+    await user.type(screen.getByLabelText('Name'), 'Ada Lovelace');
+    await user.type(
+      screen.getByLabelText('Email (the confirmation link goes here)'),
+      'ada@example.com',
+    );
+    await user.type(
+      screen.getByLabelText('What would you like to talk about?'),
+      'Automate our inbox triage.',
+    );
+    await user.click(screen.getByRole('checkbox'));
+    await user.click(submit);
+    expect(
+      screen.getByRole('button', { name: "Checking you're not a bot…" }),
+    ).toHaveAttribute('aria-busy', 'true');
+    expect(submitBooking).not.toHaveBeenCalled();
+    act(() => widget.solve());
+    await waitFor(() =>
+      expect(submitBooking).toHaveBeenCalledWith(
+        expect.objectContaining({ slot: ISO, turnstileToken: 'tok_1' }),
+      ),
+    );
+  });
+
+  it('asks for a time first when none is picked', async () => {
+    const user = userEvent.setup();
+    renderForm();
+    await user.type(screen.getByLabelText('Name'), 'Ada Lovelace');
+    await user.type(
+      screen.getByLabelText('Email (the confirmation link goes here)'),
+      'ada@example.com',
+    );
+    await user.type(
+      screen.getByLabelText('What would you like to talk about?'),
+      'Automate our inbox triage.',
+    );
+    await user.click(screen.getByRole('checkbox'));
+    await user.click(screen.getByRole('button', { name: 'Request this time' }));
+    expect(screen.getByRole('alert')).toHaveTextContent(en.picker.required);
+    expect(document.activeElement).toHaveAttribute('name', 'slot');
+    expect(document.activeElement?.closest('[data-day]')).not.toHaveAttribute(
+      'hidden',
+    );
+    expect(submitBooking).not.toHaveBeenCalled();
+  });
+
+  it('locks the form while a press waits for Turnstile; a failed check then focuses the alert', async () => {
+    const user = userEvent.setup();
+    renderForm();
+    await pick(user, '5:00 pm');
+    await user.type(screen.getByLabelText('Name'), 'Ada Lovelace');
+    await user.type(
+      screen.getByLabelText('Email (the confirmation link goes here)'),
+      'ada@example.com',
+    );
+    await user.type(
+      screen.getByLabelText('What would you like to talk about?'),
+      'Automate our inbox triage.',
+    );
+    await user.click(screen.getByRole('checkbox'));
+    await user.click(screen.getByRole('button', { name: 'Request this time' }));
+    expect(screen.getByRole('checkbox')).toBeDisabled();
+    expect(screen.getByLabelText('Name')).toBeDisabled();
+    expect(
+      screen.getByText("Checking you're not a bot…", {
+        selector: '[role="status"]',
+      }),
+    ).toBeInTheDocument();
+    act(() => widget.fail());
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('The security check failed.');
+    expect(alert).toHaveFocus();
+    expect(submitBooking).not.toHaveBeenCalled();
   });
 
   it('posts the full payload with consent, zone, locale and attribution', async () => {
@@ -379,7 +461,7 @@ describe('BookingForm', () => {
       ).toHaveLength(mailto ? 1 : 0);
       expect(
         screen.getByRole('button', { name: 'Request this time' }),
-      ).toBeDisabled();
+      ).toBeEnabled();
     },
   );
 

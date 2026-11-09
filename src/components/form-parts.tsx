@@ -183,7 +183,7 @@ export function LazyTurnstile({
         siteKey={SITE.turnstileSiteKey}
         options={{
           action,
-          theme: 'auto',
+          theme: 'light',
           language: locale,
           size: 'flexible',
           refreshExpired: 'auto',

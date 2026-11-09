@@ -38,7 +38,6 @@ vi.mock('@/lib/chat-open', () => ({ requestChat }));
 vi.mock('@/lib/track', () => ({ track }));
 vi.mock('@/lib/next-slots', () => ({
   useNextSlots: () => ({ status: 'waiting' }),
-  slotHref: (_locale: string, start: number) => `/book?slot=${start}`,
 }));
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@tanstack/react-router')>()),

@@ -48,7 +48,7 @@ vi.mock('@marsidev/react-turnstile', async () => {
         execute: () => void;
         getResponsePromise: () => Promise<string>;
       }>;
-      onWidgetLoad: () => void;
+      onWidgetLoad?: () => void;
       onError: () => void;
     }) => {
       useImperativeHandle(ref, () => ({
@@ -57,7 +57,7 @@ vi.mock('@marsidev/react-turnstile', async () => {
         getResponsePromise: async () => 'tok',
       }));
       if (widget.fail) queueMicrotask(onError);
-      else if (widget.ready) queueMicrotask(onWidgetLoad);
+      else if (widget.ready) queueMicrotask(() => onWidgetLoad?.());
       return null;
     },
   };
@@ -144,9 +144,34 @@ describe('ChatPanel semantics', () => {
     );
     expect(notice).toHaveTextContent('30 days');
     expect(
-      within(notice as HTMLElement).getByRole('link', { name: en.privacyLink }),
+      screen.getByRole('link', {
+        name: en.privacyLink,
+      }),
     ).toHaveAttribute('href', '/privacy');
     expect(screen.getByText(en.badge)).toBeInTheDocument();
+  });
+
+  it('keeps the disclosure to one line once the conversation starts, with the full text a tap away', async () => {
+    postChat.mockResolvedValue(
+      ok({ t: 'text', v: 'Hello.' }, { t: 'done', remaining: 18 }),
+    );
+    open();
+    const line = screen.getByText(en.noticeShort);
+    expect(line).toBeVisible();
+    const toggle = screen.getByRole('button', { name: en.noticeToggle });
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    const full = document.getElementById(
+      toggle.getAttribute('aria-controls') ?? '',
+    );
+    expect(full).not.toHaveAttribute('hidden');
+    const { user, box } = await ask('hi');
+    await user.type(box, '{Enter}');
+    await screen.findByText('Hello.');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(full).toHaveAttribute('hidden');
+    expect(screen.getByText(en.noticeShort)).toBeVisible();
+    await user.click(toggle);
+    expect(full).not.toHaveAttribute('hidden');
   });
 
   it('shows the same notice in Spanish with the Spanish privacy page', () => {
@@ -231,12 +256,136 @@ describe('sending', () => {
     expect(box).toHaveValue('');
   });
 
-  it('waits for the bot check before the first send', async () => {
+  it('holds a message typed before the bot check has loaded, and says so', async () => {
     widget.ready = false;
     open();
     const user = userEvent.setup();
-    await user.type(await screen.findByLabelText(en.inputLabel), 'hello');
+    const box = await screen.findByLabelText(en.inputLabel);
+    await user.type(box, 'hello');
+    expect(screen.getByRole('button', { name: en.send })).toBeEnabled();
+    await user.type(box, '{Enter}');
+    expect(postChat).not.toHaveBeenCalled();
+    expect(box).toHaveValue('hello');
+    expect(screen.getByRole('status')).toHaveTextContent(en.verifying);
     expect(screen.getByRole('button', { name: en.send })).toBeDisabled();
+    // Locked while it waits, so no edit is lost.
+    expect(box).toHaveAttribute('readonly');
+  });
+
+  it('a challenge that never loads stops checking after 20 s and offers the contact link with the draft', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      widget.ready = false;
+      open();
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      const box = await screen.findByLabelText(en.inputLabel);
+      await user.type(box, 'hello there');
+      await user.type(box, '{Enter}');
+      expect(screen.getByRole('status')).toHaveTextContent(en.verifying);
+      act(() => {
+        vi.advanceTimersByTime(20_000);
+      });
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent(en.errorCaptcha);
+      expect(
+        within(alert).getByRole('link', { name: en.fallback.form }),
+      ).toHaveAttribute('href', '/contact?message=hello+there');
+      expect(box).not.toHaveAttribute('readonly');
+      expect(box).toHaveValue('hello there');
+      expect(screen.getByRole('button', { name: en.send })).toBeDisabled();
+      expect(postChat).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('a challenge error drops the queued message: no send, the captcha alert carries the draft', async () => {
+    widget.ready = false;
+    widget.fail = true;
+    open();
+    const user = userEvent.setup();
+    const box = await screen.findByLabelText(en.inputLabel);
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(en.errorCaptcha);
+    await user.type(box, 'hello');
+    expect(screen.getByRole('button', { name: en.send })).toBeDisabled();
+    await user.type(box, '{Enter}');
+    expect(postChat).not.toHaveBeenCalled();
+    expect(
+      within(screen.getByRole('alert')).getByRole('link', {
+        name: en.fallback.form,
+      }),
+    ).toHaveAttribute('href', '/contact?message=hello');
+  });
+
+  it('draws the times check_availability returned as chips, without the plain list', async () => {
+    const zone = 'Europe/Madrid';
+    const monday9 = Date.UTC(2027, 0, 11, 8);
+    const monday930 = monday9 + 1_800_000;
+    postChat.mockResolvedValue(
+      ok(
+        { t: 'tool', name: 'check_availability' },
+        { t: 'slots', zone, starts: [monday9, monday930] },
+        {
+          t: 'text',
+          v: 'These are the free times:\nMonday 11 January:\n- 9:00 am\n- 9:30 am\nWhich one suits you?',
+        },
+        { t: 'done', remaining: 18 },
+      ),
+    );
+    open();
+    const { user, box } = await ask('what times are free?');
+    await user.type(box, '{Enter}');
+    const chips = await screen.findAllByRole('link', {
+      name: /Monday 11 January, 9:(00|30) am/,
+    });
+    expect(chips.map((chip) => chip.getAttribute('href'))).toEqual([
+      `/book?slot=${monday9}`,
+      `/book?slot=${monday930}`,
+    ]);
+    expect(chips.map((chip) => chip.textContent)).toEqual([
+      '9:00 am',
+      '9:30 am',
+    ]);
+    const reply = document.querySelector('[data-ai-generated="true"]');
+    // A model that lists them anyway: the list and its lead-in go.
+    expect(reply).not.toHaveTextContent('These are the free times');
+    expect(reply).toHaveTextContent('Which one suits you?');
+    expect(reply).not.toHaveTextContent('9:00');
+    expect(screen.getByText(/Times in Madrid/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: en.slots.seeAll })).toHaveAttribute(
+      'href',
+      '/book',
+    );
+    const second = chips[1];
+    if (!second) throw new Error('no second chip');
+    await user.click(second);
+    expect(
+      await screen.findByRole('heading', { name: en.booking.title }),
+    ).toBeInTheDocument();
+    // The card shows the time in the browser's zone, which sent the request.
+    expect(
+      screen.getByText(/^Monday 11 January, \d{1,2}:30 [ap]m$/),
+    ).toBeInTheDocument();
+  });
+
+  it('says when the browser is offline and holds the message', async () => {
+    open();
+    const box = await screen.findByLabelText(en.inputLabel);
+    const user = userEvent.setup();
+    await user.type(box, 'hello');
+    const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    act(() => {
+      dispatchEvent(new Event('offline'));
+    });
+    expect(screen.getByRole('status')).toHaveTextContent(en.offline);
+    expect(screen.getByRole('button', { name: en.send })).toBeDisabled();
+    onLine.mockReturnValue(true);
+    act(() => {
+      dispatchEvent(new Event('online'));
+    });
+    expect(screen.getByRole('button', { name: en.send })).toBeEnabled();
+    onLine.mockRestore();
   });
 
   it('hides the reply being written from screen readers and announces the finished message once', async () => {

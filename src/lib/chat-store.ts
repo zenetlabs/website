@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { postChat } from '@/lib/chat-client';
 import type { ChatError, ChatEvent, Proposal } from '@/lib/chat-events';
 import { setChatSessionId } from '@/lib/chat-session';
+import { offeredTimes, withoutListedTimes } from '@/lib/chat-slot-text';
 import type { Locale } from '@/lib/i18n';
 import type { NavigateSection } from '@/lib/navigate';
 import type { PageId } from '@/lib/page-registry';
@@ -9,6 +10,7 @@ import { track } from '@/lib/track';
 
 type ItemBody =
   | { kind: 'user' | 'assistant' | 'notice'; text: string }
+  | { kind: 'slots'; zone: string; starts: readonly number[] }
   | {
       kind: 'navigate';
       page: PageId;
@@ -31,8 +33,13 @@ export type ChatState = {
   proposal: Proposal | null;
   failure: ChatError | null;
   cut: boolean;
+  // The times check_availability returned this turn: chips under the reply
+  // once it settles; dropped if the turn proposes a booking.
+  slots: TurnSlots | null;
   nextId: number;
 };
+
+export type TurnSlots = { zone: string; starts: readonly number[] };
 
 export const EMPTY: ChatState = {
   locale: null,
@@ -45,6 +52,7 @@ export const EMPTY: ChatState = {
   proposal: null,
   failure: null,
   cut: false,
+  slots: null,
   nextId: 1,
 };
 
@@ -58,14 +66,30 @@ function push(
   };
 }
 
+// The reply as shown: without the bare list of times the chips carry (the
+// prompt asks for none; this is the safety net).
+export function shownText(text: string, slots: TurnSlots | null): string {
+  return slots === null
+    ? text.trim()
+    : withoutListedTimes(text, offeredTimes(slots.starts, slots.zone));
+}
+
 // The text streamed so far becomes a finished message (the visible swap that
-// screen readers announce once).
+// screen readers announce once), then the turn's chips.
 function settle(state: ChatState): ChatState {
-  if (state.streaming === '') return { ...state, tool: null, status: 'idle' };
+  const text = shownText(state.streaming, state.slots);
+  const withText =
+    text === ''
+      ? state
+      : { ...state, ...push(state, { kind: 'assistant', text }) };
+  const withChips =
+    state.slots === null
+      ? withText
+      : { ...withText, ...push(withText, { kind: 'slots', ...state.slots }) };
   return {
-    ...state,
-    ...push(state, { kind: 'assistant', text: state.streaming.trim() }),
+    ...withChips,
     streaming: '',
+    slots: null,
     tool: null,
     status: 'idle',
   };
@@ -94,8 +118,16 @@ export function applyEvent(state: ChatState, event: ChatEvent): ChatState {
           href: event.href,
         }),
       };
+    case 'slots':
+      return {
+        ...state,
+        slots:
+          event.starts.length === 0
+            ? null
+            : { zone: event.zone, starts: event.starts },
+      };
     case 'confirm_booking':
-      return { ...state, proposal: event.proposal };
+      return { ...state, proposal: event.proposal, slots: null };
     case 'error':
       return { ...state, cut: true };
     case 'done':
@@ -114,6 +146,7 @@ export function begin(
     status: verifying ? 'verifying' : 'writing',
     failure: null,
     cut: false,
+    slots: null,
   };
 }
 
@@ -167,6 +200,15 @@ export function ensureLocale(locale: Locale): void {
 
 export function dismissProposal(): void {
   set({ ...state, proposal: null });
+}
+
+// A chip in a chat reply starts the booking card for that time; the visitor
+// writes the topic in the card.
+export function proposeSlot(start: number): void {
+  set({
+    ...state,
+    proposal: { slot: new Date(start).toISOString(), topic: '' },
+  });
 }
 
 export function addNotice(text: string): void {

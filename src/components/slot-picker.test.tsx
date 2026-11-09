@@ -1,5 +1,5 @@
-import { render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { SlotPicker } from '@/components/slot-picker';
 import { BOOKING_RULES } from '@/content/booking-rules';
 import { bookPage as en } from '@/content/en/book';
@@ -11,102 +11,151 @@ const SLOTS = candidateSlots(BOOKING_RULES, FROM, FROM + 4 * 86_400_000).filter(
   (slot) => slot.start % 3_600_000 === 0,
 );
 
+function dayRadios() {
+  return screen
+    .getAllByRole('radio', { hidden: true })
+    .filter((radio) => radio.getAttribute('name') === 'day');
+}
+
+function at(list: HTMLElement[], index: number): HTMLElement {
+  const found = list.at(index);
+  if (!found) throw new Error(`no radio at ${index}`);
+  return found;
+}
+
+function timeRadios() {
+  return screen
+    .getAllByRole('radio', { hidden: true })
+    .filter(
+      (radio) =>
+        radio.getAttribute('name') === 'slot' &&
+        radio.closest('fieldset')?.hidden === false,
+    );
+}
+
 describe('SlotPicker', () => {
-  it('groups times by the visitor day with a count in each summary', () => {
+  it('draws a week strip of the visitor days, each a radio with its count', () => {
     const { container } = render(
       <SlotPicker
         slots={SLOTS}
         zone="Asia/Singapore"
         locale="en"
         copy={en.picker}
+        picked={null}
+        onPick={vi.fn()}
       />,
     );
-    const summaries = container.querySelectorAll('summary > span:first-child');
-    expect([...summaries].map((node) => node.textContent)).toEqual([
-      'Monday 11 January',
-      'Tuesday 12 January',
-      'Wednesday 13 January',
-      'Thursday 14 January',
-      'Friday 15 January',
+    const weekdays = container.querySelectorAll('.day-chip-weekday');
+    expect([...weekdays].map((node) => node.textContent)).toEqual([
+      'Mon',
+      'Tue',
+      'Wed',
+      'Thu',
+      'Fri',
     ]);
-    expect(screen.getAllByText(/\d+ times?$/)).toHaveLength(5);
+    expect(dayRadios()).toHaveLength(5);
+    expect(dayRadios()[0]).toBeChecked();
+    // The accessible name starts with the visible text (WCAG 2.5.3).
+    expect(
+      screen.getByRole('radio', { name: /^Mon 11 Jan ?, \d+ times?$/ }),
+    ).toBeChecked();
   });
 
-  it('uses radios that share one name and carry ISO instants', () => {
+  it("shows the chosen day's times as radios and reports the pick", () => {
+    const onPick = vi.fn();
     render(
       <SlotPicker
         slots={SLOTS}
         zone="Europe/Madrid"
         locale="en"
         copy={en.picker}
+        picked={null}
+        onPick={onPick}
       />,
     );
-    const radios = screen.getAllByRole('radio', { hidden: true });
-    expect(radios).toHaveLength(SLOTS.length);
-    expect(new Set(radios.map((radio) => radio.getAttribute('name')))).toEqual(
-      new Set(['slot']),
-    );
-    expect(radios[0]).toHaveAttribute(
+    const first = SLOTS[0];
+    if (first === undefined) throw new Error('no slots');
+    const times = timeRadios();
+    expect(times[0]).toHaveAttribute(
       'value',
-      new Date(SLOTS[0]?.start ?? 0).toISOString(),
+      new Date(first.start).toISOString(),
     );
-    expect(radios.every((radio) => radio.hasAttribute('required'))).toBe(true);
+    expect(times.some((radio) => radio.hasAttribute('required'))).toBe(false);
+    fireEvent.click(at(times, 0));
+    expect(onPick).toHaveBeenCalledWith(first.start);
   });
 
-  it('opens the first two days only', () => {
+  it('switches day without losing the picked time', () => {
+    const first = SLOTS[0];
+    if (first === undefined) throw new Error('no slots');
     const { container } = render(
       <SlotPicker
         slots={SLOTS}
         zone="Europe/Madrid"
         locale="en"
         copy={en.picker}
+        picked={first.start}
+        onPick={vi.fn()}
       />,
     );
-    const open = [...container.querySelectorAll('details')].map(
-      (node) => node.open,
+    fireEvent.click(at(dayRadios(), 1));
+    expect(dayRadios()[1]).toBeChecked();
+    const checked = container.querySelector('input[name="slot"]:checked');
+    expect(checked).toHaveAttribute(
+      'value',
+      new Date(first.start).toISOString(),
     );
-    expect(open).toEqual([true, true, false, false]);
+    expect(checked?.closest('fieldset')).toHaveAttribute('hidden');
+    expect(timeRadios().some((radio) => radio === checked)).toBe(false);
   });
 
   it('labels the times in the zone and the locale it is given', () => {
-    const { container } = render(
+    render(
       <SlotPicker
         slots={SLOTS}
         zone="Asia/Singapore"
         locale="es"
         copy={es.picker}
+        picked={null}
+        onPick={vi.fn()}
       />,
     );
-    const first = container.querySelector('details');
-    expect(first).not.toBeNull();
-    if (!first) return;
+    expect(screen.getByText('lunes 11 de enero')).toBeInTheDocument();
+    expect(screen.getByText('9 horas')).toBeInTheDocument();
+    expect(timeRadios()).toHaveLength(9);
     expect(
-      within(first).getByText('lunes 11 de enero', {
-        selector: 'summary span',
-      }),
-    ).toBeInTheDocument();
-    expect(within(first).getByText('9 horas')).toBeInTheDocument();
-    expect(within(first).getAllByRole('radio', { hidden: true })).toHaveLength(
-      9,
-    );
-    expect(first).toHaveTextContent('16:00');
+      timeRadios().map((radio) => radio.closest('label')?.textContent),
+    ).toContain('16:00');
+    expect(screen.getAllByText('lun')).toHaveLength(1);
   });
 
-  it('uses the singular for one time and renders nothing for no slots', () => {
+  it('uses the singular for one time and renders no grid for no slots', () => {
     const { container, rerender } = render(
       <SlotPicker
         slots={SLOTS.slice(0, 1)}
         zone="UTC"
         locale="en"
         copy={en.picker}
+        picked={null}
+        onPick={vi.fn()}
       />,
     );
     expect(screen.getByText('1 time')).toBeInTheDocument();
-    rerender(<SlotPicker slots={[]} zone="UTC" locale="en" copy={en.picker} />);
-    expect(container.querySelector('details')).toBeNull();
+    rerender(
+      <SlotPicker
+        slots={[]}
+        zone="UTC"
+        locale="en"
+        copy={en.picker}
+        picked={null}
+        onPick={vi.fn()}
+      />,
+    );
+    expect(container.querySelector('.time-grid')).toBeNull();
+    expect(container.querySelector('.day-chip')).toBeNull();
   });
 
-  it('checks the slot the desk linked to and opens its day', () => {
+  it('opens the day of the slot the desk linked to, with it checked', () => {
     const late = SLOTS.at(-1);
     if (late === undefined) throw new Error('no slots');
     const { container } = render(
@@ -115,29 +164,17 @@ describe('SlotPicker', () => {
         zone="Europe/Madrid"
         locale="en"
         copy={en.picker}
-        preselect={late.start}
+        picked={late.start}
+        onPick={vi.fn()}
       />,
     );
-    const checked = container.querySelectorAll('input:checked');
+    const checked = container.querySelectorAll('input[name="slot"]:checked');
     expect(checked).toHaveLength(1);
     expect(checked[0]).toHaveAttribute(
       'value',
       new Date(late.start).toISOString(),
     );
-    expect(checked[0]?.closest('details')).toHaveAttribute('open');
-  });
-
-  it('ignores a linked slot that is no longer free', () => {
-    const { container } = render(
-      <SlotPicker
-        slots={SLOTS}
-        zone="Europe/Madrid"
-        locale="en"
-        copy={en.picker}
-        preselect={1}
-      />,
-    );
-    expect(container.querySelectorAll('input:checked')).toHaveLength(0);
-    expect(container.querySelectorAll('details[open]')).toHaveLength(2);
+    expect(checked[0]?.closest('fieldset')).not.toHaveAttribute('hidden');
+    expect(dayRadios().at(-1)).toBeChecked();
   });
 });

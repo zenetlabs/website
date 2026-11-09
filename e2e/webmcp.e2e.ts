@@ -367,9 +367,13 @@ test.describe('book_meeting confirmation', () => {
       const dialog = page.getByRole('dialog', { name: copy.title });
       await expect(dialog).toBeVisible();
       await expect(dialog.getByRole('checkbox')).not.toBeChecked();
-      await expect(
-        dialog.getByRole('button', { name: copy.confirm }),
-      ).toBeDisabled();
+      // Confirm is live (it waits for the challenge itself), but the unticked
+      // consent blocks the submit: nothing is posted.
+      const confirm = dialog.getByRole('button', { name: copy.confirm });
+      await expect(confirm).toBeEnabled();
+      await confirm.click();
+      await expect(dialog).toBeVisible();
+      expect(posts).toEqual([]);
       expect(
         await startCall(page, 'book_meeting', { slot, topic: TOPIC }),
       ).toEqual({ ok: false, error: 'busy' });

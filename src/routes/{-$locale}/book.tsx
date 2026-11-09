@@ -2,10 +2,11 @@ import { createFileRoute } from '@tanstack/react-router';
 import { lazy, Suspense, useSyncExternalStore } from 'react';
 import { BookingConfirm } from '@/components/booking-confirm';
 import { BookingForm } from '@/components/booking-form';
+import { BookingPerson } from '@/components/booking-person';
 import { Breadcrumb, FactList, HeroHeading } from '@/components/page-blocks';
 import { Container } from '@/components/section';
 import { sectionFrame } from '@/components/section-frame';
-import { BAND_CARD, LEAD, TEXT_LINK } from '@/components/ui';
+import { BAND_CARD, H3, LEAD, TEXT_LINK } from '@/components/ui';
 import { ZoneSelect } from '@/components/zone-select';
 import { DEFAULT_ZONE } from '@/content/booking-rules';
 import { loadBookConfirmCopy, loadBookContent } from '@/content/load';
@@ -16,12 +17,12 @@ import { detectedZone } from '@/lib/browser-zone';
 import type { ConfirmView } from '@/lib/confirm-view';
 import { contentRouteOptions } from '@/lib/content-route';
 import type { Locale } from '@/lib/i18n';
-import { formatPrice } from '@/lib/money';
 import { pagePath } from '@/lib/page-registry';
 import { breadcrumbStructuredData } from '@/lib/page-structured-data';
 import { SITE_NAME } from '@/lib/seo';
 import { PUBLIC_EMAIL } from '@/lib/site';
 import { canonicalZone } from '@/lib/slots';
+import { zoneLabel } from '@/lib/zone-label';
 
 const BAND = sectionFrame('band');
 
@@ -51,8 +52,13 @@ async function loadBook(
   Awaited<ReturnType<typeof loadBookContent>> & {
     availability: PageAvailability;
     confirmation: Confirmation | null;
+    diagnostic: string;
   }
 > {
+  // The diagnostic's price is formatted here, through a lazy module, so
+  // `money` stays out of the page's first JavaScript (the server render
+  // carries the result).
+  const price = import('@/lib/diagnostic-price');
   if (confirm !== null) {
     const [content, view, copy] = await Promise.all([
       loadBookContent(locale),
@@ -63,13 +69,19 @@ async function loadBook(
       ...content,
       availability: { status: 'unavailable' },
       confirmation: { token: confirm, outcome, view, copy },
+      diagnostic: (await price).diagnosticPrice(locale, content.services),
     };
   }
   const [content, availability] = await Promise.all([
     loadBookContent(locale),
     bookAvailability(),
   ]);
-  return { ...content, availability, confirmation: null };
+  return {
+    ...content,
+    availability,
+    confirmation: null,
+    diagnostic: (await price).diagnosticPrice(locale, content.services),
+  };
 }
 
 function textParam(value: unknown): string | null {
@@ -108,7 +120,8 @@ function requestedZone(search: Record<string, unknown>): string | null {
 
 function Book() {
   const { locale } = Route.useRouteContext();
-  const { copy, services, availability, confirmation } = Route.useLoaderData();
+  const { copy, availability, confirmation, diagnostic } =
+    Route.useLoaderData();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const detected = useSyncExternalStore(
@@ -117,7 +130,6 @@ function Book() {
     () => null,
   );
   const zone = requestedZone(search) ?? detected ?? DEFAULT_ZONE[locale];
-  const diagnostic = formatPrice(locale, services.diagnostic.prices[0]);
   const open = availability.status === 'ok' && availability.slots.length > 0;
   const fallback = availability.status === 'ok' ? copy.empty : copy.unavailable;
 
@@ -166,19 +178,31 @@ function Book() {
           className={BAND.bg}
         >
           <Container width="narrow" className={BAND.pad}>
-            <div className={`grid gap-8 ${BAND_CARD}`}>
-              <ZoneSelect
-                zone={zone}
-                action={pagePath(locale, 'book')}
-                copy={copy.zone}
-                onChange={(tz) =>
-                  navigate({
-                    search: (previous) => ({ ...previous, tz }),
-                    replace: true,
-                    resetScroll: false,
-                  })
-                }
-              />
+            <div className={`grid gap-6 ${BAND_CARD}`}>
+              <BookingPerson locale={locale} />
+              <div className="book-head">
+                <div>
+                  <h2 className={H3}>{copy.picker.legend}</h2>
+                  <p className="mt-1 text-ui-s text-muted-fg">
+                    {copy.zone.legend.replace(
+                      '{zone}',
+                      zoneLabel(copy.zone, zone),
+                    )}
+                  </p>
+                </div>
+                <ZoneSelect
+                  zone={zone}
+                  action={pagePath(locale, 'book')}
+                  copy={copy.zone}
+                  onChange={(tz) =>
+                    navigate({
+                      search: (previous) => ({ ...previous, tz }),
+                      replace: true,
+                      resetScroll: false,
+                    })
+                  }
+                />
+              </div>
               <BookingForm
                 copy={copy}
                 locale={locale}

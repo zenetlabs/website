@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { attemptsFor, sentFor, uniqueEmail } from './fakes';
-import { CONTACT_PAIR, gotoHydrated } from './helpers';
+import { BOOKING_PUBLISHED, CONTACT_PAIR, gotoHydrated } from './helpers';
 
 const TURNSTILE_SCRIPT = 'script[src*="challenges.cloudflare.com"]';
 
@@ -13,10 +13,15 @@ async function fillForm(page: Page, email = 'ada@example.com') {
   await page.getByRole('checkbox').check();
 }
 
+// Send stays enabled throughout (a press before the check answers waits for
+// it); this waits for the check itself.
 async function waitForToken(page: Page) {
-  await expect(page.getByRole('button', { name: 'Send message' })).toBeEnabled({
-    timeout: 30_000,
-  });
+  await expect(
+    page.getByRole('button', { name: 'Send message' }),
+  ).toBeEnabled();
+  await expect(
+    page.locator('input[name="cf-turnstile-response"]'),
+  ).not.toHaveValue('', { timeout: 30_000 });
 }
 
 test('the contact card inside the band keeps the page surface', async ({
@@ -91,6 +96,46 @@ test('Turnstile mounts only after the first focus in the form', async ({
   await page.getByLabel('Name').focus();
   await expect(page.locator(TURNSTILE_SCRIPT)).toHaveCount(1);
   await waitForToken(page);
+});
+
+test('Send is enabled before the check: a press waits for it, then sends', async ({
+  page,
+}) => {
+  const email = uniqueEmail('early');
+  await gotoHydrated(page, CONTACT_PAIR.en);
+  const send = page.getByRole('button', { name: 'Send message' });
+  await expect(send).toBeEnabled();
+  await fillForm(page, email);
+  await send.click();
+  await expect(page.getByText('Message sent')).toBeVisible({ timeout: 30_000 });
+  await expect.poll(async () => (await sentFor(email)).length).toBe(2);
+});
+
+test('the booking card shows the next free times as chips, in the same box', async ({
+  page,
+}) => {
+  test.skip(!BOOKING_PUBLISHED, 'booking is not published in this build');
+  let release: () => void = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/api/book/slots', async (route) => {
+    await held;
+    await route.continue();
+  });
+  await gotoHydrated(page, CONTACT_PAIR.en);
+  const card = page.locator('.contact-book');
+  await expect(card.locator('[data-slot-fallback]')).toBeVisible();
+  const before = await card.boundingBox();
+  release();
+  const chips = card.locator('.slot-chip');
+  await expect(chips.first()).toBeVisible({ timeout: 15_000 });
+  expect(await chips.count()).toBeLessThanOrEqual(3);
+  await expect(chips.first()).toHaveAttribute('href', /^\/book\?slot=\d+$/);
+  const after = await card.boundingBox();
+  expect(Math.abs((after?.height ?? 0) - (before?.height ?? 0))).toBeLessThan(
+    2,
+  );
 });
 
 test('a filled honeypot gets a silent success and sends nothing', async ({

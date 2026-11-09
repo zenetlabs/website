@@ -1,6 +1,8 @@
-import { type FormEvent, useId, useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { BookingPending } from '@/components/booking-pending';
+import { BookingPerson } from '@/components/booking-person';
+import { BookingWhen } from '@/components/booking-when';
 import {
   BookingDetailsFields,
   ConsentCheckbox,
@@ -51,9 +53,17 @@ export function BookingCard({
   const pending = status === 'pending';
   const when = formatSlotLabel(locale, Date.parse(proposal.slot), zone);
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
+  const onSubmit = challenge.onSubmit(
+    (data, token) => {
+      void request(data, token);
+    },
+    () => {
+      setStatus('idle');
+      return true;
+    },
+  );
+
+  async function request(data: FormData, token: string) {
     setStatus('pending');
     const request: BookingRequest = {
       slot: proposal.slot,
@@ -64,7 +74,7 @@ export function BookingCard({
       timeZone: zone,
       locale,
       consent: true,
-      turnstileToken: challenge.token,
+      turnstileToken: token,
       website: text(data, 'website'),
       attribution: await attribution(),
       surface: 'chat',
@@ -93,20 +103,15 @@ export function BookingCard({
 
   const turnstile = (
     <LazyTurnstile
-      engaged={challenge.engaged || held !== null}
       action={SURFACE_ACTION.chat}
       locale={locale}
-      instance={challenge.instance}
-      onToken={challenge.setToken}
-      onError={() => {
-        challenge.setToken('');
-        setStatus('captcha');
-      }}
+      {...challenge.widgetProps(() => setStatus('captcha'))}
+      engaged={challenge.engaged || held !== null}
     />
   );
   const alert =
     status === 'idle' || status === 'pending' ? null : (
-      <p role="alert" className="text-sm">
+      <p role="alert" className="chat-alert mt-0">
         {copy[status]}
       </p>
     );
@@ -116,12 +121,12 @@ export function BookingCard({
       <section
         aria-labelledby={titleId}
         data-booking-pending
-        className="grid gap-3 rounded-card border border-border bg-surface p-4"
+        className="booking-card"
       >
         <BookingPending
           headingRef={pendingHeading}
           headingId={titleId}
-          headingClass="text-base font-semibold"
+          headingClass="text-ui-l font-semibold"
           copy={copy.pending}
           label={when}
           email={held.email}
@@ -150,21 +155,19 @@ export function BookingCard({
       aria-labelledby={titleId}
       onSubmit={onSubmit}
       onFocus={challenge.engage}
-      className="grid gap-3 rounded-card border border-border bg-surface p-4"
+      className="booking-card"
     >
       <h3
         id={titleId}
         tabIndex={-1}
         ref={(heading) => heading?.focus()}
-        className="text-base font-semibold outline-hidden"
+        className="text-ui-l font-semibold outline-hidden"
       >
         {copy.title}
       </h3>
-      <p className="text-sm">
-        <span className="font-medium">{copy.when}: </span>
-        {when} · {copy.format}
-      </p>
-      <fieldset disabled={pending} className="grid gap-3">
+      <BookingWhen label={copy.when} primary={when} secondary={copy.format} />
+      <BookingPerson locale={locale} />
+      <fieldset disabled={pending || challenge.busy} className="grid gap-4">
         <BookingDetailsFields
           labels={{
             name: copy.name,
@@ -185,11 +188,18 @@ export function BookingCard({
         <div className="flex flex-wrap gap-3">
           <button
             type="submit"
-            disabled={challenge.token === ''}
+            aria-busy={pending || challenge.busy}
             className={PRIMARY_BUTTON}
           >
-            {pending ? copy.sending : copy.confirm}
+            {challenge.submitLabel(pending, {
+              idle: copy.confirm,
+              pending: copy.sending,
+              verifying: contact.form.verifying,
+            })}
           </button>
+          <p role="status" className="sr-only">
+            {challenge.busy ? contact.form.verifying : ''}
+          </p>
           <button type="button" onClick={onCancel} className={SECONDARY_BUTTON}>
             {copy.cancel}
           </button>

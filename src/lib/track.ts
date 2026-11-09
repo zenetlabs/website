@@ -28,7 +28,9 @@ export type CtaId =
   | 'close_contact'
   | 'close_ask'
   | 'close_call'
-  | 'desk_call';
+  | 'desk_call'
+  | 'chat_slot'
+  | 'chat_times';
 
 // Where a chat was opened from: the floating launcher, the home desk, or the
 // Ask door in the home close.

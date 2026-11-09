@@ -217,7 +217,7 @@ export const PAGES: Record<
   book: {
     slugs: { en: '/book', es: '/reservar' },
     flag: 'booking',
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   privacy: {
     slugs: { en: '/privacy', es: '/privacidad' },

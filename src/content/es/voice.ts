@@ -5,6 +5,9 @@ import type { VoiceCopy } from '@/content/types';
 export const voiceCopy = {
   title: 'Habla con el asistente',
   badge: 'IA',
+  noticeShort:
+    'Una voz de IA, no una persona. ElevenLabs procesa tu voz; no grabamos audio.',
+  noticeToggle: chatCopy.noticeToggle,
   notice:
     'Vas a hablar con un asistente de voz con IA, no con una persona: la voz que oirás está generada por IA. Responde con el contenido de esta web y puede equivocarse, así que comprueba los precios en nuestra página de precios. Tu voz la procesa ElevenLabs, nuestro proveedor de voz en Estados Unidos, para entenderte y responder; no grabamos el audio. ElevenLabs guarda el texto de la conversación 30 días. Si reservas una llamada, guardamos tu nombre, email y tema con tu consulta durante 24 meses. Durante la llamada, el asistente puede abrirte páginas de esta web.',
   privacyLink: 'Política de privacidad',

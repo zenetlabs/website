@@ -33,6 +33,7 @@
       "consentLink": "privacy policy",
       "submit": "Send message",
       "sending": "Sending…",
+      "verifying": "Checking you're not a bot…",
       "successTitle": "Message sent",
       "successText": "Thank you. We will reply to the address you gave us.",
       "errorSend": "We could not send your message. Please try again, or write to",

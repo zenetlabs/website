@@ -1,5 +1,5 @@
 import { type FormEvent, type ReactNode, type Ref, useId } from 'react';
-import { CARD, EYEBROW, H3, PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
+import { EYEBROW, H3, PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
 import type {
   CalculatorOption,
   CalculatorPageContent,
@@ -246,7 +246,7 @@ export function EstimatePanel({
     <section
       id="estimate"
       aria-labelledby="estimate-title"
-      className={`${CARD} scroll-mt-6 p-6 md:p-8`}
+      className="estimate-card"
     >
       <h2
         id="estimate-title"
@@ -261,9 +261,9 @@ export function EstimatePanel({
           <dl className="mt-6 grid gap-5">
             <div>
               <dt className={EYEBROW}>{result.labels.total}</dt>
-              <dd className={`mt-1 ${H3}`}>
+              <dd className="estimate-total">
                 {rangeText(locale, estimate.total, estimate.currency)}
-                <span className="block font-sans text-ui-s text-muted-fg">
+                <span className="block text-ui-s font-normal text-fg-soft">
                   {copy.taxNote}
                 </span>
               </dd>

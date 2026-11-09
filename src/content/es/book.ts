@@ -40,8 +40,11 @@ export const bookPage = {
   },
   picker: {
     legend: 'Elige una hora',
+    days: 'Día',
     times: { one: '1 hora', other: '{n} horas' },
     required: 'Elige primero una hora.',
+    chosen: 'Tu llamada',
+    none: 'Aún no has elegido hora. Elige un día y después una hora.',
   },
   form: {
     label: 'Formulario de reserva',

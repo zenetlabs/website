@@ -27,6 +27,49 @@ function reduce(events: ChatEvent[], from: ChatState = EMPTY): ChatState {
 }
 
 describe('applyEvent', () => {
+  it('holds the early slots, then settles the text without their plain list, then the chips', () => {
+    const start = Date.UTC(2027, 0, 11, 8);
+    const held = reduce([
+      { t: 'tool', name: 'check_availability' },
+      { t: 'slots', zone: 'Europe/Madrid', starts: [start] },
+      { t: 'text', v: 'Free times:\n- 09:00\n¿Te va bien?' },
+    ]);
+    expect(held.items).toEqual([]);
+    expect(held.slots).toEqual({ zone: 'Europe/Madrid', starts: [start] });
+    const state = applyEvent(held, { t: 'done', remaining: 10 });
+    expect(state.items.map((item) => item.kind)).toEqual([
+      'assistant',
+      'slots',
+    ]);
+    expect(state.items[0]).toMatchObject({ text: '¿Te va bien?' });
+    expect(state.items[1]).toMatchObject({
+      zone: 'Europe/Madrid',
+      starts: [start],
+    });
+    expect(state.streaming).toBe('');
+    expect(state.status).toBe('idle');
+  });
+
+  it('drops the chips when the turn proposes a booking, and ignores an empty slots event', () => {
+    const start = Date.UTC(2027, 0, 11, 8);
+    const proposed = reduce([
+      { t: 'slots', zone: 'UTC', starts: [start] },
+      { t: 'text', v: 'Confirm below.' },
+      {
+        t: 'confirm_booking',
+        proposal: { slot: new Date(start).toISOString(), topic: 'x' },
+      },
+      { t: 'done', remaining: 9 },
+    ]);
+    expect(proposed.items.map((item) => item.kind)).toEqual(['assistant']);
+    const empty = reduce([
+      { t: 'text', v: 'Hello' },
+      { t: 'slots', zone: 'UTC', starts: [] },
+      { t: 'done', remaining: 9 },
+    ]);
+    expect(empty.items.map((item) => item.kind)).toEqual(['assistant']);
+  });
+
   it('keeps the session id', () => {
     expect(reduce([{ t: 'session', id: ID }]).sessionId).toBe(ID);
   });

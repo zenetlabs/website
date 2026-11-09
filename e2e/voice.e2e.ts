@@ -415,6 +415,10 @@ test('runs end to end with the keyboard alone, and Escape ends the call and retu
   await expect(page.getByRole('button', { name: en.close })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(
+    page.getByRole('button', { name: en.noticeToggle }),
+  ).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(
     page.getByRole('dialog').getByRole('link', { name: en.privacyLink }),
   ).toBeFocused();
   await page.keyboard.press('Tab');

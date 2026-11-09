@@ -1,5 +1,5 @@
 import { useHydrated } from '@tanstack/react-router';
-import { type FormEvent, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import {
   CONTROL,
@@ -40,7 +40,6 @@ export function ContactForm({ prefill }: { prefill?: ContactPrefill }) {
   const locale = useLocale();
   const hydrated = useHydrated();
   const challenge = useChallenge();
-  const { token } = challenge;
   const [status, setStatus] = useState<Status>('idle');
   const successHeading = useRef<HTMLParagraphElement>(null);
   const alert = useRef<HTMLParagraphElement>(null);
@@ -57,9 +56,17 @@ export function ContactForm({ prefill }: { prefill?: ContactPrefill }) {
     successHeading.current?.focus();
   }
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
+  const onSubmit = challenge.onSubmit(
+    (data, token) => {
+      void send(data, token);
+    },
+    () => {
+      setStatus('idle');
+      return true;
+    },
+  );
+
+  async function send(data: FormData, token: string) {
     setStatus('pending');
     try {
       const result = await submitLead({
@@ -106,7 +113,10 @@ export function ContactForm({ prefill }: { prefill?: ContactPrefill }) {
           onSubmit={onSubmit}
           onFocus={challenge.engage}
         >
-          <fieldset disabled={!hydrated || pending} className="grid gap-5">
+          <fieldset
+            disabled={!hydrated || pending || challenge.busy}
+            className="grid gap-5"
+          >
             <Field label={copy.name}>
               {(id) => (
                 <input
@@ -164,23 +174,27 @@ export function ContactForm({ prefill }: { prefill?: ContactPrefill }) {
               linkText={copy.consentLink}
             />
             <LazyTurnstile
-              engaged={challenge.engaged}
               action="lead"
               locale={locale}
-              instance={challenge.instance}
-              onToken={challenge.setToken}
-              onError={() => {
-                challenge.setToken('');
-                setStatus('errorCaptcha');
-              }}
+              {...challenge.widgetProps((waited) => {
+                if (waited) fail('errorCaptcha');
+                else setStatus('errorCaptcha');
+              })}
             />
             <button
               type="submit"
-              disabled={token === ''}
+              aria-busy={pending || challenge.busy}
               className={`${PRIMARY_BUTTON} w-full sm:w-fit`}
             >
-              {pending ? copy.sending : copy.submit}
+              {challenge.submitLabel(pending, {
+                idle: copy.submit,
+                pending: copy.sending,
+                verifying: copy.verifying,
+              })}
             </button>
+            <p role="status" className="sr-only">
+              {challenge.busy ? copy.verifying : ''}
+            </p>
             {status === 'errorSend' ||
             status === 'errorCaptcha' ||
             status === 'errorRate' ? (

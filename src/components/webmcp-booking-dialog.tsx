@@ -1,13 +1,8 @@
-import {
-  type FormEvent,
-  type Ref,
-  useCallback,
-  useId,
-  useRef,
-  useState,
-} from 'react';
+import { type Ref, useCallback, useId, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { BookingPending } from '@/components/booking-pending';
+import { BookingPerson } from '@/components/booking-person';
+import { BookingWhen } from '@/components/booking-when';
 import {
   BookingDetailsFields,
   ConsentCheckbox,
@@ -110,6 +105,8 @@ export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
   // Only the first Escape after an activation can be cancelled, so a second one
   // closes the dialog: while a booking is being sent it is put straight back.
   function onClose() {
+    // A submit still waiting for its token goes with the dialog.
+    challenge.cancel();
     if (!request.isHeld()) {
       request.dismiss();
       return;
@@ -117,11 +114,15 @@ export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
     if (element.current?.open === false) element.current.showModal();
   }
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
+  const onSubmit = challenge.onSubmit(
+    (data, token) => {
+      void book(data, token);
+    },
     // A synthetic submit skips the browser's own required check.
-    if (data.get('consent') !== 'on') return;
+    (data) => data.get('consent') === 'on',
+  );
+
+  async function book(data: FormData, token: string) {
     if (!request.begin()) return;
     setStatus('pending');
     const submitted: Submitted = {
@@ -133,7 +134,7 @@ export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
       timeZone: proposal.timeZone,
       locale,
       consent: true,
-      turnstileToken: challenge.token,
+      turnstileToken: token,
       website: text(data, 'website'),
       attribution: await attribution(),
       surface: 'webmcp',
@@ -180,15 +181,10 @@ export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
   ) : null;
   const turnstile = (
     <LazyTurnstile
-      engaged
       action={SURFACE_ACTION.webmcp}
       locale={locale}
-      instance={challenge.instance}
-      onToken={challenge.setToken}
-      onError={() => {
-        challenge.setToken('');
-        setStatus('captcha');
-      }}
+      {...challenge.widgetProps(() => setStatus('captcha'))}
+      engaged
     />
   );
 
@@ -202,7 +198,7 @@ export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
       aria-labelledby={titleId}
       aria-describedby={held ? undefined : introId}
       data-webmcp-dialog
-      className="fixed inset-0 m-auto h-fit max-h-[90dvh] w-[min(100%-2rem,32rem)] overflow-y-auto rounded-card border border-border bg-surface p-6 text-fg shadow-raised backdrop:bg-bg/60"
+      className="webmcp-dialog"
     >
       {held ? (
         <div className="grid gap-4" data-booking-pending>
@@ -230,17 +226,25 @@ export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
         </div>
       ) : (
         <form onSubmit={onSubmit} className="grid gap-5">
-          <h2 id={titleId} className={H3}>
-            {copy.title}
-          </h2>
-          <p id={introId} className="text-ui-s text-muted-fg">
+          <div className="flex items-center gap-3">
+            <span aria-hidden="true" className="desk-mark" />
+            <h2 id={titleId} className={H3}>
+              {copy.title}
+            </h2>
+          </div>
+          <p id={introId} className="webmcp-intro">
             {copy.intro}
           </p>
-          <p className="text-ui-m">
-            <span className="font-medium">{copy.when}: </span>
-            {label} · {proposal.timeZone}
-          </p>
-          <fieldset disabled={pending || answered} className="grid gap-5">
+          <BookingWhen
+            label={copy.when}
+            primary={label}
+            secondary={proposal.timeZone}
+          />
+          <BookingPerson locale={locale} />
+          <fieldset
+            disabled={pending || answered || challenge.busy}
+            className="grid gap-5"
+          >
             <BookingDetailsFields
               labels={{
                 name: form.name,
@@ -264,12 +268,20 @@ export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
             {answered ? null : (
               <button
                 type="submit"
-                disabled={challenge.token === '' || pending}
+                disabled={pending}
+                aria-busy={pending || challenge.busy}
                 className={PRIMARY_BUTTON}
               >
-                {pending ? copy.confirming : copy.confirm}
+                {challenge.submitLabel(pending, {
+                  idle: copy.confirm,
+                  pending: copy.confirming,
+                  verifying: form.verifying,
+                })}
               </button>
             )}
+            <p role="status" className="sr-only">
+              {challenge.busy ? form.verifying : ''}
+            </p>
             <button
               type="button"
               disabled={pending}

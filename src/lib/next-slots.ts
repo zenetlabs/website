@@ -1,8 +1,6 @@
 import { useCallback, useSyncExternalStore } from 'react';
-import type { PageAvailability } from '@/lib/booking-client';
 import type { Locale } from '@/lib/i18n';
 import type { ReadySlots } from '@/lib/next-slots-load';
-import { pagePath } from '@/lib/page-registry';
 import { MINUTE_MS } from '@/lib/time';
 
 export type NextSlots =
@@ -20,8 +18,6 @@ const FRESH_MS = 5 * MINUTE_MS;
 const states = new Map<Locale, NextSlots>();
 const started = new Map<Locale, number>();
 const listeners = new Set<() => void>();
-let availability: { at: number; slots: Promise<PageAvailability> } | null =
-  null;
 
 function emit(): void {
   for (const listener of listeners) listener();
@@ -32,6 +28,8 @@ function set(locale: Locale, next: NextSlots): void {
   emit();
 }
 
+// The same wait as `@/lib/after-idle` (the contact card's), kept here: as a
+// shared module it would be one more chunk in home's first JavaScript (+65 B).
 function afterLoadAndIdle(): Promise<void> {
   return new Promise((resolve) => {
     const idle = () => {
@@ -50,10 +48,10 @@ async function load(locale: Locale): Promise<void> {
   try {
     await afterLoadAndIdle();
     const loader = await import('@/lib/next-slots-load');
-    if (availability === null || Date.now() - availability.at >= FRESH_MS) {
-      availability = { at: Date.now(), slots: loader.loadAvailability() };
-    }
-    const ready = await loader.nextSlots(await availability.slots, locale);
+    const ready = await loader.nextSlots(
+      await loader.loadAvailability(),
+      locale,
+    );
     set(locale, ready ?? FAILED);
   } catch {
     set(locale, FAILED);
@@ -84,9 +82,4 @@ export function useNextSlots(locale: Locale): NextSlots {
   );
   const snapshot = useCallback(() => states.get(locale) ?? WAITING, [locale]);
   return useSyncExternalStore(subscribe, snapshot, waiting);
-}
-
-// A desk chip's link: /book with the slot preselected.
-export function slotHref(locale: Locale, start: number): string {
-  return `${pagePath(locale, 'book')}?slot=${start}`;
 }

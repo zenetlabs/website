@@ -1,4 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContactForm } from '@/components/contact-form';
@@ -14,6 +20,7 @@ const ATTRIBUTION = {
   page: '/',
 };
 
+const widget = vi.hoisted(() => ({ solve: () => {}, fail: () => {} }));
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@tanstack/react-router')>()),
   useRouteContext: ({
@@ -31,6 +38,8 @@ vi.mock('@/lib/lead-client', () => ({
 
 vi.mock('@/lib/track', () => ({ track }));
 
+// The real widget is an iframe a disabled fieldset cannot reach: `widget`
+// answers from outside the DOM while the form is locked.
 vi.mock('@marsidev/react-turnstile', () => ({
   Turnstile: ({
     onSuccess,
@@ -38,16 +47,20 @@ vi.mock('@marsidev/react-turnstile', () => ({
   }: {
     onSuccess: (token: string) => void;
     onError: () => void;
-  }) => (
-    <>
-      <button type="button" onClick={() => onSuccess('tok_1')}>
-        solve challenge
-      </button>
-      <button type="button" onClick={onError}>
-        break challenge
-      </button>
-    </>
-  ),
+  }) => {
+    widget.solve = () => onSuccess('tok_1');
+    widget.fail = onError;
+    return (
+      <>
+        <button type="button" onClick={() => onSuccess('tok_1')}>
+          solve challenge
+        </button>
+        <button type="button" onClick={onError}>
+          break challenge
+        </button>
+      </>
+    );
+  },
 }));
 
 async function fillIn(user: ReturnType<typeof userEvent.setup>) {
@@ -108,16 +121,62 @@ describe('ContactForm', () => {
     expect(screen.getByLabelText('Name')).toBeDisabled();
   });
 
-  it('mounts Turnstile only after focus and enables submit once solved', async () => {
+  it('mounts Turnstile only after focus, and keeps Send enabled throughout', async () => {
     const user = userEvent.setup();
     render(<ContactForm />);
     const submit = screen.getByRole('button', { name: 'Send message' });
     expect(screen.queryByText('solve challenge')).not.toBeInTheDocument();
-    expect(submit).toBeDisabled();
+    expect(submit).toBeEnabled();
 
     await user.click(screen.getByLabelText('Name'));
     await user.click(await screen.findByText('solve challenge'));
     expect(submit).toBeEnabled();
+  });
+
+  it('a submit before the check answers locks the form, says so, then sends exactly once', async () => {
+    submitLead.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<ContactForm />);
+    await user.click(screen.getByLabelText('Name'));
+    await fillIn(user);
+    const send = screen.getByRole('button', { name: 'Send message' });
+    await user.click(send);
+    const waiting = screen.getByRole('button', {
+      name: "Checking you're not a bot…",
+    });
+    expect(waiting).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('status')).toHaveTextContent(
+      "Checking you're not a bot…",
+    );
+    // Nothing can change between the press and the token, consent included.
+    expect(screen.getByLabelText('Name')).toBeDisabled();
+    expect(screen.getByRole('checkbox')).toBeDisabled();
+    expect(screen.getByRole('checkbox')).toBeChecked();
+    fireEvent.submit(screen.getByRole('form', { name: 'Contact form' }));
+    expect(submitLead).not.toHaveBeenCalled();
+
+    act(() => widget.solve());
+    await waitFor(() =>
+      expect(screen.getByText('Message sent')).toBeInTheDocument(),
+    );
+    expect(submitLead).toHaveBeenCalledTimes(1);
+    expect(submitLead).toHaveBeenCalledWith(
+      expect.objectContaining({ turnstileToken: 'tok_1', consent: true }),
+    );
+  });
+
+  it('a failed check while a submit waits shows the alert and drops the submit', async () => {
+    const user = userEvent.setup();
+    render(<ContactForm />);
+    await user.click(screen.getByLabelText('Name'));
+    await fillIn(user);
+    await user.click(screen.getByRole('button', { name: 'Send message' }));
+    act(() => widget.fail());
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('The security check failed');
+    expect(alert).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Send message' })).toBeEnabled();
+    expect(submitLead).not.toHaveBeenCalled();
   });
 
   it('submits the payload and shows the confirmation', async () => {
@@ -237,9 +296,10 @@ describe('ContactForm', () => {
       expect(
         screen.getByRole('link', { name: 'hello@zenetlabs.com' }),
       ).toHaveAttribute('href', 'mailto:hello@zenetlabs.com');
+      // The token was spent: Send stays enabled and waits for a new one.
       expect(
         screen.getByRole('button', { name: 'Send message' }),
-      ).toBeDisabled();
+      ).toBeEnabled();
     },
   );
 });
