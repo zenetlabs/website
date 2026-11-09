@@ -70,6 +70,23 @@ describe('applyEvent', () => {
     expect(empty.items.map((item) => item.kind)).toEqual(['assistant']);
   });
 
+  it('shows the card and the chips when the slots come again after the proposal', () => {
+    const start = Date.UTC(2027, 0, 11, 8);
+    const proposal = { slot: new Date(start).toISOString(), topic: 'x' };
+    const state = reduce([
+      { t: 'slots', zone: 'UTC', starts: [start] },
+      { t: 'text', v: 'The free times I have are shown below.' },
+      { t: 'confirm_booking', proposal },
+      { t: 'slots', zone: 'UTC', starts: [start] },
+      { t: 'done', remaining: 9 },
+    ]);
+    expect(state.proposal).toEqual(proposal);
+    expect(state.items.map((item) => item.kind)).toEqual([
+      'assistant',
+      'slots',
+    ]);
+  });
+
   it('keeps the session id', () => {
     expect(reduce([{ t: 'session', id: ID }]).sessionId).toBe(ID);
   });
