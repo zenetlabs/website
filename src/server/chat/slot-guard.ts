@@ -2,9 +2,12 @@ import type { ModelMessage } from 'ai';
 import { z } from 'zod';
 import { BOOKING_RULES } from '@/content/booking-rules';
 import type { Locale } from '@/lib/i18n';
-import { formatSlotLabel } from '@/lib/slot-format';
-import { zonedParts } from '@/lib/slots';
-import { fold, WEEKDAYS } from '@/server/chat/text';
+import { MONTH_NAMES } from '@/lib/month-names';
+import { formatDayParts, formatSlotLabel } from '@/lib/slot-format';
+import { isoWeekday, zonedParts } from '@/lib/slots';
+import { WEEKDAY_NAMES } from '@/lib/weekday-names';
+import type { ResolvedDay } from '@/server/chat/intent';
+import { fold, foldInPlace } from '@/server/chat/text';
 
 // A slot check_availability returned in this conversation, in the zone it was shown in.
 export type OfferedSlot = { start: number; end: number; zone: string };
@@ -46,50 +49,6 @@ export function toolSlots(messages: readonly ModelMessage[]): OfferedSlot[] {
   );
 }
 
-const MONTHS: Record<string, number> = {
-  january: 1,
-  jan: 1,
-  february: 2,
-  feb: 2,
-  march: 3,
-  mar: 3,
-  april: 4,
-  apr: 4,
-  may: 5,
-  june: 6,
-  jun: 6,
-  july: 7,
-  jul: 7,
-  august: 8,
-  aug: 8,
-  september: 9,
-  sept: 9,
-  sep: 9,
-  october: 10,
-  oct: 10,
-  november: 11,
-  nov: 11,
-  december: 12,
-  dec: 12,
-  enero: 1,
-  ene: 1,
-  febrero: 2,
-  marzo: 3,
-  abril: 4,
-  abr: 4,
-  mayo: 5,
-  junio: 6,
-  julio: 7,
-  agosto: 8,
-  ago: 8,
-  septiembre: 9,
-  setiembre: 9,
-  octubre: 10,
-  noviembre: 11,
-  diciembre: 12,
-  dic: 12,
-};
-
 // Short weekdays are words too ("sat", "sun"), so they count only before a day number.
 const SHORT_WEEKDAYS: Record<string, number> = {
   mon: 1,
@@ -114,8 +73,8 @@ function alternation(words: readonly string[]): string {
   return [...words].sort((a, b) => b.length - a.length).join('|');
 }
 
-const MONTH = alternation(Object.keys(MONTHS));
-const WEEKDAY = alternation(Object.keys(WEEKDAYS));
+const MONTH = alternation(Object.keys(MONTH_NAMES));
+const WEEKDAY = alternation(Object.keys(WEEKDAY_NAMES));
 const SHORT_WEEKDAY = alternation(Object.keys(SHORT_WEEKDAYS));
 const ORDINAL = '(?:st|nd|rd|th|º)?';
 const NOT_A_TIME = String.raw`(?![\d:h]|\.\d|\s?[ap]\.?\s?m\b)(?![a-z\d])`;
@@ -148,8 +107,13 @@ const NOON = /\b(?:noon|midday|mediodia)\b/g;
 const NEGATION =
   /\b(?:no|not|none|nothing|unavailable|full|fully|booked up|ningun[oa]?|nada|sin|complet[oa]s?|ocupad[oa]s?|llen[oa]s?)\b|n't\b/;
 
+// Where a date sits in the folded text: `end` is where it stops and, when it
+// opens with a weekday, `dateStart` is where the date after that weekday
+// starts ("lunes 9 de noviembre": the "9").
 type DateMention = {
   index: number;
+  end: number;
+  dateStart?: number;
   day?: number;
   month?: number;
   weekday?: number;
@@ -173,14 +137,27 @@ function dateMentions(text: string): DateMention[] {
         ? short === undefined
           ? undefined
           : SHORT_WEEKDAYS[short]
-        : WEEKDAYS[long];
+        : WEEKDAY_NAMES[long];
     const monthName = monthAfter ?? monthBefore;
-    const month = monthName === undefined ? undefined : MONTHS[monthName];
+    const month = monthName === undefined ? undefined : MONTH_NAMES[monthName];
     if (weekday === undefined && month === undefined) continue;
     const index = match.index ?? 0;
-    covered.push([index, index + whole.length]);
+    const end = index + whole.length;
+    const word = long ?? short;
+    covered.push([index, end]);
     mentions.push({
       index,
+      end,
+      ...(word === undefined
+        ? {}
+        : {
+            dateStart:
+              index +
+              word.length +
+              (/^\.?,?\s+(?:the\s+|el\s+|dia\s+)?/.exec(
+                whole.slice(word.length),
+              )?.[0].length ?? 0),
+          }),
       day: numberOr(day ?? dayAfter),
       month,
       weekday,
@@ -190,7 +167,12 @@ function dateMentions(text: string): DateMention[] {
   for (const match of text.matchAll(LONE_WEEKDAY)) {
     const index = match.index ?? 0;
     if (covered.some(([from, to]) => index >= from && index < to)) continue;
-    mentions.push({ index, weekday: WEEKDAYS[match[1] ?? ''] });
+    const word = match[1] ?? '';
+    mentions.push({
+      index,
+      end: index + word.length,
+      weekday: WEEKDAY_NAMES[word],
+    });
   }
   return mentions.sort((a, b) => a.index - b.index);
 }
@@ -356,6 +338,104 @@ function inRange(
       other.index < time.index ? [other, time] : [time, other];
     return RANGE_AFTER.test(text.slice(first.end, second.index));
   });
+}
+
+// Whether a weekday falls on a day and month: in the year given, else in the
+// date's next occurrence from today (a reply is about what is coming: "viernes
+// 14 de mayo" means the next 14 May; "lunes 9 de noviembre" asked on that day
+// means today). A day the month does not have ("31 de febrero") never matches.
+function fallsOn(
+  weekday: number,
+  {
+    day,
+    month,
+    year,
+  }: { day: number; month: number; year?: number | undefined },
+  now: number,
+): boolean {
+  const today = new Date(now);
+  const thisYear = today.getUTCFullYear();
+  const startOfToday = Date.UTC(
+    thisYear,
+    today.getUTCMonth(),
+    today.getUTCDate(),
+  );
+  const nextYear =
+    Date.UTC(thisYear, month - 1, day) < startOfToday ? thisYear + 1 : thisYear;
+  const candidate = year ?? nextYear;
+  const date = new Date(Date.UTC(candidate, month - 1, day));
+  return (
+    date.getUTCDate() === day &&
+    isoWeekday({ year: candidate, month, day }) === weekday
+  );
+}
+
+// Joins left by taking words out: "Sunday,, is" (an appositive's two commas),
+// "dom.. por" (an abbreviation's stop and the date's), doubled spaces and a
+// space before punctuation.
+function tidyJoins(text: string): string {
+  return text
+    .replace(/,\s*,/g, '')
+    .replace(/(?<!\.)\.\.(?!\.)/g, '.')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/[ \t]+([.,;:!?])/g, '$1');
+}
+
+function capitalLike(original: string, text: string): string {
+  const first = original.charAt(0);
+  return first !== first.toLowerCase()
+    ? `${text.charAt(0).toUpperCase()}${text.slice(1)}`
+    : text;
+}
+
+// A weekday written next to a date it does not fall on ("domingo 9 de
+// noviembre" when the 9th is a Monday), in any sentence. When the visitor
+// named that weekday and the website worked out its date (`visitorDays`), the
+// right date takes the wrong one's place: "el domingo 15 de noviembre".
+// Otherwise the date stays and the weekday goes: "El lunes 15 de noviembre no
+// hay huecos." reads "El 15 de noviembre no hay huecos.". Null when every
+// such pair matches the calendar. Positions come from a fold that keeps the
+// length, so an emoji before the date cannot shift them.
+export function withoutWrongDates(
+  sentence: string,
+  {
+    now,
+    language,
+    visitorDays = [],
+  }: { now: number; language: Locale; visitorDays?: readonly ResolvedDay[] },
+): string | null {
+  let result = '';
+  let last = 0;
+  let changed = false;
+  for (const date of dateMentions(foldInPlace(sentence))) {
+    const { dateStart, weekday, day, month, year } = date;
+    if (dateStart === undefined || weekday === undefined) continue;
+    if (day === undefined || month === undefined) continue;
+    if (fallsOn(weekday, { day, month, year }, now)) continue;
+    // A stop the date took with it ends the sentence, so it stays.
+    const end = sentence[date.end - 1] === '.' ? date.end - 1 : date.end;
+    const meant = visitorDays.find(
+      (visitor) => visitor.byWeekday && visitor.weekday === weekday,
+    );
+    const replaceWith =
+      meant !== undefined
+        ? capitalLike(
+            sentence.slice(date.index),
+            formatDayParts(language, { ...meant, hour: 0, minute: 0 }),
+          )
+        : capitalLike(
+            sentence.slice(date.index),
+            sentence.slice(dateStart, end),
+          );
+    // "Sunday, November 9, 2026, is full": the comma that closed a date set
+    // off by commas has nothing left to close ("Sunday 15 November is full").
+    const closing =
+      sentence.slice(date.index, end).includes(',') && sentence[end] === ',';
+    result += `${sentence.slice(last, date.index)}${replaceWith}`;
+    last = closing ? end + 1 : end;
+    changed = true;
+  }
+  return changed ? tidyJoins(`${result}${sentence.slice(last)}`) : null;
 }
 
 // What the sentence offers that no check_availability result of this

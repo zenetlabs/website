@@ -1,5 +1,7 @@
-import { dateKey, zonedParts } from '@/lib/slots';
-import { fold, hasWord, WEEKDAYS, wordPattern } from '@/server/chat/text';
+import { BOOKING_RULES } from '@/content/booking-rules';
+import { dateKey, isoWeekday, zonedParts } from '@/lib/slots';
+import { WEEKDAY_NAMES } from '@/lib/weekday-names';
+import { fold, hasWord, wordPattern } from '@/server/chat/text';
 
 // Small, deterministic reads of the visitor's message, made before the model
 // runs. They decide what the server enforces, never what the model may say.
@@ -162,49 +164,228 @@ export function bookingIntent(message: string): boolean {
   return BOOKING.some((pattern) => pattern.test(text));
 }
 
-const WEEKDAY = new RegExp(`\\b(${Object.keys(WEEKDAYS).join('|')})\\b`);
+const WEEKDAY = new RegExp(`\\b(${Object.keys(WEEKDAY_NAMES).join('|')})\\b`);
+const WEEKDAYS_ALL = new RegExp(WEEKDAY.source, 'g');
 const NEXT_WEEK =
   /\bnext week\b|\b(?:la )?semana que viene\b|\b(?:la )?proxima semana\b/;
 const THIS_WEEK = /\bthis week\b|\besta semana\b/;
-const TOMORROW = /\btomorrow\b|(?<!\bla |\bpasado )\bmanana\b/;
+const AFTER_TOMORROW = /\b(?:the )?day after tomorrow\b|\bpasado manana\b/;
+// "mañana" alone; "por la mañana" and "esta mañana" (this morning) are not a day.
+const TOMORROW = /\btomorrow\b|(?<!\bla |\bpasado |\besta )\bmanana\b/;
 const TODAY = /\btoday\b|\bhoy\b/;
+// "this Friday", "este viernes": the coming one, today included.
+const THIS_WEEKDAY = new RegExp(
+  `\\b(?:this|este|esta)\\s+(?:${Object.keys(WEEKDAY_NAMES).join('|')})\\b`,
+);
+// Words that ask about free times, beside the booking requests.
+const AVAILABILITY =
+  /\b(?:free|available|availability|slots?|open|anything|times?|huecos?|libres?|disponib[a-z]*|algo|horas?)\b/;
 
 const DAY_MS = 86_400_000;
 
-export type DayRange = { from: string; to: string };
+// `days` lists the days when they are apart ("¿lunes o martes?" asked on a
+// Monday: Tuesday and next Monday), so each can be looked at alone.
+export type DayRange = { from: string; to: string; days?: string[] };
 
-// The days the visitor names, in their own zone: "next week", "this week",
-// "tomorrow", a weekday (its next occurrence). Null when they name none.
+// One calendar day in the visitor's zone, with its ISO weekday (Monday is 1)
+// and whether the visitor named it by its weekday ("el domingo").
+export type ResolvedDay = {
+  year: number;
+  month: number;
+  day: number;
+  weekday: number;
+  key: string;
+  byWeekday: boolean;
+};
+
+function dayAt(
+  now: number,
+  zone: string,
+  offset: number,
+  byWeekday = false,
+): ResolvedDay {
+  const today = zonedParts(now, zone);
+  const date = new Date(
+    Date.UTC(today.year, today.month - 1, today.day) + offset * DAY_MS,
+  );
+  const local = {
+    year: date.getUTCFullYear(),
+    month: date.getUTCMonth() + 1,
+    day: date.getUTCDate(),
+  };
+  return {
+    ...local,
+    weekday: isoWeekday(local),
+    key: dateKey(local),
+    byWeekday,
+  };
+}
+
+// How many days ahead a named weekday is, read the natural way: its next
+// occurrence after today ("el domingo", "next Monday", "el lunes que viene";
+// "el lunes" asked on a Monday is the Monday after); "this Friday" / "este
+// viernes" may be today; with "next week" it falls in next week (Monday to
+// Sunday).
+function weekdayOffset(text: string, name: string, weekdayToday: number) {
+  const target = WEEKDAY_NAMES[name] ?? weekdayToday;
+  if (NEXT_WEEK.test(text)) return 8 - weekdayToday + target - 1;
+  const ahead = (target - weekdayToday + 7) % 7;
+  return THIS_WEEKDAY.test(text) ? ahead : ahead || 7;
+}
+
+// "the day after tomorrow" / "pasado mañana" is two days ahead, "tomorrow" /
+// "mañana" one, "today" / "hoy" none; each found once ("the day after
+// tomorrow" is not also "tomorrow").
+function relativeOffsets(text: string): number[] {
+  const rest = text.replace(AFTER_TOMORROW, ' ');
+  return [
+    ...(AFTER_TOMORROW.test(text) ? [2] : []),
+    ...(TOMORROW.test(rest) ? [1] : []),
+    ...(TODAY.test(rest) ? [0] : []),
+  ];
+}
+
+const MAX_DAYS = 7;
+const WEEKDAY_WORDS = Object.keys(WEEKDAY_NAMES).join('|');
+// "Monday to Friday", "de lunes a viernes", "lunes-viernes".
+const RANGE = new RegExp(
+  `\\b(${WEEKDAY_WORDS})\\s*(?:to|through|thru|until|till|-|–|a|al|hasta)\\s*(${WEEKDAY_WORDS})\\b`,
+);
+
+type Named = { offset: number; byWeekday: boolean };
+
+// The offsets of the days a message names: each weekday (a range of them
+// counts every day between, at most a week) and each relative day.
+function namedDays(text: string, weekdayToday: number): Named[] {
+  const relative = relativeOffsets(text).map((offset) => ({
+    offset,
+    byWeekday: false,
+  }));
+  const range = RANGE.exec(text);
+  if (range !== null) {
+    const [, from = '', to = ''] = range;
+    const start = weekdayOffset(text, from, weekdayToday);
+    const length =
+      ((WEEKDAY_NAMES[to] ?? 0) - (WEEKDAY_NAMES[from] ?? 0) + 7) % 7;
+    const days = Math.min(length, MAX_DAYS - 1) + 1;
+    return [
+      ...Array.from({ length: days }, (_, at) => ({
+        offset: start + at,
+        byWeekday: true,
+      })),
+      ...relative,
+    ];
+  }
+  const names = new Set(
+    [...text.matchAll(WEEKDAYS_ALL)].map((match) => match[1] ?? ''),
+  );
+  return [
+    ...[...names].map((name) => ({
+      offset: weekdayOffset(text, name, weekdayToday),
+      byWeekday: true,
+    })),
+    ...relative,
+  ];
+}
+
+// Every day the message names ("¿lunes o martes?", "hoy o mañana", "Monday to
+// Friday"), in the visitor's zone, by date, each once: at most a week of them,
+// all within the booking horizon. None when it names a week and no weekday
+// ("Hoy no puedo, ¿la semana que viene?"): the span wins.
+export function resolvedDays(
+  message: string,
+  now: number,
+  zone: string,
+): ResolvedDay[] {
+  const text = fold(message);
+  if (!WEEKDAY.test(text) && (NEXT_WEEK.test(text) || THIS_WEEK.test(text))) {
+    return [];
+  }
+  const byOffset = new Map<number, boolean>();
+  for (const { offset, byWeekday } of namedDays(
+    text,
+    zonedParts(now, zone).weekday,
+  )) {
+    if (offset > BOOKING_RULES.horizonDays) continue;
+    byOffset.set(offset, byWeekday || (byOffset.get(offset) ?? false));
+  }
+  return [...byOffset]
+    .sort(([a], [b]) => a - b)
+    .slice(0, MAX_DAYS)
+    .map(([offset, byWeekday]) => dayAt(now, zone, offset, byWeekday));
+}
+
+// The single day the message names, or null (none, or several).
+export function resolvedDay(
+  message: string,
+  now: number,
+  zone: string,
+): ResolvedDay | null {
+  const days = resolvedDays(message, now, zone);
+  return days.length === 1 ? (days[0] ?? null) : null;
+}
+
+// Whether the message is about free times: a booking request, or words such
+// as "free", "slots", "anything", "hueco", "disponible".
+export function asksAvailability(message: string): boolean {
+  const text = fold(message);
+  return bookingIntent(message) || AVAILABILITY.test(text) || onlyDays(text);
+}
+
+// The few words that tie day names together ("¿lunes o martes?", "on Monday
+// or Tuesday", "¿y el jueves que viene?").
+const DAY_GLUE =
+  /\b(?:o|y|u|or|and|on|the|el|la|los|las|de|del|a|al|que|viene|next|this|este|esta|then|entonces|mejor|better|maybe|quizas)\b/g;
+
+// A message that is only day names ("¿lunes o martes?") asks about those days.
+function onlyDays(text: string): boolean {
+  const rest = text
+    .replace(WEEKDAYS_ALL, ' ')
+    .replace(AFTER_TOMORROW, ' ')
+    .replace(TOMORROW, ' ')
+    .replace(TODAY, ' ');
+  return (
+    rest !== text &&
+    rest.replace(DAY_GLUE, ' ').replace(/[\s\p{P}\p{S}]/gu, '') === ''
+  );
+}
+
+// The days to look at for check_availability: every day the message names,
+// from the earliest to the latest (at most a week), else "next week" / "this
+// week" as a span. Null when none is named.
 export function requestedDays(
   message: string,
   now: number,
   zone: string,
 ): DayRange | null {
-  const text = fold(message);
-  const today = zonedParts(now, zone);
-  const base = Date.UTC(today.year, today.month - 1, today.day);
-  const day = (offset: number) => {
-    const date = new Date(base + offset * DAY_MS);
-    return dateKey({
-      year: date.getUTCFullYear(),
-      month: date.getUTCMonth() + 1,
-      day: date.getUTCDate(),
-    });
-  };
-  const span = (from: number, to: number) => ({ from: day(from), to: day(to) });
-  const nextWeek = NEXT_WEEK.test(text);
-  const weekday = WEEKDAY.exec(text)?.[1];
-  if (weekday !== undefined) {
-    const target = WEEKDAYS[weekday] ?? today.weekday;
-    const offset = nextWeek
-      ? 8 - today.weekday + target - 1
-      : (target - today.weekday + 7) % 7 || 7;
-    return span(offset, offset);
+  const days = resolvedDays(message, now, zone);
+  const first = days[0];
+  if (first !== undefined) {
+    // At most a week from the earliest day named.
+    const within = days.filter(
+      (day) =>
+        Date.UTC(day.year, day.month - 1, day.day) -
+          Date.UTC(first.year, first.month - 1, first.day) <
+        MAX_DAYS * DAY_MS,
+    );
+    const last = within.at(-1) ?? first;
+    const spanDays =
+      (Date.UTC(last.year, last.month - 1, last.day) -
+        Date.UTC(first.year, first.month - 1, first.day)) /
+        DAY_MS +
+      1;
+    return within.length > 1 && within.length < spanDays
+      ? { from: first.key, to: last.key, days: within.map((day) => day.key) }
+      : { from: first.key, to: last.key };
   }
-  if (nextWeek) return span(8 - today.weekday, 14 - today.weekday);
-  if (THIS_WEEK.test(text)) return span(0, 7 - today.weekday);
-  if (TOMORROW.test(text)) return span(1, 1);
-  if (TODAY.test(text)) return span(0, 0);
+  const text = fold(message);
+  const { weekday } = zonedParts(now, zone);
+  const span = (from: number, to: number) => ({
+    from: dayAt(now, zone, from).key,
+    to: dayAt(now, zone, to).key,
+  });
+  if (NEXT_WEEK.test(text)) return span(8 - weekday, 14 - weekday);
+  if (THIS_WEEK.test(text)) return span(0, 7 - weekday);
   return null;
 }
 

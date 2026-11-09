@@ -980,6 +980,86 @@ describe('the stream', () => {
     expect(textOf(list)).toBe(ownershipAnswer);
   });
 
+  it('tells the model the exact day a relative weekday means, and writes that date over a wrong one', async () => {
+    // NOW is Monday 4 January 2027; in Singapore the coming Sunday is the 10th.
+    const spy = scripted(
+      say('No hay huecos el domingo 9 de noviembre. ', '¿Te va otro día?'),
+    );
+    model = spy;
+    const { list } = await start('¿Hay hueco el domingo?', {
+      locale: 'es',
+      page: '/es',
+    });
+    expect(JSON.stringify(spy.doStreamCalls[0]?.prompt)).toContain(
+      'El día al que se refiere el visitante es el domingo 10 de enero de 2027 (2027-01-10)',
+    );
+    expect(textOf(list)).toBe(
+      'No hay huecos el domingo 10 de enero. ¿Te va otro día?',
+    );
+    expect(logs).toContainEqual([
+      'chat: guard',
+      { session: expect.any(String), kind: 'weekday' },
+    ]);
+  });
+
+  it('lists every day of "¿lunes o martes?" with today and tomorrow, and looks at both', async () => {
+    // NOW is Monday 4 January 2027 (16:00 in Singapore).
+    const spy = scripted(call('check_availability', {}), say('Aquí están.'));
+    model = spy;
+    await start('¿lunes o martes?', { locale: 'es', page: '/es' });
+    const first = JSON.stringify(spy.doStreamCalls[0]?.prompt);
+    expect(first).toContain(
+      'El visitante pregunta por estos días: martes 5 de enero de 2027 (2027-01-05) y lunes 11 de enero de 2027 (2027-01-11). Usa esas fechas. Hoy es lunes 4 de enero y mañana es martes 5 de enero.',
+    );
+    const days = new Set(
+      [
+        ...JSON.stringify(spy.doStreamCalls[1]?.prompt).matchAll(
+          /"start":"(2027-[\d-]+)T/g,
+        ),
+      ].map((match) => match[1]),
+    );
+    expect(days.size).toBeGreaterThan(1);
+  });
+
+  it('takes the refusal out of a reply to a question about free times', async () => {
+    model = scripted(
+      say(`${REFUSAL.en} `, 'You have free slots next week in Singapore time.'),
+    );
+    const { list } = await start("I'm busy today, anything next week?");
+    expect(textOf(list)).toBe(
+      'You have free slots next week in Singapore time.',
+    );
+  });
+
+  it.each([
+    'Hablé esta mañana con mi socio sobre Holded',
+    'Today we use Holded and PrestaShop',
+  ])(
+    'adds no day line to %j, which is not about free times',
+    async (message) => {
+      const spy = scripted(say('Fine.'));
+      model = spy;
+      await start(message);
+      const sent = JSON.stringify(spy.doStreamCalls[0]?.prompt);
+      expect(sent).not.toContain('The day the visitor means');
+      expect(sent).not.toContain('El día al que se refiere');
+    },
+  );
+
+  it('adds no day line while booking is dark, but still puts a wrong weekday right', async () => {
+    deps = chatDeps({ site: { ...TEST_SITE, booking: { published: false } } });
+    const spy = scripted(say('No hay huecos el domingo 9 de noviembre.'));
+    model = spy;
+    const { list } = await start('¿Hay hueco el domingo?', {
+      locale: 'es',
+      page: '/es',
+    });
+    expect(JSON.stringify(spy.doStreamCalls[0]?.prompt)).not.toContain(
+      'El día al que se refiere',
+    );
+    expect(textOf(list)).toBe('No hay huecos el 9 de noviembre.');
+  });
+
   it('adds the Holded pair page as a chip when the model opened none', async () => {
     model = scripted(say('Sí, conectamos Holded con PrestaShop.'));
     const { list } = await start('¿Conectáis Holded con PrestaShop?', {

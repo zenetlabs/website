@@ -36,7 +36,12 @@ export type ChatToolContext = {
   locale: Locale;
   timeZone: string;
   // The days the visitor's message names; they win over the model's from/to.
-  requestedDays?: { from: string; to: string } | null;
+  // `days` when they are apart ("¿lunes o martes?"): each is looked at alone.
+  requestedDays?: {
+    from: string;
+    to: string;
+    days?: readonly string[];
+  } | null;
   site: SiteFlags;
   run: ToolContext;
   onNavigate: (event: NavigateEvent) => void;
@@ -150,12 +155,51 @@ function isEmptyRange(raw: Record<string, unknown>, result: unknown): boolean {
 
 // A day with nothing free answers with the nearest free slots instead, marked
 // so the model says the asked day is full rather than offering it.
+const okSlotsSchema = z
+  .object({
+    status: z.literal('ok'),
+    slots: z.array(z.unknown()),
+    more: z.boolean(),
+  })
+  .loose();
+
+// Days apart ("¿lunes o martes?") are looked at one by one, so the second
+// is not cut off by the first's slots, and answered as one result.
+async function eachDay(
+  def: ServerTool,
+  raw: Record<string, unknown>,
+  days: readonly string[],
+  ctx: ChatToolContext,
+): Promise<RunResult> {
+  const runs = await Promise.all(
+    days.map((day) => def.run({ ...raw, from: day, to: day }, ctx.run)),
+  );
+  const found = runs.flatMap((run) => {
+    const parsed = run.ok ? okSlotsSchema.safeParse(run.result) : null;
+    return parsed?.success ? [parsed.data] : [];
+  });
+  const [first] = found;
+  if (first === undefined) return runs[0] ?? { ok: true, result: {} };
+  return {
+    ok: true,
+    result: {
+      ...first,
+      slots: found.flatMap((result) => result.slots),
+      more: found.some((result) => result.more),
+    },
+  };
+}
+
 async function availabilityFor(
   def: ServerTool,
   raw: Record<string, unknown>,
   ctx: ChatToolContext,
 ): Promise<RunResult> {
-  const asked = await def.run(raw, ctx.run);
+  const days = ctx.requestedDays?.days ?? [];
+  const asked =
+    days.length > 1
+      ? await eachDay(def, raw, days, ctx)
+      : await def.run(raw, ctx.run);
   if (!asked.ok || !isEmptyRange(raw, asked.result)) return asked;
   const { locale, timeZone } = raw;
   const nearest = await def.run({ locale, timeZone }, ctx.run);
@@ -175,9 +219,15 @@ async function runRegistryTool(
   const raw = {
     ...(isRecord(input) ? input : {}),
     locale: ctx.locale,
-    ...(def.name === 'check_availability'
-      ? { timeZone: ctx.timeZone, ...(ctx.requestedDays ?? {}) }
-      : {}),
+    ...(def.name === 'check_availability' && ctx.requestedDays
+      ? {
+          timeZone: ctx.timeZone,
+          from: ctx.requestedDays.from,
+          to: ctx.requestedDays.to,
+        }
+      : def.name === 'check_availability'
+        ? { timeZone: ctx.timeZone }
+        : {}),
   };
   try {
     const outcome =

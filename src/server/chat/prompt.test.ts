@@ -190,4 +190,82 @@ describe('turnContext', () => {
     expect(text).toContain('- The visitor is on: -.');
     expect(text).not.toContain('ignore');
   });
+
+  // Monday 9 November 2026, 10:00 in Madrid.
+  const MONDAY = Date.UTC(2026, 10, 9, 9, 0);
+  const day = (dayOfMonth: number, weekday: number) => ({
+    year: 2026,
+    month: 11,
+    day: dayOfMonth,
+    weekday,
+    key: `2026-11-${String(dayOfMonth).padStart(2, '0')}`,
+    byWeekday: true,
+  });
+  const at = (extra: Partial<Parameters<typeof turnContext>[0]>) =>
+    turnContext({
+      locale: 'es',
+      now: MONDAY,
+      timeZone: 'Europe/Madrid',
+      page: '/es',
+      remaining: 19,
+      availability: true,
+      ...extra,
+    })
+      .split('\n')
+      .at(-1);
+
+  it('names the one day the visitor means, with today and tomorrow, in the reply language', () => {
+    expect(at({ days: [day(15, 7)] })).toBe(
+      '- El día al que se refiere el visitante es el domingo 15 de noviembre de 2026 (2026-11-15); usa esa fecha y ninguna otra. Hoy es lunes 9 de noviembre y mañana es martes 10 de noviembre.',
+    );
+    expect(at({ days: [day(15, 7)], language: 'en' })).toBe(
+      '- The day the visitor means is Sunday 15 November 2026 (2026-11-15); use that date, never another. Today is Monday 9 November and tomorrow is Tuesday 10 November.',
+    );
+  });
+
+  it('lists several days in date order, with today and tomorrow (en, es)', () => {
+    const days = [day(10, 2), day(16, 1)];
+    expect(at({ days })).toBe(
+      '- El visitante pregunta por estos días: martes 10 de noviembre de 2026 (2026-11-10) y lunes 16 de noviembre de 2026 (2026-11-16). Usa esas fechas. Hoy es lunes 9 de noviembre y mañana es martes 10 de noviembre.',
+    );
+    expect(
+      at({ days: [day(10, 2), day(12, 4), day(16, 1)], language: 'en' }),
+    ).toBe(
+      '- The visitor asks about these days: Tuesday 10 November 2026 (2026-11-10), Thursday 12 November 2026 (2026-11-12) and Monday 16 November 2026 (2026-11-16). Use those dates. Today is Monday 9 November and tomorrow is Tuesday 10 November.',
+    );
+  });
+
+  it('gives an availability turn today and tomorrow even with no day named', () => {
+    expect(at({})).toBe(
+      '- Hoy es lunes 9 de noviembre y mañana es martes 10 de noviembre.',
+    );
+  });
+
+  it('adds nothing about days to a turn that is not about free times', () => {
+    const text = turnContext({
+      locale: 'en',
+      now: MONDAY,
+      timeZone: 'UTC',
+      page: '/',
+      remaining: 1,
+      days: [day(15, 7)],
+    });
+    expect(text).not.toContain('The day the visitor means');
+    expect(text).not.toContain('tomorrow is');
+  });
+
+  it('works out tomorrow across a month end', () => {
+    expect(
+      turnContext({
+        locale: 'en',
+        now: Date.UTC(2026, 10, 30, 9, 0),
+        timeZone: 'Europe/Madrid',
+        page: '/',
+        remaining: 1,
+        availability: true,
+      })
+        .split('\n')
+        .at(-1),
+    ).toBe('- Today is Monday 30 November and tomorrow is Tuesday 1 December.');
+  });
 });

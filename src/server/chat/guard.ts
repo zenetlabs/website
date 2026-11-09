@@ -2,10 +2,12 @@ import type { ModelMessage } from 'ai';
 import type { ServiceId, Services } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { PUBLIC_EMAIL } from '@/lib/site';
+import type { ResolvedDay } from '@/server/chat/intent';
 import {
   type OfferedSlot,
   slotFallback,
   slotViolation,
+  withoutWrongDates,
 } from '@/server/chat/slot-guard';
 import { fold, hasWord } from '@/server/chat/text';
 
@@ -82,6 +84,7 @@ export type GuardKind =
   | 'slot'
   | 'time'
   | 'claim'
+  | 'weekday'
   | 'refusal'
   | 'link'
   | 'email'
@@ -386,10 +389,6 @@ function trailing(sentence: string): string {
 
 type Guarded = { text: string; guard: GuardKind | null };
 
-// The slots check_availability returned in this conversation; without them
-// the slot check is off.
-type Calendar = { slots: readonly OfferedSlot[]; now: number };
-
 // Facts the reply must not turn around, with the official text that replaces
 // a sentence that does; `refusal: false` when the message was on topic, so the
 // refusal sentence has no place in the reply.
@@ -399,30 +398,41 @@ type Facts = {
   unlisted?: { name: string; answer: string };
 };
 
+type GuardOptions = {
+  locale: Locale;
+  allowed: Allowed;
+  // The clock of the turn: dates are checked against it.
+  now: number;
+  previous?: string;
+  language?: Locale;
+  // The slots check_availability returned in this conversation; absent while
+  // booking is dark, and the slot check waits until there are some.
+  slots?: readonly OfferedSlot[];
+  // The days the visitor's words name, when the website worked them out.
+  visitorDays?: readonly ResolvedDay[];
+  facts?: Facts;
+  refusal?: boolean;
+};
+
 // `previous` is what the visitor already saw just before this sentence, so a
 // currency sign at the end of it still counts for the number that starts this
 // one, and a time takes its day from the last date in it. `language` is the
 // reply's language (canned text); `locale` sets the currency.
 export function guardSentence(
   sentence: string,
-  {
+  options: GuardOptions,
+): Guarded {
+  const {
     locale,
     allowed,
+    now,
     previous = '',
     language = locale,
-    calendar,
+    slots,
+    visitorDays = [],
     facts,
     refusal = true,
-  }: {
-    locale: Locale;
-    allowed: Allowed;
-    previous?: string;
-    language?: Locale;
-    calendar?: Calendar;
-    facts?: Facts;
-    refusal?: boolean;
-  },
-): Guarded {
+  } = options;
   const clean = stripMarkup(normalise(sentence));
   const tail = trailing(clean);
   if (isLeak(clean)) {
@@ -432,17 +442,16 @@ export function guardSentence(
     const rest = withoutRefusal(clean);
     if (rest === '') return { text: '', guard: 'refusal' };
     if (rest !== null) {
-      const kept = guardSentence(rest, {
-        locale,
-        allowed,
-        previous,
-        language,
-        calendar,
-        facts,
-        refusal,
-      });
+      const kept = guardSentence(rest, options);
       return { text: kept.text, guard: kept.guard ?? 'refusal' };
     }
+  }
+  // A weekday beside a date it does not fall on is put right (any sentence,
+  // booking or not); the rest is checked as usual.
+  const dated = withoutWrongDates(clean, { now, language, visitorDays });
+  if (dated !== null) {
+    const kept = guardSentence(dated, options);
+    return { text: kept.text, guard: kept.guard ?? 'weekday' };
   }
   if (facts !== undefined && claimsOwnership(clean)) {
     return { text: `${facts.ownership}${tail}`, guard: 'claim' };
@@ -461,15 +470,11 @@ export function guardSentence(
   // Until check_availability has answered in this session there is nothing to
   // compare with, so the slot check waits for it.
   const slot =
-    calendar === undefined || calendar.slots.length === 0
+    slots === undefined || slots.length === 0
       ? null
-      : slotViolation(clean, { ...calendar, previous: shown });
+      : slotViolation(clean, { slots, now, previous: shown });
   if (slot !== null) {
-    const text = slotFallback(
-      language,
-      calendar?.slots ?? [],
-      calendar?.now ?? 0,
-    );
+    const text = slotFallback(language, slots ?? [], now);
     return { text: `${text}${tail}`, guard: slot === 'date' ? 'slot' : 'time' };
   }
   const kept: string[] = [];
