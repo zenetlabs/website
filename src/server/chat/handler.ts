@@ -27,10 +27,12 @@ import {
   UNLISTED_TOOL,
 } from '@/server/chat/guard';
 import {
+  asksAvailability,
   bookingIntent,
   faqTopic,
   messageIntent,
   requestedDays,
+  resolvedDays,
   unlistedTool,
 } from '@/server/chat/intent';
 import { replyLanguage } from '@/server/chat/language';
@@ -223,7 +225,15 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
   const slots = toolSlots(past.messages);
   const pastSlots = slots.length;
   // With booking dark there is no calendar to offer from, and no slot check.
-  const calendar = booking ? { slots, now } : undefined;
+  const offeredSlots = booking ? slots : undefined;
+  // An availability turn: booking is on and the visitor asks about free times
+  // (or follows times already shown). It gets today and tomorrow and the
+  // exact days the message names ("el domingo", "¿lunes o martes?").
+  const availability =
+    booking && (slots.length > 0 || asksAvailability(turn.message));
+  const visitorDays = availability
+    ? resolvedDays(turn.message, now, turn.timeZone)
+    : [];
   // A visitor who asks for a call gets the calendar on the first step, not a
   // question about whether to look at it.
   const forceAvailability =
@@ -248,7 +258,9 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
       ? undefined
       : { ownership, ...(unlisted ? { unlisted } : {}) };
   // The refusal sentence belongs to off-topic and injection messages only.
-  const refusal = messageIntent(turn.message) !== 'on-topic';
+  const refusal =
+    messageIntent(turn.message) !== 'on-topic' &&
+    !asksAvailability(turn.message);
   let refusalDropped = false;
   // The time and the messages left change every turn, so they ride with the
   // visitor's message and the system prompt stays one cacheable prefix.
@@ -266,6 +278,8 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
     topic,
     booking,
     unlisted: unlisted ?? null,
+    availability,
+    days: visitorDays,
   });
 
   outcome.promptChars = system.length + context.length;
@@ -311,7 +325,9 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
       allowed,
       previous: outcome.shown,
       language,
-      calendar,
+      now,
+      slots: offeredSlots,
+      visitorDays,
       facts,
       refusal,
     });

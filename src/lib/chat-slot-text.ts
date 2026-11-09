@@ -1,10 +1,14 @@
+import { MONTH_NAMES } from '@/lib/month-names';
 import { zonedParts } from '@/lib/slots';
+import { WEEKDAY_NAMES } from '@/lib/weekday-names';
 
 // The chips' times, by calendar day ("11-9" for 9 November) and minute of
 // the day, in the zone they are shown in.
 export type OfferedTimes = {
   times: ReadonlySet<string>;
   days: ReadonlySet<string>;
+  // The days by their number alone (10 → ["11-10"]), for "Martes 10".
+  byDayNumber: ReadonlyMap<number, readonly string[]>;
 };
 
 const LIST_ITEM = /^\s*(?:[-*•–·]|\d{1,2}[.)])\s+(.+)$/;
@@ -15,52 +19,44 @@ const TIME =
   /(?<![\d.,])(\d{1,2})(?::|h|\.(?=\d{2}(?!\d)))(\d{2})(?!\d)(?:\s*([ap])\.?\s?m\b\.?)?|(?<![\d.,])(\d{1,2})\s*([ap])\.?\s?m\b\.?/gi;
 const MAX_HEADING = 48;
 
-const MONTHS: Record<string, number> = {
-  january: 1,
-  jan: 1,
-  february: 2,
-  feb: 2,
-  march: 3,
-  mar: 3,
-  april: 4,
-  apr: 4,
-  may: 5,
-  june: 6,
-  jun: 6,
-  july: 7,
-  jul: 7,
-  august: 8,
-  aug: 8,
-  september: 9,
-  sept: 9,
-  sep: 9,
-  october: 10,
-  oct: 10,
-  november: 11,
-  nov: 11,
-  december: 12,
-  dec: 12,
-  enero: 1,
-  ene: 1,
-  febrero: 2,
-  marzo: 3,
-  abril: 4,
-  abr: 4,
-  mayo: 5,
-  junio: 6,
-  julio: 7,
-  agosto: 8,
-  ago: 8,
-  septiembre: 9,
-  setiembre: 9,
-  octubre: 10,
-  noviembre: 11,
-  diciembre: 12,
-  dic: 12,
+// The weekdays as written, accents optional ("miércoles", "miercoles"),
+// plus the short English forms.
+const ACCENTED: Readonly<Record<string, string>> = {
+  a: '[aá]',
+  e: '[eé]',
+  i: '[ií]',
+  o: '[oó]',
+  u: '[uú]',
 };
-const WEEKDAY =
-  /\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\b/gi;
-const DATE_WORDS = /\b(?:de|del|a|las|la|at|on|the|st|nd|rd|th)\b/gi;
+const WEEKDAY_WORDS = `(?:${[
+  ...Object.keys(WEEKDAY_NAMES).map((name) =>
+    name.replace(/[aeiou]/g, (vowel) => ACCENTED[vowel] ?? vowel),
+  ),
+  'mon',
+  'tue',
+  'wed',
+  'thu',
+  'fri',
+  'sat',
+  'sun',
+].join('|')})`;
+const WEEKDAY = new RegExp(String.raw`\b${WEEKDAY_WORDS}\b`, 'gi');
+// A weekday and a day number with no month ("Martes 10", "Tue 10th").
+const WEEKDAY_DAY = new RegExp(
+  String.raw`\b${WEEKDAY_WORDS}\s+(\d{1,2})(?:st|nd|rd|th)?(?!\d)`,
+  'gi',
+);
+// The filler a listed time may carry: date words, "and", "(midnight)". The
+// one-letter "a", "y", "o" count only between two times ("08:00 a 11:30")
+// and "a" before "las" ("a las 10:00").
+const DATE_WORDS =
+  /\b(?:de|del|las|la|at|on|the|st|nd|rd|th|and|or|midnight|noon|medianoche|mediod[ií]a)\b/gi;
+const TIME_MARK = '\ue002';
+const BETWEEN_TIMES = /\ue002\s+(?:a|y|o)\s+(?=\ue002)/gi;
+const A_LAS = /\ba(?=\s+las?\b)/gi;
+// A lead-in of a few words ("Here they are:", "Te propongo:") says nothing
+// once its list went; a longer one keeps its words and ends with a full stop.
+const SHORT_LEAD_WORDS = 6;
 const DAY_MONTH = /(?<!\d)(\d{1,2})(?:st|nd|rd|th)?\s+(?:de\s+)?([a-zé]+)/gi;
 const MONTH_DAY = /\b([a-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?(?!\d)/gi;
 
@@ -70,24 +66,34 @@ export function offeredTimes(
 ): OfferedTimes {
   const times = new Set<string>();
   const days = new Set<string>();
+  const byDayNumber = new Map<number, string[]>();
   for (const start of starts) {
     const { month, day, hour, minute } = zonedParts(start, zone);
-    days.add(`${month}-${day}`);
-    times.add(`${month}-${day}@${hour * 60 + minute}`);
+    const key = `${month}-${day}`;
+    if (!days.has(key))
+      byDayNumber.set(day, [...(byDayNumber.get(day) ?? []), key]);
+    days.add(key);
+    times.add(`${key}@${hour * 60 + minute}`);
   }
-  return { times, days };
+  return { times, days, byDayNumber };
 }
 
 // The calendar day a line names ("Monday 9 November", "lunes 9 de
-// noviembre", "November 9"), as "11-9", or null.
-function dayIn(text: string): string | null {
+// noviembre", "November 9"), as "11-9", or null. "Martes 10" (no month)
+// counts when exactly one of the chips' days is a 10th.
+function dayIn(text: string, offered?: OfferedTimes): string | null {
   for (const [, day, word = ''] of text.matchAll(DAY_MONTH)) {
-    const month = MONTHS[word.toLowerCase()];
+    const month = MONTH_NAMES[word.toLowerCase()];
     if (month !== undefined) return `${month}-${Number(day)}`;
   }
   for (const [, word = '', day] of text.matchAll(MONTH_DAY)) {
-    const month = MONTHS[word.toLowerCase()];
+    const month = MONTH_NAMES[word.toLowerCase()];
     if (month !== undefined) return `${month}-${Number(day)}`;
+  }
+  if (offered === undefined) return null;
+  for (const [, day] of text.matchAll(WEEKDAY_DAY)) {
+    const keys = offered.byDayNumber.get(Number(day)) ?? [];
+    if (keys.length === 1) return keys[0] ?? null;
   }
   return null;
 }
@@ -120,13 +126,17 @@ function timesIn(text: string): number[][] {
 // "a las 10:00"): what is left once those go is empty.
 function onlyDateAndTime(text: string): boolean {
   const rest = text
-    .replace(TIME, ' ')
+    .replace(TIME, TIME_MARK)
+    .replace(BETWEEN_TIMES, `${TIME_MARK} `)
+    .replace(A_LAS, ' ')
+    .replaceAll(TIME_MARK, ' ')
     .replace(DAY_MONTH, (whole, _day, word: string) =>
-      MONTHS[word.toLowerCase()] === undefined ? whole : ' ',
+      MONTH_NAMES[word.toLowerCase()] === undefined ? whole : ' ',
     )
     .replace(MONTH_DAY, (whole, word: string) =>
-      MONTHS[word.toLowerCase()] === undefined ? whole : ' ',
+      MONTH_NAMES[word.toLowerCase()] === undefined ? whole : ' ',
     )
+    .replace(WEEKDAY_DAY, ' ')
     .replace(WEEKDAY, ' ')
     .replace(DATE_WORDS, ' ');
   return rest.replace(/[\s\p{P}\p{S}]/gu, '') === '';
@@ -143,18 +153,22 @@ function isListedTime(
   const times = timesIn(item);
   if (times.length === 0 || !onlyDateAndTime(item)) return false;
   const [only] = offered.days.size === 1 ? offered.days : [];
-  const day = dayIn(item) ?? context ?? only;
+  const day = dayIn(item, offered) ?? context ?? only;
   if (day === undefined) return false;
   return times.every((candidates) =>
     candidates.some((minute) => offered.times.has(`${day}@${minute}`)),
   );
 }
 
-// A day heading over such a list ("Lunes 9 de noviembre:").
-function isDayHeading(line: string): boolean {
+// A day heading over such a list: a line that is only a date, with or
+// without a colon ("Lunes 9 de noviembre:", "Monday 16 November").
+function isDayHeading(line: string, offered: OfferedTimes): boolean {
   const text = line.trim();
   return (
-    text.length <= MAX_HEADING && text.endsWith(':') && dayIn(text) !== null
+    text.length <= MAX_HEADING &&
+    dayIn(text, offered) !== null &&
+    timesIn(text).length === 0 &&
+    onlyDateAndTime(text)
   );
 }
 
@@ -166,13 +180,15 @@ export function withoutListedTimes(
 ): string {
   const lines = text.split('\n');
   let context: string | null = null;
+  // A list item, or a line of nothing but times ("3:00 pm, 3:30 pm, 4:00 pm").
   const listed = lines.map((line) => {
     const item = LIST_ITEM.exec(line)?.[1];
-    if (item === undefined) {
-      context = dayIn(line) ?? context;
-      return false;
+    if (item !== undefined) return isListedTime(item, context, offered);
+    if (timesIn(line).length > 0 && isListedTime(line, context, offered)) {
+      return true;
     }
-    return isListedTime(item, context, offered);
+    context = dayIn(line, offered) ?? context;
+    return false;
   });
   // A heading goes only when every list item under it went.
   function headsRemovedList(index: number): boolean {
@@ -180,7 +196,7 @@ export function withoutListedTimes(
     for (let at = index + 1; at < lines.length; at += 1) {
       const line = lines[at] ?? '';
       if (line.trim() === '') continue;
-      if (!LIST_ITEM.test(line)) break;
+      if (!LIST_ITEM.test(line) && !listed[at]) break;
       if (!listed[at]) return false;
       removed = true;
     }
@@ -188,7 +204,8 @@ export function withoutListedTimes(
   }
   const removed = lines.map(
     (line, index) =>
-      listed[index] === true || (isDayHeading(line) && headsRemovedList(index)),
+      listed[index] === true ||
+      (isDayHeading(line, offered) && headsRemovedList(index)),
   );
   // A lead-in whose list went ("The nearest free times are:") loses its last
   // sentence; earlier sentences on the line stay.
@@ -209,7 +226,10 @@ export function withoutListedTimes(
     if (removed[index]) return [];
     const lead = line.trimEnd();
     if (!lead.endsWith(':') || !ledRemovedList(index)) return [line];
-    const rest = withoutLastSentence(lead.slice(0, -1));
+    const body = lead.slice(0, -1);
+    const rest = withoutLastSentence(body);
+    const last = body.slice(rest.length).trim();
+    if (last.split(/\s+/).length > SHORT_LEAD_WORDS) return [`${body}.`];
     return rest === '' ? [] : [rest];
   });
   // Blank lines the removals left behind collapse into one, none at the ends.

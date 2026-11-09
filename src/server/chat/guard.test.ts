@@ -125,8 +125,14 @@ describe('findAmounts', () => {
   });
 });
 
-const EN = { locale: 'en' as const, allowed: new Set([3000, 15000, 35000]) };
-const ES = { locale: 'es' as const, allowed: new Set([3000, 4000]) };
+// Monday 9 November 2026, the clock every check reads.
+const NOW = Date.UTC(2026, 10, 9, 9, 0);
+const EN = {
+  locale: 'en' as const,
+  allowed: new Set([3000, 15000, 35000]),
+  now: NOW,
+};
+const ES = { locale: 'es' as const, allowed: new Set([3000, 4000]), now: NOW };
 
 describe('guardSentence', () => {
   it('keeps an official amount', () => {

@@ -7,6 +7,7 @@ import {
   slotsOf,
   slotViolation,
   toolSlots,
+  withoutWrongDates,
 } from '@/server/chat/slot-guard';
 
 // Friday 6 November 2026, 10:00 in Madrid.
@@ -202,7 +203,8 @@ describe('guardSentence with a calendar', () => {
       guardSentence('Te propongo el martes 10 de noviembre a las 09:00. ', {
         locale: 'es',
         allowed,
-        calendar: { slots: SLOTS, now: NOW },
+        now: NOW,
+        slots: SLOTS,
       }),
     ).toEqual({ text: `${slotFallback('es', SLOTS, NOW)} `, guard: 'slot' });
   });
@@ -212,7 +214,8 @@ describe('guardSentence with a calendar', () => {
       locale: 'es',
       language: 'en',
       allowed,
-      calendar: { slots: SLOTS, now: NOW },
+      now: NOW,
+      slots: SLOTS,
     });
     expect(guarded.guard).toBe('slot');
     expect(guarded.text).toContain('Monday 9 November, 8:00 am');
@@ -223,7 +226,8 @@ describe('guardSentence with a calendar', () => {
       guardSentence('How about Monday at 9:00?', {
         locale: 'en',
         allowed,
-        calendar: { slots: [], now: NOW },
+        now: NOW,
+        slots: [],
       }).guard,
     ).toBeNull();
   });
@@ -233,15 +237,149 @@ describe('guardSentence with a calendar', () => {
       guardSentence('How about 7:30 pm? ', {
         locale: 'en',
         allowed,
-        calendar: { slots: SLOTS, now: NOW },
+        now: NOW,
+        slots: SLOTS,
       }).guard,
     ).toBe('time');
   });
 
   it('checks no slot without a calendar', () => {
     expect(
-      guardSentence('Tuesday 10 Nov at 9am works.', { locale: 'en', allowed })
-        .guard,
+      guardSentence('Tuesday 10 Nov at 9am works.', {
+        locale: 'en',
+        allowed,
+        now: NOW,
+      }).guard,
     ).toBeNull();
+  });
+});
+
+describe('withoutWrongDates', () => {
+  // Monday 9 November 2026.
+  const MONDAY = Date.UTC(2026, 10, 9, 9, 0);
+  const fix = (sentence: string, language: 'en' | 'es' = 'es') =>
+    withoutWrongDates(sentence, { now: MONDAY, language });
+  // The visitor asked "¿Hay hueco el domingo?": Sunday 15 November.
+  const SUNDAY = {
+    year: 2026,
+    month: 11,
+    day: 15,
+    weekday: 7,
+    key: '2026-11-15',
+    byWeekday: true,
+  };
+  const forSunday = (sentence: string, language: 'en' | 'es' = 'es') =>
+    withoutWrongDates(sentence, {
+      now: MONDAY,
+      language,
+      visitorDays: [SUNDAY],
+    });
+
+  it.each([
+    // The live reply, with no weekday from the visitor: the date stays.
+    [
+      'No hay huecos el domingo 9 de noviembre.',
+      'No hay huecos el 9 de noviembre.',
+    ],
+    [
+      'El lunes 15 de noviembre no hay huecos.',
+      'El 15 de noviembre no hay huecos.',
+    ],
+    ['Sunday 9 November is fully booked.', '9 November is fully booked.'],
+    ['Nothing on Sun 9 Nov at 3pm.', 'Nothing on 9 Nov at 3pm.'],
+    ['Nothing on Sun. 9 Nov.', 'Nothing on 9 Nov.'],
+    [
+      'No hay nada el dom. 9 nov. por la tarde.',
+      'No hay nada el 9 nov. por la tarde.',
+    ],
+    ['Sunday, November 9, 2026, is full.', 'November 9, 2026 is full.'],
+    [
+      'El martes 9 de noviembre de 2026 está completo.',
+      'El 9 de noviembre de 2026 está completo.',
+    ],
+    // Emoji before the date (variation selectors, keycaps) shift nothing.
+    ['1️⃣ Domingo 9 de noviembre: completo.', '1️⃣ 9 de noviembre: completo.'],
+    [
+      '✔️ domingo 9 de noviembre, libre por la tarde.',
+      '✔️ 9 de noviembre, libre por la tarde.',
+    ],
+  ])('keeps the date and drops the weekday in %j', (sentence, expected) => {
+    expect(fix(sentence)).toBe(expected);
+  });
+
+  it.each([
+    [
+      'No hay huecos el domingo 9 de noviembre.',
+      'No hay huecos el domingo 15 de noviembre.',
+      'es',
+    ],
+    [
+      '1️⃣ Domingo 9 de noviembre: completo.',
+      '1️⃣ Domingo 15 de noviembre: completo.',
+      'es',
+    ],
+    [
+      'Sunday 9 November is fully booked.',
+      'Sunday 15 November is fully booked.',
+      'en',
+    ],
+    [
+      'Nothing on Sun 9 Nov at 3pm.',
+      'Nothing on Sunday 15 November at 3pm.',
+      'en',
+    ],
+  ] as const)(
+    'writes the date the visitor meant in %j',
+    (sentence, expected, language) => {
+      expect(forSunday(sentence, language)).toBe(expected);
+    },
+  );
+
+  it('drops the weekday when it is not the one the visitor named', () => {
+    expect(forSunday('El lunes 15 de noviembre no hay huecos.')).toBe(
+      'El 15 de noviembre no hay huecos.',
+    );
+  });
+
+  it.each([
+    'Monday 9 November, 8:00 am',
+    'lunes 9 de noviembre, 08:00',
+    'No hay huecos el domingo 15 de noviembre.',
+    'Mon 9 Nov at 9am works.',
+    'El domingo no hay huecos.',
+    'Verifactu: las sociedades, antes del 1 de enero de 2027.',
+    // May 14 is a Friday next year.
+    'El viernes 14 de mayo lanzamos.',
+  ])('leaves %j as it is', (sentence) => {
+    expect(fix(sentence)).toBeNull();
+  });
+
+  it('reads a date without a year as its next occurrence from today', () => {
+    const december = Date.UTC(2026, 11, 28, 9, 0);
+    const at = (sentence: string) =>
+      withoutWrongDates(sentence, { now: december, language: 'es' });
+    // The next 2 January is Saturday 2 January 2027.
+    expect(at('sábado 2 de enero')).toBeNull();
+    expect(at('viernes 2 de enero')).toBe('2 de enero');
+  });
+
+  it('runs inside guardSentence, on any sentence, booking or not, and reports it', () => {
+    const options = {
+      locale: 'es' as const,
+      allowed: new Set<number>(),
+      now: MONDAY,
+    };
+    expect(
+      guardSentence('No hay huecos el domingo 9 de noviembre. ', options),
+    ).toEqual({ text: 'No hay huecos el 9 de noviembre. ', guard: 'weekday' });
+    expect(
+      guardSentence('No hay huecos el domingo 9 de noviembre. ', {
+        ...options,
+        visitorDays: [SUNDAY],
+      }),
+    ).toEqual({
+      text: 'No hay huecos el domingo 15 de noviembre. ',
+      guard: 'weekday',
+    });
   });
 });

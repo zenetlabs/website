@@ -240,6 +240,30 @@ describe('registry tools run in process', () => {
     expect(daysOf(result.slots)).not.toContain('2027-01-10');
   });
 
+  it('looks at days apart one by one, so the later day is not cut off', async () => {
+    const result = slotsResult.parse(
+      await run(
+        chatTools(
+          context({
+            requestedDays: {
+              from: '2027-01-05',
+              to: '2027-01-11',
+              days: ['2027-01-05', '2027-01-11'],
+            },
+          }),
+        ),
+        'check_availability',
+        {},
+      ),
+    );
+    const days = new Set(daysOf(result.slots));
+    expect(days.has('2027-01-05')).toBe(true);
+    expect(days.has('2027-01-11')).toBe(true);
+    expect(
+      [...days].every((day) => day === '2027-01-05' || day === '2027-01-11'),
+    ).toBe(true);
+  });
+
   it('answers unavailable, not an error, when the calendar fails', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     world.freebusyStatus = 500;

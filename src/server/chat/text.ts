@@ -6,23 +6,24 @@ export function fold(text: string): string {
   return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 }
 
-// Folded weekday names in both languages, ISO numbered (Monday is 1).
-export const WEEKDAYS: Readonly<Record<string, number>> = {
-  monday: 1,
-  tuesday: 2,
-  wednesday: 3,
-  thursday: 4,
-  friday: 5,
-  saturday: 6,
-  sunday: 7,
-  lunes: 1,
-  martes: 2,
-  miercoles: 3,
-  jueves: 4,
-  viernes: 5,
-  sabado: 6,
-  domingo: 7,
-};
+// The same fold, one code unit for one code unit, so a position found in it
+// is the same position in the original: an accented letter becomes its base
+// letter, and anything that would change length (an emoji's variation
+// selector, a keycap mark, a letter that lower-cases to two) stays as it is.
+export function foldInPlace(text: string): string {
+  let out = '';
+  for (const unit of text) {
+    const lower = unit.toLowerCase();
+    const base = lower.normalize('NFD').replace(/\p{M}/gu, '');
+    out +=
+      unit.length !== 1 || lower.length !== 1
+        ? unit
+        : base.length === 1
+          ? base
+          : lower;
+  }
+  return out;
+}
 
 // A whole word or phrase, as a pattern: no letter or digit on either side.
 export function wordPattern(needle: string, flags = 'u'): RegExp {

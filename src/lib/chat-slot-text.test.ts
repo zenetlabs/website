@@ -10,6 +10,11 @@ const OFFERED = offeredTimes([DAY, DAY + HOUR / 2, DAY + HOUR], MADRID);
 const SPREAD = offeredTimes([DAY, DAY + 2 * HOUR, DAY + 8 * HOUR], MADRID);
 // Two days: Monday 08:00 and Tuesday 10 November 08:00.
 const TWO_DAYS = offeredTimes([DAY, DAY + 24 * HOUR], MADRID);
+// The same two days at 8:00 and 8:30 am Monday, 8:00 am Tuesday.
+const TWO_DAYS_EN = offeredTimes(
+  [DAY, DAY + HOUR / 2, DAY + 24 * HOUR],
+  MADRID,
+);
 
 describe('withoutListedTimes', () => {
   it('drops the list a real reply carried, with its day heading, and keeps the prose', () => {
@@ -119,5 +124,83 @@ describe('withoutListedTimes', () => {
 
   it('returns nothing when the reply was only the list', () => {
     expect(withoutListedTimes('- 08:00\n- 08:30', OFFERED)).toBe('');
+  });
+
+  it('drops a date-only heading with no colon once every time under it went (en, es)', () => {
+    const en =
+      'I can see free slots next week in Asia/Singapore. Here they are:\n\nMonday 9 November\n- 8:00 am\n- 8:30 am\n\nTuesday 10 November\n- 8:00 am\n\nWhich time suits you?';
+    expect(withoutListedTimes(en, TWO_DAYS_EN)).toBe(
+      'I can see free slots next week in Asia/Singapore.\n\nWhich time suits you?',
+    );
+    const es =
+      'Te muestro los huecos.\n\nlunes 9 de noviembre\n- 08:00\n\nmartes 10 de noviembre:\n- 08:00\n\n¿Cuál te va bien?';
+    expect(withoutListedTimes(es, TWO_DAYS)).toBe(
+      'Te muestro los huecos.\n\n¿Cuál te va bien?',
+    );
+  });
+
+  it('keeps a date-only heading when a time under it stays', () => {
+    const reply = 'lunes 9 de noviembre\n- 08:00\n- 13:15\n\n¿Cuál te va bien?';
+    expect(withoutListedTimes(reply, OFFERED)).toBe(
+      'lunes 9 de noviembre\n- 13:15\n\n¿Cuál te va bien?',
+    );
+  });
+
+  it('keeps a date line in prose that heads no list', () => {
+    const reply = 'Monday 9 November\nis the first day with free times.';
+    expect(withoutListedTimes(reply, OFFERED)).toBe(reply);
+  });
+
+  it('drops items that name the day by weekday and number only, with their times inline (the live es reply)', () => {
+    // Tuesday 10 November 08:00–09:00 and Wednesday 11 November 08:00.
+    const offered = offeredTimes(
+      [DAY + 24 * HOUR, DAY + 24.5 * HOUR, DAY + 25 * HOUR, DAY + 48 * HOUR],
+      MADRID,
+    );
+    const reply =
+      'El domingo 15 de noviembre está completo. Tienes huecos los próximos días:\n\n- Martes 10: 08:00, 08:30, 09:00\n- Miércoles 11: 08:00\n\n¿Cuál te va bien?';
+    expect(withoutListedTimes(reply, offered)).toBe(
+      'El domingo 15 de noviembre está completo.\n\n¿Cuál te va bien?',
+    );
+  });
+
+  it('drops a line of nothing but times and keeps a long lead-in as a sentence (the live en reply)', () => {
+    const reply =
+      'I can see free 30-minute slots tomorrow (Monday 9 November) in your time zone (Europe/Madrid):\n\n8:00 am, 8:30 am, 9:00 am\n\nWhich time suits you?';
+    expect(withoutListedTimes(reply, OFFERED)).toBe(
+      'I can see free 30-minute slots tomorrow (Monday 9 November) in your time zone (Europe/Madrid).\n\nWhich time suits you?',
+    );
+  });
+
+  it('keeps a line of times the chips do not carry', () => {
+    const reply = 'Monday 9 November:\n8:00 am, 2:15 pm\n\nWhich one?';
+    expect(withoutListedTimes(reply, OFFERED)).toBe(reply);
+  });
+
+  it('drops a listed time that only adds "(midnight)" or "(noon)"', () => {
+    // Tuesday 10 November 00:00 in Madrid.
+    const offered = offeredTimes([Date.UTC(2026, 10, 9, 23)], MADRID);
+    const reply =
+      'Free slots next week.\n\nTuesday 10 November:\n- 12:00 am (midnight)\n\nWhich time suits you?';
+    expect(withoutListedTimes(reply, offered)).toBe(
+      'Free slots next week.\n\nWhich time suits you?',
+    );
+  });
+
+  it('drops a weekday-and-number heading with no month once its times went (en, es)', () => {
+    // Tuesday 10 November 08:00 and 08:30 in Madrid.
+    const offered = offeredTimes([DAY + 24 * HOUR, DAY + 24.5 * HOUR], MADRID);
+    expect(
+      withoutListedTimes('Martes 10\n- 08:00\n- 08:30\n\n¿Cuál?', offered),
+    ).toBe('¿Cuál?');
+    expect(
+      withoutListedTimes(
+        'Tuesday 10th\n- 8:00 am\n- 8:30 am\n\nWhich one?',
+        offered,
+      ),
+    ).toBe('Which one?');
+    expect(withoutListedTimes('Martes 10\n- 08:00\n- 13:15', offered)).toBe(
+      'Martes 10\n- 13:15',
+    );
   });
 });

@@ -7,8 +7,9 @@ import {
 } from '@/lib/page-registry';
 import { PUBLIC_EMAIL } from '@/lib/site';
 import { formatDayParts, formatTimeParts, zonedDay } from '@/lib/slot-format';
-import { zonedParts } from '@/lib/slots';
+import { isoWeekday, zonedParts } from '@/lib/slots';
 import { CANARY, REFUSAL, RULES_PHRASE } from '@/server/chat/guard';
+import type { ResolvedDay } from '@/server/chat/intent';
 import { buildKnowledge } from '@/server/chat/knowledge';
 
 // TODO(albert): review the assistant's rules and tone
@@ -66,6 +67,13 @@ type Prompt = {
     noOffice: (booking: boolean) => string;
     // Added when the message names a product the tool list does not.
     unlisted: (name: string, answer: string) => string;
+    // The single day the visitor's words name, worked out by the website.
+    means: (label: string, key: string) => string;
+    // Several days the visitor's words name, already listed.
+    several: (list: string) => string;
+    // Today's and tomorrow's dates, beside any day the visitor names.
+    todayTomorrow: (today: string, tomorrow: string) => string;
+    and: string;
   };
 };
 
@@ -124,6 +132,13 @@ const EN: Prompt = {
       `It names no office: never name a city, country or office it does not name, and offer ${booking ? 'a call' : 'the contact form'} or ${PUBLIC_EMAIL}.`,
     unlisted: (name, answer) =>
       `${name} is not in our tool list. Say: "${answer}" Never say we work with ${name}.`,
+    means: (label, key) =>
+      `The day the visitor means is ${label} (${key}); use that date, never another.`,
+    several: (list) =>
+      `The visitor asks about these days: ${list}. Use those dates.`,
+    todayTomorrow: (today, tomorrow) =>
+      `Today is ${today} and tomorrow is ${tomorrow}.`,
+    and: 'and',
   },
 };
 
@@ -182,6 +197,13 @@ const ES: Prompt = {
       `No nombra ninguna oficina: no nombres ninguna ciudad, país u oficina que no nombre, y ofrece ${booking ? 'una llamada' : 'el formulario de contacto'} o ${PUBLIC_EMAIL}.`,
     unlisted: (name, answer) =>
       `${name} no está en nuestra lista de herramientas. Di: «${answer}» No digas nunca «Sí, trabajamos con ${name}».`,
+    means: (label, key) =>
+      `El día al que se refiere el visitante es el ${label} (${key}); usa esa fecha y ninguna otra.`,
+    several: (list) =>
+      `El visitante pregunta por estos días: ${list}. Usa esas fechas.`,
+    todayTomorrow: (today, tomorrow) =>
+      `Hoy es ${today} y mañana es ${tomorrow}.`,
+    and: 'y',
   },
 };
 
@@ -280,7 +302,66 @@ export type Turn = {
   // A product the message names that the official tool list does not, and
   // what to say about it (in the reply language, with the call or contact offer).
   unlisted?: { name: string; answer: string } | null;
+  // An availability turn (booking published, the visitor asks about free
+  // times): it gets today and tomorrow, and the days the message names
+  // ("el domingo", "¿lunes o martes?"), resolved, in date order.
+  availability?: boolean;
+  days?: readonly ResolvedDay[];
 };
+
+// "Sunday 15 November 2026" / "domingo 15 de noviembre de 2026", hand-formatted.
+function dayLabel(locale: Locale, day: ResolvedDay): string {
+  const name = formatDayParts(locale, { ...day, hour: 0, minute: 0 });
+  return locale === 'en' ? `${name} ${day.year}` : `${name} de ${day.year}`;
+}
+
+// "A and B", "A, B and C" / "A y B".
+function listOf(items: readonly string[], and: string): string {
+  const last = items.at(-1) ?? '';
+  return items.length < 2
+    ? last
+    : `${items.slice(0, -1).join(', ')} ${and} ${last}`;
+}
+
+// The availability line: the day or days the visitor means, then today and
+// tomorrow, so "mañana" is never mistaken for another day.
+function daysLine(
+  language: Locale,
+  days: readonly ResolvedDay[],
+  now: number,
+  timeZone: string,
+): string {
+  const { turn } = PROMPTS[language];
+  const today = zonedParts(now, timeZone);
+  const next = new Date(Date.UTC(today.year, today.month - 1, today.day + 1));
+  const tomorrow = {
+    year: next.getUTCFullYear(),
+    month: next.getUTCMonth() + 1,
+    day: next.getUTCDate(),
+  };
+  const when = turn.todayTomorrow(
+    formatDayParts(language, today),
+    formatDayParts(language, {
+      ...tomorrow,
+      weekday: isoWeekday(tomorrow),
+      hour: 0,
+      minute: 0,
+    }),
+  );
+  const [only] = days;
+  const named =
+    days.length === 1 && only !== undefined
+      ? turn.means(dayLabel(language, only), only.key)
+      : days.length > 1
+        ? turn.several(
+            listOf(
+              days.map((day) => `${dayLabel(language, day)} (${day.key})`),
+              turn.and,
+            ),
+          )
+        : null;
+  return named === null ? when : `${named} ${when}`;
+}
 
 export function turnContext({
   locale,
@@ -293,6 +374,8 @@ export function turnContext({
   topic = null,
   booking = false,
   unlisted = null,
+  availability = false,
+  days = [],
 }: Turn): string {
   const { turn, turnHeader } = PROMPTS[locale];
   const id = pageForSlug(splitLocale(page.split(/[?#]/)[0] ?? page).rest);
@@ -312,5 +395,6 @@ export function turnContext({
     ...(unlisted === null
       ? []
       : [`- ${turn.unlisted(unlisted.name, unlisted.answer)}`]),
+    ...(availability ? [`- ${daysLine(language, days, now, timeZone)}`] : []),
   ].join('\n');
 }

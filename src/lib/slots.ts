@@ -111,7 +111,8 @@ function addDays(date: LocalDate, days: number): LocalDate {
   };
 }
 
-function isoWeekday(date: LocalDate): number {
+// The ISO weekday (Monday is 1) of a calendar date.
+export function isoWeekday(date: LocalDate): number {
   const day = new Date(
     Date.UTC(date.year, date.month - 1, date.day),
   ).getUTCDay();
