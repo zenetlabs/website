@@ -85,7 +85,7 @@ export const PAGES: Record<
   home: { slugs: { en: '/', es: '/' }, lastmod: '2026-11-06' },
   services: {
     slugs: { en: '/services', es: '/servicios' },
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   diagnostic: {
     slugs: {
@@ -95,7 +95,7 @@ export const PAGES: Record<
     kind: 'service',
     parent: 'services',
     service: 'diagnostic',
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   automation: {
     slugs: {
@@ -105,7 +105,7 @@ export const PAGES: Record<
     kind: 'service',
     parent: 'services',
     service: 'integration',
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   integrations: {
     slugs: {
@@ -115,14 +115,14 @@ export const PAGES: Record<
     kind: 'service',
     parent: 'services',
     service: 'integration',
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   agents: {
     slugs: { en: '/services/ai-agents', es: '/servicios/agentes-de-ia' },
     kind: 'service',
     parent: 'services',
     service: 'agent',
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   software: {
     slugs: {
@@ -132,7 +132,7 @@ export const PAGES: Record<
     kind: 'service',
     parent: 'services',
     service: 'web',
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   training: {
     slugs: {
@@ -142,7 +142,7 @@ export const PAGES: Record<
     kind: 'service',
     parent: 'services',
     service: 'training',
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   maintenance: {
     slugs: {
@@ -152,57 +152,57 @@ export const PAGES: Record<
     kind: 'service',
     parent: 'services',
     service: 'maintenance',
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   holdedPrestashop: {
     slugs: { es: '/servicios/integraciones/holded-prestashop' },
     route: '/services/integrations/holded-prestashop',
     parent: 'integrations',
     service: 'integration',
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   holdedWoocommerce: {
     slugs: { es: '/servicios/integraciones/holded-woocommerce' },
     route: '/services/integrations/holded-woocommerce',
     parent: 'integrations',
     service: 'integration',
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   holdedHubspot: {
     slugs: { es: '/servicios/integraciones/holded-hubspot' },
     route: '/services/integrations/holded-hubspot',
     parent: 'integrations',
     service: 'integration',
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   verifactu: {
     slugs: { es: '/verifactu-integracion' },
     route: '/verifactu',
     service: 'integration',
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   travelAgencies: {
     slugs: { es: '/sectores/agencias-de-viaje' },
     route: '/industries/travel-agencies',
     service: 'integration',
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   viatsyCase: {
     slugs: { en: '/case-studies/viatsy', es: '/casos/viatsy' },
     parent: 'cases',
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   cases: {
     slugs: { en: '/case-studies', es: '/casos' },
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   contact: {
     slugs: { en: '/contact', es: '/contacto' },
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   pricing: {
     slugs: { en: '/pricing', es: '/precios' },
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   calculator: {
     slugs: { en: '/pricing/calculator', es: '/precios/calculadora' },
@@ -212,7 +212,7 @@ export const PAGES: Record<
   },
   about: {
     slugs: { en: '/about', es: '/sobre-nosotros' },
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-09',
   },
   book: {
     slugs: { en: '/book', es: '/reservar' },

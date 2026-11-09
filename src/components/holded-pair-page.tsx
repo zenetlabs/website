@@ -1,7 +1,7 @@
 import { Faq } from '@/components/faq';
+import { FlowTileMark } from '@/components/offer-system';
 import {
   Breadcrumb,
-  DataTable,
   FactsHero,
   GetStarted,
   RelatedLinks,
@@ -10,13 +10,80 @@ import {
 import { Section } from '@/components/section';
 import { StickyZone } from '@/components/sticky-cta';
 import type {
+  FlowTool,
   HoldedPairContent,
   Services,
   ServicesHubContent,
+  SyncRow,
 } from '@/content/types';
 import { hubNames } from '@/lib/crumb-names';
 import type { Locale } from '@/lib/i18n';
 import type { HoldedPageId } from '@/lib/page-registry';
+
+// The shop on the left, Holded on the right, and the way each datum travels
+// between them. The legend and the arrows are drawn; the table says it all.
+function SyncTable({
+  shop,
+  sync,
+}: {
+  shop: HoldedPairContent['shop'];
+  sync: HoldedPairContent['sync'];
+}) {
+  const { columns, rows } = sync;
+  return (
+    <>
+      <p aria-hidden="true" className="sync-pair">
+        <span className="sync-pair-end">
+          <FlowTileMark tile={shop.tool} />
+          {shop.name}
+        </span>
+        <span className="sync-pair-wire" />
+        <span className="sync-pair-end">
+          Holded
+          <FlowTileMark tile="holded" />
+        </span>
+      </p>
+      <table aria-labelledby="sync-title" className="data-table sync-table">
+        <thead>
+          <tr>
+            {[columns.data, columns.direction, columns.when].map((column) => (
+              <th key={column} scope="col">
+                {column}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <th scope="row">{row.data}</th>
+              <td data-label={columns.direction} className="sync-cell">
+                <Lane row={row} shop={shop.tool} />
+                <span className="sync-direction">{row.direction}</span>
+              </td>
+              <td data-label={columns.when}>{row.when}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </>
+  );
+}
+
+function Lane({ row, shop }: { row: SyncRow; shop: FlowTool }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="sync-lane"
+      data-to={row.to}
+      data-both={row.both ? '' : undefined}
+    >
+      <FlowTileMark tile={shop} className="sync-end" />
+      <span className="sync-wire" />
+      <FlowTileMark tile="holded" className="sync-end" />
+    </span>
+  );
+}
 
 export function HoldedPairPage({
   page,
@@ -32,7 +99,7 @@ export function HoldedPairPage({
   services: Services;
 }) {
   const names = hubNames(hub);
-  const { columns, rows, note, ...section } = copy.sync;
+  const { note, ...section } = copy.sync;
 
   return (
     <>
@@ -55,15 +122,7 @@ export function HoldedPairPage({
       />
       <StickyZone locale={locale}>
         <Section id="sync" title={section.title} lead={section.lead}>
-          <DataTable
-            labelledBy="sync-title"
-            columns={[columns.data, columns.direction, columns.when]}
-            rows={rows.map((row) => ({
-              id: row.id,
-              cells: [row.data, row.direction, row.when],
-            }))}
-            iconColumn={1}
-          />
+          <SyncTable shop={copy.shop} sync={copy.sync} />
           <p className="mt-6 max-w-[60ch] text-ui-s text-muted-fg">{note}</p>
         </Section>
         <Section id="edge-cases" title={copy.edgeCases.title} variant="tint">

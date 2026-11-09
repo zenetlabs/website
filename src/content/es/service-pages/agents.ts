@@ -73,7 +73,11 @@ export const agents = {
     },
     caption: 'Una consulta, de la bandeja de entrada a la respuesta',
     steps: [
-      { actor: 'tool', label: 'Llega una consulta por correo o WhatsApp' },
+      {
+        actor: 'tool',
+        label: 'Llega una consulta por correo o WhatsApp',
+        tool: 'whatsapp',
+      },
       {
         actor: 'agent',
         label: 'El agente busca lo que necesita y redacta la respuesta',
@@ -124,6 +128,7 @@ export const agents = {
   // TODO(albert): confirm the case
   case: {
     page: 'viatsyCase',
+    company: 'viatsy',
     title: { before: 'Primeras respuestas en ', emphasis: 'Viatsy', after: '' },
     text: 'Viatsy recibe consultas de viaje por varios canales, y cada una necesita una respuesta a medida. Un agente redacta la primera respuesta y la propuesta, y el equipo las revisa antes de enviar nada.',
     points: [

@@ -59,6 +59,29 @@ export const maintenance = {
       },
     ],
   },
+  flow: {
+    title: {
+      before: 'Cuando algo falla, ',
+      emphasis: 'paso a paso',
+      after: '',
+    },
+    caption: 'Una herramienta cambia y la automatización sigue funcionando',
+    steps: [
+      {
+        actor: 'tool',
+        label: 'Cambia una herramienta o falla un paso',
+        tool: 'holded',
+      },
+      {
+        actor: 'agent',
+        label: 'La automatización reintenta y nos avisa',
+      },
+      {
+        actor: 'human',
+        label: 'Lo arreglamos y lo revisamos cada mes',
+      },
+    ],
+  },
   how: {
     title: {
       before: 'Cómo funciona un plan ',
@@ -101,6 +124,7 @@ export const maintenance = {
       'Solicitudes de pago y recordatorios enviados a su debido tiempo',
     ],
     page: 'viatsyCase',
+    company: 'viatsy',
   },
   faq: {
     title: {

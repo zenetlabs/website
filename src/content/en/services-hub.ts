@@ -1,4 +1,5 @@
 import { casesName, contactName, viatsyCaseName } from '@/content/en/case-name';
+import { diagnosticPlan } from '@/content/en/diagnostic-plan';
 import { services } from '@/content/en/services';
 import type { ServicesHubContent } from '@/content/types';
 import { formatPriceSummary } from '@/lib/money';
@@ -72,6 +73,7 @@ export const servicesHub = {
   },
   startHere: 'Start here',
   book: 'Book the diagnostic',
+  plan: { title: 'What the diagnostic hands you', items: diagnosticPlan },
   also: {
     title: 'Maintenance and growth',
     lead: 'Once your project is live, maintenance keeps it working, and growth work helps the right customers find you.',

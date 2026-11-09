@@ -62,7 +62,7 @@ export function Section({
           <EmphasisTitle parts={title} />
         </h2>
         {lead ? <p className={`mt-5 md:mt-6 ${LEAD}`}>{lead}</p> : null}
-        <div className="mt-6 md:mt-14">{children}</div>
+        <div className="mt-5 md:mt-14">{children}</div>
       </Container>
     </section>
   );

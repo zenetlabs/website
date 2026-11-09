@@ -107,7 +107,20 @@ export type Metric = {
 export type PageLink = { page: PageId; label: string };
 
 export type FlowActor = 'tool' | 'agent' | 'human';
-export type FlowStep = { actor: FlowActor; label: string };
+// The customer's tools drawn in a flow figure, in their own colours.
+export type FlowTool =
+  | 'shopify'
+  | 'xero'
+  | 'sheets'
+  | 'hubspot'
+  | 'gmail'
+  | 'whatsapp'
+  | 'woocommerce'
+  | 'prestashop'
+  | 'holded';
+// A tile in a flow row: a tool, a custom app, our agent or the person.
+export type FlowTile = FlowTool | 'app' | 'agent' | 'human';
+export type FlowStep = { actor: FlowActor; label: string; tool?: FlowTool };
 export type CaseFlow = { caption: string; steps: readonly FlowStep[] };
 export type FlowSectionCopy = SectionCopy & CaseFlow;
 export type ApprovalCopy = {
@@ -320,6 +333,7 @@ export type ContactPageContent = {
   meta: PageMeta;
   title: TitleParts;
   lead: string;
+  slots: DeskCopy['slots'];
   form: HomeContent['contact'];
   next: ProcessCopy;
 };
@@ -329,6 +343,7 @@ export type CasesHubContent = {
   title: TitleParts;
   lead: string;
   cases: HomeContent['cases'];
+  companies: { title: string; items: CompanyCopy };
   cta: { title: string; text: string; button: string };
 };
 
@@ -357,6 +372,8 @@ export type ServicePageContent = {
     text: string;
     points: readonly string[];
     page?: PageId;
+    // The company the case runs at, named by its logo
+    company?: PortfolioKey;
   };
   faq: SectionCopy & { items: readonly FaqItem[] };
   related: readonly ServicePageId[];
@@ -368,6 +385,9 @@ export type SyncRow = {
   id: string;
   data: string;
   direction: string;
+  // Where the data goes; `both` when it may also flow back
+  to: 'holded' | 'shop';
+  both?: true;
   when: string;
 };
 
@@ -375,6 +395,8 @@ export type SyncColumns = { data: string; direction: string; when: string };
 
 export type HoldedPairContent = {
   meta: LandingMeta;
+  // The other side of the pair, as the mapping names and draws it
+  shop: { name: string; tool: FlowTool };
   hero: PageHero;
   facts: PageFacts;
   cta: PageCta;
@@ -390,11 +412,14 @@ export type HoldedPairContent = {
 
 export type VerifactuPageContent = {
   meta: LandingMeta;
+  // The marks of the timeline, from `verifactu.ts`
+  dates: { producersFrom: string; announcedTo: string };
   hero: PageHero;
   facts: PageFacts;
   cta: PageCta;
   deadlines: SectionCopy & {
-    columns: { who: string; date: string };
+    // Heads the timeline: the dates in force plus the announced postponement
+    label: string;
     rows: readonly { id: 'companies' | 'others'; who: string; date: string }[];
     announced: string;
     producers: string;
@@ -473,21 +498,23 @@ export type ServicePageLabels = {
   actors: Record<FlowActor, string>;
 };
 
+// The service pages the hub shows as cards (the diagnostic is its ticket and
+// maintenance sits with the care plans).
+export type HubCardPage = Exclude<ServicePageId, 'diagnostic' | 'maintenance'>;
+
 export type ServicesHubContent = {
   labels: ServicePageLabels;
   meta: PageMeta;
   title: TitleParts;
   lead: string;
-  cards: Record<
-    Exclude<ServicePageId, 'diagnostic' | 'maintenance'>,
-    { name: string; summary: string }
-  > &
+  cards: Record<HubCardPage, { name: string; summary: string }> &
     Record<'diagnostic' | 'maintenance', { name: string }>;
   landing: Partial<
     Record<LandingPageId | 'viatsyCase' | 'cases' | 'contact', string>
   >;
   startHere: string;
   book: string;
+  plan: { title: string; items: readonly string[] };
   also: { title: string; lead: string };
   start: { title: string; text: string; button: string };
   pricing: string;

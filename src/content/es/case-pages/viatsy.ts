@@ -102,6 +102,7 @@ export const viatsyCase = {
         actor: 'tool',
         label:
           'Un proveedor envía una confirmación por correo o como texto pegado',
+        tool: 'gmail',
       },
       {
         actor: 'agent',

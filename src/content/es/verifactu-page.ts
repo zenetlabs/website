@@ -17,6 +17,7 @@ const {
 } = verifactuDates;
 
 export const verifactuPage = {
+  dates: { producersFrom, announcedTo },
   meta: {
     metaTitle: 'Integración con Verifactu para pymes | Zenet Labs',
     description:
@@ -45,7 +46,7 @@ export const verifactuPage = {
   },
   deadlines: {
     title: { before: 'Quién debe cumplir ', emphasis: 'y cuándo', after: '' },
-    columns: { who: 'Quién', date: 'Fecha según la norma en vigor' },
+    label: 'Calendario: la norma en vigor y el aplazamiento anunciado',
     rows: [
       {
         id: 'companies',
@@ -58,7 +59,7 @@ export const verifactuPage = {
         date: `antes del ${others}`,
       },
     ],
-    announced: `El ${announcedOn}, el Ministerio de Hacienda anunció en una nota que modificará el reglamento para que estas obligaciones se apliquen a partir de ${announcedTo}, a la vez que la factura electrónica obligatoria entre empresas. Hasta que esa modificación se publique en el BOE, las fechas que cuentan son las de la tabla.`,
+    announced: `El ${announcedOn}, el Ministerio de Hacienda anunció en una nota que modificará el reglamento para que estas obligaciones se apliquen a partir de ${announcedTo}, a la vez que la factura electrónica obligatoria entre empresas. Hasta que esa modificación se publique en el BOE, las que cuentan son las fechas de la norma en vigor.`,
     // TODO(albert): confirm the producers' date
     producers: `Los fabricantes de programas de facturación ya deben ofrecerlos adaptados desde el ${producersFrom}.`,
     exclusionsTitle: 'No te afecta si…',

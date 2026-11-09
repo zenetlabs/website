@@ -45,3 +45,11 @@ export const PORTFOLIO = [
 }[];
 
 export type PortfolioKey = (typeof PORTFOLIO)[number]['key'];
+
+export type PortfolioEntry = (typeof PORTFOLIO)[number];
+
+export function portfolioOf(key: PortfolioKey): PortfolioEntry {
+  const found = PORTFOLIO.find((entry) => entry.key === key);
+  if (!found) throw new Error(key);
+  return found;
+}

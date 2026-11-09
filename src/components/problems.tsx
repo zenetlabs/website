@@ -1,7 +1,7 @@
-import { FlowRow, type FlowTile } from '@/components/flow-row';
+import { FlowRow } from '@/components/offer-system';
 import { Section } from '@/components/section';
 import { H3 } from '@/components/ui';
-import type { HomeContent } from '@/content/types';
+import type { FlowTile, HomeContent } from '@/content/types';
 
 type JobId = HomeContent['problems']['items'][number]['id'];
 

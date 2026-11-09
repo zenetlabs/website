@@ -15,6 +15,13 @@ describe('FlowDiagram', () => {
         ]}
         actors={ACTORS}
         caption="Caption"
+        approval={{
+          title: 'Needs your approval',
+          detail: 'Detail',
+          approve: 'Approve',
+          hold: 'Hold',
+          caption: 'Example',
+        }}
       />,
     );
     const items = screen.getAllByRole('listitem');
@@ -24,8 +31,28 @@ describe('FlowDiagram', () => {
     expect(items[2]).toHaveTextContent('A person');
     expect(container.querySelector('ol')).not.toBeNull();
     expect(screen.getByText('Caption').tagName).toBe('FIGCAPTION');
-    for (const icon of container.querySelectorAll('.icon')) {
-      expect(icon).toHaveAttribute('aria-hidden', 'true');
+    for (const tile of container.querySelectorAll('.flow-tile')) {
+      expect(tile).toHaveAttribute('aria-hidden', 'true');
     }
+    expect(items[2]).toHaveTextContent('Needs your approval');
+    expect(items[0]).not.toHaveTextContent('Needs your approval');
+  });
+
+  it('draws a named tool by its own mark, and a step without one as an app', () => {
+    const { container } = render(
+      <FlowDiagram
+        steps={[
+          { actor: 'tool', label: 'Mail', tool: 'gmail' },
+          { actor: 'tool', label: 'Portal' },
+          { actor: 'tool', label: 'Books', tool: 'holded' },
+        ]}
+        actors={ACTORS}
+        caption="Caption"
+      />,
+    );
+    const tiles = [...container.querySelectorAll('.flow-tile')];
+    expect(tiles[0]?.getAttribute('style')).toContain('/icons/tools/gmail.svg');
+    expect(tiles[1]).toHaveClass('icon-app');
+    expect(tiles[2]).toHaveClass('icon-ledger');
   });
 });

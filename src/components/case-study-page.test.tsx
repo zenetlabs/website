@@ -100,19 +100,20 @@ describe.each(locales)('CaseStudyPage (%s)', (locale) => {
 });
 
 describe.each(locales)('CaseStudyPage flow (%s)', (locale) => {
-  it('draws the supplier-confirmation flow between built and operations', () => {
+  it('draws the supplier-confirmation flow in the header, beside the title', () => {
     const { container } = view(locale);
     const copy = VIATSY[locale];
-    const steps = [...container.querySelectorAll('#flow ol.flow > li')];
+    const steps = [...container.querySelectorAll('header #flow ol > li')];
     expect(steps).toHaveLength(copy.flow.steps.length);
     expect(steps.map((step) => step.getAttribute('data-actor'))).toEqual(
       copy.flow.steps.map((step) => step.actor),
     );
+    expect(container.querySelector('header .logo')).not.toBeNull();
+    expect(container.querySelector('header')).toHaveTextContent('Viatsy');
     const ids = [...container.querySelectorAll('section[id]')].map(
       (section) => section.id,
     );
-    expect(ids.indexOf('flow')).toBe(ids.indexOf('built') + 1);
-    expect(ids.indexOf('operations')).toBe(ids.indexOf('flow') + 1);
+    expect(ids.indexOf('operations')).toBe(ids.indexOf('built') + 1);
     expect(container.querySelectorAll('[data-sticky-cta]')).toHaveLength(1);
   });
 });

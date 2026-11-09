@@ -61,6 +61,26 @@ export const training = {
       },
     ],
   },
+  flow: {
+    title: { before: 'A workshop, ', emphasis: 'step by step', after: '' },
+    caption: 'One workshop, on your own process',
+    steps: [
+      {
+        actor: 'tool',
+        label:
+          'We start from a task your team does today, such as answering email',
+        tool: 'gmail',
+      },
+      {
+        actor: 'agent',
+        label: 'The team builds an assistant for it during the workshop',
+      },
+      {
+        actor: 'human',
+        label: 'Monthly mentoring reviews what the team builds',
+      },
+    ],
+  },
   how: {
     title: {
       before: 'From one workshop to ',

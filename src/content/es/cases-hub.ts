@@ -1,4 +1,5 @@
 import { cases } from '@/content/es/cases';
+import { companies } from '@/content/es/companies';
 import type { CasesHubContent } from '@/content/types';
 
 export const casesHub = {
@@ -25,6 +26,7 @@ export const casesHub = {
     actors: { tool: 'Tus herramientas', agent: 'Agente', human: 'Una persona' },
     items: cases,
   },
+  companies: { title: 'Todas las empresas que llevamos', items: companies },
   cta: {
     title: 'Empieza por el diagnóstico',
     text: 'Cuéntanos qué hace tu equipo a mano y te responderemos personalmente.',

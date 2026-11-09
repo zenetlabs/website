@@ -2,6 +2,7 @@ import { assistantIntro } from '@/content/en/assistant-intro';
 import { cases } from '@/content/en/cases';
 import { companies } from '@/content/en/companies';
 import { diagnosticPlan } from '@/content/en/diagnostic-plan';
+import { slotsCopy } from '@/content/en/slots';
 import type { HomeContent } from '@/content/types';
 
 export const home = {
@@ -31,17 +32,7 @@ export const home = {
       text: 'Prefer to talk? Our voice assistant is an AI, not a person: it can answer questions and book a call.',
       button: 'Call the agent',
     },
-    slots: {
-      title: 'Book a 30-minute call',
-      meta: '30 minutes on Google Meet',
-      group: 'Next free times',
-      timesIn: 'Times in {zone}',
-      seeAll: 'See all times',
-      seeAvailable: 'See available times',
-      unavailable:
-        "Online booking isn't available right now. Send us a message instead and we will suggest a time.",
-      message: 'Send a message',
-    },
+    slots: slotsCopy,
     handoff: 'You work with the person who builds it.',
   },
   companies: {

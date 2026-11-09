@@ -118,8 +118,8 @@ const NEEDLES: Record<Kind, Partial<Record<Locale, string>>> = {
     es: 'En todos los casos, los agentes preparan',
   },
   contact: {
-    en: 'Send the form or write to us',
-    es: 'Envía el formulario o escríbenos',
+    en: 'Tell us which tools you use. A person',
+    es: 'Cuéntanos qué herramientas usas. Una persona',
   },
   diagnostic: {
     en: 'Do we need to know what to automate',

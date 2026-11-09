@@ -2,6 +2,7 @@ import { assistantIntro } from '@/content/es/assistant-intro';
 import { cases } from '@/content/es/cases';
 import { companies } from '@/content/es/companies';
 import { diagnosticPlan } from '@/content/es/diagnostic-plan';
+import { slotsCopy } from '@/content/es/slots';
 import { verifactuDates } from '@/content/es/verifactu';
 import type { HomeContent } from '@/content/types';
 
@@ -32,17 +33,7 @@ export const home = {
       text: '¿Prefieres hablar? Nuestro asistente de voz es una IA, no una persona: responde tus dudas y te reserva una llamada.',
       button: 'Llamar al agente',
     },
-    slots: {
-      title: 'Reserva una llamada de 30 minutos',
-      meta: '30 minutos por Google Meet',
-      group: 'Próximas horas libres',
-      timesIn: 'Hora de {zone}',
-      seeAll: 'Ver todas las horas',
-      seeAvailable: 'Ver horas disponibles',
-      unavailable:
-        'La reserva en línea no está disponible ahora mismo. Envíanos un mensaje y te proponemos una hora.',
-      message: 'Enviar un mensaje',
-    },
+    slots: slotsCopy,
     handoff: 'Trabajas con quien lo construye.',
   },
   companies: {

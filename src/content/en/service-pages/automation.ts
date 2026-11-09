@@ -68,7 +68,7 @@ export const automation = {
     title: { before: 'A process, ', emphasis: 'step by step', after: '' },
     caption: 'A supplier invoice, from inbox to ledger',
     steps: [
-      { actor: 'tool', label: 'An invoice arrives by email' },
+      { actor: 'tool', label: 'An invoice arrives by email', tool: 'gmail' },
       {
         actor: 'agent',
         label:
@@ -105,6 +105,7 @@ export const automation = {
   // TODO(albert): confirm the case
   case: {
     page: 'viatsyCase',
+    company: 'viatsy',
     title: {
       before: 'How ',
       emphasis: 'Viatsy',

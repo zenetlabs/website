@@ -1,4 +1,5 @@
 import { cases } from '@/content/en/cases';
+import { companies } from '@/content/en/companies';
 import type { CasesHubContent } from '@/content/types';
 
 export const casesHub = {
@@ -25,6 +26,7 @@ export const casesHub = {
     actors: { tool: 'Your tools', agent: 'Agent', human: 'A person' },
     items: cases,
   },
+  companies: { title: 'Every company we run', items: companies },
   cta: {
     title: 'Start with the diagnostic',
     text: 'Tell us what your team does by hand and we will reply personally.',

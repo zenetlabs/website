@@ -231,12 +231,6 @@
 }
 
 @layer components {
-  .dot-grid {
-    background-image: radial-gradient(var(--hairline) 1px, transparent 1px);
-    background-size: 24px 24px;
-    mask-image: linear-gradient(to bottom, black 30%, transparent);
-  }
-
   .icon,
   .tick-item::before {
     display: inline-block;
@@ -269,20 +263,17 @@
     --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14'/%3E%3Cpath d='M5 12h14'/%3E%3C/svg%3E");
   }
 
+  .icon-arrow,
+  .related-links a {
+    --icon-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E");
+  }
+
   .icon-arrow {
-    --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E");
+    --icon: var(--icon-arrow);
   }
 
   .icon-human {
     --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 12a4 4 0 100-8 4 4 0 000 8z'/%3E%3Cpath d='M4 20c0-4 3.6-6 8-6s8 2 8 6'/%3E%3C/svg%3E");
-  }
-
-  .icon-agent {
-    --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z'/%3E%3C/svg%3E");
-  }
-
-  .icon-tool {
-    --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 2v6M15 2v6'/%3E%3Cpath d='M6 8h12v4a6 6 0 01-12 0z'/%3E%3Cpath d='M12 18v4'/%3E%3C/svg%3E");
   }
 
   .icon-calendar {
@@ -305,6 +296,10 @@
     --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 9h18M7 6.5h.01M10 6.5h.01'/%3E%3C/svg%3E");
   }
 
+  .icon-ledger {
+    --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5zM5 19.5A1.5 1.5 0 0 0 6.5 21H19M9 7.5h6M9 11h6'/%3E%3C/svg%3E");
+  }
+
   /* The home hero: copy on 5 columns, the desk on 7, one screen tall from lg */
   .hero-grid {
     @apply grid grid-cols-[minmax(0,1fr)] gap-8 pt-9 pb-10 md:gap-10 md:py-16 lg:min-h-[calc(100svh-var(--header-h))] lg:grid-cols-12 lg:items-center lg:gap-6 lg:py-14;
@@ -319,7 +314,7 @@
   }
 
   .plan-list {
-    @apply mt-4 grid gap-2.5 text-ui-s md:gap-3 md:text-ui-m;
+    @apply mt-3 grid gap-2 text-ui-s md:mt-4 md:gap-3 md:text-ui-m;
   }
 
   .hero-fact {
@@ -338,8 +333,10 @@
     @apply mt-6 text-ui-s text-muted-fg max-sm:hidden;
   }
 
-  .price-from {
-    @apply block text-ui-s font-normal text-muted-fg;
+  /* A price in parts: large on a card, smaller in a tier list */
+  .price-from,
+  .price-unit {
+    @apply text-ui-s font-normal text-muted-fg;
   }
 
   .door-text {
@@ -347,7 +344,7 @@
   }
 
   .offer-head {
-    @apply grid gap-5 lg:grid-cols-12 lg:items-end;
+    @apply grid gap-4 md:gap-5 lg:grid-cols-12 lg:items-end;
   }
 
   .job-check {
@@ -368,7 +365,7 @@
 
   .timeline {
     display: grid;
-    gap: 1.25rem;
+    gap: 1rem;
     counter-reset: step;
   }
 
@@ -409,76 +406,22 @@
   }
 
   @media (min-width: 768px) {
-    .timeline:not(.timeline-stack) {
+    .timeline {
       grid-template-columns: repeat(4, 1fr);
       gap: 2rem;
     }
 
-    .timeline:not(.timeline-stack) > li {
+    .timeline > li {
       padding-left: 0;
       padding-top: 2.75rem;
     }
 
-    .timeline:not(.timeline-stack) > li::before {
+    .timeline > li::before {
       left: 2rem;
       right: -2rem;
       top: 0.8125rem;
       bottom: auto;
       width: auto;
-      height: 1px;
-    }
-  }
-
-  .flow {
-    display: grid;
-    gap: 0.875rem;
-  }
-
-  .flow > li {
-    position: relative;
-    background-color: var(--actor-soft);
-  }
-
-  .flow .icon {
-    color: var(--actor);
-  }
-
-  .flow > [data-actor="tool"] {
-    --actor: var(--tool);
-    --actor-soft: var(--tool-soft);
-  }
-
-  .flow > [data-actor="agent"] {
-    --actor: var(--agent);
-    --actor-soft: var(--agent-soft);
-  }
-
-  .flow > [data-actor="human"] {
-    --actor: var(--human);
-    --actor-soft: var(--human-soft);
-  }
-
-  .flow > li + li::before {
-    content: "";
-    position: absolute;
-    left: 1.25rem;
-    top: -0.875rem;
-    width: 1px;
-    height: 0.875rem;
-    background: var(--line-strong);
-  }
-
-  @media (min-width: 768px) {
-    .flow {
-      grid-auto-flow: column;
-      grid-auto-columns: 1fr;
-      gap: 1.75rem;
-    }
-
-    .flow > li + li::before {
-      left: -1.75rem;
-      top: 50%;
-      width: 1.75rem;
       height: 1px;
     }
   }
@@ -516,22 +459,6 @@
 
   .ledger-text {
     @apply mt-1.5 text-ui-m md:text-base;
-  }
-
-  .service-row {
-    @apply flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-4 md:grid md:grid-cols-12 md:gap-x-8 md:py-7;
-  }
-
-  .service-summary {
-    @apply order-3 basis-full text-ui-m text-fg-soft md:order-none md:col-span-5 md:text-base;
-  }
-
-  .service-row-dense {
-    @apply py-2.5 md:py-7;
-  }
-
-  .service-row-dense .service-summary {
-    @apply line-clamp-1 md:line-clamp-none;
   }
 
   .company-link {
@@ -603,12 +530,98 @@
     }
   }
 
-  .facts {
-    @apply mt-8 grid grid-cols-2 gap-x-6 gap-y-6 border-t border-hairline pt-6 md:mt-10 lg:grid-cols-4 lg:gap-x-8;
+  /* Inner page heroes: copy and actions on 7 columns, the page's figure on 5 */
+  .page-hero {
+    @apply grid grid-cols-[minmax(0,1fr)] gap-6 pt-4 pb-8 md:gap-10 md:pt-10 md:pb-16 lg:grid-cols-12 lg:items-start lg:gap-x-6 lg:gap-y-12 lg:py-16;
   }
 
-  .fact-highlight {
-    @apply -m-3 rounded-input bg-highlight-soft p-3;
+  /* The hero copy has 7 columns beside its figure: long titles stop at 60px */
+  .page-hero h1 {
+    font-size: clamp(2.5rem, 1.7rem + 3.2vw, 3.75rem);
+  }
+
+  .page-hero-actions {
+    @apply mt-5 flex flex-wrap items-center gap-x-8 gap-y-3 md:mt-8 md:gap-y-4;
+  }
+
+  .facts {
+    @apply grid grid-cols-2 gap-x-6 gap-y-4 border-t border-line-strong pt-5 md:gap-y-5 md:pt-6 lg:grid-cols-4 lg:gap-x-8;
+  }
+
+  .fact-value {
+    @apply mt-1 text-ui-s text-fg-soft md:text-ui-m;
+  }
+
+  [data-highlight] > .fact-value {
+    @apply font-semibold text-fg;
+  }
+
+  /* Below lg the facts run as the strip does; from lg they are the hero's card */
+  .facts-card {
+    @apply grid grid-cols-2 gap-x-6 gap-y-5 border-t border-line-strong pt-6 lg:grid-cols-1 lg:gap-4 lg:rounded-card lg:border lg:border-hairline lg:bg-surface lg:p-7 lg:shadow-raised;
+  }
+
+  @media (min-width: 1024px) {
+    .facts-card > div + div {
+      @apply border-t border-hairline pt-4;
+    }
+
+    .facts-card [data-highlight] > .fact-value {
+      @apply text-h3 text-agent;
+    }
+  }
+
+  /* A process figure: one row per actor, tiles joined by a vertical wire */
+  /* A card from md; on a phone the steps sit straight on the hero ground */
+  .flow-figure {
+    @apply md:rounded-card md:border md:border-hairline md:bg-surface md:p-7 md:shadow-raised;
+  }
+
+  .flow-figure-flat {
+    @apply md:shadow-none;
+  }
+
+  /* A phone reads the steps straight away; the caption stays for assistive technology */
+  .flow-figure-head {
+    @apply text-ui-s font-semibold text-muted-fg max-md:sr-only;
+  }
+
+  .flow-steps {
+    @apply grid gap-3 md:mt-5 md:gap-6;
+  }
+
+  .flow-steps > li {
+    @apply relative grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 md:gap-4;
+  }
+
+  .flow-steps > li:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 2.75rem;
+    bottom: -0.625rem;
+    left: calc(1.25rem - 1px);
+    border-left: 2px dashed var(--line-strong);
+  }
+
+  @media (min-width: 768px) {
+    .flow-steps > li:not(:last-child)::after {
+      top: 3.25rem;
+      bottom: -1rem;
+      left: calc(1.5rem - 1px);
+    }
+  }
+
+  .flow-steps > li:has(+ [data-actor="human"])::after {
+    border-color: var(--human-ring);
+  }
+
+  /* On a phone the tile names the actor; the word stays for assistive technology */
+  .flow-step-actor {
+    @apply text-ui-s text-muted-fg max-md:sr-only md:pt-0.5;
+  }
+
+  .flow-step-label {
+    @apply text-ui-m font-medium max-md:pt-2 md:text-ui-l;
   }
 
   .usecase-list {
@@ -616,11 +629,41 @@
   }
 
   .usecase-list > li {
-    @apply border-b border-hairline py-5 md:py-7;
+    @apply border-b border-hairline py-3.5 md:py-7;
   }
 
+  /* Wrapped links on a phone, ruled rows with an arrow from sm */
   .related-links {
-    @apply mt-5 flex flex-wrap gap-x-8 gap-y-3 text-ui-l;
+    @apply mt-4 flex flex-wrap gap-x-6 sm:mt-5 sm:grid sm:grid-cols-2 sm:gap-x-10 sm:border-t sm:border-hairline lg:grid-cols-3;
+  }
+
+  .related-links a {
+    @apply flex min-h-11 items-center justify-between gap-2 sm:min-h-13 sm:gap-4 sm:border-b sm:border-hairline sm:py-2;
+  }
+
+  .related-links a::after {
+    content: "";
+    @apply size-4 shrink-0 bg-agent sm:size-5;
+    mask: var(--icon-arrow) center / contain no-repeat;
+  }
+
+  .case-callout {
+    @apply grid gap-5 rounded-card border border-hairline bg-surface p-4 md:gap-6 md:p-10 lg:grid-cols-12 lg:gap-x-12;
+  }
+
+  /* Five services: three in the first row, two wider ones under them */
+  @media (min-width: 1024px) {
+    .offer-row.offer-row-hub {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+
+    .offer-row-hub > li {
+      grid-column: span 2;
+    }
+
+    .offer-row-hub > li:nth-last-child(-n + 2):nth-child(n + 4) {
+      grid-column: span 3;
+    }
   }
 
   .data-table {
@@ -647,10 +690,6 @@
     }
   }
 
-  .case-item {
-    @apply flex flex-col border-t border-hairline pt-6 md:pt-8;
-  }
-
   .price-chip {
     @apply mt-2 bg-agent-soft text-ui-s font-semibold text-agent;
   }
@@ -663,26 +702,14 @@
     @apply border-b border-hairline;
   }
 
-  .logo,
-  .logo-wordmark {
-    height: var(--logo-h);
-  }
-
   .logo {
     display: block;
+    height: var(--logo-h);
     background-color: var(--fg);
     mask-image: var(--logo);
     mask-position: left center;
     mask-repeat: no-repeat;
     mask-size: contain;
-  }
-
-  .logo-wordmark {
-    display: flex;
-    align-items: center;
-    font-size: var(--logo-h);
-    font-weight: 650;
-    line-height: 1;
   }
 
   @supports selector(::details-content) {
@@ -1073,7 +1100,16 @@
 
   .flow-tile[data-actor="app"]::before,
   .flow-tile[data-actor="human"]::before {
-    display: none;
+    background: currentColor;
+    mask: var(--icon) center / contain no-repeat;
+  }
+
+  .flow-tile[data-actor="human"]::before {
+    @apply size-5;
+  }
+
+  .flow-tile[data-actor="app"]::before {
+    @apply size-6;
   }
 
   .flow-tile[data-actor="human"] {
@@ -1090,11 +1126,11 @@
 
   /* The diagnostic as an entry ticket: a perforation between the offer and its stub */
   .ticket {
-    @apply relative grid overflow-hidden rounded-ticket bg-agent-soft lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)];
+    @apply relative grid grid-cols-[minmax(0,1fr)] overflow-hidden rounded-ticket bg-agent-soft lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)];
   }
 
   .ticket-stub {
-    @apply border-t-2 border-dashed border-highlight px-5 py-5 md:p-10 lg:border-t-0 lg:border-l-2;
+    @apply border-t-2 border-dashed border-highlight px-4 py-4 md:p-10 lg:border-t-0 lg:border-l-2;
   }
 
   /* Sized by the ticket's own width, so the price never clips (down to 320px) */
@@ -1125,23 +1161,64 @@
     @apply w-[min(20rem,82%)] shrink-0 snap-start lg:w-auto;
   }
 
-  .offer-card {
-    @apply flex flex-col gap-3 rounded-card border border-hairline bg-surface p-5 md:gap-4 md:p-8;
+  /* The full catalogue (pricing): every card in view, no swipe */
+  .offer-row-full {
+    @apply mx-0 grid snap-none overflow-visible px-0 pb-0 md:grid-cols-2 lg:grid-cols-3;
   }
 
-  .card-price {
+  .offer-row-full > li {
+    @apply w-auto;
+  }
+
+  .offer-alongside-full {
+    @apply lg:grid-cols-3;
+  }
+
+  .offer-includes {
+    @apply text-ui-s md:gap-2.5;
+  }
+
+  .tiers-detailed {
+    @apply grid content-start gap-3;
+  }
+
+  .tiers-detailed .tier-list {
+    @apply mt-1 grid-flow-row grid-cols-1;
+  }
+
+  .tiers-detailed .tier-list > div {
+    @apply border-t border-hairline py-3;
+  }
+
+  @media (max-width: 639px) {
+    .tiers-detailed .tier-summary,
+    .tiers-detailed .tier-note {
+      display: block;
+    }
+  }
+
+  /* Positioned, so the price read aloud (sr-only) stays inside the swipe row */
+  .offer-card {
+    @apply relative flex flex-col gap-2.5 rounded-card border border-hairline bg-surface p-4 md:gap-4 md:p-8;
+  }
+
+  .offer-card .price-from {
+    display: block;
+  }
+
+  .offer-card .price-amount {
     font-size: clamp(2.25rem, 1.9rem + 1.2vw, 3rem);
     font-weight: 650;
     letter-spacing: -0.035em;
     line-height: 1;
   }
 
-  .card-price-range {
+  .offer-card .price-amount[data-range] {
     font-size: clamp(2rem, 1.7rem + 0.9vw, 2.5rem);
     white-space: nowrap;
   }
 
-  .tier-price {
+  .tier-list .price-amount {
     @apply text-2xl md:text-[1.75rem];
     font-weight: 650;
     letter-spacing: -0.025em;
@@ -1179,6 +1256,275 @@
       display: none;
     }
   }
+
+  /* Inner pages (relaunch PR9) */
+  /* A long Spanish word breaks inside its box rather than widening the page */
+  .offer-card,
+  .tiers-detailed,
+  .ticket,
+  .flow-figure,
+  .case-callout,
+  .sync-table th,
+  .sync-table td,
+  .date-line {
+    overflow-wrap: anywhere;
+  }
+
+  .flow-steps .flow-tile {
+    @apply max-md:size-10;
+  }
+
+  .offer-alongside-care {
+    @apply mt-6 border-t-0 pt-0 md:mt-12 lg:grid-cols-2;
+  }
+
+  .case-item {
+    @apply grid gap-4 border-t border-hairline pt-6 md:gap-6 md:rounded-card md:border md:bg-surface md:p-8 lg:grid-cols-12 lg:gap-x-12;
+  }
+
+  .case-item[data-featured] {
+    @apply lg:p-10;
+  }
+
+  .case-name,
+  .case-mark,
+  .platform-mark {
+    --logo-h: 1.75rem;
+  }
+
+  .case-name > .logo {
+    @apply w-fit;
+  }
+
+  .case-mark {
+    @apply mb-6 block md:mb-8;
+  }
+
+  .platform-mark {
+    @apply block;
+    --logo-h: 2.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .case-name,
+    .case-mark {
+      --logo-h: 2.25rem;
+    }
+
+    .platform-mark {
+      --logo-h: 3.5rem;
+    }
+  }
+
+  /* The Holded mapping: the shop on the left, Holded on the right */
+  .sync-pair {
+    @apply mb-3 flex items-center gap-3 text-ui-m font-semibold sm:mb-6 sm:max-w-xl;
+  }
+
+  .sync-pair .flow-tile {
+    @apply max-sm:size-9;
+  }
+
+  .sync-pair-end {
+    @apply inline-flex shrink-0 items-center gap-3;
+  }
+
+  .sync-pair-wire {
+    @apply h-0 min-w-4 flex-1 border-t-2 border-dashed border-line-strong max-[359px]:hidden;
+  }
+
+  .sync-table thead th {
+    @apply pr-4 pb-3 text-ui-s font-semibold text-muted-fg;
+  }
+
+  .sync-table tbody tr {
+    @apply border-t border-hairline;
+  }
+
+  .sync-table tbody th {
+    @apply py-0.5 pr-4 text-left font-medium sm:w-[34%] sm:py-4;
+  }
+
+  .sync-table tbody td {
+    @apply py-0.5 pr-4 text-fg-soft sm:py-4;
+  }
+
+  .sync-table .sync-cell {
+    @apply py-2 text-fg sm:py-4;
+  }
+
+  .sync-lane {
+    @apply flex w-full max-w-60 items-center gap-1 sm:max-w-72 sm:gap-1.5;
+  }
+
+  .sync-end {
+    @apply size-8 rounded-input sm:size-10;
+  }
+
+  .sync-end::before {
+    @apply size-4.5 sm:size-5.5;
+  }
+
+  .sync-end[data-actor]::before {
+    @apply size-4.5;
+  }
+
+  .sync-wire {
+    @apply relative h-0 flex-1 border-t-2 border-fg-soft;
+  }
+
+  .sync-wire::before,
+  .sync-wire::after {
+    position: absolute;
+    top: -6px;
+    width: 8px;
+    height: 10px;
+    background-color: var(--fg-soft);
+  }
+
+  [data-to="holded"] > .sync-wire::after,
+  [data-both] > .sync-wire::after {
+    content: "";
+    right: -1px;
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+  }
+
+  [data-to="shop"] > .sync-wire::before,
+  [data-both] > .sync-wire::before {
+    content: "";
+    left: -1px;
+    clip-path: polygon(100% 0, 0 50%, 100% 100%);
+  }
+
+  [data-both] > .sync-wire {
+    @apply border-dashed;
+  }
+
+  .sync-direction {
+    @apply block text-ui-s text-muted-fg max-sm:min-w-0 max-sm:flex-1 sm:mt-1.5;
+  }
+
+  /* On a phone the lane and its words share one line where they fit */
+  @media (max-width: 639px) {
+    .sync-table .sync-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .sync-cell > .sync-lane {
+      width: 6.5rem;
+      flex-shrink: 0;
+    }
+  }
+
+  /* On a phone the lane, between the two marks, names the direction itself */
+  @media (max-width: 639px) {
+    .sync-cell::before {
+      @apply sr-only;
+    }
+  }
+
+  /* Verifactu: the dates in the order they fall, the announced one pending */
+  .date-line {
+    @apply mt-5 grid lg:grid-cols-4 lg:gap-x-8;
+  }
+
+  .date-line > li {
+    @apply relative pb-7 pl-9 lg:pt-10 lg:pb-0 lg:pl-0;
+  }
+
+  .date-line > li::before {
+    content: "";
+    position: absolute;
+    top: 0.3rem;
+    left: 0;
+    z-index: 1;
+    width: 1.125rem;
+    height: 1.125rem;
+    border: 2px solid var(--agent);
+    border-radius: 9999px;
+    background-color: var(--bg);
+  }
+
+  .date-line > [data-mark="producers"]::before {
+    background-color: var(--agent);
+  }
+
+  .date-line > [data-pending]::before {
+    border-style: dashed;
+    border-color: var(--muted-fg);
+  }
+
+  .date-line > li:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 1.6rem;
+    bottom: 0.2rem;
+    left: calc(0.5625rem - 1px);
+    border-left: 2px solid var(--line-strong);
+  }
+
+  .date-line > li:has(+ [data-pending])::after {
+    border-left-style: dashed;
+  }
+
+  @media (min-width: 1024px) {
+    .date-line > li::before {
+      top: 0;
+    }
+
+    .date-line > li:not(:last-child)::after {
+      top: calc(0.5625rem - 1px);
+      right: -1.75rem;
+      bottom: auto;
+      left: 1.6rem;
+      border-top: 2px solid var(--line-strong);
+      border-left: 0;
+    }
+
+    .date-line > li:has(+ [data-pending])::after {
+      border-top-style: dashed;
+    }
+  }
+
+  .date-line-date {
+    @apply text-h3;
+  }
+
+  [data-pending] > .date-line-date {
+    @apply text-fg-soft;
+  }
+
+  .date-line-text {
+    @apply mt-2 max-w-[34em] text-ui-m text-fg-soft;
+  }
+
+  .date-line-after {
+    @apply mt-6 grid gap-6 border-t border-hairline pt-8 md:mt-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:gap-16;
+  }
+
+  /* About */
+  .founder-block {
+    @apply grid gap-6 py-section md:grid-cols-[auto_minmax(0,1fr)] md:gap-14;
+  }
+
+  .founder-portrait {
+    @apply size-28 border-4 text-4xl md:size-48 md:text-6xl;
+  }
+
+  .principles {
+    @apply grid gap-4 md:grid-cols-2 md:gap-6;
+  }
+
+  .vision-text {
+    @apply mt-5 max-w-[34em] text-h3 leading-[1.4] font-medium text-pretty md:mt-8;
+  }
+
+  /* Contact: the next times as a card on the hero */
+  .contact-book {
+    @apply grid grid-cols-[minmax(0,1fr)] gap-4 rounded-card border border-hairline bg-surface p-5 shadow-raised md:p-7;
+  }
 }
 
 @keyframes menu-in {
@@ -1199,7 +1545,12 @@
   .icon,
   .tick-item::before,
   .menu-bar,
-  .logo {
+  .logo,
+  .sync-wire::before,
+  .sync-wire::after,
+  .flow-tile[data-actor="app"]::before,
+  .flow-tile[data-actor="human"]::before,
+  .related-links a::after {
     background-color: CanvasText;
     forced-color-adjust: none;
   }

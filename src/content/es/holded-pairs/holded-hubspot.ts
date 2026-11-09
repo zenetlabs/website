@@ -9,6 +9,7 @@ const price = formatPrice('es', row);
 const diagnostic = formatPriceSummary('es', services.diagnostic.prices);
 
 export const holdedHubspot = {
+  shop: { name: 'HubSpot', tool: 'hubspot' },
   meta: {
     metaTitle: 'Integración de Holded con HubSpot | Zenet Labs',
     description:
@@ -47,30 +48,35 @@ export const holdedHubspot = {
         id: 'companies',
         data: 'Empresas y contactos, con NIF y dirección fiscal',
         direction: 'De HubSpot a Holded',
+        to: 'holded',
         when: 'Al ganar la oportunidad, o antes si lo prefieres',
       },
       {
         id: 'deals',
         data: 'Oportunidades ganadas, como factura, proforma o pedido de venta',
         direction: 'De HubSpot a Holded',
+        to: 'holded',
         when: 'Al momento, cuando la oportunidad pasa a «Ganada»',
       },
       {
         id: 'line-items',
         data: 'Líneas de producto, con cantidades, precios y descuentos',
         direction: 'De HubSpot a Holded',
+        to: 'holded',
         when: 'Con la oportunidad',
       },
       {
         id: 'payments',
         data: 'Estado del cobro y número de factura',
         direction: 'De Holded a HubSpot',
+        to: 'shop',
         when: 'Al momento, cuando se registra un cobro',
       },
       {
         id: 'products',
         data: 'Productos y precios del catálogo',
         direction: 'De Holded a HubSpot',
+        to: 'shop',
         when: 'Cada vez que cambian en Holded',
       },
     ],

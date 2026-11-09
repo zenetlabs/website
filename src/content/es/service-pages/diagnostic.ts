@@ -59,6 +59,27 @@ export const diagnostic = {
       },
     ],
   },
+  flow: {
+    title: { before: 'El diagnóstico, ', emphasis: 'paso a paso', after: '' },
+    caption: 'Un proceso, de tus herramientas a un plan con precio',
+    steps: [
+      {
+        actor: 'tool',
+        label:
+          'Trazamos cómo se mueven los datos entre tus herramientas y hojas de cálculo',
+        tool: 'sheets',
+      },
+      {
+        actor: 'agent',
+        label:
+          'Marcamos los pasos que podría hacer una automatización o un agente',
+      },
+      {
+        actor: 'human',
+        label: 'Recibes un plan con precio y decides qué construir',
+      },
+    ],
+  },
   how: {
     title: {
       before: 'De la primera llamada a ',
@@ -101,6 +122,7 @@ export const diagnostic = {
       'Las confirmaciones de proveedores se pasan a la reserva y con ellas se monta la documentación del viaje',
     ],
     page: 'viatsyCase',
+    company: 'viatsy',
   },
   faq: {
     title: {

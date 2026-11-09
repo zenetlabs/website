@@ -9,6 +9,7 @@ const price = formatPrice('es', row);
 const diagnostic = formatPriceSummary('es', services.diagnostic.prices);
 
 export const holdedWoocommerce = {
+  shop: { name: 'WooCommerce', tool: 'woocommerce' },
   meta: {
     metaTitle: 'Integración de Holded con WooCommerce | Zenet Labs',
     description:
@@ -47,36 +48,43 @@ export const holdedWoocommerce = {
         id: 'orders',
         data: 'Pedidos, como factura, ticket o pedido de venta',
         direction: 'De WooCommerce a Holded',
+        to: 'holded',
         when: 'Al momento, cuando el pedido pasa a «Procesando» o «Completado»',
       },
       {
         id: 'customers',
         data: 'Clientes, con NIF si tu tienda lo pide',
         direction: 'De WooCommerce a Holded',
+        to: 'holded',
         when: 'Con su primer pedido; si ya existen, se reutilizan',
       },
       {
         id: 'refunds',
         data: 'Reembolsos, como factura rectificativa',
         direction: 'De WooCommerce a Holded',
+        to: 'holded',
         when: 'Al registrarse el reembolso',
       },
       {
         id: 'stock',
         data: 'Stock por SKU',
         direction: 'De Holded a WooCommerce, o en los dos sentidos',
+        to: 'shop',
+        both: true,
         when: 'Cada vez que cambia en Holded',
       },
       {
         id: 'payments',
         data: 'Cobros',
         direction: 'De WooCommerce a Holded',
+        to: 'holded',
         when: 'Con el pedido, con su forma de pago',
       },
       {
         id: 'products',
         data: 'Productos nuevos',
         direction: 'De WooCommerce a Holded',
+        to: 'holded',
         when: 'Al publicarlos en la tienda',
       },
     ],

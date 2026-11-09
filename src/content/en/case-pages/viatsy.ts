@@ -97,6 +97,7 @@ export const viatsyCase = {
       {
         actor: 'tool',
         label: 'A supplier sends a confirmation by email or as pasted text',
+        tool: 'gmail',
       },
       {
         actor: 'agent',

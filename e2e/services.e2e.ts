@@ -145,7 +145,7 @@ for (const locale of LOCALES) {
       await expect(page.locator('h1')).toHaveCount(1);
       await expect(page.locator('main img')).toHaveCount(0);
       const rows = await page
-        .locator('main ul a')
+        .locator('main [data-service] a')
         .evaluateAll((links) => links.map((a) => a.getAttribute('href')));
       const { diagnostic, maintenance, ...listed } = SERVICE_PAIRS;
       expect(rows).toEqual([

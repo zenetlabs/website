@@ -35,7 +35,11 @@ export const viatsy = {
   flow: {
     caption: 'From inquiry to proposal',
     steps: [
-      { actor: 'tool', label: 'An inquiry arrives by email or WhatsApp' },
+      {
+        actor: 'tool',
+        label: 'An inquiry arrives by email or WhatsApp',
+        tool: 'whatsapp',
+      },
       { actor: 'agent', label: 'The agent drafts the reply and the proposal' },
       { actor: 'human', label: 'A person reviews and sends them' },
     ],

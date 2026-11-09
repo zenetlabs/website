@@ -1,7 +1,6 @@
 import { Faq } from '@/components/faq';
 import { BulletList } from '@/components/lists';
 import {
-  DataTable,
   FactsHero,
   GetStarted,
   RelatedLinks,
@@ -9,7 +8,7 @@ import {
 } from '@/components/page-blocks';
 import { Container, Section } from '@/components/section';
 import { StickyZone } from '@/components/sticky-cta';
-import { H3, PROSE } from '@/components/ui';
+import { EYEBROW, H3, PROSE } from '@/components/ui';
 import type {
   Services,
   ServicesHubContent,
@@ -17,6 +16,48 @@ import type {
 } from '@/content/types';
 import { hubNames } from '@/lib/crumb-names';
 import type { Locale } from '@/lib/i18n';
+
+type Mark = { id: string; date: string; text: string; pending?: boolean };
+
+// The dates in the order they fall: the programs first, then each group of
+// taxpayers, then the postponement Hacienda announced, drawn as pending until
+// the BOE publishes it.
+function DateLine({
+  deadlines,
+  dates,
+}: {
+  deadlines: VerifactuPageContent['deadlines'];
+  dates: VerifactuPageContent['dates'];
+}) {
+  const marks: readonly Mark[] = [
+    { id: 'producers', date: dates.producersFrom, text: deadlines.producers },
+    ...deadlines.rows.map((row) => ({
+      id: row.id,
+      date: row.date,
+      text: row.who,
+    })),
+    {
+      id: 'announced',
+      date: dates.announcedTo,
+      text: deadlines.announced,
+      pending: true,
+    },
+  ];
+  return (
+    <ol aria-labelledby="deadlines-title" className="date-line">
+      {marks.map((mark) => (
+        <li
+          key={mark.id}
+          data-mark={mark.id}
+          data-pending={mark.pending ? '' : undefined}
+        >
+          <p className="date-line-date">{mark.date}</p>
+          <p className="date-line-text">{mark.text}</p>
+        </li>
+      ))}
+    </ol>
+  );
+}
 
 export function VerifactuPage({
   locale,
@@ -44,24 +85,20 @@ export function VerifactuPage({
       />
       <StickyZone locale={locale}>
         <Section id="deadlines" title={deadlines.title}>
-          <DataTable
-            labelledBy="deadlines-title"
-            columns={[deadlines.columns.who, deadlines.columns.date]}
-            rows={deadlines.rows.map((row) => ({
-              id: row.id,
-              cells: [row.who, row.date],
-            }))}
-          />
-          <div className={`mt-8 grid gap-4 ${PROSE}`}>
-            <p>{deadlines.announced}</p>
-            <p>{deadlines.producers}</p>
+          <p className={EYEBROW}>{deadlines.label}</p>
+          <DateLine deadlines={deadlines} dates={copy.dates} />
+          <div className="date-line-after">
+            <div>
+              <h3 className={H3}>{deadlines.exclusionsTitle}</h3>
+              <BulletList
+                items={deadlines.exclusions}
+                className={`mt-4 ${PROSE}`}
+              />
+            </div>
+            <p className="text-ui-s text-muted-fg lg:self-end">
+              {deadlines.checked}
+            </p>
           </div>
-          <h3 className={`mt-10 ${H3}`}>{deadlines.exclusionsTitle}</h3>
-          <BulletList
-            items={deadlines.exclusions}
-            className={`mt-4 ${PROSE}`}
-          />
-          <p className="mt-8 text-ui-s text-muted-fg">{deadlines.checked}</p>
         </Section>
         <Section
           id="requirements"

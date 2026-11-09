@@ -38,18 +38,35 @@ describe('VerifactuPage', () => {
     ).toBeNull();
   });
 
-  it('shows both deadlines from the shared dates in a table', () => {
+  it('sets the dates on a timeline in the order they fall, the postponement pending', () => {
     const { container } = view();
-    const table = container.querySelector('#deadlines table');
-    expect(table).toHaveAttribute('aria-labelledby', 'deadlines-title');
+    const marks = [
+      ...container.querySelectorAll('#deadlines ol.date-line > li'),
+    ];
+    expect(marks.map((mark) => mark.getAttribute('data-mark'))).toEqual([
+      'producers',
+      'companies',
+      'others',
+      'announced',
+    ]);
     expect(
-      [...(table?.querySelectorAll('tbody td') ?? [])].map(
-        (td) => td.textContent,
-      ),
+      marks.map((mark) => mark.querySelector('.date-line-date')?.textContent),
     ).toEqual([
+      verifactuDates.producersFrom,
       `antes del ${verifactuDates.companies}`,
       `antes del ${verifactuDates.others}`,
+      verifactuDates.announcedTo,
     ]);
+    expect(marks.map((mark) => mark.hasAttribute('data-pending'))).toEqual([
+      false,
+      false,
+      false,
+      true,
+    ]);
+    expect(container.querySelector('ol.date-line')).toHaveAttribute(
+      'aria-labelledby',
+      'deadlines-title',
+    );
   });
 
   it('shows the check date, the announcement, the exclusions and the disclaimer', () => {

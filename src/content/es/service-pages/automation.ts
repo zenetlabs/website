@@ -69,7 +69,7 @@ export const automation = {
     caption:
       'Una factura de proveedor, de la bandeja de entrada a contabilidad',
     steps: [
-      { actor: 'tool', label: 'Llega una factura por correo' },
+      { actor: 'tool', label: 'Llega una factura por correo', tool: 'gmail' },
       {
         actor: 'agent',
         label: 'La automatización la lee y la compara con lo que esperabas',
@@ -105,6 +105,7 @@ export const automation = {
   // TODO(albert): confirm the case
   case: {
     page: 'viatsyCase',
+    company: 'viatsy',
     title: {
       before: 'Cómo gestiona ',
       emphasis: 'Viatsy',

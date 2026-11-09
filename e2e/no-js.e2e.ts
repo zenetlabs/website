@@ -159,9 +159,9 @@ for (const { locale, path } of LOCALES.map((locale) => ({
     await page.goto(path);
     const text = normalise(await page.locator('main').innerText());
     for (const service of Object.values(SERVICES[locale])) {
-      expect(text).toContain(
-        normalise(formatPriceSummary(locale, service.prices)),
-      );
+      for (const price of service.prices) {
+        expect(text).toContain(normalise(formatPrice(locale, price)));
+      }
     }
   });
 }
@@ -172,7 +172,7 @@ for (const { path, locale } of PRICING) {
   }) => {
     await page.goto(path);
     for (const service of Object.values(SERVICES[locale])) {
-      const card = page.locator(`article[data-service="${service.id}"]`);
+      const card = page.locator(`main [data-service="${service.id}"]`);
       await expect(card).toBeVisible();
       const text = normalise(await card.innerText());
       for (const price of service.prices) {

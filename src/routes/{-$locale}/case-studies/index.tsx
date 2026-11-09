@@ -1,12 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { Cases } from '@/components/cases';
+import { CompaniesStrip } from '@/components/companies-strip';
 import { CtaSection } from '@/components/cta-section';
-import { Container, EmphasisTitle } from '@/components/section';
+import { PageIntro } from '@/components/page-intro';
+import { Container } from '@/components/section';
+import { sectionFrame } from '@/components/section-frame';
 import { StickyZone } from '@/components/sticky-cta';
-import { LEAD } from '@/components/ui';
 import { loadCasesHubContent } from '@/content/load';
 import { casesStructuredData } from '@/lib/page-structured-data';
 import { contentHead } from '@/lib/pages';
+
+const TINT = sectionFrame('tint');
 
 export const Route = createFileRoute('/{-$locale}/case-studies/')({
   staticData: { page: 'cases' },
@@ -26,16 +30,14 @@ function CasesHub() {
 
   return (
     <>
-      <section data-ground="paper">
-        <Container className="py-12 md:py-24">
-          <h1 className="max-w-4xl">
-            <EmphasisTitle parts={page.title} />
-          </h1>
-          <p className={`mt-6 ${LEAD}`}>{page.lead}</p>
+      <section data-ground={TINT.ground} className={TINT.bg}>
+        <Container className="pt-8 pb-10 md:pt-14 md:pb-16">
+          <PageIntro title={page.title} lead={page.lead} />
         </Container>
       </section>
       <StickyZone locale={locale}>
         <Cases copy={page.cases} locale={locale} />
+        <CompaniesStrip copy={page.companies} locale={locale} />
       </StickyZone>
       <CtaSection cta="cases" copy={page.cta} locale={locale} />
     </>

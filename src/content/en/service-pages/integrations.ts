@@ -68,10 +68,15 @@ export const integrations = {
     title: { before: 'A connection, ', emphasis: 'step by step', after: '' },
     caption: 'A won deal, from HubSpot to Xero',
     steps: [
-      { actor: 'tool', label: 'A deal is marked as won in HubSpot' },
+      {
+        actor: 'tool',
+        label: 'A deal is marked as won in HubSpot',
+        tool: 'hubspot',
+      },
       {
         actor: 'tool',
         label: 'The integration creates the contact and the invoice in Xero',
+        tool: 'xero',
       },
       { actor: 'human', label: 'Sales can see who has paid' },
     ],
