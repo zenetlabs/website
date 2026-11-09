@@ -3,14 +3,10 @@ import { SECONDARY_BUTTON } from '@/components/ui';
 import type { DeskCopy } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { navHref } from '@/lib/nav';
-import { slotHref, useNextSlots } from '@/lib/next-slots';
+import { useNextSlots } from '@/lib/next-slots';
 import { pagePath } from '@/lib/page-registry';
 
 type SlotCopy = DeskCopy['slots'];
-
-function Arrow() {
-  return <span aria-hidden="true" className="icon icon-arrow" />;
-}
 
 // Booking is published: the next real times arrive after load and idle, in a
 // row that keeps its height in every state. Until then, or when the fetch
@@ -35,26 +31,12 @@ function LiveSlots({ copy, locale }: { copy: SlotCopy; locale: Locale }) {
         </p>
       </div>
       {ready ? (
-        <div className="slot-ready">
-          <ul aria-label={copy.group} className="slot-row">
-            {ready.chips.map((chip) => (
-              <li key={chip.start} className="grid">
-                <CtaLink
-                  cta="desk_slot"
-                  href={slotHref(locale, chip.start)}
-                  className="slot-chip"
-                  label={chip.label}
-                >
-                  {chip.time}
-                </CtaLink>
-              </li>
-            ))}
-          </ul>
-          <CtaLink cta="desk_times" href={book} className="slot-more">
-            {copy.seeAll}
-            <Arrow />
-          </CtaLink>
-        </div>
+        <ready.Chips
+          chips={ready.chips}
+          locale={locale}
+          group={copy.group}
+          seeAll={copy.seeAll}
+        />
       ) : (
         <div className="grid gap-2" data-slot-fallback={state.status}>
           <CtaLink cta="desk_times" href={book} className={SECONDARY_BUTTON}>

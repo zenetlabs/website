@@ -1,5 +1,5 @@
 import { useHydrated } from '@tanstack/react-router';
-import { type FormEvent, lazy, Suspense, useRef, useState } from 'react';
+import { lazy, Suspense, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { BookingAlert } from '@/components/booking-alert';
 import {
@@ -21,7 +21,7 @@ import {
 import { type PageFailure, pageFailureOf } from '@/lib/booking-failure';
 import { SURFACE_ACTION } from '@/lib/booking-surfaces';
 import { text } from '@/lib/form-data';
-import type { Locale } from '@/lib/i18n';
+import { type Locale, useMessages } from '@/lib/i18n';
 import { attribution } from '@/lib/lead-client';
 import { PUBLIC_EMAIL } from '@/lib/site';
 import { formatSlotLabel } from '@/lib/slot-format';
@@ -53,12 +53,17 @@ export function BookingForm({
   const hydrated = useHydrated();
   const [slots, setSlots] = useState(initialSlots);
   const challenge = useChallenge();
-  const { token } = challenge;
+  const { contact } = useMessages();
   const [status, setStatus] = useState<Status>('idle');
   const [held, setHeld] = useState<Held | null>(null);
+  const [chosen, setChosen] = useState(preselect);
+  const [missing, setMissing] = useState(false);
   const alert = useRef<HTMLParagraphElement>(null);
+  const strip = useRef<HTMLDivElement>(null);
   const pending = status === 'pending';
   const { form } = copy;
+  // Only a time still in the (possibly refreshed) list counts as chosen.
+  const picked = slots.some((slot) => slot.start === chosen) ? chosen : null;
   const [noscriptBefore, noscriptAfter] = form.noscript.split('{email}');
 
   function fail(next: PageFailure) {
@@ -66,11 +71,25 @@ export function BookingForm({
     alert.current?.focus();
   }
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
+  const onSubmit = challenge.onSubmit(
+    (data, token) => {
+      void request(data, token);
+    },
+    (data) => {
+      if (text(data, 'slot') === '') {
+        flushSync(() => setMissing(true));
+        strip.current
+          ?.querySelector<HTMLInputElement>('[data-day]:not([hidden]) input')
+          ?.focus();
+        return false;
+      }
+      setStatus('idle');
+      return true;
+    },
+  );
+
+  async function request(data: FormData, token: string) {
     const slot = text(data, 'slot');
-    if (slot === '') return;
     setStatus('pending');
     const request: BookingRequest = {
       slot,
@@ -116,6 +135,7 @@ export function BookingForm({
     );
   }
 
+  const when = picked === null ? null : formatSlotLabel(locale, picked, zone);
   return (
     <form
       aria-label={form.label}
@@ -123,20 +143,45 @@ export function BookingForm({
       onFocus={challenge.engage}
       className="grid gap-8"
     >
-      <fieldset disabled={!hydrated || pending} className="grid gap-5">
-        <legend className={`mb-3 ${H3}`}>
-          {copy.picker.legend}
-          <span className="mt-1 block font-sans text-ui-s font-normal text-muted-fg">
-            {copy.zone.legend.replace('{zone}', zoneLabel(copy.zone, zone))}
-          </span>
-        </legend>
-        <SlotPicker
-          slots={slots}
-          zone={zone}
-          locale={locale}
-          copy={copy.picker}
-          preselect={preselect}
-        />
+      <fieldset
+        disabled={!hydrated || pending || challenge.busy}
+        className="grid min-w-0 gap-6"
+      >
+        <legend className="sr-only">{copy.picker.legend}</legend>
+        <div ref={strip} className="min-w-0">
+          <SlotPicker
+            slots={slots}
+            zone={zone}
+            locale={locale}
+            copy={copy.picker}
+            picked={picked}
+            onPick={(start) => {
+              setChosen(start);
+              setMissing(false);
+            }}
+          />
+        </div>
+        <div className="booking-when">
+          <span aria-hidden="true" className="icon icon-calendar" />
+          <p aria-live="polite">
+            <span className="block text-ui-s text-fg-soft">
+              {copy.picker.chosen}
+            </span>
+            <span className="block font-semibold">
+              {when ?? copy.picker.none}
+            </span>
+            {when === null ? null : (
+              <span className="block text-ui-s text-fg-soft">
+                {copy.zone.legend.replace('{zone}', zoneLabel(copy.zone, zone))}
+              </span>
+            )}
+          </p>
+        </div>
+        {missing ? (
+          <p role="alert" className="chat-alert mt-0">
+            {copy.picker.required}
+          </p>
+        ) : null}
         <h2 className={`mt-2 border-t border-hairline pt-6 ${H3}`}>
           {form.details}
         </h2>
@@ -156,23 +201,27 @@ export function BookingForm({
           linkText={form.consentLink}
         />
         <LazyTurnstile
-          engaged={challenge.engaged}
           action={SURFACE_ACTION.page}
           locale={locale}
-          instance={challenge.instance}
-          onToken={challenge.setToken}
-          onError={() => {
-            challenge.setToken('');
-            setStatus('captcha');
-          }}
+          {...challenge.widgetProps((waited) => {
+            if (waited) fail('captcha');
+            else setStatus('captcha');
+          })}
         />
         <button
           type="submit"
-          disabled={token === ''}
+          aria-busy={pending || challenge.busy}
           className={`${PRIMARY_BUTTON} w-full sm:w-fit`}
         >
-          {pending ? form.sending : form.submit}
+          {challenge.submitLabel(pending, {
+            idle: form.submit,
+            pending: form.sending,
+            verifying: contact.form.verifying,
+          })}
         </button>
+        <p role="status" className="sr-only">
+          {challenge.busy ? contact.form.verifying : ''}
+        </p>
         <BookingAlert
           copy={copy}
           failure={status === 'idle' || status === 'pending' ? null : status}

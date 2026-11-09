@@ -61,15 +61,21 @@ const PROPOSAL = {
   timeZone: 'Europe/Madrid',
 };
 
+const widget = vi.hoisted(() => ({ solve: () => {}, fail: () => {} }));
 vi.mock('@/lib/booking-client', () => ({ submitBooking }));
 vi.mock('@/lib/lead-client', () => ({ attribution }));
 vi.mock('@/lib/track', () => ({ track }));
+// The real widget is an iframe a disabled fieldset cannot reach: `widget`
+// answers from outside the DOM while the form is locked.
 vi.mock('@marsidev/react-turnstile', () => ({
-  Turnstile: ({ onSuccess }: { onSuccess: (token: string) => void }) => (
-    <button type="button" onClick={() => onSuccess('tok_book')}>
-      solve challenge
-    </button>
-  ),
+  Turnstile: ({ onSuccess }: { onSuccess: (token: string) => void }) => {
+    widget.solve = () => onSuccess('tok_book');
+    return (
+      <button type="button" onClick={() => onSuccess('tok_book')}>
+        solve challenge
+      </button>
+    );
+  },
 }));
 
 let last: BookingRequest | null = null;
@@ -143,15 +149,33 @@ describe('WebMcpBookingDialog', () => {
     expect(screen.getByRole('checkbox')).toBeRequired();
   });
 
-  it('keeps Confirm disabled until the challenge is solved', async () => {
-    const user = userEvent.setup();
+  it('keeps Confirm enabled, and shows who the visitor will meet', async () => {
     open();
     const confirm = screen.getByRole('button', {
       name: en.dialog.confirm,
     });
-    expect(confirm).toBeDisabled();
-    await user.click(await screen.findByText('solve challenge'));
     expect(confirm).toBeEnabled();
+    expect(
+      screen.getByText("You'll talk to Albert Sabaté, the founder."),
+    ).toBeInTheDocument();
+    expect(await screen.findByText('solve challenge')).toBeInTheDocument();
+  });
+
+  it('a Cancel while a press waits for the challenge posts nothing, even when the token comes', async () => {
+    const user = userEvent.setup();
+    const { answers } = open();
+    const { form } = messages.en.contact;
+    await user.type(screen.getByLabelText(form.email), 'ada@example.com');
+    await user.click(screen.getByRole('checkbox'));
+    await user.click(screen.getByRole('button', { name: en.dialog.confirm }));
+    expect(screen.getByRole('checkbox')).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: en.dialog.cancel }));
+    await waitFor(() =>
+      expect(answers).toEqual([{ ok: true, result: { status: 'declined' } }]),
+    );
+    act(() => widget.solve());
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(submitBooking).not.toHaveBeenCalled();
   });
 
   it('declines on Cancel and never submits', async () => {
@@ -260,9 +284,10 @@ describe('WebMcpBookingDialog', () => {
     expect(alert).toHaveTextContent(en.dialog.errors.captcha);
     expect(answers).toEqual([]);
     expect(screen.getByLabelText(messages.en.contact.form.name)).toBeEnabled();
+    // The spent token is gone: the next press waits for a fresh one.
     expect(
       screen.getByRole('button', { name: en.dialog.confirm }),
-    ).toBeDisabled();
+    ).toBeEnabled();
   });
 
   it('does not close on Escape while the booking is being sent', async () => {

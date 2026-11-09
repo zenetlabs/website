@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type Ref, useImperativeHandle } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -22,6 +22,7 @@ const PROPOSAL = {
   topic: 'Automate our inbox triage',
 };
 
+const widget = vi.hoisted(() => ({ solve: () => {}, fail: () => {} }));
 vi.mock('@/lib/booking-client', () => ({ submitBooking }));
 vi.mock('@/lib/lead-client', () => ({ attribution }));
 vi.mock('@/lib/track', () => ({ track }));
@@ -33,6 +34,8 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
     select: (context: { locale: string }) => unknown;
   }) => select({ locale: 'en' }),
 }));
+// The real widget is an iframe a disabled fieldset cannot reach: `widget`
+// answers from outside the DOM while the form is locked.
 vi.mock('@marsidev/react-turnstile', () => ({
   Turnstile: ({
     onSuccess,
@@ -42,6 +45,7 @@ vi.mock('@marsidev/react-turnstile', () => ({
     ref: Ref<{ reset: () => void }>;
   }) => {
     useImperativeHandle(ref, () => ({ reset }));
+    widget.solve = () => onSuccess('tok_book');
     return (
       <button type="button" onClick={() => onSuccess('tok_book')}>
         solve challenge
@@ -106,17 +110,30 @@ describe('BookingCard', () => {
     expect(screen.getByRole('checkbox')).toBeRequired();
   });
 
-  it('keeps Confirm disabled until the challenge is solved', async () => {
-    const user = userEvent.setup();
+  it('shows who the visitor will meet, and the time in the summary', () => {
     card();
     expect(
-      screen.getByRole('button', { name: en.booking.confirm }),
-    ).toBeDisabled();
-    await user.click(screen.getByLabelText(en.booking.name));
-    await user.click(await screen.findByText('solve challenge'));
-    expect(
-      screen.getByRole('button', { name: en.booking.confirm }),
-    ).toBeEnabled();
+      screen.getByText("You'll talk to Albert Sabaté, the founder."),
+    ).toBeInTheDocument();
+    expect(screen.getByText(en.booking.format)).toBeInTheDocument();
+  });
+
+  it('a press before the challenge answers waits, locked, then books with the token', async () => {
+    submitBooking.mockResolvedValue({ kind: 'failed', error: 'unavailable' });
+    const user = userEvent.setup();
+    card();
+    await user.type(screen.getByLabelText(en.booking.name), 'Ada Lovelace');
+    await user.type(screen.getByLabelText(en.booking.email), 'ada@example.com');
+    await user.click(screen.getByRole('checkbox'));
+    await user.click(screen.getByRole('button', { name: en.booking.confirm }));
+    expect(submitBooking).not.toHaveBeenCalled();
+    expect(screen.getByLabelText(en.booking.name)).toBeDisabled();
+    expect(screen.getByRole('checkbox')).toBeDisabled();
+    act(() => widget.solve());
+    await waitFor(() => expect(submitBooking).toHaveBeenCalledTimes(1));
+    expect(submitBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ turnstileToken: 'tok_book', consent: true }),
+    );
   });
 
   it('posts the details with the conversation id and the chat surface, then shows the pending panel', async () => {
@@ -230,7 +247,7 @@ describe('BookingCard', () => {
     expect(reset).toHaveBeenCalledTimes(1);
     expect(
       screen.getByRole('button', { name: en.booking.confirm }),
-    ).toBeDisabled();
+    ).toBeEnabled();
   });
 
   it('cancels from "Not now"', async () => {

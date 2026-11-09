@@ -1,6 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { slotHref, useNextSlots } from '@/lib/next-slots';
+import { useNextSlots } from '@/lib/next-slots';
+import { slotHref } from '@/lib/slot-chip';
 
 const loadAvailability = vi.hoisted(() => vi.fn());
 

@@ -1,22 +1,25 @@
+import { SlotChips } from '@/components/slot-chips';
 import { fetchAvailability, type PageAvailability } from '@/lib/booking-client';
 import { visitorZone } from '@/lib/browser-zone';
 import type { Locale } from '@/lib/i18n';
-import { formatDayParts, formatTimeParts } from '@/lib/slot-format';
+import { chipsOf, type SlotChip, zoneName } from '@/lib/slot-chip';
+import { formatDayParts } from '@/lib/slot-format';
 import { groupByDay } from '@/lib/slots';
-import { curatedZone } from '@/lib/zone-label';
+import { MINUTE_MS } from '@/lib/time';
 
 // Loaded after `load` and idle by the home desk: the fetch, the slot maths and
 // the zone names never ride in the first JavaScript.
 
 export const SHOWN_SLOTS = 3;
 
-export type SlotChip = { start: number; time: string; label: string };
-
+// The chips component rides with the times, so the desk draws the same
+// lazily loaded chips as the contact page and the chat.
 export type ReadySlots = {
   status: 'ready';
   day: string;
   zone: string;
   chips: readonly SlotChip[];
+  Chips: typeof SlotChips;
 };
 
 const ZONE_NAMES = {
@@ -24,13 +27,16 @@ const ZONE_NAMES = {
   es: () => import('@/content/es/zone-names').then((m) => m.zoneNames),
 };
 
-// A zone outside the curated list is shown by its city, as the browser names it.
-function cityOf(zone: string): string {
-  return (zone.split('/').at(-1) ?? zone).replaceAll('_', ' ');
-}
+// One fetch for the desk, the close card and the contact card, reused for five
+// minutes across client-side navigation.
+const FRESH_MS = 5 * MINUTE_MS;
+let cached: { at: number; slots: Promise<PageAvailability> } | null = null;
 
 export function loadAvailability(): Promise<PageAvailability> {
-  return fetchAvailability();
+  if (cached === null || Date.now() - cached.at >= FRESH_MS) {
+    cached = { at: Date.now(), slots: fetchAvailability() };
+  }
+  return cached.slots;
 }
 
 // The first free day, and at most three of its times, in the visitor's zone.
@@ -44,15 +50,12 @@ export async function nextSlots(
   const head = first?.entries[0];
   if (first === undefined || head === undefined) return null;
   const names = await ZONE_NAMES[locale]();
-  const curated = curatedZone(zone);
   const day = formatDayParts(locale, head.parts);
   return {
     status: 'ready',
     day,
-    zone: curated === undefined ? cityOf(zone) : names[curated],
-    chips: first.entries.slice(0, SHOWN_SLOTS).map(({ slot, parts }) => {
-      const time = formatTimeParts(locale, parts);
-      return { start: slot.start, time, label: `${day}, ${time}` };
-    }),
+    zone: zoneName(names, zone),
+    chips: chipsOf(locale, day, first.entries.slice(0, SHOWN_SLOTS)),
+    Chips: SlotChips,
   };
 }

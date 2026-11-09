@@ -33,6 +33,7 @@
       "consentLink": "política de privacidad",
       "submit": "Enviar mensaje",
       "sending": "Enviando…",
+      "verifying": "Comprobando que no eres un bot…",
       "successTitle": "Mensaje enviado",
       "successText": "Gracias. Te responderemos a la dirección que nos has indicado.",
       "errorSend": "No hemos podido enviar tu mensaje. Inténtalo de nuevo o escribe a",

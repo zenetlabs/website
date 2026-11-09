@@ -33,7 +33,7 @@ const pricingSchema = z.object({
   ),
 });
 const slotsSchema = z.object({
-  slots: z.array(z.object({ start: z.string() })),
+  slots: z.array(z.object({ start: z.string(), label: z.string().optional() })),
 });
 
 type Reading = {
@@ -139,6 +139,9 @@ function has(question: string, words: readonly string[]): boolean {
 
 // Asks the calendar, then offers a time it never returned: the slot guard's e2e.
 const FAKE_TIME = ['fake time', 'hora falsa'];
+// Asks the calendar and names the day, leaving the times to the panel's
+// chips: the chips e2e.
+const FREE_TIMES = ['what times', 'qué horas'];
 
 function script({ es, question, results }: Reading): StreamPart[] {
   const [last] = results.slice(-1);
@@ -147,6 +150,18 @@ function script({ es, question, results }: Reading): StreamPart[] {
       es
         ? 'Te propongo el domingo 1 de marzo a las 03:17. Es una gran hora.'
         : 'How about Sunday 1 March at 3:17 am? It is a great time.',
+    );
+  }
+  if (last?.tool === 'check_availability' && has(question, FREE_TIMES)) {
+    const slots = slotsSchema.safeParse(last.value);
+    const label = slots.success ? slots.data.slots[0]?.label : undefined;
+    // The day only: the times are the chips under the reply (prompt rule).
+    const day = label?.split(', ')[0];
+    if (day === undefined) return say(NO_CALENDAR[es ? 'es' : 'en']);
+    return say(
+      es
+        ? `Las horas libres del ${day}, en tu zona horaria, están aquí debajo. ¿Cuál te va bien?`
+        : `The free times on ${day}, in your time zone, are below. Which one suits you?`,
     );
   }
   if (last?.tool === 'get_pricing') {
@@ -192,6 +207,7 @@ function script({ es, question, results }: Reading): StreamPart[] {
     return say(es ? REFUSAL.es : REFUSAL.en);
   }
   if (has(question, FAKE_TIME)) return call('check_availability', {});
+  if (has(question, FREE_TIMES)) return call('check_availability', {});
   // The refusal said where it does not belong, and an inverted FAQ answer:
   // the server takes the first out and replaces the second.
   if (has(question, ['tokyo', 'tokio']))

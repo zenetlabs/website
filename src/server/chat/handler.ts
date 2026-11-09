@@ -41,7 +41,7 @@ import {
 } from '@/server/chat/prompt';
 import { relatedPage } from '@/server/chat/related-page';
 import { chatRequestSchema, splitTest } from '@/server/chat/schema';
-import { slotsOf, toolSlots } from '@/server/chat/slot-guard';
+import { type OfferedSlot, slotsOf, toolSlots } from '@/server/chat/slot-guard';
 import {
   claimTurn,
   countAddressTurn,
@@ -218,7 +218,10 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
   ]);
   const now = deps.now();
   const booking = isPublished('book', deps.site);
+  // One accumulator for the slot guard and the chips: the chips are what
+  // check_availability returned in this turn (from `pastSlots` on).
   const slots = toolSlots(past.messages);
+  const pastSlots = slots.length;
   // With booking dark there is no calendar to offer from, and no slot check.
   const calendar = booking ? { slots, now } : undefined;
   // A visitor who asks for a call gets the calendar on the first step, not a
@@ -415,6 +418,9 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
         for (const value of numbersIn(part.output)) allowed.add(value);
         if (part.toolName === 'check_availability') {
           slots.push(...slotsOf(part.output));
+          // Before any text, so the panel never shows a list that then goes.
+          const shown = turnSlots(slots.slice(pastSlots));
+          if (shown !== null && !stopped) turn.emit(shown);
         }
         break;
       case 'tool-error':
@@ -464,6 +470,20 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
       outcome.failed = true;
     }
   }
+}
+
+const MAX_CHIPS = 8;
+
+// The times this turn's check_availability calls returned, merged, without
+// repeats, in time order, at most eight: the panel's chips (it drops them if
+// the turn proposes a booking). No times, no event.
+function turnSlots(offered: readonly OfferedSlot[]): ChatEvent | null {
+  const [first] = offered;
+  if (first === undefined) return null;
+  const starts = [...new Set(offered.map((slot) => slot.start))].sort(
+    (a, b) => a - b,
+  );
+  return { t: 'slots', zone: first.zone, starts: starts.slice(0, MAX_CHIPS) };
 }
 
 async function runTurn(turn: Turn): Promise<void> {

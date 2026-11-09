@@ -23,6 +23,18 @@ const CHAT_ERRORS: Record<ChatError, true> = {
 
 export type Proposal = { slot: string; topic: string };
 
+const MAX_SLOTS = 8;
+
+// A zone the browser can format times in (an unknown one throws).
+function isUsableZone(zone: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: zone });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export type ChatEvent =
   | { t: 'session'; id: string }
   | { t: 'tool'; name: string }
@@ -34,6 +46,8 @@ export type ChatEvent =
       href: string;
     }
   | { t: 'confirm_booking'; proposal: Proposal }
+  // The free slots check_availability returned this turn, as epoch ms.
+  | { t: 'slots'; zone: string; starts: number[] }
   | { t: 'error'; code: 'unavailable' }
   | { t: 'done'; remaining: number };
 
@@ -74,6 +88,14 @@ export function isChatEvent(value: unknown): value is ChatEvent {
         isRecord(value.proposal) &&
         typeof value.proposal.slot === 'string' &&
         typeof value.proposal.topic === 'string'
+      );
+    case 'slots':
+      return (
+        typeof value.zone === 'string' &&
+        isUsableZone(value.zone) &&
+        Array.isArray(value.starts) &&
+        value.starts.length <= MAX_SLOTS &&
+        value.starts.every(Number.isSafeInteger)
       );
     case 'error':
       return value.code === 'unavailable';

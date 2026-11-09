@@ -4,6 +4,7 @@ import { chatCopy as en } from '../src/content/en/chat';
 import { services as enServices } from '../src/content/en/services';
 import { chatCopy as es } from '../src/content/es/chat';
 import { services as esServices } from '../src/content/es/services';
+import { isRecord } from '../src/lib/is-record';
 import { formatPrice } from '../src/lib/money';
 import {
   confirmByLink,
@@ -96,6 +97,60 @@ for (const locale of ['en', 'es'] as const) {
     expect(results.violations).toEqual([]);
   });
 }
+
+for (const viewport of [
+  { width: 390, height: 844 },
+  { width: 1440, height: 900 },
+]) {
+  test(`keeps the AI notice to one line once the chat starts, full text a tap away (${viewport.width})`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    const dialog = await openChat(page, 'en');
+    const toggle = dialog.getByRole('button', { name: en.noticeToggle });
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await say(page, 'en', 'How much does an AI agent cost?');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(dialog.getByText(en.noticeShort)).toBeVisible();
+    await expect(dialog.getByText(en.notice.slice(0, 40))).toBeHidden();
+    await expect(
+      dialog.getByRole('link', { name: en.privacyShort, exact: true }),
+    ).toHaveAttribute('href', '/privacy');
+    const share = await page.evaluate(() => {
+      const panel = document.querySelector('dialog[data-chat-panel]');
+      const notice = document.querySelector(
+        'dialog[data-chat-panel] [data-ai-notice]',
+      );
+      if (!panel || !notice) return 1;
+      return (
+        notice.getBoundingClientRect().height /
+        panel.getBoundingClientRect().height
+      );
+    });
+    expect(share).toBeLessThan(0.12);
+    await toggle.click();
+    await expect(dialog.getByText(en.notice.slice(0, 40))).toBeVisible();
+  });
+}
+
+test('docks to the right edge on a desktop, clear of the desk composer', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await gotoHydrated(page, '/');
+  const composer = page.locator('[data-desk] .desk-composer');
+  const desk = await composer.boundingBox();
+  await page.getByRole('button', { name: LAUNCHER.en }).click();
+  const panel = page.locator('dialog[data-chat-panel]');
+  await expect(panel).toBeVisible();
+  await settleAnimations(page);
+  const box = await panel.boundingBox();
+  expect(box?.height).toBe(900);
+  expect(Math.round((box?.x ?? 0) + (box?.width ?? 0))).toBe(1440);
+  expect(box?.width).toBeLessThanOrEqual(416);
+  // The composer's own left half (where the visitor typed) stays uncovered.
+  expect((desk?.x ?? 0) + (desk?.width ?? 0) / 2).toBeLessThan(box?.x ?? 0);
+});
 
 test('traps focus in the dialog, closes on Escape and returns focus to the launcher', async ({
   page,
@@ -323,6 +378,69 @@ test.describe('booking from the chat', () => {
       }),
     ).toBeVisible();
   });
+
+  for (const locale of ['en', 'es'] as const) {
+    test(`draws the times check_availability returned as the desk's chips (${locale})`, async ({
+      page,
+      request,
+    }) => {
+      const copy = COPY[locale];
+      await openChat(page, locale);
+      await say(
+        page,
+        locale,
+        locale === 'en'
+          ? 'What times are free next week?'
+          : '¿Qué horas tienes libres la semana que viene?',
+      );
+      const slots = page.locator('[data-chat-slots]');
+      await expect(slots).toBeVisible();
+      const chips = slots.locator('.slot-chip');
+      const count = await chips.count();
+      expect(count).toBeGreaterThan(0);
+      expect(count).toBeLessThanOrEqual(8);
+      // Never an invented time: every chip is a slot the calendar serves.
+      const served: unknown = await (
+        await request.get('/api/book/slots')
+      ).json();
+      const listed =
+        isRecord(served) && Array.isArray(served.slots) ? served.slots : [];
+      const starts = new Set(
+        listed.flatMap((slot: unknown) =>
+          isRecord(slot) && typeof slot.start === 'number' ? [slot.start] : [],
+        ),
+      );
+      for (const href of await chips.evaluateAll((links) =>
+        links.map((link) => link.getAttribute('href') ?? ''),
+      )) {
+        expect(href).toMatch(
+          new RegExp(
+            `^${locale === 'en' ? '' : '/es'}/(book|reservar)\\?slot=\\d+$`,
+          ),
+        );
+        expect(starts.has(Number(href.split('=')[1]))).toBe(true);
+      }
+      const reply = page
+        .getByRole('log')
+        .locator('[data-ai-generated="true"]')
+        .last();
+      await expect(reply).not.toContainText('- ');
+      await expect(
+        slots.getByRole('link', { name: copy.slots.seeAll }),
+      ).toBeVisible();
+      await chips.first().click();
+      await expect(
+        page.getByRole('heading', { name: copy.booking.title }),
+      ).toBeVisible();
+      await expect(page).toHaveURL(locale === 'en' ? '/' : '/es');
+      await settleAnimations(page);
+      const results = await new AxeBuilder({ page })
+        .withTags(TAGS)
+        .exclude('iframe[src*="challenges.cloudflare.com"]')
+        .analyze();
+      expect(results.violations).toEqual([]);
+    });
+  }
 
   test('proposes a slot, holds it through the card, and books it from the email as a chat lead', async ({
     page,

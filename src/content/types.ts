@@ -258,6 +258,8 @@ export type DeskCopy = {
 
 export type VoiceCopy = {
   title: string;
+  noticeShort: string;
+  noticeToggle: string;
   badge: string;
   notice: string;
   privacyLink: string;
@@ -733,8 +735,12 @@ export type BookPageContent = {
   };
   picker: {
     legend: string;
+    days: string;
     times: { one: string; other: string };
     required: string;
+    // The summary above the details: the chosen time, or none yet.
+    chosen: string;
+    none: string;
   };
   form: {
     label: string;
@@ -771,6 +777,10 @@ export type ChatCopy = {
   talk: string;
   badge: string;
   notice: string;
+  // The one line shown at all times; `notice` opens under it.
+  noticeShort: string;
+  noticeToggle: string;
+  privacyShort: string;
   privacyLink: string;
   welcome: string;
   welcomeBooking: string;
@@ -809,6 +819,12 @@ export type ChatCopy = {
   };
   pages: Record<PageId, string>;
   sections: Record<NavigateSection, string>;
+  // The desk's booking copy and zone names, for the times drawn as chips.
+  slots: DeskCopy['slots'];
+  zones: Record<BookingZone, string>;
+  // The hand-off to the person.
+  person: { text: string; book: string; write: string };
+  offline: string;
   booking: {
     title: string;
     when: string;

@@ -1,5 +1,7 @@
 import { assistantIntro } from '@/content/en/assistant-intro';
 import { bookingPending } from '@/content/en/booking-pending';
+import { slotsCopy } from '@/content/en/slots';
+import { zoneNames } from '@/content/en/zone-names';
 import type { ChatCopy } from '@/content/types';
 
 // TODO(albert): review the widget copy
@@ -9,6 +11,9 @@ export const chatCopy = {
   badge: assistantIntro.badge,
   notice:
     "You're chatting with an AI assistant, not a person: its replies are generated automatically by an AI model. It answers from this site's content and can make mistakes; prices come only from our official list. We keep this conversation for 30 days to reply to you and to prevent abuse, or for 24 months with your enquiry if you book a call or send the contact form. Please don't share passwords or sensitive personal data.",
+  noticeShort: 'AI replies, not a person. We keep chats for 30 days.',
+  noticeToggle: 'Details',
+  privacyShort: 'Privacy',
   privacyLink: 'Privacy policy',
   welcome: assistantIntro.welcome,
   welcomeBooking: assistantIntro.welcomeBooking,
@@ -76,6 +81,14 @@ export const chatCopy = {
     services: 'Services',
     faq: 'FAQ',
   },
+  slots: slotsCopy,
+  zones: zoneNames,
+  person: {
+    text: 'Prefer a person? Talk to Albert Sabaté.',
+    book: 'Book a call',
+    write: 'Write to us',
+  },
+  offline: "You're offline. Your message stays here; send it when you're back.",
   booking: {
     title: 'Confirm your call',
     when: 'When',

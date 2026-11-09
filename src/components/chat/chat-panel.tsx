@@ -9,15 +9,14 @@ import {
   useId,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react';
+import { AiNotice, CloseIcon } from '@/components/chat/ai-notice';
 import { BookingCard } from '@/components/chat/booking-card';
+import { ChatSlots } from '@/components/chat/chat-slots';
+import { usePanelMotion } from '@/components/chat/panel-motion';
 import { ContactLinks } from '@/components/contact-links';
-import { CONTROL, LazyTurnstile } from '@/components/form-parts';
-import {
-  PRIMARY_BUTTON,
-  SECONDARY_BUTTON_SM,
-  TEXT_LINK,
-} from '@/components/ui';
+import { LazyTurnstile } from '@/components/form-parts';
 import { challengeToken } from '@/components/use-challenge';
 import type { ChatCopy } from '@/content/types';
 import { CHAT_LIMITS } from '@/lib/assistant-limits';
@@ -29,7 +28,9 @@ import {
   dismissProposal,
   ensureLocale,
   hasChatSession,
+  proposeSlot,
   send,
+  shownText,
   useChatState,
 } from '@/lib/chat-store';
 import type { Locale } from '@/lib/i18n';
@@ -39,6 +40,7 @@ import { noop } from '@/lib/time';
 import { openVoice, voiceAvailable } from '@/lib/voice-entry';
 
 const LOW_REMAINING = 5;
+const CHALLENGE_WAIT_MS = 20_000;
 const FALLBACK: ReadonlySet<string> = new Set([
   'budget',
   'unavailable',
@@ -50,67 +52,6 @@ const FALLBACK: ReadonlySet<string> = new Set([
 ]);
 
 type NavigateItem = Extract<ChatItem, { kind: 'navigate' }>;
-
-// The one orchestrated motion on the site: from the home desk, the panel grows
-// out of the desk's own box (a transform-only FLIP), or rises as a sheet on a
-// phone. Interruptible: closing mid-flight reverses from where it is.
-const GROW_EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
-const SHEET_EASE = 'cubic-bezier(0.32, 0.72, 0, 1)';
-const GROW_MS = 260;
-const SHEET_MS = 300;
-const CLOSE_MS = 200;
-
-type Motion = { frames: Keyframe[]; easing: string; duration: number };
-
-function prefersReducedMotion(): boolean {
-  return matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
-function onScreen(box: DOMRect): boolean {
-  return box.bottom > 0 && box.top < innerHeight && box.width > 0;
-}
-
-function motionFrom(
-  dialog: HTMLDialogElement,
-  from: Element | null,
-): Motion | null {
-  if (from === null || !from.isConnected || prefersReducedMotion()) {
-    return null;
-  }
-  const origin = from.getBoundingClientRect();
-  if (!onScreen(origin)) return null;
-  if (!matchMedia('(min-width: 768px)').matches) {
-    return {
-      frames: [{ transform: 'translateY(100%)' }, { transform: 'none' }],
-      easing: SHEET_EASE,
-      duration: SHEET_MS,
-    };
-  }
-  const box = dialog.getBoundingClientRect();
-  if (box.width === 0 || box.height === 0) return null;
-  const x = origin.left - box.left;
-  const y = origin.top - box.top;
-  const scaleX = origin.width / box.width;
-  const scaleY = origin.height / box.height;
-  return {
-    frames: [
-      {
-        transformOrigin: '0 0',
-        transform: `translate(${x}px, ${y}px) scale(${scaleX}, ${scaleY})`,
-      },
-      { transformOrigin: '0 0', transform: 'none' },
-    ],
-    easing: GROW_EASE,
-    duration: GROW_MS,
-  };
-}
-
-// The content stays hidden while the box is scaled, then settles in place.
-const CONTENT_FRAMES: Keyframe[] = [
-  { opacity: 0 },
-  { opacity: 0, offset: 0.55 },
-  { opacity: 1 },
-];
 
 function Speaker({ children }: { children: ReactNode }) {
   return <span className="sr-only">{children}: </span>;
@@ -127,8 +68,10 @@ function labelFor(item: NavigateItem, copy: ChatCopy) {
     : copy.sections[item.section];
 }
 
-function statusText(state: ChatState, copy: ChatCopy): string {
-  if (state.status === 'verifying') return copy.verifying;
+function statusText(state: ChatState, copy: ChatCopy, queued: boolean): string {
+  if (state.status === 'verifying' || (queued && state.status === 'idle')) {
+    return copy.verifying;
+  }
   if (state.status === 'tool' && state.tool !== null) {
     return toolLabel(copy, state.tool);
   }
@@ -139,6 +82,23 @@ function isSendKey(event: KeyboardEvent<HTMLTextAreaElement>): boolean {
   return (
     event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing
   );
+}
+
+function subscribeOnline(listener: () => void): () => void {
+  addEventListener('online', listener);
+  addEventListener('offline', listener);
+  return () => {
+    removeEventListener('online', listener);
+    removeEventListener('offline', listener);
+  };
+}
+
+function online(): boolean {
+  return navigator.onLine;
+}
+
+function alwaysOnline(): boolean {
+  return true;
 }
 
 function ChatHeader({
@@ -155,107 +115,168 @@ function ChatHeader({
   onClose: () => void;
 }) {
   return (
-    <header className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-3">
-      <div className="flex items-center gap-2">
-        <h2
-          id={titleId}
-          className="font-sans text-base font-semibold leading-snug tracking-normal"
-        >
+    <header className="chat-head">
+      <span aria-hidden="true" className="desk-mark" />
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5">
+        <h2 id={titleId} className="desk-name leading-tight">
           {copy.title}
         </h2>
-        <span className="rounded-input border border-border px-1.5 py-0.5 text-label font-semibold">
-          {copy.badge}
-        </span>
+        <span className="desk-badge">{copy.badge}</span>
       </div>
-      <div className="flex items-center gap-1">
-        {canTalk ? (
-          <button
-            type="button"
-            onClick={onTalk}
-            className={SECONDARY_BUTTON_SM}
-          >
-            {copy.talk}
-          </button>
-        ) : null}
+      {canTalk ? (
         <button
           type="button"
-          aria-label={copy.close}
-          onClick={onClose}
-          className="inline-flex size-11 items-center justify-center rounded-input pointer-fine:hover:bg-tint"
+          onClick={onTalk}
+          aria-label={copy.talk}
+          title={copy.talk}
+          className="chat-talk"
         >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            className="size-5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          >
-            <path d="M6 6l12 12M18 6L6 18" />
-          </svg>
+          <span aria-hidden="true" className="icon icon-phone" />
         </button>
-      </div>
+      ) : null}
+      <button
+        type="button"
+        aria-label={copy.close}
+        onClick={onClose}
+        className="chat-close"
+      >
+        <CloseIcon />
+      </button>
     </header>
+  );
+}
+
+// The person behind the agent, in a person's amber: a call with the founder
+// while booking is published, the contact page otherwise.
+function ChatPerson({
+  copy,
+  locale,
+  booking,
+}: {
+  copy: ChatCopy;
+  locale: Locale;
+  booking: boolean;
+}) {
+  return (
+    <div className="chat-person" data-chat-person>
+      <span aria-hidden="true" className="monogram size-10">
+        <span className="icon icon-human size-5" />
+      </span>
+      <p className="min-w-0 flex-[1_1_11rem] text-ui-s leading-snug">
+        {copy.person.text}
+      </p>
+      <a
+        href={pagePath(locale, booking ? 'book' : 'contact')}
+        className="chat-person-link"
+      >
+        {booking ? copy.person.book : copy.person.write}
+      </a>
+    </div>
   );
 }
 
 function ChatLog({
   copy,
+  locale,
   welcome,
   state,
+  typing,
   onNavigate,
+  onPickSlot,
+  onOpen,
 }: {
   copy: ChatCopy;
+  locale: Locale;
   welcome: string;
   state: ChatState;
+  typing: string;
   onNavigate: (
     item: NavigateItem,
     event: MouseEvent<HTMLAnchorElement>,
   ) => void;
+  onPickSlot: (start: number) => void;
+  onOpen: (href: string, event: MouseEvent<HTMLAnchorElement>) => void;
 }) {
+  // The turn's chips show once the reply settles (a booking proposed later in
+  // the turn drops them); the list the chips carry never shows in the text.
+  const streamed = shownText(state.streaming, state.slots);
   return (
     <div role="log" aria-label={copy.logLabel}>
-      <ol className="grid gap-3 text-sm">
-        <li className="max-w-[90%] rounded-card bg-surface px-3 py-2">
+      <ol className="grid gap-3">
+        <li className="chat-msg" data-from="agent">
           <Speaker>{copy.assistant}</Speaker>
           {welcome}
         </li>
-        {state.items.map((item) =>
-          item.kind === 'navigate' ? (
-            <li key={item.id}>
-              <a
-                href={item.href}
-                onClick={(event) => onNavigate(item, event)}
-                className={`${SECONDARY_BUTTON_SM} ${TEXT_LINK}`}
-              >
-                {copy.open.replace('{label}', labelFor(item, copy))}
-              </a>
-            </li>
-          ) : item.kind === 'notice' ? (
-            <li key={item.id} className="text-ui-s text-muted-fg">
-              {item.text}
-            </li>
-          ) : (
-            <li
-              key={item.id}
-              data-ai-generated={item.kind === 'assistant' ? 'true' : undefined}
-              className={`max-w-[90%] whitespace-pre-line rounded-card px-3 py-2 ${item.kind === 'user' ? 'ml-auto bg-accent text-accent-fg' : 'bg-surface'}`}
-            >
-              <Speaker>
-                {item.kind === 'user' ? copy.you : copy.assistant}
-              </Speaker>
-              {item.text}
-            </li>
-          ),
-        )}
-        {state.streaming === '' ? null : (
+        {state.items.map((item) => {
+          switch (item.kind) {
+            case 'navigate':
+              return (
+                <li key={item.id}>
+                  <a
+                    href={item.href}
+                    onClick={(event) => onNavigate(item, event)}
+                    className="chat-link"
+                  >
+                    {copy.open.replace('{label}', labelFor(item, copy))}
+                    <span aria-hidden="true" className="icon icon-arrow" />
+                  </a>
+                </li>
+              );
+            case 'notice':
+              return (
+                <li key={item.id} className="chat-note">
+                  {item.text}
+                </li>
+              );
+            case 'slots':
+              return (
+                <li key={item.id}>
+                  <ChatSlots
+                    copy={copy}
+                    locale={locale}
+                    zone={item.zone}
+                    starts={item.starts}
+                    onPick={onPickSlot}
+                    onOpen={onOpen}
+                  />
+                </li>
+              );
+            default:
+              return (
+                <li
+                  key={item.id}
+                  data-ai-generated={
+                    item.kind === 'assistant' ? 'true' : undefined
+                  }
+                  data-from={item.kind === 'user' ? 'user' : 'agent'}
+                  className="chat-msg"
+                >
+                  <Speaker>
+                    {item.kind === 'user' ? copy.you : copy.assistant}
+                  </Speaker>
+                  {item.text}
+                </li>
+              );
+          }
+        })}
+        {streamed === '' ? null : (
           <li
             aria-hidden="true"
             data-streaming
-            className="max-w-[90%] whitespace-pre-line rounded-card bg-surface px-3 py-2"
+            data-from="agent"
+            className="chat-msg"
           >
-            {state.streaming}
+            {streamed}
+          </li>
+        )}
+        {typing === '' || streamed !== '' ? null : (
+          <li aria-hidden="true" data-chat-typing className="chat-typing">
+            <span className="chat-dots">
+              <span />
+              <span />
+              <span />
+            </span>
+            {typing}
           </li>
         )}
       </ol>
@@ -280,7 +301,7 @@ function ChatSuggestions({
             type="button"
             disabled={!canSend}
             onClick={() => onPick(suggestion)}
-            className={SECONDARY_BUTTON_SM}
+            className="desk-chip text-left"
           >
             {suggestion}
           </button>
@@ -316,11 +337,8 @@ function ChatAlerts({
   return (
     <>
       {showFallback || state.cut ? (
-        <div
-          role="alert"
-          className="mt-3 rounded-card border border-border p-3 text-sm"
-        >
-          <p className="font-medium">
+        <div role="alert" className="chat-alert" data-chat-alert="fallback">
+          <p className="font-semibold text-fg">
             {showFallback ? copy.fallback.title : copy.errorReply}
           </p>
           {state.failure === 'session-full' ? (
@@ -332,24 +350,22 @@ function ChatAlerts({
             booking={booking}
             labels={copy.fallback}
             message={message}
-            className="mt-2"
           />
         </div>
       ) : null}
       {state.failure === 'rate' ? (
-        <p role="alert" className="mt-3 text-sm">
+        <p role="alert" className="chat-alert" data-chat-alert="rate">
           {copy.errorRate}
         </p>
       ) : null}
       {state.failure === 'captcha' || challengeFailed ? (
-        <div role="alert" className="mt-3 text-sm">
+        <div role="alert" className="chat-alert" data-chat-alert="captcha">
           <p>{copy.errorCaptcha}</p>
           <ContactLinks
             locale={locale}
             booking={booking}
             labels={copy.fallback}
             message={message}
-            className="mt-2"
           />
         </div>
       ) : null}
@@ -357,16 +373,30 @@ function ChatAlerts({
   );
 }
 
-function ChatStatusLine({ copy, state }: { copy: ChatCopy; state: ChatState }) {
-  const status = statusText(state, copy);
+// Read aloud once per change; the same words show in the typing bubble.
+function ChatStatusLine({
+  copy,
+  state,
+  status,
+  offline,
+}: {
+  copy: ChatCopy;
+  state: ChatState;
+  status: string;
+  offline: boolean;
+}) {
+  const low =
+    state.remaining !== null && state.remaining <= LOW_REMAINING
+      ? copy.remaining.replace('{n}', String(state.remaining))
+      : '';
+  const visible = offline ? copy.offline : status === '' ? low : '';
   return (
-    <p role="status" className="min-h-6 px-4 text-ui-s text-muted-fg">
-      {status}
-      {status === '' &&
-      state.remaining !== null &&
-      state.remaining <= LOW_REMAINING
-        ? copy.remaining.replace('{n}', String(state.remaining))
-        : ''}
+    <p
+      role="status"
+      data-chat-status={offline ? 'offline' : undefined}
+      className={visible === '' ? 'sr-only' : 'chat-status'}
+    >
+      {visible === '' ? status : visible}
     </p>
   );
 }
@@ -377,6 +407,7 @@ function ChatComposer({
   inputRef,
   draft,
   canSubmit,
+  locked,
   onDraftChange,
   onSubmit,
 }: {
@@ -385,6 +416,8 @@ function ChatComposer({
   inputRef: Ref<HTMLTextAreaElement>;
   draft: string;
   canSubmit: boolean;
+  // A message waiting for the challenge: no edit may be lost meanwhile.
+  locked: boolean;
   onDraftChange: (value: string) => void;
   onSubmit: () => void;
 }) {
@@ -400,31 +433,32 @@ function ChatComposer({
   }
 
   return (
-    <form
-      onSubmit={onFormSubmit}
-      className="grid gap-2 border-t border-hairline p-3"
-    >
+    <form onSubmit={onFormSubmit} className="chat-composer">
       <label htmlFor={inputId} className="sr-only">
         {copy.inputLabel}
       </label>
-      <textarea
-        id={inputId}
-        ref={inputRef}
-        value={draft}
-        onChange={(event) => onDraftChange(event.target.value)}
-        onKeyDown={onKeyDown}
-        maxLength={CHAT_LIMITS.messageChars}
-        rows={2}
-        placeholder={copy.placeholder}
-        className={`${CONTROL} resize-none`}
-      />
-      <button
-        type="submit"
-        disabled={!canSubmit}
-        className={`${PRIMARY_BUTTON} w-full`}
-      >
-        {copy.send}
-      </button>
+      <div className="desk-composer chat-box">
+        <textarea
+          id={inputId}
+          ref={inputRef}
+          value={draft}
+          onChange={(event) => onDraftChange(event.target.value)}
+          onKeyDown={onKeyDown}
+          maxLength={CHAT_LIMITS.messageChars}
+          readOnly={locked}
+          rows={1}
+          placeholder={copy.placeholder}
+          className="chat-input"
+        />
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          aria-label={copy.send}
+          className="desk-send"
+        >
+          <span aria-hidden="true" className="icon icon-send size-5" />
+        </button>
+      </div>
     </form>
   );
 }
@@ -449,100 +483,87 @@ export function ChatPanel({
   // The desk's message waits in the composer until it is sent, so a slow or
   // failed challenge never loses it.
   const [draft, setDraft] = useState(initialMessage ?? '');
-  const [ready, setReady] = useState(false);
+  // The challenge has loaded: read only when a message is sent.
+  const ready = useRef(false);
+  const [queued, setQueued] = useState(false);
+  const [noticeOpen, setNoticeOpen] = useState<boolean | null>(null);
   const [challengeFailed, setChallengeFailed] = useState(false);
+  const isOnline = useSyncExternalStore(subscribeOnline, online, alwaysOnline);
   const [zone] = useState(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone,
   );
   const widget = useRef<TurnstileInstance>(undefined);
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
-  const content = useRef<HTMLDivElement>(null);
   const pendingMessage = useRef(initialMessage);
-  const motion = useRef<Motion | null>(null);
-  const running = useRef<Animation[]>([]);
-  const closing = useRef(false);
+  const queueTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const motion = usePanelMotion(from);
+  const { dialogRef, content, dismiss } = motion;
   const opened = useRef(false);
   const titleId = useId();
   const noticeId = useId();
   const inputId = useId();
   const busy = state.status !== 'idle';
-  const canSend = !busy && (state.sessionId !== null || ready);
+  const canSend = () => !busy && (state.sessionId !== null || ready.current);
+  // A message typed before the challenge has loaded waits for it, shown as the
+  // check it is, instead of a send button that does nothing.
+  // Once the challenge has failed only a session can carry a message: the
+  // captcha alert (with the draft in its contact link) takes over.
+  const canQueue =
+    !busy &&
+    !queued &&
+    isOnline &&
+    (state.sessionId !== null || !challengeFailed);
+  const status = statusText(state, copy, queued);
+  const notice = noticeOpen ?? state.items.length === 0;
   const welcome = booking ? copy.welcome + copy.welcomeBooking : copy.welcome;
   const suggestions = booking
     ? [...copy.suggestions, copy.suggestionBooking]
     : copy.suggestions;
 
   function canSendText(text: string) {
-    return canSend && text.trim() !== '';
+    return canQueue && text.trim() !== '';
   }
 
   function submit(text: string) {
     if (!canSendText(text)) return;
-    sendText(text);
+    if (canSend()) {
+      sendText(text);
+      return;
+    }
+    pendingMessage.current = text;
+    setQueued(true);
+    // A challenge that never loads must not leave the message checking forever.
+    clearTimeout(queueTimer.current);
+    queueTimer.current = setTimeout(challengeDown, CHALLENGE_WAIT_MS);
+  }
+
+  // The challenge failed or never loaded: nothing waits for it any more, and
+  // the typed message stays in the composer and in the alert's contact link.
+  function challengeDown() {
+    clearTimeout(queueTimer.current);
+    pendingMessage.current = null;
+    setQueued(false);
+    setChallengeFailed(true);
   }
 
   // The desk's message goes out like a typed one once a session or a
   // Turnstile token can carry it. While a reply is still streaming it stays
   // in the composer for the visitor to send.
   function sendPending() {
+    clearTimeout(queueTimer.current);
     const text = pendingMessage.current;
+    setQueued(false);
     if (text === null) return;
     pendingMessage.current = null;
     if (chatIdle()) sendText(text);
-  }
-
-  function play(dialog: HTMLDialogElement, reverse: boolean): Animation[] {
-    const current = motion.current;
-    if (current === null) return [];
-    const options: KeyframeAnimationOptions = {
-      duration: reverse ? CLOSE_MS : current.duration,
-      easing: current.easing,
-      direction: reverse ? 'reverse' : 'normal',
-    };
-    const played = [
-      dialog.animate(current.frames, options),
-      dialog.animate([{ opacity: 0 }, { opacity: 1 }], {
-        ...options,
-        pseudoElement: '::backdrop',
-      }),
-    ];
-    const inner = content.current;
-    if (inner) played.push(inner.animate(CONTENT_FRAMES, options));
-    return played;
   }
 
   function openPanel(dialog: HTMLDialogElement) {
     ensureLocale(locale);
     dialog.showModal();
     input.current?.focus();
-    motion.current = motionFrom(dialog, from);
-    running.current = play(dialog, false);
+    motion.grow(dialog);
     if (hasChatSession()) sendPending();
-  }
-
-  // A close while the panel is still growing turns the same motion around;
-  // after that it shrinks back into the desk where it is now, or closes at
-  // once when the desk has scrolled away.
-  function dismiss() {
-    const dialog = dialogRef.current;
-    if (!dialog || closing.current) return;
-    const inFlight = running.current.filter(
-      (animation) => animation.playState === 'running',
-    );
-    if (inFlight.length === 0 && motion.current !== null) {
-      motion.current = motionFrom(dialog, from);
-    }
-    if (motion.current === null) {
-      dialog.close();
-      return;
-    }
-    closing.current = true;
-    const back = inFlight.length > 0 ? inFlight : play(dialog, true);
-    for (const animation of inFlight) animation.reverse();
-    void Promise.all(back.map((animation) => animation.finished))
-      .catch(() => undefined)
-      .then(() => dialog.close());
   }
 
   function sendText(text: string) {
@@ -557,11 +578,16 @@ export function ChatPanel({
     });
   }
 
-  function navigate(item: NavigateItem, event: MouseEvent<HTMLAnchorElement>) {
+  // A page opened from the chat: inside the app, so the conversation stays.
+  function open(href: string, event: MouseEvent<HTMLAnchorElement>) {
     if (!isPlainClick(event)) return;
     event.preventDefault();
     dialogRef.current?.close();
-    router.history.push(item.href);
+    router.history.push(href);
+  }
+
+  function navigate(item: NavigateItem, event: MouseEvent<HTMLAnchorElement>) {
+    open(item.href, event);
   }
 
   return (
@@ -576,7 +602,7 @@ export function ChatPanel({
         }
       }}
       onCancel={(event) => {
-        if (motion.current === null) return;
+        if (!motion.moves()) return;
         event.preventDefault();
         dismiss();
       }}
@@ -585,9 +611,9 @@ export function ChatPanel({
       aria-describedby={noticeId}
       data-chat-panel
       data-chat-state={state.status}
-      className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none border-0 bg-bg p-0 text-fg md:inset-auto md:right-4 md:bottom-4 md:h-[min(40rem,85dvh)] md:w-[26rem] md:rounded-card md:border md:border-border backdrop:bg-bg/60"
+      className="chat-panel"
     >
-      <div ref={content} className="flex h-full flex-col">
+      <div ref={content} className="flex h-full min-h-0 flex-col">
         <ChatHeader
           copy={copy}
           titleId={titleId}
@@ -598,35 +624,44 @@ export function ChatPanel({
           }}
           onClose={dismiss}
         />
-        <p
-          id={noticeId}
-          className="border-b border-hairline px-4 py-2 text-ui-s leading-snug text-muted-fg"
-        >
-          {copy.notice}{' '}
-          <a href={pagePath(locale, 'privacy')} className={TEXT_LINK}>
-            {copy.privacyLink}
-          </a>
-        </p>
+        <AiNotice
+          copy={copy}
+          locale={locale}
+          noticeId={noticeId}
+          open={notice}
+          onToggle={() => setNoticeOpen(!notice)}
+          privacyInText={copy.privacyShort}
+        />
         {/* Reversed, so the newest message and the streaming reply stay in
             view as the conversation grows; short logs still start at the top. */}
-        <div className="flex flex-1 flex-col-reverse overflow-y-auto px-4 py-3">
+        <div className="chat-scroll">
           <div className="mb-auto">
             <ChatLog
               copy={copy}
+              locale={locale}
               welcome={welcome}
               state={state}
+              typing={status}
               onNavigate={navigate}
+              onOpen={open}
+              onPickSlot={(start) => {
+                proposeSlot(start);
+              }}
             />
             {state.items.length === 0 ? (
-              <ChatSuggestions
-                suggestions={suggestions}
-                canSend={canSend}
-                onPick={submit}
-              />
+              <>
+                <ChatSuggestions
+                  suggestions={suggestions}
+                  canSend={canQueue}
+                  onPick={submit}
+                />
+                <ChatPerson copy={copy} locale={locale} booking={booking} />
+              </>
             ) : null}
             {state.proposal === null ? null : (
               <div className="mt-3">
                 <BookingCard
+                  key={state.proposal.slot}
                   proposal={state.proposal}
                   copy={copy.booking}
                   locale={locale}
@@ -653,13 +688,19 @@ export function ChatPanel({
             />
           </div>
         </div>
-        <ChatStatusLine copy={copy} state={state} />
+        <ChatStatusLine
+          copy={copy}
+          state={state}
+          status={status}
+          offline={!isOnline}
+        />
         <ChatComposer
           copy={copy}
           inputId={inputId}
           inputRef={input}
           draft={draft}
           canSubmit={canSendText(draft)}
+          locked={queued}
           onDraftChange={setDraft}
           onSubmit={() => submit(draft)}
         />
@@ -669,9 +710,9 @@ export function ChatPanel({
           locale={locale}
           instance={widget}
           onToken={noop}
-          onError={() => setChallengeFailed(true)}
+          onError={challengeDown}
           onLoad={() => {
-            setReady(true);
+            ready.current = true;
             sendPending();
           }}
           options={{ appearance: 'interaction-only', execution: 'execute' }}

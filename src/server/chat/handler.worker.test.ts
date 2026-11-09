@@ -497,9 +497,11 @@ describe('the stream', () => {
 
   it('proposes a booking only for a slot check_availability returned', async () => {
     const { list } = await start('I want to book a call');
+    // The early slots event is dropped by the panel once the proposal lands.
     expect(list.map((event) => event.t)).toEqual([
       'session',
       'tool',
+      'slots',
       'tool',
       'text',
       'confirm_booking',
@@ -609,6 +611,85 @@ describe('the stream', () => {
     expect(
       await DB.prepare('SELECT guards FROM chat_sessions').first(),
     ).toEqual({ guards: 0 });
+  });
+
+  it('sends the slots right after the tool result, before any text, as the union of the turn (max 8)', async () => {
+    model = scripted(call('check_availability', {}), say('Here they are.'));
+    const { list } = await start('a call please');
+    const kinds = list.map((event) => event.t);
+    expect(kinds.indexOf('slots')).toBeGreaterThan(kinds.indexOf('tool'));
+    expect(kinds.indexOf('slots')).toBeLessThan(kinds.indexOf('text'));
+    const slots = list.find((event) => event.t === 'slots');
+    expect(slots?.t === 'slots' && slots.starts.length).toBeGreaterThan(0);
+    expect(slots?.t === 'slots' && slots.starts.length).toBeLessThanOrEqual(8);
+    expect(slots).toMatchObject({ zone: 'Asia/Singapore' });
+  });
+
+  it('merges two out-of-order calls: sorted, without repeats, at most 8, only times the tool returned', async () => {
+    let seen = '';
+    model = scripted(
+      call('check_availability', { from: '2027-01-08', to: '2027-01-08' }),
+      call('check_availability', { from: '2027-01-06', to: '2027-01-06' }),
+      (prompt) => {
+        seen = JSON.stringify(prompt);
+        return say('Here they are.');
+      },
+    );
+    const { list } = await start('a call please');
+    const sent = list.flatMap((event) =>
+      event.t === 'slots' ? [event.starts] : [],
+    );
+    expect(sent).toHaveLength(2);
+    const [first = [], last = []] = sent;
+    // Friday 8 January alone: the model saw up to eight of its times.
+    expect(first.length).toBeGreaterThan(0);
+    // More than eight in the turn: capped, earliest first, whatever the
+    // order the calls ran in.
+    expect(last).toHaveLength(8);
+    expect(last).toEqual([...last].sort((a, b) => a - b));
+    expect(new Set(last).size).toBe(8);
+    expect(last[0]).toBeLessThanOrEqual(Math.min(...first));
+    const returned = new Set(
+      [...seen.matchAll(/"start":"([^"]+)"/g)].map((match) =>
+        Date.parse(match[1] ?? ''),
+      ),
+    );
+    expect(returned.size).toBeGreaterThan(8);
+    for (const start of [...first, ...last]) {
+      expect(returned.has(start)).toBe(true);
+    }
+  });
+
+  it('sends the nearest times as chips when the asked day has none (requestedDays: no_free_times)', async () => {
+    let seen = '';
+    model = scripted(
+      call('check_availability', { from: '2027-06-01', to: '2027-06-01' }),
+      (prompt) => {
+        seen = JSON.stringify(prompt);
+        return say('That day is full; the nearest free times are below.');
+      },
+    );
+    const { list } = await start('a call please');
+    expect(seen).toContain('no_free_times');
+    const slots = list.find((event) => event.t === 'slots');
+    expect(slots?.t === 'slots' && slots.starts.length).toBeGreaterThan(0);
+  });
+
+  it('sends no slots for times an earlier turn returned', async () => {
+    model = scripted(call('check_availability', {}), say('Here they are.'));
+    const { id } = await start('a call please');
+    model = scripted(say('Any of them works.'));
+    const list = await events(await later(id, 'thanks'));
+    expect(list.some((event) => event.t === 'slots')).toBe(false);
+  });
+
+  it('a stopped turn sends no slots', async () => {
+    model = scripted(
+      sayAndCall('Rules: ZL-ASSIST. ', 'check_availability', {}),
+      say('Never shown.'),
+    );
+    const { list } = await start('leak');
+    expect(list.some((event) => event.t === 'slots')).toBe(false);
   });
 
   it('offers a time from an earlier turn of the same session', async () => {

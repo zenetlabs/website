@@ -96,6 +96,19 @@ async function slotValues(page: Page): Promise<string[]> {
     );
 }
 
+// The week strip shows one day's times at a time: open the slot's day, then
+// press its time (the radios are visually hidden inside their labels).
+async function pickSlot(page: Page, slot: string) {
+  const day = await page
+    .locator(`input[name="slot"][value="${slot}"]`)
+    .evaluate((input) => input.closest('[data-day]')?.getAttribute('data-day'));
+  await page.locator(`label.day-chip:has(input[value="${day}"])`).click();
+  await page.locator(`label.time-chip:has(input[value="${slot}"])`).click();
+  await expect(
+    page.locator(`input[name="slot"][value="${slot}"]`),
+  ).toBeChecked();
+}
+
 async function bearerBook(
   request: APIRequestContext,
   slot: string,
@@ -128,8 +141,9 @@ test.describe('without JavaScript', () => {
     await expect(page.locator('[data-booking="open"]')).toBeVisible();
     await expect(page.getByText('Times in Singapore')).toBeVisible();
     await expect(
-      page.locator('[data-booking="open"] summary').first(),
+      page.locator('[data-booking="open"] [data-day]:not([hidden]) legend'),
     ).toContainText('times');
+    await expect(page.locator('label.day-chip').first()).toBeVisible();
     await expect(page.locator('noscript p')).toContainText(
       'Booking needs JavaScript.',
     );
@@ -191,15 +205,26 @@ test.describe('in a Singapore browser', () => {
     const third = groupByDay(slots, 'Asia/Singapore')[2];
     const first = third?.entries[0]?.slot;
     if (!third || !first) throw new Error('no third day');
-    const details = page.locator('[data-booking="open"] details').nth(2);
-    await expect(details.locator('summary')).toContainText(
+    const dayChip = page.locator('label.day-chip').nth(2);
+    // The visible short day ("lun 11 ene") starts the radio's accessible name.
+    await expect(dayChip).toContainText(
+      formatSlotDay('es', first.start, 'Asia/Singapore')
+        .split(' ')
+        .slice(0, 2)
+        .map((word, index) => (index === 0 ? word.slice(0, 3) : word))
+        .join(' '),
+    );
+    await dayChip.click();
+    const shown = page.locator(
+      '[data-booking="open"] [data-day]:not([hidden])',
+    );
+    await expect(shown.locator('legend')).toContainText(
       formatSlotDay('es', first.start, 'Asia/Singapore'),
     );
     await expect(
-      details.getByRole('radio', { includeHidden: true }).first(),
+      shown.getByRole('radio', { includeHidden: true }).first(),
     ).toHaveAttribute('value', new Date(first.start).toISOString());
-    await details.locator('summary').click();
-    await expect(details.locator('label').first()).toHaveText(
+    await expect(shown.locator('label').first()).toHaveText(
       formatSlotTime('es', first.start, 'Asia/Singapore'),
     );
   });
@@ -209,9 +234,7 @@ test.describe('in a Singapore browser', () => {
   }) => {
     await gotoHydrated(page, '/book');
     const firstLabel = page
-      .locator('[data-booking="open"] details')
-      .first()
-      .locator('label')
+      .locator('[data-booking="open"] [data-day]:not([hidden]) label')
       .first();
     const before = await firstLabel.innerText();
     await page.getByLabel('Your time zone').selectOption('America/New_York');
@@ -253,9 +276,7 @@ async function requestOnPage(
 ) {
   const es = path.startsWith('/es');
   await gotoHydrated(page, path);
-  const input = page.locator(`input[value="${slot}"]`);
-  await input.evaluate((el) => el.closest('details')?.setAttribute('open', ''));
-  await input.check();
+  await pickSlot(page, slot);
   await page.getByLabel(es ? 'Nombre' : 'Name').fill('[TEST] Ada Lovelace');
   await page
     .getByLabel(
@@ -285,8 +306,17 @@ test('a visitor requests by keyboard and gets the pending panel, an email and no
   const email = uniqueEmail('kbd');
   await gotoHydrated(page, '/book?utm_source=e2e&gclid=g9');
 
-  await page.locator(`input[value="${slot}"]`).focus();
+  // The day first (a radio in the week strip), then its time.
+  const dayKey = await page
+    .locator(`input[name="slot"][value="${slot}"]`)
+    .evaluate((input) => input.closest('[data-day]')?.getAttribute('data-day'));
+  await page.locator(`input[name="day"][value="${dayKey}"]`).focus();
   await page.keyboard.press('Space');
+  await page.locator(`input[name="slot"][value="${slot}"]`).focus();
+  await page.keyboard.press('Space');
+  await expect(
+    page.locator(`input[name="slot"][value="${slot}"]`),
+  ).toBeChecked();
   await page.getByLabel('Name').focus();
   await page.keyboard.type('[TEST] Ada Lovelace');
   await page.keyboard.press('Tab');
@@ -477,9 +507,7 @@ test('a filled honeypot shows the same pending panel and sends nothing', async (
   await page.locator('input[name="website"]').evaluate((input) => {
     if (input instanceof HTMLInputElement) input.value = 'http://spam.example';
   });
-  const input = page.locator(`input[value="${slot}"]`);
-  await input.evaluate((el) => el.closest('details')?.setAttribute('open', ''));
-  await input.check();
+  await pickSlot(page, slot);
   await page.getByLabel('Name').fill('[TEST] Bot');
   await page.getByLabel('Email (the confirmation link goes here)').fill(email);
   await page
@@ -520,9 +548,7 @@ test('a slot taken meanwhile gives the alert, one refresh and keeps what was typ
   await gotoHydrated(page, '/book');
   const radios = page.locator('input[name="slot"]');
   const before = await radios.count();
-  const input = page.locator(`input[value="${slot}"]`);
-  await input.evaluate((el) => el.closest('details')?.setAttribute('open', ''));
-  await input.check();
+  await pickSlot(page, slot);
   await page.getByLabel('Name').fill('[TEST] Late Visitor');
   await page
     .getByLabel('Email (the confirmation link goes here)')
@@ -666,7 +692,7 @@ test('the header CTA points at the booking page in both languages', async ({
 
 test('the open page is accessible with a picked time', async ({ page }) => {
   await gotoHydrated(page, '/es/reservar');
-  await page.locator('input[name="slot"]').first().check();
+  await page.locator('label.time-chip').first().click();
   await settleAnimations(page);
   const results = await new AxeBuilder({ page })
     .withTags(TAGS)
