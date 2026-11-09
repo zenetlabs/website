@@ -5,6 +5,8 @@ import { PUBLIC_EMAIL } from '@/lib/site';
 import type { ResolvedDay } from '@/server/chat/intent';
 import {
   type OfferedSlot,
+  repeatsBelow,
+  slotBelow,
   slotFallback,
   slotViolation,
   withoutWrongDates,
@@ -408,6 +410,9 @@ type GuardOptions = {
   // The slots check_availability returned in this conversation; absent while
   // booking is dark, and the slot check waits until there are some.
   slots?: readonly OfferedSlot[];
+  // The panel shows this turn's times as chips (times came back this turn and
+  // no booking is proposed): a replaced time points at them, never lists any.
+  chips?: boolean;
   // The days the visitor's words name, when the website worked them out.
   visitorDays?: readonly ResolvedDay[];
   facts?: Facts;
@@ -429,6 +434,7 @@ export function guardSentence(
     previous = '',
     language = locale,
     slots,
+    chips = false,
     visitorDays = [],
     facts,
     refusal = true,
@@ -474,8 +480,17 @@ export function guardSentence(
       ? null
       : slotViolation(clean, { slots, now, previous: shown });
   if (slot !== null) {
-    const text = slotFallback(language, slots ?? [], now);
-    return { text: `${text}${tail}`, guard: slot === 'date' ? 'slot' : 'time' };
+    const text = chips
+      ? slotBelow(language, shown)
+      : slotFallback(language, slots ?? [], now);
+    return {
+      text: text === '' ? '' : `${text}${tail}`,
+      guard: slot === 'date' ? 'slot' : 'time',
+    };
+  }
+  // The model's own "the times are below" after the pointer said so: once is enough.
+  if (chips && repeatsBelow(language, clean, shown)) {
+    return { text: '', guard: null };
   }
   const kept: string[] = [];
   const foreignEmail = (clean.match(EMAIL) ?? []).some(isForeign);

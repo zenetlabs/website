@@ -362,16 +362,19 @@ test.describe('booking from the chat', () => {
     await googleReset();
   });
 
-  test('replaces a time the calendar never returned with the nearest real ones', async ({
+  test('replaces a time the calendar never returned with a pointer to the chips', async ({
     page,
   }) => {
     await openChat(page, 'en');
     await say(page, 'en', 'Book me at a fake time');
     const log = page.getByRole('log');
-    await expect(log).toContainText("I can't confirm that time");
-    await expect(log).toContainText('The nearest free ones are:');
+    await expect(log).toContainText(
+      'The free times I have are shown below; pick the one that suits you.',
+    );
+    await expect(log).not.toContainText("I can't confirm that time");
     await expect(log).not.toContainText('3:17');
     await expect(log).not.toContainText('great time');
+    await expect(page.locator('[data-chat-slots]')).toBeVisible();
     await expect(
       page.getByRole('link', {
         name: en.open.replace('{label}', en.pages.book),

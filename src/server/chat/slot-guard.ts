@@ -495,7 +495,42 @@ const SLOT_FALLBACK: Record<Locale, { none: string; nearest: string }> = {
   },
 };
 
-// The replacement names real slots, so the visitor still has something to pick.
+// When the panel shows this turn's times as chips, the replacement points at
+// them instead of listing times (and of "that time", which the visitor never
+// asked for).
+const SLOT_BELOW: Record<Locale, string> = {
+  en: 'The free times I have are shown below; pick the one that suits you.',
+  es: 'Las horas libres que tengo están debajo; elige la que te vaya bien.',
+};
+
+// "Below" counts only next to a word for times, so "por debajo de 450 €" or
+// "el formulario de abajo" is not a pointer at the chips.
+const SAYS_BELOW = /\b(?:below|underneath|debajo|abajo)\b/;
+const TIME_WORD = /\b(?:horas?|huecos?|times?|slots?)\b/;
+
+function saysTimesBelow(text: string): boolean {
+  return fold(text)
+    .split(/[.!?\n]+/)
+    .some((sentence) => SAYS_BELOW.test(sentence) && TIME_WORD.test(sentence));
+}
+
+// A sentence that says the times are below, after the pointer already did.
+export function repeatsBelow(
+  language: Locale,
+  sentence: string,
+  previous: string,
+): boolean {
+  return saysTimesBelow(sentence) && previous.includes(SLOT_BELOW[language]);
+}
+
+// The replacement while chips are showing: the pointer to them, or nothing
+// when the reply already says they are below.
+export function slotBelow(language: Locale, previous: string): string {
+  return saysTimesBelow(previous) ? '' : SLOT_BELOW[language];
+}
+
+// With no chips (no times this turn, or a booking proposal) the replacement
+// names real slots, so the visitor still has something to pick.
 export function slotFallback(
   language: Locale,
   slots: readonly OfferedSlot[],

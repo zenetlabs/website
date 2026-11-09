@@ -318,8 +318,12 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
     offered.add(page);
     turn.emit({ t: 'navigate', page, href });
   };
+  // The reply pointed at the chips; a proposal that lands later in the same
+  // step clears them, so they are sent again after the booking card.
+  let pointedAtChips = false;
   const speak = (sentence: string) => {
     if (stopped || muted) return;
+    const chips = slots.length > pastSlots && pending.proposal === null;
     const guarded = guardSentence(sentence, {
       locale,
       allowed,
@@ -327,6 +331,7 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
       language,
       now,
       slots: offeredSlots,
+      chips,
       visitorDays,
       facts,
       refusal,
@@ -341,7 +346,10 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
     }
     say(guarded.text);
     if (guarded.guard === 'price') offer('pricing');
-    if (guarded.guard === 'slot' || guarded.guard === 'time') offer('book');
+    if (guarded.guard === 'slot' || guarded.guard === 'time') {
+      if (chips) pointedAtChips = true;
+      offer('book');
+    }
     if (guarded.guard === 'leak') stopped = true;
     else if (replacesReply(guarded.guard)) muted = true;
   };
@@ -460,6 +468,8 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
   if (!stopped) speak(buffer.flush());
   if (pending.proposal !== null && !stopped) {
     turn.emit({ t: 'confirm_booking', proposal: pending.proposal });
+    const chips = pointedAtChips ? turnSlots(slots.slice(pastSlots)) : null;
+    if (chips !== null) turn.emit(chips);
   }
   const related = stopped ? null : relatedPage(turn.message, locale, deps.site);
   if (related !== null && offered.size === 0) offer(related.page, related.href);

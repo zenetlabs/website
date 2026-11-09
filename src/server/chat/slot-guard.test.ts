@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { guardSentence } from '@/server/chat/guard';
 import {
   type OfferedSlot,
+  repeatsBelow,
   slotFallback,
   slotsOf,
   slotViolation,
@@ -251,6 +252,111 @@ describe('guardSentence with a calendar', () => {
         now: NOW,
       }).guard,
     ).toBeNull();
+  });
+});
+
+describe('the replacement while chips show the times', () => {
+  const base = {
+    allowed: new Set<number>(),
+    now: NOW,
+    slots: SLOTS,
+  };
+
+  it.each([
+    [
+      'es',
+      'Te propongo el lunes 9 de noviembre a las 16:00. ',
+      'Las horas libres que tengo están debajo; elige la que te vaya bien. ',
+    ],
+    [
+      'en',
+      'How about Monday 9 November at 4:00 pm? ',
+      'The free times I have are shown below; pick the one that suits you. ',
+    ],
+  ] as const)(
+    'points at the chips, with no time in it (%s)',
+    (locale, sentence, expected) => {
+      const guarded = guardSentence(sentence, { ...base, locale, chips: true });
+      expect(guarded).toEqual({ text: expected, guard: 'slot' });
+      expect(guarded.text).not.toMatch(/\d/);
+    },
+  );
+
+  it('keeps listing the nearest times when no chips show (a proposal turn)', () => {
+    expect(
+      guardSentence('Te propongo el lunes 9 de noviembre a las 16:00. ', {
+        ...base,
+        locale: 'es',
+        chips: false,
+      }),
+    ).toEqual({ text: `${slotFallback('es', SLOTS, NOW)} `, guard: 'slot' });
+  });
+
+  it('adds no second "below" when the reply already said it', () => {
+    expect(
+      guardSentence('Te propongo el lunes 9 de noviembre a las 16:00.', {
+        ...base,
+        locale: 'es',
+        chips: true,
+        previous: 'Tienes horas libres el lunes; están debajo. ',
+      }),
+    ).toEqual({ text: '', guard: 'slot' });
+  });
+
+  it("drops the model's own 'below' after the pointer said it", () => {
+    const previous =
+      'Las horas libres que tengo están debajo; elige la que te vaya bien. ';
+    expect(
+      guardSentence('Tienes todas las horas abajo.', {
+        ...base,
+        locale: 'es',
+        chips: true,
+        previous,
+      }),
+    ).toEqual({ text: '', guard: null });
+    expect(
+      guardSentence('Tienes todas las horas abajo.', {
+        ...base,
+        locale: 'es',
+        chips: true,
+      }),
+    ).toEqual({ text: 'Tienes todas las horas abajo.', guard: null });
+  });
+
+  it.each([
+    'No cobramos nada por debajo de 450 €. ',
+    'Abajo tienes el enlace para ver más días. ',
+  ])('a "below" with no times in it is not a pointer: %s', (earlier) => {
+    expect(
+      guardSentence('Te propongo el lunes 9 de noviembre a las 16:00. ', {
+        ...base,
+        locale: 'es',
+        chips: true,
+        previous: earlier,
+      }),
+    ).toEqual({
+      text: 'Las horas libres que tengo están debajo; elige la que te vaya bien. ',
+      guard: 'slot',
+    });
+  });
+
+  it('keeps a later "below" with no times in it after the pointer', () => {
+    const previous =
+      'Las horas libres que tengo están debajo; elige la que te vaya bien. ';
+    expect(
+      repeatsBelow('es', 'No cobramos nada por debajo de 450 €.', previous),
+    ).toBe(false);
+    expect(
+      guardSentence('Abajo tienes el enlace para ver más días.', {
+        ...base,
+        locale: 'es',
+        chips: true,
+        previous,
+      }),
+    ).toEqual({
+      text: 'Abajo tienes el enlace para ver más días.',
+      guard: null,
+    });
   });
 });
 

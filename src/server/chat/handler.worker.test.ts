@@ -572,17 +572,18 @@ describe('the stream', () => {
     expect(textOf(list)).toBe(`Good question. ${PRICE_FALLBACK.en} `);
   });
 
-  it('replaces an invented time with the nearest real slots and a booking chip', async () => {
+  it('replaces an invented time with a pointer to the chips, never a list of times, and a booking chip', async () => {
     model = scripted(
       call('check_availability', {}),
       say('How about Tuesday 5 January at 3:17 am? ', 'It is a great time.'),
     );
     const { list } = await start('a call on Tuesday');
     const text = textOf(list);
-    expect(text).toMatch(
-      /^I can't confirm that time; .* The nearest free ones are: \w+day \d+ January, [^;]+; /,
+    expect(list.some((event) => event.t === 'slots')).toBe(true);
+    expect(text).toBe(
+      'The free times I have are shown below; pick the one that suits you. ',
     );
-    expect(text).not.toContain('3:17');
+    expect(text).not.toMatch(/\d/);
     expect(text).not.toContain('great time');
     expect(list).toContainEqual({ t: 'navigate', page: 'book', href: '/book' });
     expect(logs).toContainEqual([
@@ -596,6 +597,88 @@ describe('the stream', () => {
     model = scripted(say('We met on Tuesday 5 January at 3:17 am.'));
     const { list } = await start('when?');
     expect(textOf(list)).toBe('We met on Tuesday 5 January at 3:17 am.');
+  });
+
+  it('keeps listing the nearest times when the turn proposes a booking (no chips)', async () => {
+    const firstStart = (prompt: unknown) =>
+      /"start":"([^"]+)"/.exec(JSON.stringify(prompt))?.[1] ?? '';
+    model = scripted(
+      call('check_availability', {}),
+      (prompt) =>
+        call('book_meeting', {
+          slot: firstStart(prompt),
+          topic: 'Automation diagnostic call',
+        }),
+      say('Or Tuesday 5 January at 3:17 am. '),
+    );
+    const { list } = await start('a call please');
+    expect(list.some((event) => event.t === 'confirm_booking')).toBe(true);
+    expect(textOf(list)).toMatch(
+      /^I can't confirm that time; .* The nearest free ones are: /,
+    );
+  });
+
+  it('sends the chips again after the booking card when the pointer went out in the step that proposes', async () => {
+    const firstStart = (prompt: unknown) =>
+      /"start":"([^"]+)"/.exec(JSON.stringify(prompt))?.[1] ?? '';
+    model = scripted(
+      call('check_availability', {}),
+      (prompt) =>
+        sayAndCall('Tuesday 5 January at 3:17 am. ', 'book_meeting', {
+          slot: firstStart(prompt),
+          topic: 'Automation diagnostic call',
+        }),
+      say('Booked.'),
+    );
+    const { list } = await start('a call please');
+    const kinds = list.map((event) => event.t);
+    expect(textOf(list)).toBe(
+      'The free times I have are shown below; pick the one that suits you. ',
+    );
+    const card = kinds.indexOf('confirm_booking');
+    expect(card).toBeGreaterThan(-1);
+    expect(kinds.lastIndexOf('slots')).toBeGreaterThan(card);
+    const [first, again] = list.filter((event) => event.t === 'slots');
+    expect(again).toEqual(first);
+  });
+
+  it('sends no chips after the booking card when nothing pointed at them', async () => {
+    const firstStart = (prompt: unknown) =>
+      /"start":"([^"]+)"/.exec(JSON.stringify(prompt))?.[1] ?? '';
+    model = scripted(
+      call('check_availability', {}),
+      (prompt) =>
+        sayAndCall('Let me hold that one. ', 'book_meeting', {
+          slot: firstStart(prompt),
+          topic: 'Automation diagnostic call',
+        }),
+      say('Confirm it below.'),
+    );
+    const { list } = await start('a call please');
+    const kinds = list.map((event) => event.t);
+    expect(kinds.lastIndexOf('slots')).toBeLessThan(
+      kinds.indexOf('confirm_booking'),
+    );
+  });
+
+  it('points at the chips for a time with no day, keeps the reply and drops a later "times are below"', async () => {
+    model = scripted(
+      call('check_availability', {}),
+      say(
+        'How about 3:17 am? ',
+        'The call takes 30 minutes. ',
+        'The free times are below.',
+      ),
+    );
+    const { list } = await start('a call please');
+    expect(textOf(list)).toBe(
+      'The free times I have are shown below; pick the one that suits you. The call takes 30 minutes. ',
+    );
+    expect(list.some((event) => event.t === 'slots')).toBe(true);
+    expect(logs).toContainEqual([
+      'chat: guard',
+      { session: expect.any(String), kind: 'time' },
+    ]);
   });
 
   it('lets a slot check_availability returned through, word for word', async () => {
