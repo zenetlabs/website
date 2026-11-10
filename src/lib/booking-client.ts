@@ -144,14 +144,18 @@ export function availabilityOutcome(body: unknown): PageAvailability {
   return { status: 'ok', slots: slotsFrom(body.slots) };
 }
 
-// One request for the whole horizon (the endpoint is the page's own data).
-export async function fetchAvailability(): Promise<PageAvailability> {
+// One request for the whole horizon (the endpoint is the page's own data),
+// read by the caller's parser: the slots for the chips, slots and calendar
+// for /book.
+export async function fetchAvailability<T>(
+  parse: (body: unknown) => T,
+): Promise<T | { status: 'unavailable' }> {
   try {
     const response = await fetch('/api/book/slots', {
       headers: { Accept: 'application/json' },
     });
     if (!response.ok) return { status: 'unavailable' };
-    return availabilityOutcome(await response.json().catch(() => undefined));
+    return parse(await response.json().catch(() => undefined));
   } catch {
     return { status: 'unavailable' };
   }

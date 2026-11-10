@@ -1,20 +1,31 @@
 import { useHydrated } from '@tanstack/react-router';
-import { lazy, Suspense, useRef, useState } from 'react';
+import { createIsomorphicFn } from '@tanstack/react-start';
+import {
+  type ComponentProps,
+  lazy,
+  memo,
+  Suspense,
+  useRef,
+  useState,
+} from 'react';
 import { flushSync } from 'react-dom';
 import { BookingAlert } from '@/components/booking-alert';
+import { PanelBoundary } from '@/components/chat-launcher';
 import {
   BookingDetailsFields,
   ConsentCheckbox,
+  FormAlert,
   Honeypot,
   LazyTurnstile,
 } from '@/components/form-parts';
-import { SlotPicker } from '@/components/slot-picker';
+import { SlotPicker as ServerSlotPicker } from '@/components/slot-picker';
 import { H3, PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
 import { useChallenge } from '@/components/use-challenge';
 import type { BookPageContent } from '@/content/types';
+import { bookAvailability } from '@/lib/book-availability';
+import type { BookingCalendar } from '@/lib/booking-calendar';
 import {
   type BookingRequest,
-  fetchAvailability,
   type PageSlot,
   submitBooking,
 } from '@/lib/booking-client';
@@ -31,6 +42,36 @@ import { zoneLabel } from '@/lib/zone-label';
 type Status = 'idle' | 'pending' | PageFailure;
 type Held = { request: BookingRequest; label: string };
 
+// The calendar maths and grid load in their own chunk in the browser. The
+// server renders the grid in place (no streamed fallback, so it is in the
+// HTML as sent), and the browser hydrates it once the chunk is in.
+const LazySlotPicker = lazy(() =>
+  import('@/components/slot-picker').then(({ SlotPicker }) => ({
+    default: SlotPicker,
+  })),
+);
+
+const slotPicker = createIsomorphicFn()
+  .server(() => ServerSlotPicker)
+  .client(() => LazySlotPicker);
+
+// Memoised so the island gets no update before it has hydrated (one would
+// throw the server HTML away for the empty fallback); a chunk that fails to
+// load (offline, or an old page after a deploy) leaves the mail address.
+const PickerIsland = memo(function PickerIsland({
+  failText,
+  ...props
+}: ComponentProps<typeof ServerSlotPicker> & { failText: string }) {
+  const Picker = slotPicker();
+  return (
+    <PanelBoundary fallback={<FormAlert alertRef={null}>{failText}</FormAlert>}>
+      <Suspense fallback={null}>
+        <Picker {...props} />
+      </Suspense>
+    </PanelBoundary>
+  );
+});
+
 const PagePending = lazy(() =>
   import('@/components/page-pending').then(({ PagePending }) => ({
     default: PagePending,
@@ -41,17 +82,26 @@ export function BookingForm({
   copy,
   locale,
   zone,
+  serverZone,
   slots: initialSlots,
+  calendar: initialCalendar,
   preselect = null,
 }: {
   copy: BookPageContent;
   locale: Locale;
   zone: string;
+  // The zone the server rendered with, which the calendar keeps until it has
+  // hydrated (the browser's own zone arrives right after the page's).
+  serverZone: string;
   slots: readonly PageSlot[];
+  calendar: BookingCalendar;
   preselect?: number | null;
 }) {
   const hydrated = useHydrated();
-  const [slots, setSlots] = useState(initialSlots);
+  const [{ slots, calendar }, setList] = useState({
+    slots: initialSlots,
+    calendar: initialCalendar,
+  });
   const { contact } = useMessages();
   const [status, setStatus] = useState<Status>('idle');
   const challenge = useChallenge((waited) => {
@@ -61,8 +111,11 @@ export function BookingForm({
   const [held, setHeld] = useState<Held | null>(null);
   const [chosen, setChosen] = useState(preselect);
   const [missing, setMissing] = useState(false);
+  // The calendar's root, set once it is in the page (hydrated or drawn).
+  const [root, setRoot] = useState<HTMLElement | null>(null);
+  const ready = root !== null;
   const alert = useRef<HTMLParagraphElement>(null);
-  const strip = useRef<HTMLDivElement>(null);
+  const strip = useRef<HTMLFieldSetElement>(null);
   const pending = status === 'pending';
   const { form } = copy;
   // Only a time still in the (possibly refreshed) list counts as chosen.
@@ -120,8 +173,8 @@ export function BookingForm({
     fail(failure);
     if (failure === 'taken' || failure === 'dayFull') {
       // Keep the typed details and the old list if the refresh itself fails.
-      const fresh = await fetchAvailability();
-      if (fresh.status === 'ok') setSlots(fresh.slots);
+      const fresh = await bookAvailability();
+      if (fresh.status === 'ok') setList(fresh);
     }
   }
 
@@ -151,19 +204,20 @@ export function BookingForm({
         className="grid min-w-0 gap-6"
       >
         <legend className="sr-only">{copy.picker.legend}</legend>
-        <div ref={strip} className="min-w-0">
-          <SlotPicker
+        {/* Only the calendar waits for its chunk; the details work at once. */}
+        <fieldset ref={strip} disabled={!ready} className="min-w-0">
+          <PickerIsland
             slots={slots}
-            zone={zone}
+            calendar={calendar}
+            zone={ready ? zone : serverZone}
             locale={locale}
             copy={copy.picker}
             picked={picked}
-            onPick={(start) => {
-              setChosen(start);
-              setMissing(false);
-            }}
+            onPick={setChosen}
+            rootRef={setRoot}
+            failText={copy.unavailable.text}
           />
-        </div>
+        </fieldset>
         <div className="booking-when">
           <span aria-hidden="true" className="icon icon-calendar" />
           <p aria-live="polite">
@@ -180,7 +234,8 @@ export function BookingForm({
             )}
           </p>
         </div>
-        {missing ? (
+        {/* "Pick a time first" goes once a time is picked. */}
+        {missing && picked === null ? (
           <p role="alert" className="chat-alert mt-0">
             {copy.picker.required}
           </p>

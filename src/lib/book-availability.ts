@@ -1,13 +1,17 @@
 import { createIsomorphicFn } from '@tanstack/react-start';
-import { fetchAvailability, type PageAvailability } from '@/lib/booking-client';
+import type { BookAvailability } from '@/lib/booking-calendar';
 import type { ConfirmView } from '@/lib/confirm-view';
 
 export const bookAvailability = createIsomorphicFn()
   .server(
-    async (): Promise<PageAvailability> =>
+    async (): Promise<BookAvailability> =>
       (await import('@/server/book-page')).pageAvailability(),
   )
-  .client((): Promise<PageAvailability> => fetchAvailability());
+  .client(async (): Promise<BookAvailability> => {
+    // The calendar's chunk loads alongside the times, so it never pops in.
+    void import('@/components/slot-picker');
+    return (await import('@/lib/book-slots')).fetchBookAvailability();
+  });
 
 export const bookConfirmation = createIsomorphicFn()
   .server(

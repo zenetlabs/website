@@ -1,18 +1,27 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  BOOKING_HOLIDAYS,
+  type BookingHoliday,
+} from '@/content/booking-holidays';
 import { BOOKING_RULES } from '@/content/booking-rules';
 import {
-  type Availability,
-  availableSlots,
-  candidateSlots,
   canonicalZone,
-  checkSlot,
   formatterCacheSize,
   groupByDay,
+  isoWeekday,
   isTimeZone,
   type Slot,
   zonedParts,
   zonedToInstant,
 } from '@/lib/slots';
+import {
+  type Availability,
+  availableSlots,
+  bookingCalendar,
+  candidateSlots,
+  checkSlot,
+  ruleDays,
+} from '@/server/booking-slots';
 
 const MADRID = 'Europe/Madrid';
 const MINUTE = 60_000;
@@ -131,29 +140,36 @@ describe('candidateSlots', () => {
     madrid(2027, 1, 18, '00:00'),
   );
 
-  it('offers 20 half-hours on each of the five weekdays, 08:00 to 17:30', () => {
-    expect(week).toHaveLength(100);
+  it('offers 12 half-hours from Monday to Thursday, 10:00 to 15:30', () => {
+    expect(week).toHaveLength(48);
     const monday = times(week.filter((slot) => slot.day === '2027-01-11'));
-    expect(monday).toHaveLength(20);
-    expect(monday[0]).toBe('08:00');
-    expect(monday.at(-1)).toBe('17:30');
+    expect(monday).toHaveLength(12);
+    expect(monday[0]).toBe('10:00');
+    expect(monday.at(-1)).toBe('15:30');
+    const last = week.at(-1);
+    expect(last && zonedParts(last.end, MADRID)).toMatchObject({
+      hour: 16,
+      minute: 0,
+    });
   });
 
-  it('skips weekends', () => {
+  it('skips Fridays and weekends', () => {
     const weekdays = new Set(
       week.map((slot) => zonedParts(slot.start, MADRID).weekday),
     );
-    expect([...weekdays].sort()).toEqual([1, 2, 3, 4, 5]);
+    expect([...weekdays].sort()).toEqual([1, 2, 3, 4]);
   });
 
   it('keeps the wall-clock grid across both EU changes', () => {
-    for (const [from, to] of [
-      [madrid(2027, 3, 22, '00:00'), madrid(2027, 4, 2, '00:00')],
-      [madrid(2026, 10, 19, '00:00'), madrid(2026, 10, 30, '00:00')],
+    // 22 March to 1 April 2027: seven working days (Easter Monday is a
+    // Catalan holiday); 19 to 29 October 2026: eight.
+    for (const [from, to, days] of [
+      [madrid(2027, 3, 22, '00:00'), madrid(2027, 4, 2, '00:00'), 7],
+      [madrid(2026, 10, 19, '00:00'), madrid(2026, 10, 30, '00:00'), 8],
     ] as const) {
       const slots = candidateSlots(BOOKING_RULES, from, to);
-      expect(slots).toHaveLength(180);
-      expect(new Set(times(slots)).size).toBe(20);
+      expect(slots).toHaveLength(days * 12);
+      expect(new Set(times(slots)).size).toBe(12);
     }
   });
 
@@ -197,7 +213,7 @@ describe('a DST change inside a window', () => {
 });
 
 describe('availableSlots', () => {
-  const start = madrid(2027, 1, 18, '09:00');
+  const start = madrid(2027, 1, 18, '10:00');
   const only = (now: number) =>
     availableSlots(availability({ now, from: start, to: start + 1 }));
 
@@ -207,7 +223,7 @@ describe('availableSlots', () => {
   });
 
   it('stops at the horizon', () => {
-    const now = madrid(2027, 1, 4, '09:00');
+    const now = madrid(2027, 1, 4, '10:30');
     const inside = availableSlots(
       availability({
         now,
@@ -215,7 +231,7 @@ describe('availableSlots', () => {
         to: now + 14 * DAY,
       }),
     );
-    expect(times(inside)).toEqual(['08:30']);
+    expect(times(inside)).toEqual(['10:00']);
     expect(
       availableSlots(
         availability({ now, from: now + 14 * DAY, to: now + 15 * DAY }),
@@ -226,36 +242,36 @@ describe('availableSlots', () => {
   it('keeps a 15 minute buffer around busy time', () => {
     const busy = [
       {
-        start: madrid(2027, 1, 11, '10:10'),
-        end: madrid(2027, 1, 11, '10:50'),
+        start: madrid(2027, 1, 11, '12:10'),
+        end: madrid(2027, 1, 11, '12:50'),
       },
     ];
     const left = mondayTimes({ busy });
-    for (const gone of ['09:30', '10:00', '10:30', '11:00']) {
+    for (const gone of ['11:30', '12:00', '12:30', '13:00']) {
       expect(left, gone).not.toContain(gone);
     }
-    for (const kept of ['09:00', '11:30']) expect(left, kept).toContain(kept);
+    for (const kept of ['11:00', '13:30']) expect(left, kept).toContain(kept);
   });
 
   it('keeps a 15 minute buffer around a booking', () => {
-    const left = mondayTimes({ booked: [slotAt(2027, 1, 11, '09:00')] });
-    expect(left).not.toContain('09:00');
-    expect(left).not.toContain('09:30');
-    expect(left).toContain('10:00');
-    expect(left).not.toContain('08:30');
-    expect(left).toContain('08:00');
+    const left = mondayTimes({ booked: [slotAt(2027, 1, 11, '12:00')] });
+    expect(left).not.toContain('12:00');
+    expect(left).not.toContain('12:30');
+    expect(left).toContain('13:00');
+    expect(left).not.toContain('11:30');
+    expect(left).toContain('11:00');
   });
 
   it('empties a day once three bookings exist and keeps it at two', () => {
-    const two = [slotAt(2027, 1, 11, '08:00'), slotAt(2027, 1, 11, '12:00')];
+    const two = [slotAt(2027, 1, 11, '10:00'), slotAt(2027, 1, 11, '12:00')];
     expect(mondayTimes({ booked: two }).length).toBeGreaterThan(0);
     expect(
-      mondayTimes({ booked: [...two, slotAt(2027, 1, 11, '16:00')] }),
+      mondayTimes({ booked: [...two, slotAt(2027, 1, 11, '14:00')] }),
     ).toEqual([]);
   });
 
   it('counts bookings per owner-zone day, not per visitor day', () => {
-    const three = ['08:00', '12:00', '16:00'].map((at) =>
+    const three = ['10:00', '12:00', '14:00'].map((at) =>
       slotAt(2027, 1, 11, at),
     );
     expect(
@@ -268,7 +284,7 @@ describe('availableSlots', () => {
           }),
         ),
       ),
-    ).toHaveLength(20);
+    ).toHaveLength(12);
   });
 });
 
@@ -286,6 +302,10 @@ describe('checkSlot', () => {
     ['off the grid', madrid(2027, 1, 11, '10:10')],
     ['on a weekend', madrid(2027, 1, 16, '10:00')],
     ['outside the windows', madrid(2027, 1, 11, '19:00')],
+    ['before the window opens', madrid(2027, 1, 11, '09:30')],
+    ['when the window has closed', madrid(2027, 1, 11, '16:00')],
+    ['on a Friday', madrid(2027, 1, 15, '10:00')],
+    ['on a Catalan holiday', madrid(2027, 3, 29, '10:00')],
     ['under the notice', FAR_NOW + 11 * HOUR],
     ['past the horizon', FAR_NOW + 20 * DAY],
   ])('rejects a slot %s as invalid', (_label, start) => {
@@ -300,12 +320,150 @@ describe('checkSlot', () => {
         busy: [{ start, end: start + 30 * MINUTE }],
       }),
     ).toEqual({ status: 'taken' });
-    const three = ['08:00', '12:00', '16:00'].map((at) =>
+    const three = ['10:30', '12:00', '14:00'].map((at) =>
       slotAt(2027, 1, 11, at),
     );
     expect(checkSlot(start, { ...base, booked: three })).toEqual({
       status: 'full',
     });
+  });
+});
+
+describe('holidays', () => {
+  const dayOf = (date: string) => {
+    const [year = 0, month = 0, day = 0] = date.split('-').map(Number);
+    return candidateSlots(
+      BOOKING_RULES,
+      madrid(year, month, day, '00:00'),
+      madrid(year, month, day, '23:59'),
+    );
+  };
+
+  it.each([
+    ['a Spanish one', '2026-12-08'],
+    ['Epiphany', '2027-01-06'],
+    ['a Catalan one', '2027-03-29'],
+    ['a Singapore one', '2027-03-10'],
+    ['a Singapore Monday after a Sunday holiday', '2026-11-09'],
+  ])('closes the whole day on %s', (_label, date) => {
+    expect(dayOf(date)).toEqual([]);
+  });
+
+  it('keeps the working days around them', () => {
+    expect(dayOf('2026-12-09')).toHaveLength(12);
+    expect(dayOf('2027-01-07')).toHaveLength(12);
+  });
+
+  it('closes every listed holiday that falls on a working day', () => {
+    for (const { date } of BOOKING_HOLIDAYS) {
+      const [year = 0, month = 0, day = 0] = date.split('-').map(Number);
+      if (isoWeekday({ year, month, day }) > 4) continue;
+      expect(dayOf(date), date).toEqual([]);
+    }
+  });
+
+  it('closes a day when a holiday in either zone touches any part of its window', () => {
+    // 16:00-18:00 Madrid in January is 23:00-01:00 in Singapore, so a
+    // Singapore holiday on the 12th closes Madrid's 11th and 12th.
+    const late = {
+      ...BOOKING_RULES,
+      windows: [{ from: '16:00', to: '18:00' }],
+      holidays: [
+        ...BOOKING_HOLIDAYS,
+        {
+          date: '2027-01-12',
+          region: 'SG',
+          name: { en: 'Test', es: 'Prueba' },
+        } satisfies BookingHoliday,
+      ],
+    };
+    const days = ruleDays(
+      late,
+      madrid(2027, 1, 11, '00:00'),
+      madrid(2027, 1, 14, '00:00'),
+    );
+    expect(days.map(({ day, holidays }) => [day, holidays.length > 0])).toEqual(
+      [
+        ['2027-01-11', true],
+        ['2027-01-12', true],
+        ['2027-01-13', false],
+      ],
+    );
+    expect(
+      new Set(
+        candidateSlots(
+          late,
+          madrid(2027, 1, 11, '00:00'),
+          madrid(2027, 1, 14, '00:00'),
+        ).map((slot) => slot.day),
+      ),
+    ).toEqual(new Set(['2027-01-13']));
+  });
+});
+
+describe('a holiday list that has run out', () => {
+  it('closes every day past its last year and says so once', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const stale = {
+      ...BOOKING_RULES,
+      holidays: BOOKING_HOLIDAYS.filter(({ date }) => date < '2027-01-01'),
+    };
+    const from = madrid(2026, 12, 28, '00:00');
+    const to = madrid(2027, 1, 8, '00:00');
+    const days = new Set(
+      candidateSlots(stale, from, to).map((slot) => slot.day),
+    );
+    expect([...days]).toEqual([
+      '2026-12-28',
+      '2026-12-29',
+      '2026-12-30',
+      '2026-12-31',
+    ]);
+    candidateSlots(stale, from, to);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith('booking: holidays not listed', {
+      after: '2026-12-31',
+    });
+    const calendar = bookingCalendar(stale, madrid(2026, 12, 28, '09:00'));
+    expect(calendar.to).toBe(madrid(2027, 1, 4, '10:00'));
+    warn.mockRestore();
+  });
+});
+
+describe('the Shanghai bound', () => {
+  const SHANGHAI = 'Asia/Shanghai';
+  const endsIn = (slots: readonly Slot[]) =>
+    slots.map((slot) => {
+      const end = zonedParts(slot.end, SHANGHAI);
+      const start = zonedParts(slot.start, SHANGHAI);
+      expect(end.day, 'same Shanghai day').toBe(start.day);
+      return end.hour * 60 + end.minute;
+    });
+
+  it('ends every call by 23:00 in Shanghai in winter, the last exactly then', () => {
+    const ends = endsIn(
+      candidateSlots(BOOKING_RULES, utc(2027, 1, 1), utc(2027, 2, 28)),
+    );
+    expect(Math.max(...ends)).toBe(23 * 60);
+  });
+
+  it('ends every call by 22:00 in Shanghai in summer', () => {
+    const ends = endsIn(
+      candidateSlots(BOOKING_RULES, utc(2027, 6, 1), utc(2027, 8, 31)),
+    );
+    expect(Math.max(...ends)).toBe(22 * 60);
+  });
+
+  it('stays inside the bound in the week the clocks change', () => {
+    const slots = candidateSlots(
+      BOOKING_RULES,
+      utc(2027, 3, 22),
+      utc(2027, 4, 2),
+    );
+    expect(Math.max(...endsIn(slots))).toBeLessThanOrEqual(23 * 60);
+    expect(new Set(times(slots))).toEqual(
+      new Set(times(slots.filter((slot) => slot.day === '2027-03-22'))),
+    );
   });
 });
 

@@ -181,7 +181,7 @@ describe('availability', () => {
       }),
     );
     vi.stubGlobal('fetch', send);
-    await expect(fetchAvailability()).resolves.toEqual({
+    await expect(fetchAvailability(availabilityOutcome)).resolves.toEqual({
       status: 'ok',
       slots: [
         { start: 1, end: 2 },
@@ -194,13 +194,13 @@ describe('availability', () => {
 
   it('is unavailable on a bad body or a network error', async () => {
     vi.stubGlobal('fetch', async () => new Response('<html>', { status: 502 }));
-    await expect(fetchAvailability()).resolves.toEqual({
+    await expect(fetchAvailability(availabilityOutcome)).resolves.toEqual({
       status: 'unavailable',
     });
     vi.stubGlobal('fetch', async () => {
       throw new TypeError('offline');
     });
-    await expect(fetchAvailability()).resolves.toEqual({
+    await expect(fetchAvailability(availabilityOutcome)).resolves.toEqual({
       status: 'unavailable',
     });
   });

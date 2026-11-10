@@ -12,7 +12,7 @@ import { DEFAULT_ZONE } from '@/content/booking-rules';
 import { loadBookConfirmCopy, loadBookContent } from '@/content/load';
 import type { BookingConfirmCopy } from '@/content/types';
 import { bookAvailability, bookConfirmation } from '@/lib/book-availability';
-import type { PageAvailability } from '@/lib/booking-client';
+import type { BookAvailability } from '@/lib/booking-calendar';
 import { detectedZone } from '@/lib/browser-zone';
 import type { ConfirmView } from '@/lib/confirm-view';
 import { contentRouteOptions } from '@/lib/content-route';
@@ -50,7 +50,7 @@ async function loadBook(
   { confirm, outcome }: ConfirmDeps = NO_CONFIRM,
 ): Promise<
   Awaited<ReturnType<typeof loadBookContent>> & {
-    availability: PageAvailability;
+    availability: BookAvailability;
     confirmation: Confirmation | null;
     diagnostic: string;
   }
@@ -129,8 +129,12 @@ function Book() {
     detectedZone,
     () => null,
   );
-  const zone = requestedZone(search) ?? detected ?? DEFAULT_ZONE[locale];
-  const open = availability.status === 'ok' && availability.slots.length > 0;
+  const serverZone = requestedZone(search) ?? DEFAULT_ZONE[locale];
+  const zone = requestedZone(search) ?? detected ?? serverZone;
+  const open =
+    availability.status === 'ok' && availability.slots.length > 0
+      ? availability
+      : null;
   const fallback = availability.status === 'ok' ? copy.empty : copy.unavailable;
 
   return (
@@ -207,7 +211,9 @@ function Book() {
                 copy={copy}
                 locale={locale}
                 zone={zone}
-                slots={availability.slots}
+                serverZone={serverZone}
+                slots={open.slots}
+                calendar={open.calendar}
                 preselect={requestedSlot(search)}
               />
             </div>

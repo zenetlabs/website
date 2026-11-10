@@ -1,7 +1,13 @@
+import {
+  BOOKING_HOLIDAYS,
+  type BookingHoliday,
+} from '@/content/booking-holidays';
+
 export type BookingRules = {
   zone: string;
   days: readonly number[];
   windows: readonly { from: string; to: string }[];
+  holidays: readonly BookingHoliday[];
   slotMinutes: number;
   stepMinutes: number;
   bufferMinutes: number;
@@ -12,16 +18,14 @@ export type BookingRules = {
   confirmMinutes: number;
 };
 
-// TODO(albert): confirm the call windows (Europe/Madrid wall clock, ISO weekdays 1-7).
-// The 08:00-09:00 window is the morning slot that lands in the Singapore afternoon.
+// Europe/Madrid wall clock, ISO weekdays. The last call ends at 16:00 Madrid,
+// 23:00 in Shanghai in winter and 22:00 in summer.
 // TODO(albert): confirm the 14-day booking horizon.
 export const BOOKING_RULES = {
   zone: 'Europe/Madrid',
-  days: [1, 2, 3, 4, 5],
-  windows: [
-    { from: '08:00', to: '09:00' },
-    { from: '09:00', to: '18:00' },
-  ],
+  days: [1, 2, 3, 4],
+  windows: [{ from: '10:00', to: '16:00' }],
+  holidays: BOOKING_HOLIDAYS,
   slotMinutes: 30,
   stepMinutes: 30,
   bufferMinutes: 15,

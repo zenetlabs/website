@@ -1,16 +1,10 @@
 import { BOOKING_RULES } from '@/content/booking-rules';
-import type { PageAvailability } from '@/lib/booking-client';
+import type { BookAvailability } from '@/lib/booking-calendar';
 import type { Surface } from '@/lib/booking-surfaces';
 import type { Attribution } from '@/lib/lead-schema';
 import { isPublished } from '@/lib/page-registry';
 import { zonedDay } from '@/lib/slot-format';
-import {
-  availableSlots,
-  canonicalZone,
-  checkSlot,
-  type Interval,
-  type Slot,
-} from '@/lib/slots';
+import { canonicalZone, type Interval, type Slot } from '@/lib/slots';
 import { DAY_MS, noop, startOfUtcDay, utcDay } from '@/lib/time';
 import { addressKey } from '@/server/address-usage';
 import {
@@ -24,6 +18,11 @@ import type {
   PendingRequest,
   VoiceRef,
 } from '@/server/booking-schema';
+import {
+  availableSlots,
+  bookingCalendar,
+  checkSlot,
+} from '@/server/booking-slots';
 import {
   activeBookings,
   type BookingRow,
@@ -273,7 +272,7 @@ export async function availability(
 export async function pageSlots(
   scope: BookingScope,
   deadlineMs: number,
-): Promise<PageAvailability> {
+): Promise<BookAvailability> {
   const pending = availability(scope);
   scope.deps.waitUntil(pending.then(noop, noop));
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -288,6 +287,7 @@ export async function pageSlots(
     return {
       status: 'ok',
       slots: result.slots.map(({ start, end }) => ({ start, end })),
+      calendar: bookingCalendar(BOOKING_RULES, scope.now),
     };
   } catch (error) {
     console.error('booking: availability failed', { error: errorName(error) });
