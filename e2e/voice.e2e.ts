@@ -19,6 +19,7 @@ import {
   uniqueEmail,
 } from './fakes';
 import { gotoHydrated, settleAnimations, VOICE_PUBLISHED } from './helpers';
+import { forceInteractiveTurnstile } from './turnstile-interactive';
 
 test.skip(!VOICE_PUBLISHED, 'voice is not published in this build');
 test.describe.configure({ mode: 'serial' });
@@ -157,6 +158,40 @@ test('starts a call after Turnstile: one mint, the Spanish agent, the session ha
     'aria-pressed',
     'false',
   );
+});
+
+test('asks for the tick while Turnstile is interactive, then starts the call once it is ticked', async ({
+  page,
+}) => {
+  await forceInteractiveTurnstile(page);
+  await page.clock.install();
+  const mints: number[] = [];
+  page.on('response', (response) => {
+    if (response.url().endsWith('/api/voice/session')) {
+      mints.push(response.status());
+    }
+  });
+  await openPanel(page, 'en');
+  const start = page.getByRole('button', { name: en.start });
+  await expect(start).toBeEnabled({ timeout: 30_000 });
+  await start.click();
+  const box = page.getByRole('button', { name: 'Fake Turnstile checkbox' });
+  await expect(box).toBeVisible();
+  await expect(page.getByText('Tick the box to continue.')).toBeVisible();
+  // Past the 30 s the check gets while it works alone, then past a minute.
+  await page.clock.fastForward('00:31');
+  await expect(page.getByText(en.errorCaptcha)).toHaveCount(0);
+  await expect(box).toBeVisible();
+  await page.clock.fastForward('00:30');
+  await expect(page.getByText(en.errorCaptcha)).toHaveCount(0);
+  await expect(page.getByText('Tick the box to continue.')).toBeVisible();
+  expect(mints).toEqual([]);
+  await box.click();
+  await expect(page.getByRole('status')).toHaveText(en.listening, {
+    timeout: 30_000,
+  });
+  expect(mints).toEqual([200]);
+  await expect(page.getByText('Tick the box to continue.')).toHaveCount(0);
 });
 
 test.describe('on a phone', () => {

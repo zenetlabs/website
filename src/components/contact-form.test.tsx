@@ -20,7 +20,12 @@ const ATTRIBUTION = {
   page: '/',
 };
 
-const widget = vi.hoisted(() => ({ solve: () => {}, fail: () => {} }));
+const widget = vi.hoisted(() => ({
+  solve: () => {},
+  fail: () => {},
+  interact: () => {},
+  timeOut: () => {},
+}));
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@tanstack/react-router')>()),
   useRouteContext: ({
@@ -44,12 +49,18 @@ vi.mock('@marsidev/react-turnstile', () => ({
   Turnstile: ({
     onSuccess,
     onError,
+    onBeforeInteractive,
+    onTimeout,
   }: {
     onSuccess: (token: string) => void;
     onError: () => void;
+    onBeforeInteractive: () => void;
+    onTimeout: () => void;
   }) => {
     widget.solve = () => onSuccess('tok_1');
     widget.fail = onError;
+    widget.interact = onBeforeInteractive;
+    widget.timeOut = onTimeout;
     return (
       <>
         <button type="button" onClick={() => onSuccess('tok_1')}>
@@ -163,6 +174,67 @@ describe('ContactForm', () => {
     expect(submitLead).toHaveBeenCalledWith(
       expect.objectContaining({ turnstileToken: 'tok_1', consent: true }),
     );
+  });
+
+  it('an interactive check while a submit waits asks for the tick, not an error, then sends', async () => {
+    submitLead.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<ContactForm />);
+    await user.click(screen.getByLabelText('Name'));
+    await fillIn(user);
+    await user.click(screen.getByRole('button', { name: 'Send message' }));
+    act(() => widget.interact());
+    expect(screen.getByText('Tick the box to continue.')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
+    act(() => widget.solve());
+    await waitFor(() =>
+      expect(screen.getByText('Message sent')).toBeInTheDocument(),
+    );
+    expect(submitLead).toHaveBeenCalledTimes(1);
+  });
+
+  it('an interactive timeout keeps the waiting submit: the fresh checkbox still sends it once', async () => {
+    submitLead.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<ContactForm />);
+    await user.click(screen.getByLabelText('Name'));
+    await fillIn(user);
+    await user.click(screen.getByRole('button', { name: 'Send message' }));
+    act(() => widget.interact());
+    act(() => widget.timeOut());
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByText('Tick the box to continue.')).toBeInTheDocument();
+    act(() => widget.interact());
+    act(() => widget.solve());
+    await waitFor(() =>
+      expect(screen.getByText('Message sent')).toBeInTheDocument(),
+    );
+    expect(submitLead).toHaveBeenCalledTimes(1);
+  });
+
+  it('a submit still waiting after 3 minutes gives up with the alert', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      render(<ContactForm />);
+      await user.click(screen.getByLabelText('Name'));
+      await fillIn(user);
+      await user.click(screen.getByRole('button', { name: 'Send message' }));
+      act(() => widget.interact());
+      act(() => {
+        vi.advanceTimersByTime(179_000);
+      });
+      expect(screen.queryByRole('alert')).toBeNull();
+      act(() => {
+        vi.advanceTimersByTime(1_000);
+      });
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'The security check failed',
+      );
+      expect(submitLead).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('a failed check while a submit waits shows the alert and drops the submit', async () => {

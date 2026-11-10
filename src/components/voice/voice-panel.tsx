@@ -1,9 +1,8 @@
-import type { TurnstileInstance } from '@marsidev/react-turnstile';
 import { useId, useRef, useState } from 'react';
 import { ContactLinks } from '@/components/contact-links';
 import { LazyTurnstile } from '@/components/form-parts';
 import { SECONDARY_BUTTON_SM, TEXT_LINK } from '@/components/ui';
-import { challengeToken } from '@/components/use-challenge';
+import { useChallengeOnDemand } from '@/components/use-challenge-on-demand';
 import type { VoiceCopy } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { isPublished, pagePath } from '@/lib/page-registry';
@@ -129,7 +128,7 @@ export function VoicePanel({
   const [zone] = useState(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone,
   );
-  const widget = useRef<TurnstileInstance>(undefined);
+  const challenge = useChallengeOnDemand();
   const title = useRef<HTMLHeadingElement>(null);
   const titleId = useId();
   const noticeId = useId();
@@ -152,7 +151,7 @@ export function VoicePanel({
       copy,
       supported: voiceSupported,
       requestMic,
-      token: challengeToken(widget),
+      token: challenge.token,
       push,
     });
   }
@@ -280,6 +279,8 @@ export function VoicePanel({
               type="button"
               onClick={() => {
                 focusTitle();
+                // Ending while the check still runs takes its checkbox along.
+                challenge.cancel();
                 void endCall();
               }}
               className={SECONDARY_BUTTON_SM}
@@ -342,9 +343,7 @@ export function VoicePanel({
           engaged
           action="voice"
           locale={locale}
-          instance={widget}
-          onToken={noop}
-          onError={noop}
+          {...challenge.widgetProps}
           onLoad={() => setReady(true)}
           options={{ appearance: 'interaction-only', execution: 'execute' }}
         />

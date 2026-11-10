@@ -60,5 +60,8 @@
     "unavailable": "The assistant could not load. Write to hello@zenetlabs.com or use the contact form.",
     "close": "Close",
     "contact": "Use the contact form"
+  },
+  "challenge": {
+    "interactive": "Tick the box to continue."
   }
 }

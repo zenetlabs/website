@@ -52,9 +52,12 @@ export function BookingForm({
 }) {
   const hydrated = useHydrated();
   const [slots, setSlots] = useState(initialSlots);
-  const challenge = useChallenge();
   const { contact } = useMessages();
   const [status, setStatus] = useState<Status>('idle');
+  const challenge = useChallenge((waited) => {
+    if (waited) fail('captcha');
+    else setStatus('captcha');
+  });
   const [held, setHeld] = useState<Held | null>(null);
   const [chosen, setChosen] = useState(preselect);
   const [missing, setMissing] = useState(false);
@@ -203,10 +206,7 @@ export function BookingForm({
         <LazyTurnstile
           action={SURFACE_ACTION.page}
           locale={locale}
-          {...challenge.widgetProps((waited) => {
-            if (waited) fail('captcha');
-            else setStatus('captcha');
-          })}
+          {...challenge.widgetProps}
         />
         <button
           type="submit"

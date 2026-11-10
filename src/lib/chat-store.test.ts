@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ChallengeCancelled } from '@/lib/challenge-cancel';
 import type { ChatEvent, ChatFailure } from '@/lib/chat-events';
 import { getChatSessionId, setChatSessionId } from '@/lib/chat-session';
 import {
@@ -303,6 +304,20 @@ describe('send', () => {
     );
     expect(postChat).not.toHaveBeenCalled();
     expect(state()).toMatchObject({ failure: 'captcha', status: 'idle' });
+  });
+
+  it('treats a cancelled challenge as a cancel: idle, no failure, the message kept', async () => {
+    await send(
+      'hello',
+      context({
+        token: vi.fn(async () => {
+          throw new ChallengeCancelled();
+        }),
+      }),
+    );
+    expect(postChat).not.toHaveBeenCalled();
+    expect(state()).toMatchObject({ failure: null, status: 'idle' });
+    expect(state().items.at(-1)).toMatchObject({ kind: 'user', text: 'hello' });
   });
 
   it.each(['rate', 'budget', 'unavailable', 'session-full'] as const)(

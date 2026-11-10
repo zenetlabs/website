@@ -1,21 +1,22 @@
 import type { TurnstileInstance } from '@marsidev/react-turnstile';
-import {
-  type FormEvent,
-  type RefObject,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
+import { noop } from '@/lib/time';
 
 type SubmitLabels = { idle: string; pending: string; verifying: string };
+
+// However long Turnstile keeps asking (its checkbox refreshes after its own
+// timeout), a waiting submit gives up after this.
+const WAIT_LIMIT_MS = 180_000;
 
 // The Turnstile state the forms share: nothing mounts until the first focus,
 // and a failed submit clears the token and asks the widget for a new one.
 // A submit before the token exists waits for it, so the button is never a dead
 // control: it reads "checking" until the check answers, then the request goes.
-export function useChallenge() {
+// `onFailure` learns whether a submit was waiting (it is dropped).
+export function useChallenge(onFailure: (waited: boolean) => void = noop) {
   const instance = useRef<TurnstileInstance>(undefined);
   const waiting = useRef<((token: string) => void) | null>(null);
+  const limit = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [engaged, setEngaged] = useState(false);
   const [token, setTokenState] = useState('');
   const [verifying, setVerifying] = useState(false);
@@ -24,16 +25,30 @@ export function useChallenge() {
   useEffect(
     () => () => {
       waiting.current = null;
+      clearTimeout(limit.current);
     },
     [],
   );
+
+  // Nothing waits any more; says whether a submit was.
+  function drop(): boolean {
+    clearTimeout(limit.current);
+    const waited = waiting.current !== null;
+    waiting.current = null;
+    setVerifying(false);
+    return waited;
+  }
+
+  function fail() {
+    setTokenState('');
+    onFailure(drop());
+  }
 
   function setToken(next: string) {
     setTokenState(next);
     const run = waiting.current;
     if (next === '' || run === null) return;
-    waiting.current = null;
-    setVerifying(false);
+    drop();
     run(next);
   }
 
@@ -45,6 +60,8 @@ export function useChallenge() {
     waiting.current = run;
     setVerifying(true);
     setEngaged(true);
+    clearTimeout(limit.current);
+    limit.current = setTimeout(fail, WAIT_LIMIT_MS);
   }
 
   return {
@@ -70,45 +87,17 @@ export function useChallenge() {
         if (start && !start(data)) return;
         withToken((next) => run(data, next));
       },
-    // The widget's token and failure in one place; `onFailure` learns whether
-    // a submit was waiting (it is dropped).
-    widgetProps: (onFailure: (waited: boolean) => void) => ({
-      engaged,
-      instance,
-      onToken: setToken,
-      onError: () => {
-        const waited = waiting.current !== null;
-        waiting.current = null;
-        setVerifying(false);
-        setToken('');
-        onFailure(waited);
-      },
-    }),
-    // The visitor left (a dialog closed): a token that arrives later submits nothing.
+    widgetProps: { engaged, instance, onToken: setToken, onError: fail },
+    // The visitor left (a dialog closed): a token that arrives later submits
+    // nothing, and the widget starts over without its checkbox or hint.
     cancel: () => {
-      waiting.current = null;
-      setVerifying(false);
+      drop();
+      instance.current?.reset();
     },
     submitLabel: (pending: boolean, labels: SubmitLabels): string => {
       if (pending) return labels.pending;
       return verifying ? labels.verifying : labels.idle;
     },
     busy: verifying,
-  };
-}
-
-const TOKEN_TIMEOUT_MS = 30_000;
-
-// A fresh token on demand, for the panels that run the challenge themselves
-// ('execute' mode): reset the widget, run it, wait for its answer.
-export function challengeToken(
-  widget: RefObject<TurnstileInstance | undefined>,
-): () => Promise<string> {
-  return async () => {
-    const instance = widget.current;
-    if (!instance) throw new Error('no challenge');
-    instance.reset();
-    instance.execute();
-    return instance.getResponsePromise(TOKEN_TIMEOUT_MS);
   };
 }
