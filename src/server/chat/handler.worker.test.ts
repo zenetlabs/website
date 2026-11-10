@@ -711,8 +711,8 @@ describe('the stream', () => {
   it('merges two out-of-order calls: sorted, without repeats, at most 8, only times the tool returned', async () => {
     let seen = '';
     model = scripted(
-      call('check_availability', { from: '2027-01-08', to: '2027-01-08' }),
-      call('check_availability', { from: '2027-01-06', to: '2027-01-06' }),
+      call('check_availability', { from: '2027-01-14', to: '2027-01-14' }),
+      call('check_availability', { from: '2027-01-12', to: '2027-01-12' }),
       (prompt) => {
         seen = JSON.stringify(prompt);
         return say('Here they are.');
@@ -724,7 +724,7 @@ describe('the stream', () => {
     );
     expect(sent).toHaveLength(2);
     const [first = [], last = []] = sent;
-    // Friday 8 January alone: the model saw up to eight of its times.
+    // Thursday 14 January alone: the model saw up to eight of its times.
     expect(first.length).toBeGreaterThan(0);
     // More than eight in the turn: capped, earliest first, whatever the
     // order the calls ran in.

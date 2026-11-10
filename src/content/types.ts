@@ -1,4 +1,6 @@
+import type { HolidayRegion } from '@/content/booking-holidays';
 import type { BookingZone } from '@/content/booking-rules';
+import type { ClosedReason } from '@/lib/booking-calendar';
 import type {
   ProjectType,
   ToolId,
@@ -741,6 +743,13 @@ export type BookPageContent = {
     // The summary above the details: the chosen time, or none yet.
     chosen: string;
     none: string;
+    weekdays: readonly [string, string, string, string, string, string, string];
+    // Why a day cannot be picked, read with its date and shown as its tooltip.
+    // `off` names the weekdays with calls: {days} is a range or a list.
+    closed: Record<ClosedReason, string>;
+    dayList: { range: string; and: string };
+    regions: Record<HolidayRegion, string>;
+    holidays: string;
   };
   form: {
     label: string;

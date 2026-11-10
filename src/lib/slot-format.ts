@@ -1,7 +1,8 @@
 import type { Locale } from '@/lib/i18n';
 import { dateKey, type ZonedParts, zonedParts } from '@/lib/slots';
 
-const WEEKDAYS: Record<Locale, readonly string[]> = {
+// The full names, also read by the calendar (index 0 is Monday, January).
+export const WEEKDAYS: Record<Locale, readonly string[]> = {
   en: [
     'Monday',
     'Tuesday',
@@ -22,7 +23,7 @@ const WEEKDAYS: Record<Locale, readonly string[]> = {
   ],
 };
 
-const MONTHS: Record<Locale, readonly string[]> = {
+export const MONTHS: Record<Locale, readonly string[]> = {
   en: [
     'January',
     'February',

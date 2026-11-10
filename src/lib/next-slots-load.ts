@@ -1,5 +1,9 @@
 import { SlotChips } from '@/components/slot-chips';
-import { fetchAvailability, type PageAvailability } from '@/lib/booking-client';
+import {
+  availabilityOutcome,
+  fetchAvailability,
+  type PageAvailability,
+} from '@/lib/booking-client';
 import { visitorZone } from '@/lib/browser-zone';
 import type { Locale } from '@/lib/i18n';
 import { chipsOf, type SlotChip, zoneName } from '@/lib/slot-chip';
@@ -34,7 +38,7 @@ let cached: { at: number; slots: Promise<PageAvailability> } | null = null;
 
 export function loadAvailability(): Promise<PageAvailability> {
   if (cached === null || Date.now() - cached.at >= FRESH_MS) {
-    cached = { at: Date.now(), slots: fetchAvailability() };
+    cached = { at: Date.now(), slots: fetchAvailability(availabilityOutcome) };
   }
   return cached.slots;
 }

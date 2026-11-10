@@ -1,7 +1,7 @@
 import '@tanstack/react-start/server-only';
 import { env } from 'cloudflare:workers';
 import { getRequestUrl, setResponseHeader } from '@tanstack/react-start/server';
-import type { PageAvailability } from '@/lib/booking-client';
+import type { BookAvailability } from '@/lib/booking-calendar';
 import type { ConfirmView } from '@/lib/confirm-view';
 import { isLiveHost } from '@/lib/redirects';
 import { pageSlots } from '@/server/booking';
@@ -11,7 +11,7 @@ import { bookingDeps } from '@/server/tool-deps';
 // A slow Google must not slow the page: past this the visitor gets the contact form.
 const DEADLINE_MS = 1_500;
 
-export function pageAvailability(): Promise<PageAvailability> {
+export function pageAvailability(): Promise<BookAvailability> {
   setResponseHeader('Cache-Control', 'private, no-store');
   return pageSlots(
     {

@@ -9,12 +9,8 @@ import {
 } from '@playwright/test';
 import { BOOKING_RULES } from '../src/content/booking-rules';
 import { formatSlotDay, formatSlotTime } from '../src/lib/slot-format';
-import {
-  availableSlots,
-  groupByDay,
-  type Slot,
-  zonedToInstant,
-} from '../src/lib/slots';
+import { groupByDay, type Slot, zonedToInstant } from '../src/lib/slots';
+import { availableSlots } from '../src/server/booking-slots';
 import {
   agentHeaders,
   cancelLinkIn,
@@ -37,11 +33,13 @@ test.describe.configure({ mode: 'serial' });
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
-// Owner-zone days that currently have bookable slots, earlier than the late
-// window (11+ days out) that api-tools, voice and webmcp book in. Each test uses
-// its own index so that the tests never share a slot, and none sits near the
-// notice edge (index 0 is skipped). Any 11 days hold at least six such days.
-const LATE_WINDOW_DAYS = 11;
+// Whole owner-zone working days (Monday to Thursday, no holiday, all twelve
+// times past the notice), earlier than the late window (12+ days out) that
+// api-tools, voice and webmcp book in. The tests share four of them, never
+// one slot, and at most three requests a day. Twelve days hold at least four
+// such days unless a holiday falls in a short week.
+const LATE_WINDOW_DAYS = 12;
+const FULL_DAY = 12;
 
 function ownerDays(): Slot[][] {
   const now = Date.now();
@@ -59,7 +57,7 @@ function ownerDays(): Slot[][] {
     if (slot.day >= lateFrom) continue;
     days.set(slot.day, [...(days.get(slot.day) ?? []), slot]);
   }
-  return [...days.values()];
+  return [...days.values()].filter((day) => day.length === FULL_DAY);
 }
 
 function atOwnerTime(day: Slot, at: string): number {
@@ -96,13 +94,18 @@ async function slotValues(page: Page): Promise<string[]> {
     );
 }
 
-// The week strip shows one day's times at a time: open the slot's day, then
+// The calendar shows one day's times at a time: open the slot's day, then
 // press its time (the radios are visually hidden inside their labels).
-async function pickSlot(page: Page, slot: string) {
-  const day = await page
+async function dayOf(page: Page, slot: string) {
+  return page
     .locator(`input[name="slot"][value="${slot}"]`)
     .evaluate((input) => input.closest('[data-day]')?.getAttribute('data-day'));
-  await page.locator(`label.day-chip:has(input[value="${day}"])`).click();
+}
+
+async function pickSlot(page: Page, slot: string) {
+  await page
+    .locator(`.cal-day[data-date="${await dayOf(page, slot)}"]`)
+    .click();
   await page.locator(`label.time-chip:has(input[value="${slot}"])`).click();
   await expect(
     page.locator(`input[name="slot"][value="${slot}"]`),
@@ -143,7 +146,9 @@ test.describe('without JavaScript', () => {
     await expect(
       page.locator('[data-booking="open"] [data-day]:not([hidden]) legend'),
     ).toContainText('times');
-    await expect(page.locator('label.day-chip').first()).toBeVisible();
+    await expect(
+      page.locator('.cal-day[data-status="open"]').first(),
+    ).toBeVisible();
     await expect(page.locator('noscript p')).toContainText(
       'Booking needs JavaScript.',
     );
@@ -205,22 +210,19 @@ test.describe('in a Singapore browser', () => {
     const third = groupByDay(slots, 'Asia/Singapore')[2];
     const first = third?.entries[0]?.slot;
     if (!third || !first) throw new Error('no third day');
-    const dayChip = page.locator('label.day-chip').nth(2);
-    // The visible short day ("lun 11 ene") starts the radio's accessible name.
-    await expect(dayChip).toContainText(
-      formatSlotDay('es', first.start, 'Asia/Singapore')
-        .split(' ')
-        .slice(0, 2)
-        .map((word, index) => (index === 0 ? word.slice(0, 3) : word))
-        .join(' '),
+    const day = page.locator(`.cal-day[data-date="${third.date}"]`);
+    const name = formatSlotDay('es', first.start, 'Asia/Singapore');
+    // The day's number is visible; its name says the date and the count.
+    await expect(day).toHaveText(String(Number(third.date.slice(8))));
+    await expect(day).toHaveAccessibleName(
+      new RegExp(`^${name}, \\d+ horas?$`),
     );
-    await dayChip.click();
+    await day.click();
+    await expect(day).toHaveAttribute('aria-pressed', 'true');
     const shown = page.locator(
       '[data-booking="open"] [data-day]:not([hidden])',
     );
-    await expect(shown.locator('legend')).toContainText(
-      formatSlotDay('es', first.start, 'Asia/Singapore'),
-    );
+    await expect(shown.locator('legend')).toContainText(new RegExp(name, 'i'));
     await expect(
       shown.getByRole('radio', { includeHidden: true }).first(),
     ).toHaveAttribute('value', new Date(first.start).toISOString());
@@ -247,7 +249,7 @@ test.describe('in a Singapore browser', () => {
 test('busy time and its 15 minute buffer disappear from the list', async ({
   page,
 }) => {
-  const day = dayAt(2);
+  const day = dayAt(1);
   const first = day[0];
   if (!first) throw new Error('empty day');
   await googleBusy(TEST_CALENDAR, [
@@ -258,10 +260,10 @@ test('busy time and its 15 minute buffer disappear from the list', async ({
   ]);
   await gotoHydrated(page, '/book');
   const values = await slotValues(page);
-  for (const gone of ['09:30', '10:00', '10:30', '11:00']) {
+  for (const gone of ['10:00', '10:30', '11:00']) {
     expect(values, gone).not.toContain(slotValue(day, gone));
   }
-  for (const kept of ['09:00', '11:30']) {
+  for (const kept of ['11:30', '12:00']) {
     expect(values, kept).toContain(slotValue(day, kept));
   }
 });
@@ -301,17 +303,31 @@ async function requestOnPage(
 test('a visitor requests by keyboard and gets the pending panel, an email and no event yet', async ({
   page,
 }) => {
-  const day = dayAt(1);
+  const day = dayAt(0);
   const slot = slotValue(day, '10:00');
   const email = uniqueEmail('kbd');
   await gotoHydrated(page, '/book?utm_source=e2e&gclid=g9');
 
-  // The day first (a radio in the week strip), then its time.
-  const dayKey = await page
-    .locator(`input[name="slot"][value="${slot}"]`)
-    .evaluate((input) => input.closest('[data-day]')?.getAttribute('data-day'));
-  await page.locator(`input[name="day"][value="${dayKey}"]`).focus();
+  // The day first (arrow keys in the date grid, Space on it), then its time.
+  // The calendar opens once its chunk is in and it has hydrated.
+  await expect(page.locator('.cal-day[tabindex="0"]')).toBeEnabled();
+  const dayKey = await dayOf(page, slot);
+  const active = page.locator('.cal-day[tabindex="0"]');
+  await active.focus();
+  const from = (await active.getAttribute('data-date')) ?? '';
+  await page.keyboard.press('ArrowDown');
+  const week = new Date(`${from}T00:00:00Z`);
+  week.setUTCDate(week.getUTCDate() + 7);
+  const below = page.locator(
+    `.cal-day[data-date="${week.toISOString().slice(0, 10)}"]`,
+  );
+  if ((await below.count()) > 0) await expect(below).toBeFocused();
+  await page.locator(`.cal-day[data-date="${dayKey}"]`).focus();
   await page.keyboard.press('Space');
+  await expect(page.locator(`.cal-day[data-date="${dayKey}"]`)).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   await page.locator(`input[name="slot"][value="${slot}"]`).focus();
   await page.keyboard.press('Space');
   await expect(
@@ -360,7 +376,7 @@ for (const locale of ['en', 'es'] as const) {
     request,
   }) => {
     const es = locale === 'es';
-    const day = dayAt(es ? 2 : 1);
+    const day = dayAt(es ? 1 : 0);
     const slot = slotValue(day, '14:00');
     const email = uniqueEmail(`flow-${locale}`);
     await requestOnPage(page, {
@@ -463,7 +479,7 @@ for (const locale of ['en', 'es'] as const) {
 test('a resend makes the first link invalid, and the newest one works', async ({
   page,
 }) => {
-  const slot = slotValue(dayAt(3), '12:00');
+  const slot = slotValue(dayAt(1), '15:00');
   const email = uniqueEmail('resend');
   await requestOnPage(page, { slot, email });
   const first = await confirmLinkFor(email);
@@ -489,7 +505,7 @@ test('a resend makes the first link invalid, and the newest one works', async ({
 });
 
 test('a disposable address gets its message and no email', async ({ page }) => {
-  const slot = slotValue(dayAt(4), '09:00');
+  const slot = slotValue(dayAt(2), '10:00');
   const email = `e2e-${crypto.randomUUID().slice(0, 8)}@mailinator.com`;
   await requestOnPage(page, { slot, email });
   await expect(page.getByRole('alert')).toContainText(
@@ -501,7 +517,7 @@ test('a disposable address gets its message and no email', async ({ page }) => {
 test('a filled honeypot shows the same pending panel and sends nothing', async ({
   page,
 }) => {
-  const slot = slotValue(dayAt(4), '16:00');
+  const slot = slotValue(dayAt(2), '11:00');
   const email = uniqueEmail('bot');
   await gotoHydrated(page, '/book');
   await page.locator('input[name="website"]').evaluate((input) => {
@@ -543,7 +559,7 @@ test('a slot taken meanwhile gives the alert, one refresh and keeps what was typ
   page,
   request,
 }) => {
-  const day = dayAt(3);
+  const day = dayAt(2);
   const slot = slotValue(day, '15:00');
   await gotoHydrated(page, '/book');
   const radios = page.locator('input[name="slot"]');
@@ -577,7 +593,7 @@ test('a slot taken meanwhile gives the alert, one refresh and keeps what was typ
 test('two parallel bookings of one slot give exactly one booked and one slot_taken', async ({
   request,
 }) => {
-  const slot = slotValue(dayAt(4), '14:00');
+  const slot = slotValue(dayAt(2), '13:00');
   const results = await Promise.all([
     bearerBook(request, slot),
     bearerBook(request, slot),
@@ -599,13 +615,13 @@ test('three bookings fill a day and the day leaves the list', async ({
   page,
   request,
 }) => {
-  const day = dayAt(5);
-  for (const at of ['08:00', '12:00', '16:00']) {
+  const day = dayAt(3);
+  for (const at of ['10:00', '12:00', '14:00']) {
     expect((await bearerBook(request, slotValue(day, at))).status).toBe(
       'pending',
     );
   }
-  expect((await bearerBook(request, slotValue(day, '10:00'))).status).toBe(
+  expect((await bearerBook(request, slotValue(day, '11:00'))).status).toBe(
     'rejected',
   );
   await gotoHydrated(page, '/book');
@@ -690,15 +706,54 @@ test('the header CTA points at the booking page in both languages', async ({
   );
 });
 
-test('the open page is accessible with a picked time', async ({ page }) => {
-  await gotoHydrated(page, '/es/reservar');
-  await page.locator('label.time-chip').first().click();
-  await settleAnimations(page);
-  const results = await new AxeBuilder({ page })
-    .withTags(TAGS)
-    .exclude('iframe[src*="challenges.cloudflare.com"]')
-    .analyze();
-  expect(results.violations).toEqual([]);
+for (const path of ['/book', '/es/reservar']) {
+  test(`${path} is accessible with a picked day and time`, async ({ page }) => {
+    await gotoHydrated(page, path);
+    await page.locator('.cal-day[data-status="open"]').last().click();
+    await page
+      .locator('[data-day]:not([hidden]) label.time-chip')
+      .first()
+      .click();
+    await settleAnimations(page);
+    const results = await new AxeBuilder({ page })
+      .withTags(TAGS)
+      .exclude('iframe[src*="challenges.cloudflare.com"]')
+      .analyze();
+    expect(results.violations).toEqual([]);
+  });
+}
+
+test('closed days are focusable, named with their reason and never picked', async ({
+  page,
+}) => {
+  await gotoHydrated(page, '/book');
+  const closed = page.locator('.cal-day[aria-disabled="true"]');
+  expect(await closed.count()).toBeGreaterThan(0);
+  const off = page.locator('.cal-day[data-status="off"]').first();
+  await expect(off).toHaveAccessibleName(
+    /, calls are Monday to Thursday \(Madrid time\)$/,
+  );
+  await expect(off).toHaveAttribute(
+    'title',
+    'Calls are Monday to Thursday (Madrid time)',
+  );
+  await expect(page.locator('.cal-day[tabindex="0"]')).toBeEnabled();
+  const picked = page.locator('.cal-day[aria-pressed="true"]');
+  const before = await picked.getAttribute('data-date');
+  // Playwright waits forever on an aria-disabled target; a visitor's click
+  // reaches it and changes nothing.
+  await off.click({ force: true });
+  await expect(picked).toHaveAttribute('data-date', before ?? '');
+  for (const date of await page
+    .locator('.cal-day[data-status="open"]')
+    .evaluateAll((cells) =>
+      cells.map((cell) => cell.getAttribute('data-date')),
+    )) {
+    const [year = 0, month = 0, day = 0] = (date ?? '').split('-').map(Number);
+    const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+    // From UTC to Singapore, Madrid's Monday to Thursday stay those days.
+    expect([1, 2, 3, 4], date ?? '').toContain(weekday);
+  }
 });
 
 test('no client file carries Google endpoints or key material', () => {

@@ -259,9 +259,9 @@ describe('check_availability', () => {
     expect(result).toMatchObject({ timeZone: 'Asia/Singapore', more: true });
     expect(result.slots).toHaveLength(30);
     expect(result.slots[0]).toEqual({
-      start: '2027-01-05T07:00:00.000Z',
-      end: '2027-01-05T07:30:00.000Z',
-      label: 'Tuesday 5 January, 3:00 pm',
+      start: '2027-01-05T09:00:00.000Z',
+      end: '2027-01-05T09:30:00.000Z',
+      label: 'Tuesday 5 January, 5:00 pm',
     });
   });
 
@@ -274,9 +274,10 @@ describe('check_availability', () => {
     if (!outcome.ok) throw new Error('expected result');
     const result = SLOTS_RESULT.parse(outcome.result);
     expect(result.timeZone).toBe('Europe/Madrid');
-    expect(result.slots).toHaveLength(20);
+    expect(result.slots).toHaveLength(12);
     expect(result.more).toBe(false);
-    expect(result.slots[0]?.label).toBe('martes 12 de enero, 08:00');
+    expect(result.slots[0]?.label).toBe('martes 12 de enero, 10:00');
+    expect(result.slots.at(-1)?.label).toBe('martes 12 de enero, 15:30');
   });
 
   it('uses the test calendar on a non-live host', async () => {

@@ -220,12 +220,12 @@ describe('registry tools run in process', () => {
   it('returns only the asked day when it has free slots', async () => {
     const result = slotsResult.parse(
       await run(chatTools(context()), 'check_availability', {
-        from: '2027-01-06',
-        to: '2027-01-06',
+        from: '2027-01-07',
+        to: '2027-01-07',
       }),
     );
     expect(result.requestedDays).toBeUndefined();
-    expect(new Set(daysOf(result.slots))).toEqual(new Set(['2027-01-06']));
+    expect(new Set(daysOf(result.slots))).toEqual(new Set(['2027-01-07']));
   });
 
   it('answers a full day with the nearest free slots, marked as such', async () => {

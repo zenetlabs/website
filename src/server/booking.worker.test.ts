@@ -223,6 +223,10 @@ describe('a request', () => {
     ['off the grid', Date.UTC(2027, 0, 12, 9, 10)],
     ['under 12 hours away', NOW + 11 * 3_600_000],
     ['on a weekend', Date.UTC(2027, 0, 16, 9, 0)],
+    ['on a Friday', Date.UTC(2027, 0, 15, 9, 0)],
+    ['on a holiday (Epiphany)', Date.UTC(2027, 0, 6, 9, 0)],
+    ['before the window opens (09:30 Madrid)', Date.UTC(2027, 0, 12, 8, 30)],
+    ['when the window has closed (16:00 Madrid)', Date.UTC(2027, 0, 12, 15, 0)],
   ])(
     'rejects a slot %s without touching the calendar or the database',
     async (_label, start) => {
@@ -261,7 +265,7 @@ describe('a request', () => {
   });
 
   it('stops at three in one owner day, pending ones included', async () => {
-    for (const [index, hour] of [8, 11, 14].entries()) {
+    for (const [index, hour] of [9, 11, 13].entries()) {
       const result = await ask({
         email: `p${index}@example.com`,
         slot: new Date(Date.UTC(2027, 0, 12, hour, 0)).toISOString(),
@@ -271,7 +275,7 @@ describe('a request', () => {
     expect(
       await ask({
         email: 'p3@example.com',
-        slot: new Date(Date.UTC(2027, 0, 12, 15, 0)).toISOString(),
+        slot: new Date(Date.UTC(2027, 0, 12, 14, 30)).toISOString(),
       }),
     ).toEqual({ status: 'rejected', reason: 'day_full' });
   });
@@ -451,6 +455,19 @@ describe('a confirm', () => {
     expect(world.events).toEqual([]);
   });
 
+  it('refuses a held slot that sits on a holiday and releases the hold', async () => {
+    await ask();
+    const holiday = Date.UTC(2027, 0, 6, 9, 0);
+    await DB.prepare('UPDATE bookings SET slot_start = ?, slot_end = ?')
+      .bind(holiday, holiday + 1_800_000)
+      .run();
+    expect(await confirm(tokenFor())).toBe('taken');
+    expect(world.events).toEqual([]);
+    expect(
+      await rows("SELECT id FROM bookings WHERE status = 'confirmed'"),
+    ).toEqual([]);
+  });
+
   it('answers taken when the slot went in Google meanwhile, and releases the hold', async () => {
     await ask();
     world.busy.set('main-calendar', [
@@ -464,8 +481,8 @@ describe('a confirm', () => {
   });
 
   it('still confirms when the 12-hour notice has passed since the request', async () => {
-    const asked = Date.UTC(2027, 0, 4, 18, 50);
-    const slot = Date.UTC(2027, 0, 5, 7, 0);
+    const asked = Date.UTC(2027, 0, 4, 20, 50);
+    const slot = Date.UTC(2027, 0, 5, 9, 0);
     expect(
       (await ask({ slot: new Date(slot).toISOString() }, false, {}, asked))
         .status,
@@ -750,10 +767,29 @@ describe('pageSlots', () => {
     isTest: false,
   });
 
-  it('returns the slots for the page', async () => {
+  it('returns the slots for the page and why the closed days are closed', async () => {
     const result = await pageSlots(scope(), 2_000);
-    expect(result.status).toBe('ok');
-    expect(result.status === 'ok' && result.slots.length).toBeGreaterThan(100);
+    if (result.status !== 'ok') throw new Error('expected slots');
+    // 5, 7 and 11 to 14 January: six working days, Epiphany closed.
+    expect(result.slots).toHaveLength(72);
+    expect(result.calendar).toMatchObject({
+      now: NOW,
+      from: NOW + 12 * 3_600_000,
+      to: NOW + 14 * DAY,
+    });
+    const epiphany = result.calendar.days.find(
+      (day) => day.start === Date.UTC(2027, 0, 6, 9, 0),
+    );
+    expect(epiphany?.holidays).toEqual([
+      { region: 'ES', name: { en: 'Epiphany', es: 'Reyes' } },
+    ]);
+    expect(
+      result.slots.some(
+        (slot) =>
+          slot.start >= Date.UTC(2027, 0, 6) &&
+          slot.start < Date.UTC(2027, 0, 7),
+      ),
+    ).toBe(false);
   });
 
   it('falls back to the contact form instead of throwing when availability rejects', async () => {

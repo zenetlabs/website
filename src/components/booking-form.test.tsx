@@ -5,13 +5,13 @@ import { BookingForm } from '@/components/booking-form';
 import { BOOKING_RULES } from '@/content/booking-rules';
 import { bookPage as en } from '@/content/en/book';
 import { bookPage as es } from '@/content/es/book';
-import { candidateSlots } from '@/lib/slots';
+import { bookingCalendar, candidateSlots } from '@/server/booking-slots';
 
 const state = vi.hoisted(() => ({ hydrated: true }));
 const submitBooking = vi.hoisted(() => vi.fn());
 const track = vi.hoisted(() => vi.fn());
 const attribution = vi.hoisted(() => vi.fn());
-const fetchAvailability = vi.hoisted(() => vi.fn());
+const fetchBookAvailability = vi.hoisted(() => vi.fn());
 const ATTRIBUTION = {
   landing: '/book?utm_source=news',
   referrer: '',
@@ -28,7 +28,10 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
   }) => select({ locale: 'en' }),
   useHydrated: () => state.hydrated,
 }));
-vi.mock('@/lib/booking-client', () => ({ submitBooking, fetchAvailability }));
+vi.mock('@/lib/booking-client', () => ({ submitBooking }));
+vi.mock('@/lib/book-availability', () => ({
+  bookAvailability: fetchBookAvailability,
+}));
 vi.mock('@/lib/lead-client', () => ({ attribution }));
 vi.mock('@/lib/track', () => ({ track }));
 // The real widget is an iframe a disabled fieldset cannot reach: `widget`
@@ -58,6 +61,7 @@ vi.mock('@marsidev/react-turnstile', () => ({
 
 const FROM = Date.UTC(2027, 0, 12, 0);
 const SLOTS = candidateSlots(BOOKING_RULES, FROM, FROM + 2 * 86_400_000);
+const CALENDAR = bookingCalendar(BOOKING_RULES, Date.UTC(2027, 0, 4, 8));
 const SLOT = SLOTS.find((slot) => slot.start === Date.UTC(2027, 0, 12, 9));
 const ISO = '2027-01-12T09:00:00.000Z';
 
@@ -67,13 +71,15 @@ function renderForm(locale: 'en' | 'es' = 'en') {
       copy={locale === 'en' ? en : es}
       locale={locale}
       zone="Asia/Singapore"
+      serverZone="Asia/Singapore"
       slots={SLOTS}
+      calendar={CALENDAR}
     />,
   );
 }
 
 async function pick(user: ReturnType<typeof userEvent.setup>, time: string) {
-  const [first] = screen.getAllByRole('radio', { name: time });
+  const [first] = await screen.findAllByRole('radio', { name: time });
   if (!first) throw new Error(`no slot at ${time}`);
   await user.click(first);
 }
@@ -98,8 +104,8 @@ beforeEach(() => {
   submitBooking.mockReset();
   track.mockReset();
   attribution.mockReset();
-  fetchAvailability.mockReset();
-  fetchAvailability.mockResolvedValue({ status: 'unavailable' });
+  fetchBookAvailability.mockReset();
+  fetchBookAvailability.mockResolvedValue({ status: 'unavailable' });
   attribution.mockResolvedValue(ATTRIBUTION);
 });
 
@@ -359,13 +365,15 @@ describe('BookingForm', () => {
 
   it('refreshes the list after slot_taken in one request and keeps what was typed', async () => {
     submitBooking.mockResolvedValue({ kind: 'rejected', reason: 'slot_taken' });
-    fetchAvailability.mockResolvedValue({
+    fetchBookAvailability.mockResolvedValue({
       status: 'ok',
       slots: SLOTS.slice(1),
+      calendar: CALENDAR,
     });
     const user = userEvent.setup();
     renderForm();
-    const before = screen.getAllByRole('radio', { hidden: true }).length;
+    const before = (await screen.findAllByRole('radio', { hidden: true }))
+      .length;
     await fillIn(user);
     await user.click(screen.getByRole('button', { name: 'Request this time' }));
     const alert = await screen.findByRole('alert');
@@ -377,21 +385,22 @@ describe('BookingForm', () => {
         before - 1,
       ),
     );
-    expect(fetchAvailability).toHaveBeenCalledTimes(1);
+    expect(fetchBookAvailability).toHaveBeenCalledTimes(1);
     expect(screen.getByLabelText('Name')).toHaveValue('Ada Lovelace');
     expect(track).not.toHaveBeenCalled();
   });
 
   it('keeps the form, the list and the typed details when the refresh fails', async () => {
     submitBooking.mockResolvedValue({ kind: 'rejected', reason: 'slot_taken' });
-    fetchAvailability.mockResolvedValue({ status: 'unavailable' });
+    fetchBookAvailability.mockResolvedValue({ status: 'unavailable' });
     const user = userEvent.setup();
     renderForm();
-    const before = screen.getAllByRole('radio', { hidden: true }).length;
+    const before = (await screen.findAllByRole('radio', { hidden: true }))
+      .length;
     await fillIn(user);
     await user.click(screen.getByRole('button', { name: 'Request this time' }));
     await screen.findByRole('alert');
-    await waitFor(() => expect(fetchAvailability).toHaveBeenCalled());
+    await waitFor(() => expect(fetchBookAvailability).toHaveBeenCalled());
     expect(screen.getAllByRole('radio', { hidden: true })).toHaveLength(before);
     expect(screen.getByLabelText('Name')).toHaveValue('Ada Lovelace');
     expect(
@@ -401,7 +410,11 @@ describe('BookingForm', () => {
 
   it('says the day is full, and refreshes, when the day filled up', async () => {
     submitBooking.mockResolvedValue({ kind: 'rejected', reason: 'day_full' });
-    fetchAvailability.mockResolvedValue({ status: 'ok', slots: SLOTS });
+    fetchBookAvailability.mockResolvedValue({
+      status: 'ok',
+      slots: SLOTS,
+      calendar: CALENDAR,
+    });
     const user = userEvent.setup();
     renderForm();
     await fillIn(user);
@@ -409,7 +422,7 @@ describe('BookingForm', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'That day is now fully booked.',
     );
-    await waitFor(() => expect(fetchAvailability).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(fetchBookAvailability).toHaveBeenCalledTimes(1));
   });
 
   it.each([

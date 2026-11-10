@@ -140,19 +140,24 @@ test('refusals sent before the body is read never turn into a 500', async ({
 });
 
 test('a bearer caller books on the test calendar', async ({ request }) => {
-  // A late window, so this never shares a slot with booking.e2e.ts.
-  const from = new Date(Date.now() + 11 * 86_400_000)
-    .toISOString()
-    .slice(0, 10);
-  const check = await request.post('/api/tools/check_availability', {
-    data: { from, timeZone: 'UTC' },
-  });
-  const slots = z
-    .object({
-      result: z.object({ slots: z.array(z.object({ start: z.string() })) }),
-    })
-    .parse(await check.json()).result.slots;
-  const start = slots.at(0)?.start;
+  // A late window, so this never shares a slot with booking.e2e.ts: the
+  // first time of the first late day that has one (calls are Monday to
+  // Thursday, so a given offset can be closed).
+  let start: string | undefined;
+  for (const offset of [12, 13, 14, 11, 10, 9]) {
+    const day = new Date(Date.now() + offset * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+    const check = await request.post('/api/tools/check_availability', {
+      data: { from: day, to: day, timeZone: 'UTC' },
+    });
+    start = z
+      .object({
+        result: z.object({ slots: z.array(z.object({ start: z.string() })) }),
+      })
+      .parse(await check.json()).result.slots[0]?.start;
+    if (start) break;
+  }
   if (!start) throw new Error('no slot left to book');
   const response = await request.post('/api/tools/book_meeting', {
     headers: agentHeaders(await startVoiceSession(request)),
