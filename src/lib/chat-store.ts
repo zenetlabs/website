@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { ChallengeCancelled } from '@/lib/challenge-cancel';
 import { postChat } from '@/lib/chat-client';
 import type { ChatError, ChatEvent, Proposal } from '@/lib/chat-events';
 import { setChatSessionId } from '@/lib/chat-session';
@@ -229,14 +230,14 @@ type Source = { sessionId: string } | { turnstileToken: string };
 async function source(
   viaSession: boolean,
   context: SendContext,
-): Promise<Source | null> {
+): Promise<Source | 'cancelled' | null> {
   if (viaSession && state.sessionId !== null) {
     return { sessionId: state.sessionId };
   }
   try {
     return { turnstileToken: await context.token() };
-  } catch {
-    return null;
+  } catch (error) {
+    return error instanceof ChallengeCancelled ? 'cancelled' : null;
   }
 }
 
@@ -264,6 +265,12 @@ export async function send(text: string, context: SendContext): Promise<void> {
   set(begin(state, message, !viaSession));
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const origin = await source(viaSession, context);
+    if (origin === 'cancelled') {
+      // The visitor closed the panel mid-check: the message stays, unsent,
+      // and nothing reports a failed check.
+      set(settle(state));
+      return;
+    }
     if (origin === null) {
       set(fail(state, 'captcha'));
       return;

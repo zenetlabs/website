@@ -17,9 +17,24 @@ const device = vi.hoisted(() => {
   };
   return { state, requestMic: vi.fn() };
 });
+// 'interactive' answers execute() with Turnstile's checkbox instead of a token;
+// the test then drives the widget's callbacks through `handlers`.
 const widget = vi.hoisted(() => {
   const order: string[] = [];
-  return { ready: true, order };
+  const state: {
+    ready: boolean;
+    order: string[];
+    interactive: boolean;
+    handlers: {
+      onSuccess: (token: string) => void;
+      onError: () => void;
+      onUnsupported: () => void;
+      onTimeout: () => void;
+      onBeforeInteractive: () => void;
+      onAfterInteractive: () => void;
+    } | null;
+  } = { ready: true, order, interactive: false, handlers: null };
+  return state;
 });
 
 vi.mock('@/lib/track', () => ({ track }));
@@ -41,18 +56,28 @@ vi.mock('@marsidev/react-turnstile', async () => {
     Turnstile: ({
       ref,
       onWidgetLoad,
+      ...handlers
     }: {
-      ref: React.Ref<{
-        reset: () => void;
-        execute: () => void;
-        getResponsePromise: () => Promise<string>;
-      }>;
+      ref: React.Ref<{ reset: () => void; execute: () => void }>;
       onWidgetLoad: () => void;
+      onSuccess: (token: string) => void;
+      onError: () => void;
+      onUnsupported: () => void;
+      onTimeout: () => void;
+      onBeforeInteractive: () => void;
+      onAfterInteractive: () => void;
     }) => {
+      widget.handlers = handlers;
       useImperativeHandle(ref, () => ({
-        reset: () => {},
-        execute: () => widget.order.push('execute'),
-        getResponsePromise: async () => 'tok',
+        reset: () => widget.order.push('reset'),
+        execute: () => {
+          widget.order.push('execute');
+          queueMicrotask(() =>
+            widget.interactive
+              ? handlers.onBeforeInteractive()
+              : handlers.onSuccess('tok'),
+          );
+        },
       }));
       if (widget.ready) queueMicrotask(onWidgetLoad);
       return null;
@@ -92,6 +117,7 @@ beforeEach(async () => {
   mint.mockReset().mockResolvedValue(MINTED);
   widget.ready = true;
   widget.order = [];
+  widget.interactive = false;
   device.state.supported = true;
   device.requestMic.mockReset().mockImplementation(async () => {
     widget.order.push('mic');
@@ -151,7 +177,7 @@ describe('VoicePanel', () => {
     await waitFor(() =>
       expect(screen.getByRole('status')).toHaveTextContent(en.listening),
     );
-    expect(widget.order).toEqual(['mic', 'execute']);
+    expect(widget.order).toEqual(['mic', 'reset', 'execute']);
     expect(mint).toHaveBeenCalledWith(
       expect.objectContaining({ locale: 'en', turnstileToken: 'tok' }),
       undefined,
@@ -167,6 +193,87 @@ describe('VoicePanel', () => {
     expect(
       transcript.querySelector('[data-ai-generated="true"]'),
     ).not.toBeNull();
+  });
+
+  it('asks the visitor to tick the box while Turnstile is interactive, then calls once it is solved', async () => {
+    widget.interactive = true;
+    mount();
+    await start();
+    expect(
+      await screen.findByText('Tick the box to continue.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(en.errorCaptcha)).not.toBeInTheDocument();
+    expect(mint).not.toHaveBeenCalled();
+    act(() => {
+      widget.handlers?.onAfterInteractive();
+      widget.handlers?.onSuccess('tok');
+    });
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(en.listening),
+    );
+    expect(mint).toHaveBeenCalledWith(
+      expect.objectContaining({ turnstileToken: 'tok' }),
+      undefined,
+    );
+    expect(
+      screen.queryByText('Tick the box to continue.'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps waiting through an interactive timeout: the fresh checkbox still starts the call', async () => {
+    widget.interactive = true;
+    mount();
+    await start();
+    await screen.findByText('Tick the box to continue.');
+    act(() => widget.handlers?.onTimeout());
+    expect(screen.queryByText(en.errorCaptcha)).not.toBeInTheDocument();
+    expect(screen.getByText('Tick the box to continue.')).toBeInTheDocument();
+    act(() => {
+      widget.handlers?.onBeforeInteractive();
+      widget.handlers?.onAfterInteractive();
+      widget.handlers?.onSuccess('tok');
+    });
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(en.listening),
+    );
+    expect(mint).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText(en.errorCaptcha)).not.toBeInTheDocument();
+  });
+
+  it.each(['onError', 'onUnsupported'] as const)(
+    '%s shows the captcha error, and "Try again" runs a fresh check',
+    async (name) => {
+      widget.interactive = true;
+      mount();
+      await start();
+      await screen.findByText('Tick the box to continue.');
+      act(() => widget.handlers?.[name]());
+      expect(await screen.findByText(en.errorCaptcha)).toBeInTheDocument();
+      expect(screen.queryByText('Tick the box to continue.')).toBeNull();
+      expect(mint).not.toHaveBeenCalled();
+      widget.interactive = false;
+      widget.order.length = 0;
+      await userEvent.click(screen.getByRole('button', { name: en.again }));
+      await start();
+      await waitFor(() =>
+        expect(screen.getByRole('status')).toHaveTextContent(en.listening),
+      );
+      expect(widget.order).toEqual(['mic', 'reset', 'execute']);
+      expect(mint).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it('ending the call while the checkbox shows takes the hint along', async () => {
+    widget.interactive = true;
+    mount();
+    await start();
+    await screen.findByText('Tick the box to continue.');
+    await userEvent.click(screen.getByRole('button', { name: en.end }));
+    expect(screen.getByRole('status')).toHaveTextContent(en.ended);
+    expect(screen.queryByText('Tick the box to continue.')).toBeNull();
+    expect(screen.queryByText(en.errorCaptcha)).toBeNull();
+    expect(widget.order.at(-1)).toBe('reset');
+    expect(mint).not.toHaveBeenCalled();
   });
 
   it('toggles mute with aria-pressed and ends the call', async () => {

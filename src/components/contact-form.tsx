@@ -39,8 +39,11 @@ export function ContactForm({ prefill }: { prefill?: ContactPrefill }) {
   const { form: copy } = contact;
   const locale = useLocale();
   const hydrated = useHydrated();
-  const challenge = useChallenge();
   const [status, setStatus] = useState<Status>('idle');
+  const challenge = useChallenge((waited) => {
+    if (waited) fail('errorCaptcha');
+    else setStatus('errorCaptcha');
+  });
   const successHeading = useRef<HTMLParagraphElement>(null);
   const alert = useRef<HTMLParagraphElement>(null);
   const pending = status === 'pending';
@@ -176,10 +179,7 @@ export function ContactForm({ prefill }: { prefill?: ContactPrefill }) {
             <LazyTurnstile
               action="lead"
               locale={locale}
-              {...challenge.widgetProps((waited) => {
-                if (waited) fail('errorCaptcha');
-                else setStatus('errorCaptcha');
-              })}
+              {...challenge.widgetProps}
             />
             <button
               type="submit"

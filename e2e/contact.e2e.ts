@@ -1,6 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 import { attemptsFor, sentFor, uniqueEmail } from './fakes';
 import { BOOKING_PUBLISHED, CONTACT_PAIR, gotoHydrated } from './helpers';
+import { forceInteractiveTurnstile } from './turnstile-interactive';
 
 const TURNSTILE_SCRIPT = 'script[src*="challenges.cloudflare.com"]';
 
@@ -195,4 +196,25 @@ test('a rejected submit shows the alert with the mailto fallback', async ({
   await expect(
     alert.getByRole('link', { name: 'hello@zenetlabs.com' }),
   ).toHaveAttribute('href', 'mailto:hello@zenetlabs.com');
+});
+
+test('an interactive check asks for the tick, not an error, and the enquiry goes once it is ticked', async ({
+  page,
+}) => {
+  await forceInteractiveTurnstile(page);
+  const email = uniqueEmail('interactive');
+  await gotoHydrated(page, CONTACT_PAIR.en);
+  await page.getByLabel('Name').focus();
+  const box = page.getByRole('button', { name: 'Fake Turnstile checkbox' });
+  await expect(box).toBeVisible();
+  await expect(page.getByText('Tick the box to continue.')).toBeVisible();
+  await fillForm(page, email);
+  await page.getByRole('button', { name: 'Send message' }).click();
+  await expect(
+    page.getByRole('button', { name: "Checking you're not a bot…" }),
+  ).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await box.click();
+  await expect(page.getByText('Message sent')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText('Tick the box to continue.')).toHaveCount(0);
 });

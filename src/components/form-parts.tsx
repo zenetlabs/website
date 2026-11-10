@@ -3,7 +3,7 @@ import { lazy, type ReactNode, type Ref, Suspense, useId } from 'react';
 import { TEXT_LINK } from '@/components/ui';
 import { BOOKING_LIMITS } from '@/lib/booking-limits';
 import { legalEntity } from '@/lib/content';
-import type { Locale } from '@/lib/i18n';
+import { type Locale, messages } from '@/lib/i18n';
 import { pagePath } from '@/lib/page-registry';
 import { PUBLIC_EMAIL, SITE } from '@/lib/site';
 
@@ -149,12 +149,8 @@ export function ConsentCheckbox({
   );
 }
 
-// The widget library only loads once the visitor engages with the form.
-const Turnstile = lazy(() =>
-  import('@marsidev/react-turnstile').then(({ Turnstile }) => ({
-    default: Turnstile,
-  })),
-);
+// The widget and its library only load once the visitor engages with the form.
+const TurnstileWidget = lazy(() => import('@/components/turnstile-widget'));
 
 export function LazyTurnstile({
   engaged,
@@ -164,6 +160,7 @@ export function LazyTurnstile({
   onToken,
   onError,
   onLoad,
+  onInteractive,
   options,
 }: {
   engaged: boolean;
@@ -173,26 +170,28 @@ export function LazyTurnstile({
   onToken: (token: string) => void;
   onError: () => void;
   onLoad?: () => void;
+  onInteractive?: (active: boolean) => void;
   options?: { appearance?: 'interaction-only'; execution?: 'execute' };
 }) {
   if (!engaged) return null;
   return (
     <Suspense fallback={null}>
-      <Turnstile
-        ref={instance}
+      <TurnstileWidget
+        instance={instance}
         siteKey={SITE.turnstileSiteKey}
         options={{
           action,
           theme: 'light',
           language: locale,
           size: 'flexible',
-          refreshExpired: 'auto',
           ...options,
         }}
+        hint={messages[locale].challenge.interactive}
         onWidgetLoad={onLoad}
         onSuccess={onToken}
         onExpire={() => onToken('')}
         onError={onError}
+        onInteractive={onInteractive}
       />
     </Suspense>
   );

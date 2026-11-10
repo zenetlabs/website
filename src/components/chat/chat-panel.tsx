@@ -1,4 +1,3 @@
-import type { TurnstileInstance } from '@marsidev/react-turnstile';
 import { useRouter } from '@tanstack/react-router';
 import {
   type FormEvent,
@@ -17,7 +16,7 @@ import { ChatSlots } from '@/components/chat/chat-slots';
 import { usePanelMotion } from '@/components/chat/panel-motion';
 import { ContactLinks } from '@/components/contact-links';
 import { LazyTurnstile } from '@/components/form-parts';
-import { challengeToken } from '@/components/use-challenge';
+import { useChallengeOnDemand } from '@/components/use-challenge-on-demand';
 import type { ChatCopy } from '@/content/types';
 import { CHAT_LIMITS } from '@/lib/assistant-limits';
 import {
@@ -36,7 +35,6 @@ import {
 import type { Locale } from '@/lib/i18n';
 import { pagePath } from '@/lib/page-registry';
 import { isPlainClick } from '@/lib/plain-click';
-import { noop } from '@/lib/time';
 import { openVoice, voiceAvailable } from '@/lib/voice-entry';
 
 const LOW_REMAINING = 5;
@@ -492,7 +490,7 @@ export function ChatPanel({
   const [zone] = useState(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone,
   );
-  const widget = useRef<TurnstileInstance>(undefined);
+  const challenge = useChallengeOnDemand(challengeDown);
   const input = useRef<HTMLTextAreaElement>(null);
   const pendingMessage = useRef(initialMessage);
   const queueTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -573,8 +571,8 @@ export function ChatPanel({
       page: location.pathname,
       timeZone: zone,
       newSession: copy.newSession,
-      resetToken: () => widget.current?.reset(),
-      token: challengeToken(widget),
+      resetToken: () => challenge.widget.current?.reset(),
+      token: challenge.token,
     });
   }
 
@@ -606,7 +604,11 @@ export function ChatPanel({
         event.preventDefault();
         dismiss();
       }}
-      onClose={onClose}
+      onClose={() => {
+        // A check still running goes with the panel: no failure on reopening.
+        challenge.cancel();
+        onClose();
+      }}
       aria-labelledby={titleId}
       aria-describedby={noticeId}
       data-chat-panel
@@ -708,9 +710,7 @@ export function ChatPanel({
           engaged
           action="chat"
           locale={locale}
-          instance={widget}
-          onToken={noop}
-          onError={challengeDown}
+          {...challenge.widgetProps}
           onLoad={() => {
             ready.current = true;
             sendPending();

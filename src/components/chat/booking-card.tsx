@@ -44,8 +44,8 @@ export function BookingCard({
   onCancel: () => void;
 }) {
   const { contact } = useMessages();
-  const challenge = useChallenge();
   const [status, setStatus] = useState<Status>('idle');
+  const challenge = useChallenge(() => setStatus('captcha'));
   const [held, setHeld] = useState<BookingRequest | null>(null);
   const again = useResend(challenge);
   const titleId = useId();
@@ -105,7 +105,7 @@ export function BookingCard({
     <LazyTurnstile
       action={SURFACE_ACTION.chat}
       locale={locale}
-      {...challenge.widgetProps(() => setStatus('captcha'))}
+      {...challenge.widgetProps}
       engaged={challenge.engaged || held !== null}
     />
   );

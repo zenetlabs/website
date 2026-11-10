@@ -17,7 +17,22 @@ import { resetChat } from '@/lib/chat-store';
 const postChat = vi.hoisted(() => vi.fn());
 const track = vi.hoisted(() => vi.fn());
 const push = vi.hoisted(() => vi.fn());
-const widget = vi.hoisted(() => ({ ready: true, fail: false }));
+// 'interactive' answers execute() with Turnstile's checkbox instead of a token;
+// the test then drives the widget's callbacks through `handlers`.
+const widget = vi.hoisted(() => {
+  const state: {
+    ready: boolean;
+    fail: boolean;
+    interactive: boolean;
+    handlers: {
+      onSuccess: (token: string) => void;
+      onTimeout: () => void;
+      onBeforeInteractive: () => void;
+      onAfterInteractive: () => void;
+    } | null;
+  } = { ready: true, fail: false, interactive: false, handlers: null };
+  return state;
+});
 const voice = vi.hoisted(() => ({ available: false, openVoice: vi.fn() }));
 
 vi.mock('@/lib/chat-client', () => ({ postChat }));
@@ -42,19 +57,25 @@ vi.mock('@marsidev/react-turnstile', async () => {
       ref,
       onWidgetLoad,
       onError,
+      ...handlers
     }: {
-      ref: React.Ref<{
-        reset: () => void;
-        execute: () => void;
-        getResponsePromise: () => Promise<string>;
-      }>;
+      ref: React.Ref<{ reset: () => void; execute: () => void }>;
       onWidgetLoad?: () => void;
       onError: () => void;
+      onSuccess: (token: string) => void;
+      onTimeout: () => void;
+      onBeforeInteractive: () => void;
+      onAfterInteractive: () => void;
     }) => {
+      widget.handlers = handlers;
       useImperativeHandle(ref, () => ({
         reset: () => {},
-        execute: () => {},
-        getResponsePromise: async () => 'tok',
+        execute: () =>
+          queueMicrotask(() =>
+            widget.interactive
+              ? handlers.onBeforeInteractive()
+              : handlers.onSuccess('tok'),
+          ),
       }));
       if (widget.fail) queueMicrotask(onError);
       else if (widget.ready) queueMicrotask(() => onWidgetLoad?.());
@@ -121,6 +142,7 @@ beforeEach(() => {
   push.mockReset();
   widget.ready = true;
   widget.fail = false;
+  widget.interactive = false;
   voice.available = false;
   voice.openVoice.mockReset();
   resetChat('en');
@@ -297,6 +319,82 @@ describe('sending', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('waits past every timer while the visitor ticks the box, then sends', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      widget.interactive = true;
+      postChat.mockResolvedValue(ok({ t: 'done', remaining: 19 }));
+      open();
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      const box = await screen.findByLabelText(en.inputLabel);
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: en.send })).toBeDisabled(),
+      );
+      await user.type(box, 'hello');
+      await user.type(box, '{Enter}');
+      expect(
+        await screen.findByText('Tick the box to continue.'),
+      ).toBeInTheDocument();
+      // Past the 30 s limit the token wait keeps while the widget works alone.
+      act(() => {
+        vi.advanceTimersByTime(60_000);
+      });
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(postChat).not.toHaveBeenCalled();
+      act(() => {
+        widget.handlers?.onAfterInteractive();
+        widget.handlers?.onSuccess('tok');
+      });
+      await waitFor(() => expect(postChat).toHaveBeenCalledTimes(1));
+      expect(postChat.mock.calls[0]?.[0]).toMatchObject({
+        message: 'hello',
+        turnstileToken: 'tok',
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('keeps waiting through an interactive timeout: the fresh checkbox still sends once', async () => {
+    widget.interactive = true;
+    postChat.mockResolvedValue(ok({ t: 'done', remaining: 19 }));
+    open();
+    const { user } = await ask('hello');
+    await user.keyboard('{Enter}');
+    await screen.findByText('Tick the box to continue.');
+    act(() => widget.handlers?.onTimeout());
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    act(() => {
+      widget.handlers?.onBeforeInteractive();
+      widget.handlers?.onAfterInteractive();
+      widget.handlers?.onSuccess('tok');
+    });
+    await waitFor(() => expect(postChat).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('closing the panel mid-check and opening it again shows no failure', async () => {
+    widget.interactive = true;
+    const { unmount } = open();
+    const { user } = await ask('hello');
+    await user.keyboard('{Enter}');
+    await screen.findByText('Tick the box to continue.');
+    fireEvent.click(screen.getByRole('button', { name: en.close }));
+    unmount();
+    widget.interactive = false;
+    open();
+    await screen.findByLabelText(en.inputLabel);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.queryByText(en.errorCaptcha)).not.toBeInTheDocument();
+    expect(screen.queryByText('Tick the box to continue.')).toBeNull();
+    expect(postChat).not.toHaveBeenCalled();
+    // The composer is free again: the next message goes out.
+    postChat.mockResolvedValue(ok({ t: 'done', remaining: 19 }));
+    const next = await ask('again');
+    await next.user.keyboard('{Enter}');
+    await waitFor(() => expect(postChat).toHaveBeenCalledTimes(1));
   });
 
   it('a challenge error drops the queued message: no send, the captcha alert carries the draft', async () => {

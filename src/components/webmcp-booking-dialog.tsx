@@ -75,8 +75,8 @@ function DialogAlert({
 export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
   const { proposal, locale, label, copy } = request;
   const { form } = messages[locale].contact;
-  const challenge = useChallenge();
   const [status, setStatus] = useState<Status>('idle');
+  const challenge = useChallenge(() => setStatus('captcha'));
   const [answered, setAnswered] = useState(false);
   const [held, setHeld] = useState<Held | null>(null);
   const again = useResend(challenge);
@@ -183,7 +183,7 @@ export function WebMcpBookingDialog({ request }: { request: BookingRequest }) {
     <LazyTurnstile
       action={SURFACE_ACTION.webmcp}
       locale={locale}
-      {...challenge.widgetProps(() => setStatus('captcha'))}
+      {...challenge.widgetProps}
       engaged
     />
   );
