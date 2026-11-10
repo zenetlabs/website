@@ -27,7 +27,7 @@ export function CookiesEs({
   return (
     <LegalPage
       title={title}
-      updated="Última actualización: 5 de noviembre de 2026"
+      updated="Última actualización: 10 de noviembre de 2026"
     >
       <LegalSection title="Qué cubre esta política">
         <p>

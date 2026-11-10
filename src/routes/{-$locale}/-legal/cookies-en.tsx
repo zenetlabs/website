@@ -24,7 +24,7 @@ export function CookiesEn({
 }) {
   const analytics = __GA4_ID__ !== null;
   return (
-    <LegalPage title={title} updated="Last updated: 5 November 2026">
+    <LegalPage title={title} updated="Last updated: 10 November 2026">
       <LegalSection title="What this policy covers">
         <p>
           This policy explains how the English pages of zenetlabs.com, operated

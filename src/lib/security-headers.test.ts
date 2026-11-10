@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { HEADERS, withSecurityHeaders } from '@/lib/security-headers';
+import { withSecurityHeaders } from '@/lib/security-headers';
 
 function starBlock(file: string): Array<[string, string]> {
   const lines: Array<[string, string]> = [];
@@ -20,24 +20,30 @@ function starBlock(file: string): Array<[string, string]> {
   return lines;
 }
 
+// The headers a build sets with voice on or off, whatever production holds.
+async function headersFor(voice: boolean): Promise<Map<string, string>> {
+  vi.stubGlobal('__VOICE__', voice);
+  vi.resetModules();
+  const { HEADERS } = await import('@/lib/security-headers');
+  return new Map(HEADERS);
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.resetModules();
+});
+
 describe('public/_headers', () => {
-  it('matches the security headers set by the worker', () => {
+  // Static assets never need the microphone, so they keep a dark build's set.
+  it('matches the security headers a dark worker build sets', async () => {
     const file = readFileSync('public/_headers', 'utf8');
-    expect(new Map(starBlock(file))).toEqual(new Map(HEADERS));
+    expect(new Map(starBlock(file))).toEqual(await headersFor(false));
   });
 });
 
 describe('Permissions-Policy', () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-    vi.resetModules();
-  });
-
   async function policy(voice: boolean): Promise<string | undefined> {
-    vi.stubGlobal('__VOICE__', voice);
-    vi.resetModules();
-    const { HEADERS: built } = await import('@/lib/security-headers');
-    return new Map(built).get('Permissions-Policy');
+    return (await headersFor(voice)).get('Permissions-Policy');
   }
 
   it('keeps the microphone off while voice is dark', async () => {

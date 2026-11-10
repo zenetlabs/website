@@ -1001,11 +1001,15 @@ describe('a placeholder or invalid calendar secret', () => {
         result: { status: 'unavailable', reason: 'not_configured' },
       });
       expect(
-        await getHealth({
-          GOOGLE_CALENDAR: binding,
-          TOOLS_BEARER_SECRET: binding,
-          ELEVENLABS_API_KEY: binding,
-        }),
+        await getHealth(
+          {
+            GOOGLE_CALENDAR: binding,
+            TOOLS_BEARER_SECRET: binding,
+            ELEVENLABS_API_KEY: binding,
+          },
+          false,
+          TEST_SITE,
+        ),
       ).toMatchObject({
         booking: false,
       });
@@ -1115,24 +1119,32 @@ describe('manifest and health', () => {
       },
     });
     expect(
-      await getHealth({
-        GOOGLE_CALENDAR: binding(secret),
-        TOOLS_BEARER_SECRET: binding('x'),
-        ELEVENLABS_API_KEY: binding('key'),
-      }),
+      await getHealth(
+        {
+          GOOGLE_CALENDAR: binding(secret),
+          TOOLS_BEARER_SECRET: binding('x'),
+          ELEVENLABS_API_KEY: binding('key'),
+        },
+        false,
+        TEST_SITE,
+      ),
     ).toEqual({
       ok: true,
       booking: true,
       toolsBearer: true,
       assistant: false,
-      voice: false,
+      voice: true,
     });
     expect(
-      await getHealth({
-        GOOGLE_CALENDAR: binding('UNSET'),
-        TOOLS_BEARER_SECRET: binding(new Error('Secret not found')),
-        ELEVENLABS_API_KEY: binding('UNSET'),
-      }),
+      await getHealth(
+        {
+          GOOGLE_CALENDAR: binding('UNSET'),
+          TOOLS_BEARER_SECRET: binding(new Error('Secret not found')),
+          ELEVENLABS_API_KEY: binding('UNSET'),
+        },
+        false,
+        TEST_SITE,
+      ),
     ).toEqual({
       ok: true,
       booking: false,
@@ -1142,17 +1154,21 @@ describe('manifest and health', () => {
     });
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(
-      await getHealth({
-        GOOGLE_CALENDAR: binding('{"broken"'),
-        TOOLS_BEARER_SECRET: binding('x'),
-        ELEVENLABS_API_KEY: binding('key'),
-      }),
+      await getHealth(
+        {
+          GOOGLE_CALENDAR: binding('{"broken"'),
+          TOOLS_BEARER_SECRET: binding('x'),
+          ELEVENLABS_API_KEY: binding('key'),
+        },
+        false,
+        TEST_SITE,
+      ),
     ).toEqual({
       ok: true,
       booking: false,
       toolsBearer: true,
       assistant: false,
-      voice: false,
+      voice: true,
     });
     log.mockRestore();
   });

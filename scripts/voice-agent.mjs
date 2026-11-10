@@ -163,6 +163,9 @@ function toolId(entry) {
   return entry?.id;
 }
 
+/** @type {Record<'en' | 'es', string | null>} */
+const NO_CONFIGURED_AGENTS = { en: null, es: null };
+
 export async function runVoiceAgents({
   command,
   flags,
@@ -170,6 +173,7 @@ export async function runVoiceAgents({
   fetch: send = fetch,
   readFile: read = (path) => readFile(path, 'utf8'),
   log = console.log,
+  configuredAgents = NO_CONFIGURED_AGENTS,
 }) {
   const apiKey = env.ELEVENLABS_API_KEY;
   if (!apiKey) throw new Error('ELEVENLABS_API_KEY is required');
@@ -261,6 +265,21 @@ export async function runVoiceAgents({
         `--update-only found no ${missing.join(', ')}; nothing was changed. Run pnpm voice:apply once without it to create them`,
       );
     }
+    // The site calls the ids in site.config.ts; a sync must patch those agents.
+    const mismatched = file.agents.flatMap(({ locale, config }) => {
+      const expected = configuredAgents[locale] ?? null;
+      const found = foundAgents.get(config.name);
+      return expected !== null && found.agent_id !== expected
+        ? [
+            `${config.name} is ${found.agent_id}, site.config.ts expects ${expected}`,
+          ]
+        : [];
+    });
+    if (mismatched.length > 0) {
+      throw new Error(
+        `--update-only found agents the site does not call: ${mismatched.join('; ')}; nothing was changed. Fix voice.agents in site.config.ts or the agents in ElevenLabs`,
+      );
+    }
   }
 
   if (secret === undefined) {
@@ -324,7 +343,13 @@ export async function runVoiceAgents({
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   try {
     const { command, flags } = parseArgs(process.argv.slice(2));
-    await runVoiceAgents({ command, flags, env: process.env });
+    const { siteConfig } = await import('../site.config.ts');
+    await runVoiceAgents({
+      command,
+      flags,
+      env: process.env,
+      configuredAgents: siteConfig('production').voice.agents,
+    });
   } catch (error) {
     console.error(error instanceof Error ? error.message : 'failed');
     process.exitCode = 1;

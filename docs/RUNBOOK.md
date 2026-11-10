@@ -13,7 +13,7 @@ Conventions: `<store-id>`, `<secret-id>`, `<version-id>`, `<alias>`, `<booking-i
 | Database | D1 `prod-zenet-web` (EU jurisdiction), binding `DB`, migrations in `migrations/` (0001 to 0006). |
 | Analytics | Cloudflare Web Analytics (cookieless, always on). GA4 is on, consent only (`ga4Id` set; `docs/analytics.md`). |
 | Email | Outbound through Resend on `send.zenetlabs.com`; inbound is Google Workspace. |
-| Third parties | Workers AI (binding `AI`, assistant), Google Calendar (booking), ElevenLabs (voice). Booking and the assistant are live in production (2026-11-06); voice is dark. |
+| Third parties | Workers AI (binding `AI`, assistant), Google Calendar (booking), ElevenLabs (voice). Booking and the assistant are live in production (2026-11-06), voice since 2026-11-10. |
 | Cron | One trigger, `*/10 * * * *`, production only (section 8). |
 | Config | Public per-env values in `site.config.ts` (build time, by `CLOUDFLARE_ENV`); secrets in the Secrets Store, read per request. |
 
@@ -48,8 +48,8 @@ bash scripts/smoke.sh
    2. Bundle guards: no `FAKE_ASSISTANT_SENTINEL` in `dist/server`, no `FAKE_VOICE_SENTINEL` in `dist/client` or `dist/server`, and `dist/server/wrangler.json` carries the `AI` binding, `CHAT_LIMITER`, the `ELEVENLABS_API_KEY` secret and `VOICE_LIMITER`.
    3. `wrangler d1 migrations apply DB --remote --env production` (expand-only migrations).
    4. `./.github/actions/wrangler-deploy-retry`: retries code 971 (API rate limit, up to 5 times with doubling backoff) and startup validation 10021 with CPU wording (4 attempts, 15 s apart); any other failure fails at once. A zero exit without a "Current Version ID" line is a failure, because wrangler can exit 0 without deploying.
-   5. `bash scripts/smoke.sh` (retries each check 5 times, 10 s apart).
-   6. Optional: `node scripts/voice-agent.mjs apply --update-only` when the `production` environment secret `ELEVENLABS_API_KEY` exists (`continue-on-error`; a failure is a warning).
+   5. `bash scripts/smoke.sh` with `EXPECT_ASSISTANT=1` and `EXPECT_VOICE=1` (retries each check 5 times, 10 s apart). `EXPECT_VOICE=1` fails the smoke unless `/api/health` reports `"voice":true` and `/` sends `microphone=(self)`; without it the voice lines follow `/api/health`. A PR that turns voice off (the `voice.published` kill switch) removes `EXPECT_VOICE` from `deploy-prod.yml` in the same PR.
+   6. `node scripts/voice-agent.mjs apply --update-only` when the `production` environment secret `ELEVENLABS_API_KEY` exists. It is `continue-on-error`: a failure shows the step red but the deploy goes on, so fix it by hand (`pnpm voice:apply`). It also fails when an agent found by name has another id than `voice.agents` in `site.config.ts`. Without the secret, the run shows a warning that the agents were not synced.
    7. The sitemap walk: `PLAYWRIGHT_BASE_URL=https://zenetlabs.com pnpm exec playwright test e2e/sitemap.e2e.ts`. It checks every sitemap page (canonical, hreflang, markdown twin, JSON-LD, placeholders, fragments), every internal link and every link in the llms files.
    8. On failure, the job summary prints the rollback command.
 
@@ -249,8 +249,8 @@ All secrets live in the Cloudflare Secrets Store (account-wide store shared with
 | `PROD_RESEND_API_KEY` (legacy name) | `RESEND_API_KEY` | Resend send-only key for lead and booking email | owner | the lead is still stored and the form still reports success; email retries then goes `dead` (section 12) |
 | `ZENETLABS_PROD_TURNSTILE_SECRET` | `TURNSTILE_SECRET_KEY` | Turnstile siteverify, and the key for the chat per-address fingerprint | owner | forms answer 503 and log `secret: unreadable`; the visitor sees the mailto fallback |
 | `ZENETLABS_PROD_GOOGLE_CALENDAR` | `GOOGLE_CALENDAR` | one JSON bundle: service-account key, `subject`, `calendar_id`, optional `test_calendar_id` | owner | `unconfigured`, `UNSET`, empty or invalid JSON all mean "not configured": `booking:false`, the tools answer `unavailable`, `/book` shows the contact form, never a 5xx |
-| `ZENETLABS_PROD_ELEVENLABS_TOOL_SECRET` | `TOOLS_BEARER_SECRET` | bearer the ElevenLabs agents send to `/api/tools/*` | owner (an unknown random value today) | `toolsBearer:false`; voice tool calls answer 401 |
-| `ZENETLABS_PROD_ELEVENLABS_API_KEY` | `ELEVENLABS_API_KEY` | mints voice conversation tokens | owner (`UNSET` today) | `UNSET` or `unconfigured` read as not configured: `voice:false`, the mint answers 503 |
+| `ZENETLABS_PROD_ELEVENLABS_TOOL_SECRET` | `TOOLS_BEARER_SECRET` | bearer the ElevenLabs agents send to `/api/tools/*` | owner (rotated 2026-11-10; the same value is the ElevenLabs workspace secret `zenetlabs-tools-bearer`) | `toolsBearer:false`; voice tool calls answer 401 |
+| `ZENETLABS_PROD_ELEVENLABS_API_KEY` | `ELEVENLABS_API_KEY` | mints voice conversation tokens | owner (set 2026-11-10, a key restricted to ElevenAgents) | `UNSET` or `unconfigured` read as not configured: `voice:false`, the mint answers 503 |
 
 Editing a value (never type it into a flag, a chat or a note). Dashboard: Secrets Store, the secret, Edit. CLI, which prompts for the value:
 
@@ -315,7 +315,7 @@ Every recipe below was dry-run on 2026-11-01: the flag was set in the production
 | `calculator.published` | `site.config.ts` | `false` | both calculator URLs, links to them, `estimate_project` | the flag |
 | `ga4Id` | `site.config.ts` | set (`null` turns GA4 off) | banner, consent, GA4, the legal-page variants | the flag |
 | `assistant.published` | `site.config.ts` | `true` (2026-11-06) | the launcher, the panel, `POST /api/chat`, the privacy section | the flag or the budget |
-| `voice.published` and `voice.agents` | `site.config.ts` | `false`, ids `null` | the voice callout, the mint, the bearer tools, `microphone=(self)` | ElevenLabs, or the flag |
+| `voice.published` and `voice.agents` | `site.config.ts` | `true` (2026-11-10), both agent ids set | the call doors on home, the callout on `/contact`, the mint, the bearer tools, `microphone=(self)` | ElevenLabs, or the flag |
 | `webmcp.published`, `webmcp.originTrialToken` | `site.config.ts` | `true`, `null` | the WebMCP chunk, the origin-trial meta tag | the flag |
 | `access` | `site.config.ts` (`productionServer`) | set (team domain and AUD) | `/internal/*` (404 without it) | set it back to `null` |
 | Spanish entity `address` | `src/content/es/entity.ts` | `null` | which entity every `es` page names | none (a legal fact) |
@@ -357,13 +357,13 @@ Every recipe ends the same way: after the deploy run `bash scripts/smoke.sh`, ch
 4. Bumps: the assistant privacy section now renders, so `CONSENT_VERSION`, the `updated` date of both privacy pages, `PAGES.privacy.lastmod` and the `legal.test.tsx` date.
 5. After the deploy: health `assistant:true`; the smoke chat lines switch to the 400 and 403 pair (they follow `/api/health`; deploy-prod sets `EXPECT_ASSISTANT=1`, which also fails the smoke if the assistant is dark); one `[TEST]` chat on production, then delete the session; an `ai_usage` row appears; CPU in `wrangler tail`.
 
-### `voice.published` (level `high`; needs `booking.published` first)
+### `voice.published` (level `high`; needs `booking.published` first). Done on 2026-11-10
 
 1. Owner: the ElevenLabs steps in the [owner checklist](owner-checklist.md) (account, API key into `ZENETLABS_PROD_ELEVENLABS_API_KEY`, tool secret into `ZENETLABS_PROD_ELEVENLABS_TOOL_SECRET`, Bot Fight Mode off), then enter the key and the tool secret with `read -rs` as in section 6, then `pnpm voice:plan` and `pnpm voice:apply`, which prints the two agent ids.
 2. Acceptance calls per locale on a preview alias built with the flag on ([ai-assistant.md](ai-assistant.md), Voice, Activation). A preview call spends the same daily cap; **re-upload dark** afterwards.
 3. The flip PR: production `voice.published: true` and `voice.agents` with the two ids; update `src/site-config.test.ts`, `src/lib/{security-headers,voice-entry}.test.ts`, `src/server/tools/http.worker.test.ts` and regenerate the agent file.
-4. Bumps: `CONSENT_VERSION`, the `updated` date of both privacy pages, `PAGES.privacy.lastmod`, `PAGES.home.lastmod` (the contact section gains the callout), and the `legal.test.tsx` date. `Permissions-Policy` becomes `microphone=(self)`.
-5. After the deploy: health `voice:true`, the headers on `/`, the callout on the home pages, one test call, and the ElevenLabs agent sync step green (or run `pnpm voice:apply`).
+4. Bumps: `CONSENT_VERSION`, the `updated` date of both privacy pages and both cookies pages (the cookies pages name Turnstile at the start of a call), `PAGES.privacy.lastmod`, `PAGES.cookies.lastmod`, `PAGES.home.lastmod` (the call doors), and the `legal.test.tsx` date. `Permissions-Policy` becomes `microphone=(self)`.
+5. After the deploy: the smoke passes with `EXPECT_VOICE=1` (health `voice:true`, `microphone=(self)` on `/`), the call doors on both home pages and the callout on `/contact` and `/es/contacto`, one test call per locale, and the "Sync ElevenLabs agents" step green; a red step does not stop the deploy, so run `pnpm voice:apply --update-only` by hand.
 
 ### `webmcp.originTrialToken` (level `low`)
 
@@ -405,7 +405,7 @@ Fastest first. Config switches need a deploy (section 2); `wrangler rollback` ne
 |---|---|---|---|
 | Booking (page, tools, chat and voice bookings) | edit the secret `ZENETLABS_PROD_GOOGLE_CALENDAR` back to `unconfigured` (the tools answer `unavailable`, the page shows the contact form) | `booking.published: false` | rollback |
 | Assistant | none (no runtime switch) | `assistant.published: false`, or `dailyNeuronBudget: 0` | rollback |
-| Voice | disable the agent in ElevenLabs, or revoke the ElevenLabs API key, or rotate the tool secret | `voice.published: false`, a locale's agent id to `null`, or `dailySessions: 0` | rollback |
+| Voice | disable the agent in ElevenLabs, or revoke the ElevenLabs API key, or rotate the tool secret | `voice.published: false` (and drop `EXPECT_VOICE` from `deploy-prod.yml`), a locale's agent id to `null`, or `dailySessions: 0` | rollback |
 | Calculator | none | `calculator.published: false` | rollback |
 | WebMCP | none | `webmcp.published: false` | rollback |
 | GA4 and consent | none | `ga4Id: null` (also bump the cookies and privacy pages) | rollback |

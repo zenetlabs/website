@@ -318,14 +318,14 @@ There is one agent per locale (`zenetlabs-voice-en`, `zenetlabs-voice-es`). The 
 
 ### Gate
 
-`voice.published` in `site.config.ts` (`true` locally, `false` in production, `TODO(albert)`) is the build-time constant `__VOICE__`. While it is false:
+`voice.published` in `site.config.ts` (`true` locally, `true` in production since 2026-11-10) is the build-time constant `__VOICE__`. While it is false:
 
 - the build ships no voice client code (the callout, the host and their dynamic imports fold away) and the button never renders;
 - `POST /api/voice/session` answers 503 `unavailable` before it imports anything, reads a secret or touches D1;
 - every bearer call with a valid secret answers 503 `unavailable` without a D1 query;
 - the privacy pages say nothing about voice, and the home content loader drops `contact.voice`, so neither the HTML nor the data the page hands to the client holds the call-to-action copy.
 
-`Permissions-Policy` follows the flag: `microphone=(self)` in the Worker's headers when `__VOICE__` is on, `microphone=()` otherwise. `public/_headers` only covers static assets, which never need the microphone, so it keeps `microphone=()` and the parity test holds for a dark build. The retention purge runs whatever the flag, so the kill switch leaves nothing behind.
+`Permissions-Policy` follows the flag: `microphone=(self)` in the Worker's headers when `__VOICE__` is on, `microphone=()` otherwise. `public/_headers` only covers static assets, which never need the microphone, so it keeps `microphone=()`, and the parity test compares it with a dark build's headers. The retention purge runs whatever the flag, so the kill switch leaves nothing behind.
 
 Agent ids are `voice.agents` (public; an id is useless without a token from our server). `null` for a locale means no button and 503 for that locale. `voice.fakeSdk` is true only locally: `__VOICE_FAKE__` swaps the SDK for `src/lib/voice-fake-sdk.ts`, and `deploy-prod.yml` fails if `FAKE_VOICE_SENTINEL` reaches `dist/client` or `dist/server`.
 
@@ -388,7 +388,7 @@ The ordered recipe (owner steps, then one PR with the flag, the two agent ids an
 2. Create an API key restricted to ElevenLabs Agents with a credit limit; store it in the Cloudflare Secrets Store as `ZENETLABS_PROD_ELEVENLABS_API_KEY` (Workers scope). Keep a second key with Agents write on your machine for step 4.
 3. Generate a tool secret (`openssl rand -base64 32`) and store the same value as `ZENETLABS_PROD_ELEVENLABS_TOOL_SECRET`.
 4. Enter `ELEVENLABS_API_KEY` and `ZENETLABS_TOOL_SECRET` (the same value as the stored secret) with `read -rs NAME && export NAME` ([RUNBOOK.md](RUNBOOK.md) section 6), then `pnpm voice:plan` and `pnpm voice:apply`. It prints both agent ids.
-5. Put the ids in `site.config.ts` and open the activation PR.
+5. Put the ids in `site.config.ts` (`voice.agents`, which holds the live ones since 2026-11-10) and open the activation PR.
 6. Optional: GitHub `production` environment secret `ELEVENLABS_API_KEY` so every deploy re-syncs prompt and tools.
 7. Check that Bot Fight Mode is off for `zenetlabs.com`: it challenges server-to-server webhooks and every voice tool would fail silently.
 8. Review the `TODO(albert)` items: the voice rules, the spoken messages, the notice, the caps, the model (`glm-52`), the retention and the privacy sentences.

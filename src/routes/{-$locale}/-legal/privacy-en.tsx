@@ -42,7 +42,7 @@ export function PrivacyEn({
   const spanish = legalEntity('es');
 
   return (
-    <LegalPage title={title} updated="Last updated: 6 November 2026">
+    <LegalPage title={title} updated="Last updated: 10 November 2026">
       <LegalSection title="Who is responsible for your data">
         <p>
           The controller of the personal data collected through the English

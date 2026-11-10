@@ -39,7 +39,7 @@ export function PrivacyEs({
   return (
     <LegalPage
       title={title}
-      updated="Última actualización: 6 de noviembre de 2026"
+      updated="Última actualización: 10 de noviembre de 2026"
     >
       <LegalSection title="Quién es el responsable de tus datos">
         <p>{describeEntity(legalEs.controller, entity, 'es')}</p>

@@ -100,16 +100,17 @@ jobs:
       - name: Smoke test
         env:
           EXPECT_ASSISTANT: '1'
+          EXPECT_VOICE: '1'
         run: bash scripts/smoke.sh
       - name: Sync ElevenLabs agents
         if: ${{ env.HAS_ELEVENLABS == 'true' }}
         continue-on-error: true
         env:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
-        run: node scripts/voice-agent.mjs apply --update-only || echo "::warning::The ElevenLabs agent sync failed; run pnpm voice:apply by hand"
+        run: node scripts/voice-agent.mjs apply --update-only
       - name: ElevenLabs sync skipped
         if: ${{ env.HAS_ELEVENLABS != 'true' }}
-        run: echo "::notice::ELEVENLABS_API_KEY is not set for the production environment, so the voice agents were not synced"
+        run: echo "::warning::ELEVENLABS_API_KEY is not set for the production environment, so the voice agents were not synced"
       - name: Sitemap walk
         env:
           PLAYWRIGHT_BASE_URL: https://zenetlabs.com

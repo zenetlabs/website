@@ -82,7 +82,7 @@ export const PAGES: Record<
 > &
   Record<ServicePageId, ServicePageEntry> &
   Record<LandingPageId, LandingPageEntry> = {
-  home: { slugs: { en: '/', es: '/' }, lastmod: '2026-11-06' },
+  home: { slugs: { en: '/', es: '/' }, lastmod: '2026-11-10' },
   services: {
     slugs: { en: '/services', es: '/servicios' },
     lastmod: '2026-11-09',
@@ -221,11 +221,11 @@ export const PAGES: Record<
   },
   privacy: {
     slugs: { en: '/privacy', es: '/privacidad' },
-    lastmod: '2026-11-06',
+    lastmod: '2026-11-10',
   },
   cookies: {
     slugs: { en: '/cookies', es: '/cookies' },
-    lastmod: '2026-11-05',
+    lastmod: '2026-11-10',
   },
   legalNotice: {
     slugs: { es: '/aviso-legal' },

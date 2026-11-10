@@ -50,10 +50,11 @@ const production: SiteConfig = {
     originTrialToken: null,
   },
   voice: {
-    // TODO(albert): set true once the ElevenLabs agents exist and /api/health reports voice:true (docs/ai-assistant.md "Voice activation"); needs booking.published first
-    published: false,
-    // TODO(albert): the agent ids printed by pnpm voice:apply
-    agents: { en: null, es: null },
+    published: true,
+    agents: {
+      en: 'agent_4701m72jq72wfsr8zqtr4yc52jtz',
+      es: 'agent_3501m72jq8yafdcskb724xdx5er5',
+    },
     fakeSdk: false,
   },
 };
