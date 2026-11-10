@@ -180,7 +180,6 @@ export function VoiceTransfer() {
   if (!__VOICE__) return null;
   return (
     <li>
-      {/* TODO(albert): confirm ElevenLabs' DPA covers the plan you are on and whether ElevenLabs Inc. is certified under the EU–US Data Privacy Framework; if it is, add it here */}
       ElevenLabs processes voice calls in the United States under the European
       Commission's standard contractual clauses in its data processing
       agreement.

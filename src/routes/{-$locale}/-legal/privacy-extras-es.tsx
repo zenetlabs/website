@@ -182,7 +182,6 @@ export function VoiceTransfer() {
   if (!__VOICE__) return null;
   return (
     <li>
-      {/* TODO(albert): confirmar que el DPA de ElevenLabs cubre el plan contratado y si ElevenLabs Inc. está certificada en el Marco de Privacidad de Datos UE-EE. UU.; si lo está, añadirlo aquí */}
       ElevenLabs trata las llamadas de voz en Estados Unidos con las cláusulas
       contractuales tipo de la Comisión Europea incluidas en su acuerdo de
       tratamiento de datos.

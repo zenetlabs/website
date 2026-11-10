@@ -179,11 +179,14 @@ describe('voice config', () => {
     });
   });
 
-  it('stays dark in production with no agents, no fake SDK and the real API', () => {
+  it('is live in production with real agents, no fake SDK and the real API', () => {
     const { voice } = siteConfig('production');
     expect(voice).toEqual({
-      published: false,
-      agents: { en: null, es: null },
+      published: true,
+      agents: {
+        en: 'agent_4701m72jq72wfsr8zqtr4yc52jtz',
+        es: 'agent_3501m72jq8yafdcskb724xdx5er5',
+      },
       fakeSdk: false,
     });
     expect(serverConfig('production').voice).toEqual({

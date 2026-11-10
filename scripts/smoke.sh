@@ -170,7 +170,11 @@ attempt "405 GET /api/voice/session" status_is 405 "${SITE}/api/voice/session"
 attempt "400 or 503 POST /api/voice/session {}" post_status_in "${SITE}/api/voice/session" 400 503
 attempt "403 or 503 POST /api/voice/session without Origin" post_json_status_in 403 503 "${SITE}/api/voice/session" '{}'
 # Dark builds keep the microphone off; a live voice build allows this origin only.
-if grep -qF '"voice":true' <<<"$(curl -s --max-time 20 "${SITE}/api/health")"; then
+# EXPECT_VOICE=1 (set by deploy-prod) also requires voice to be live.
+if [ "${EXPECT_VOICE:-0}" = 1 ]; then
+  attempt "api health reports voice live" body_contains "${SITE}/api/health" '"voice":true'
+  attempt "microphone is allowed for this origin only" header_matches 'text/html' "${SITE}/" '^permissions-policy: camera=\(\), microphone=\(self\), geolocation=\(\)$'
+elif grep -qF '"voice":true' <<<"$(curl -s --max-time 20 "${SITE}/api/health")"; then
   attempt "microphone is allowed for this origin only" header_matches 'text/html' "${SITE}/" '^permissions-policy: camera=\(\), microphone=\(self\), geolocation=\(\)$'
 else
   attempt "microphone stays off while voice is dark" header_matches 'text/html' "${SITE}/" '^permissions-policy: camera=\(\), microphone=\((self)?\), geolocation=\(\)$'

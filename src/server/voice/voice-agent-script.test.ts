@@ -391,6 +391,40 @@ describe('ownership', () => {
     ).rejects.toThrow('found no tool navigate; nothing was changed');
     expect(writes(fake.requests)).toEqual([]);
   });
+
+  it('--update-only patches only the agents site.config.ts calls, and stops before any write otherwise', async () => {
+    const seed = {
+      secret: true,
+      tools: ['get_faq', 'navigate'],
+      agents: ['zenetlabs-voice-en', 'zenetlabs-voice-es'],
+    };
+    const sync = (configuredAgents: Record<'en' | 'es', string | null>) => {
+      const fake = elevenLabs(seed);
+      const done = runVoiceAgents({
+        command: 'apply',
+        flags: { updateOnly: true, rotateSecret: false, file: 'x' },
+        env: { ELEVENLABS_API_KEY: KEY },
+        fetch: fake.send,
+        readFile: async () => FILE,
+        log: () => undefined,
+        configuredAgents,
+      });
+      return { fake, done };
+    };
+    const matching = sync({ en: 'agent-zenetlabs-voice-en', es: null });
+    await expect(matching.done).resolves.toEqual({
+      en: 'agent-zenetlabs-voice-en',
+      es: 'agent-zenetlabs-voice-es',
+    });
+    const other = sync({
+      en: 'agent-zenetlabs-voice-en',
+      es: 'agent_somewhere_else',
+    });
+    await expect(other.done).rejects.toThrow(
+      'zenetlabs-voice-es is agent-zenetlabs-voice-es, site.config.ts expects agent_somewhere_else; nothing was changed',
+    );
+    expect(writes(other.fake.requests)).toEqual([]);
+  });
 });
 
 describe('voice-agent plan', () => {

@@ -388,12 +388,14 @@ checkPages(CONFIGURED_STATES, 'G-TEST1234');
 
 describe('consent version', () => {
   it.each([
-    ['PrivacyEn', PrivacyEn, '6 November 2026'],
-    ['PrivacyEs', PrivacyEs, '6 de noviembre de 2026'],
+    ['PrivacyEn', PrivacyEn, '10 November 2026'],
+    ['PrivacyEs', PrivacyEs, '10 de noviembre de 2026'],
+    ['CookiesEn', CookiesEn, '10 November 2026'],
+    ['CookiesEs', CookiesEs, '10 de noviembre de 2026'],
   ])('%s is dated like CONSENT_VERSION', (_name, Page, date) => {
     const body = text(<Page title="t" entity={SINGAPORE} />);
     expect(body).toContain(date);
-    expect(CONSENT_VERSION).toBe('2026-11-06.2');
+    expect(CONSENT_VERSION).toBe('2026-11-10');
   });
 });
 
