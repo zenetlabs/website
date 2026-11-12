@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { BOOKING_RULES } from '@/content/booking-rules';
 import type { Locale } from '@/lib/i18n';
 import { MONTH_NAMES } from '@/lib/month-names';
+import { PUBLIC_EMAIL } from '@/lib/site';
 import { formatDayParts, formatSlotLabel } from '@/lib/slot-format';
 import { isoWeekday, zonedParts } from '@/lib/slots';
 import { WEEKDAY_NAMES } from '@/lib/weekday-names';
@@ -32,9 +33,11 @@ export function slotsOf(value: unknown): OfferedSlot[] {
   });
 }
 
+// check_availability's times, and the free times a book_meeting for a time
+// that was not offered answered with.
 const storedResultSchema = z.object({
   type: z.literal('tool-result'),
-  toolName: z.literal('check_availability'),
+  toolName: z.enum(['check_availability', 'book_meeting']),
   output: z.object({ type: z.literal('json'), value: z.unknown() }),
 });
 
@@ -238,6 +241,12 @@ function timeMentions(text: string): TimeMention[] {
     });
   }
   return mentions.filter((mention) => mention.minutes.length > 0);
+}
+
+// Whether a message names a clock time ("5:30", "5 pm", "at 5", "a las 5"),
+// as a visitor picking a time does; "I meant Tuesday" names none.
+export function namesTime(message: string): boolean {
+  return timeMentions(fold(message)).length > 0;
 }
 
 type OfferedDay = {
@@ -521,6 +530,54 @@ export function repeatsBelow(
   previous: string,
 ): boolean {
   return saysTimesBelow(sentence) && previous.includes(SLOT_BELOW[language]);
+}
+
+// "I can't see the calendar right now", "the calendar is unavailable", "no
+// puedo ver la agenda": false while this turn's free times are on screen. The
+// speaker and the calendar sit next to the verb, so "if you can't see a slot",
+// "the calendar shows 9:00 is not available" or "la disponibilidad no está
+// completa" are not read as the calendar being out.
+const CALENDAR = '(?:the |our |my |your )?(?:calendar|agenda|availability)';
+const CALENDARIO =
+  '(?:la |el |al |a la |a el |nuestra |tu )?(?:agenda|calendario|disponibilidad)';
+const NO_CALENDAR = [
+  new RegExp(
+    String.raw`\b(?:i|we)(?:'m| am|'re| are| was| were)?\s+(?:not able to|unable to|can'?t|cannot|can not|couldn'?t|could not)\s+(?:currently\s+|right now\s+)?(?:see|access|check|reach|load|read|view|open|get to)\s+${CALENDAR}\b`,
+  ),
+  new RegExp(
+    String.raw`\b(?:i|we) (?:don'?t|do not|no longer) have access to ${CALENDAR}\b`,
+  ),
+  /\b(?:the )?(?:calendar|agenda|booking system)\s+(?:is|seems|appears to be|is currently)\s+(?:unavailable|not available|down|offline|not working|not responding)\b|\b(?:calendar|agenda|booking system)\s+isn'?t (?:available|working|responding)\b/,
+  new RegExp(
+    String.raw`\b(?:an? )?error (?:checking|loading|reading|accessing|reaching) ${CALENDAR}\b`,
+  ),
+  new RegExp(
+    String.raw`\bno (?:puedo|podemos|consigo|logro|he podido|hemos podido|pude|pudimos)\s+(?:ahora mismo\s+|ahora\s+|en este momento\s+)?(?:ver|acceder|consultar|cargar|leer|abrir|comprobar|revisar)\s+${CALENDARIO}\b`,
+  ),
+  new RegExp(String.raw`\bno (?:tengo|tenemos) acceso a ${CALENDARIO}\b`),
+  /\b(?:agenda|calendario|sistema de reservas)\s+(?:no esta disponible|no funciona|no responde|esta caid[oa]|esta fuera de servicio)\b/,
+  new RegExp(
+    String.raw`\berror al (?:consultar|cargar|ver|comprobar|acceder a) ${CALENDARIO}\b`,
+  ),
+];
+
+// The contact form or the email instead of a time: a way out of the booking.
+const CONTACT_INSTEAD = new RegExp(
+  String.raw`\bcontact (?:form|page)\b|\bformulario de contacto\b|\bpagina de contacto\b|${PUBLIC_EMAIL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
+);
+
+function folded(sentence: string): string {
+  return fold(sentence).replace(/[’‘]/g, "'");
+}
+
+// A sentence that says the calendar can't be seen, or, after a booking for a
+// time that was not free, sends the visitor to the contact form or the email.
+export function abandonsCalendar(sentence: string, missed: boolean): boolean {
+  const text = folded(sentence);
+  return (
+    NO_CALENDAR.some((pattern) => pattern.test(text)) ||
+    (missed && CONTACT_INSTEAD.test(text))
+  );
 }
 
 // The replacement while chips are showing: the pointer to them, or nothing

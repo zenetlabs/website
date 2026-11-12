@@ -72,7 +72,14 @@ const offered = (...starts: string[]): ModelMessage[] => [
         toolName: 'check_availability',
         output: {
           type: 'json',
-          value: { slots: starts.map((start) => ({ start })) },
+          value: {
+            status: 'ok',
+            timeZone: 'Asia/Tokyo',
+            slots: starts.map((start) => ({
+              start,
+              end: new Date(Date.parse(start) + 30 * 60_000).toISOString(),
+            })),
+          },
         },
       },
     ],
@@ -329,8 +336,255 @@ describe('book_meeting', () => {
       { slot: SLOT, topic: 'Automate our inbox triage' },
       messages,
     );
-    expect(result).toEqual({ status: 'invalid_slot' });
+    expect(result).toMatchObject({ status: 'invalid_slot' });
     expect(proposals).toEqual([]);
+  });
+
+  const SLOT_VIEW = z.object({
+    start: z.string(),
+    end: z.string(),
+    label: z.string(),
+  });
+  const SHOWN = z.object({
+    status: z.string(),
+    timeZone: z.string(),
+    slots: z.array(SLOT_VIEW),
+    more: z.boolean(),
+  });
+
+  const MISSED = z.object({
+    status: z.literal('invalid_slot'),
+    note: z.string(),
+    timeZone: z.string(),
+    slots: z.array(
+      z.object({ start: z.string(), end: z.string(), label: z.string() }),
+    ),
+  });
+
+  it('answers a time that was never offered with the free times of that day in the visitor zone, and no contact block', async () => {
+    // Singapore: a 09:00 UTC start read as 09:00 local.
+    const tools = chatTools(context({ timeZone: 'Asia/Singapore' }));
+    const shown = await run(tools, 'check_availability', {
+      from: '2027-01-05',
+      to: '2027-01-05',
+    });
+    const offeredStart = z
+      .object({ slots: z.array(z.object({ start: z.string() })) })
+      .parse(shown).slots[0]?.start;
+    expect(offeredStart).toBe('2027-01-05T17:00:00+08:00');
+    const history: ModelMessage[] = [
+      {
+        role: 'tool',
+        content: [
+          {
+            type: 'tool-result',
+            toolCallId: 'c',
+            toolName: 'check_availability',
+            output: { type: 'json', value: SHOWN.parse(shown) },
+          },
+        ],
+      },
+    ];
+    const result = await run(
+      tools,
+      'book_meeting',
+      { slot: '2027-01-05T09:00:00+08:00', topic: 'Automate our inbox triage' },
+      history,
+    );
+    const missed = MISSED.parse(result);
+    expect(missed.note).toMatch(/not free/);
+    expect(missed.timeZone).toBe('Asia/Singapore');
+    expect(missed.slots.length).toBeGreaterThan(0);
+    for (const slot of missed.slots) {
+      expect(slot.start).toMatch(/^2027-01-05T\d\d:\d\d:00\+08:00$/);
+      expect(slot.label).toMatch(/^Tuesday 5 January, /);
+    }
+    expect(JSON.stringify(result)).not.toMatch(/contact|url/i);
+    expect(proposals).toEqual([]);
+  });
+
+  it('books a start copied from the recovery answer', async () => {
+    const tools = chatTools(context({ timeZone: 'Asia/Singapore' }));
+    const missed = MISSED.parse(
+      await run(tools, 'book_meeting', {
+        slot: '2027-01-05T09:00:00+08:00',
+        topic: 'Automate our inbox triage',
+      }),
+    );
+    const [first] = missed.slots;
+    if (first === undefined) throw new Error('expected a free time');
+    const history: ModelMessage[] = [
+      {
+        role: 'tool',
+        content: [
+          {
+            type: 'tool-result',
+            toolCallId: 'b',
+            toolName: 'book_meeting',
+            output: { type: 'json', value: missed },
+          },
+        ],
+      },
+    ];
+    const result = await run(
+      tools,
+      'book_meeting',
+      { slot: first.start, topic: 'Automate our inbox triage' },
+      history,
+    );
+    expect(result).toEqual({ status: 'awaiting_confirmation' });
+    expect(proposals).toEqual([
+      {
+        slot: new Date(Date.parse(first.start)).toISOString(),
+        topic: 'Automate our inbox triage',
+      },
+    ]);
+  });
+
+  it('answers a day with no free time with the nearest ones, marked', async () => {
+    const result = await run(chatTools(context()), 'book_meeting', {
+      slot: '2027-01-09T10:00:00+09:00',
+      topic: 'Automate our inbox triage',
+    });
+    expect(result).toMatchObject({
+      status: 'invalid_slot',
+      requestedDays: 'no_free_times',
+      note: 'That day is full; the nearest free times are in slots.',
+    });
+    expect(MISSED.parse(result).slots.length).toBeGreaterThan(0);
+  });
+
+  it('says the calendar could not be checked when it fails, never "below"', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    world.freebusyStatus = 500;
+    const result = await run(chatTools(context()), 'book_meeting', {
+      slot: SLOT,
+      topic: 'Automate our inbox triage',
+    });
+    expect(result).toEqual({
+      status: 'invalid_slot',
+      calendar: 'unavailable',
+      note: 'That time is not one of the offered times, and the calendar could not be checked just now.',
+    });
+    expect(proposals).toEqual([]);
+  });
+
+  it('proposes a time that was not shown but is free: the card and the server still check it', async () => {
+    const result = await run(
+      chatTools(context({ timeZone: 'Asia/Singapore' })),
+      'book_meeting',
+      { slot: '2027-01-05T17:00:00+08:00', topic: 'Automate our inbox triage' },
+    );
+    expect(result).toEqual({ status: 'awaiting_confirmation' });
+    expect(proposals).toEqual([
+      { slot: '2027-01-05T09:00:00.000Z', topic: 'Automate our inbox triage' },
+    ]);
+  });
+
+  it('asks the calendar once for a miss on a day already shown', async () => {
+    const tools = chatTools(context({ timeZone: 'Asia/Singapore' }));
+    const before = world.freebusyCalls.length;
+    const result = MISSED.parse(
+      await run(
+        tools,
+        'book_meeting',
+        {
+          slot: '2027-01-05T09:00:00+08:00',
+          topic: 'Automate our inbox triage',
+        },
+        offered('2027-01-05T09:00:00.000Z', '2027-01-05T09:30:00.000Z'),
+      ),
+    );
+    expect(world.freebusyCalls.length).toBe(before + 1);
+    expect(result.note).toBe(
+      'That time is not free; the free times for that day are in slots.',
+    );
+    const starts = result.slots.map((slot) => slot.start);
+    expect(starts).toContain('2027-01-05T17:00:00+08:00');
+    expect(starts).toContain('2027-01-05T17:30:00+08:00');
+  });
+
+  it('proposes a free time on a shown day that was not among the shown times', async () => {
+    const result = await run(
+      chatTools(context({ timeZone: 'Asia/Singapore' })),
+      'book_meeting',
+      { slot: '2027-01-05T18:00:00+08:00', topic: 'Automate our inbox triage' },
+      offered('2027-01-05T09:00:00.000Z'),
+    );
+    expect(result).toEqual({ status: 'awaiting_confirmation' });
+    expect(proposals).toEqual([
+      { slot: '2027-01-05T10:00:00.000Z', topic: 'Automate our inbox triage' },
+    ]);
+  });
+
+  it('lists no earlier times when the calendar cannot be read for a shown day', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    world.freebusyStatus = 500;
+    const result = await run(
+      chatTools(context({ timeZone: 'Asia/Singapore' })),
+      'book_meeting',
+      { slot: '2027-01-05T09:00:00+08:00', topic: 'Automate our inbox triage' },
+      offered('2027-01-05T09:00:00.000Z'),
+    );
+    expect(result).toMatchObject({
+      status: 'invalid_slot',
+      calendar: 'unavailable',
+    });
+    expect(result).not.toHaveProperty('slots');
+  });
+
+  it('looks at the day of the UTC-as-local misread too, across midnight (Honolulu)', async () => {
+    // 09:00Z on Tuesday 5 January is 23:00 on Monday 4 January in Honolulu;
+    // the model wrote it as 09:00 Honolulu time on the 5th.
+    const result = MISSED.parse(
+      await run(
+        chatTools(context({ timeZone: 'Pacific/Honolulu' })),
+        'book_meeting',
+        {
+          slot: '2027-01-05T09:00:00-10:00',
+          topic: 'Automate our inbox triage',
+        },
+      ),
+    );
+    const starts = result.slots.map((slot) => slot.start);
+    expect(starts).toContain('2027-01-04T23:00:00-10:00');
+    expect(result.slots.length).toBeLessThanOrEqual(8);
+    expect(starts).toEqual([...starts].sort());
+  });
+
+  it('centres the free times on the wanted time', async () => {
+    // 13:07 Madrid on Tuesday 12 January: the nearest of its twelve slots.
+    const result = MISSED.parse(
+      await run(
+        chatTools(context({ timeZone: 'Europe/Madrid' })),
+        'book_meeting',
+        {
+          slot: '2027-01-12T13:07:00+01:00',
+          topic: 'Automate our inbox triage',
+        },
+      ),
+    );
+    expect(result.slots).toHaveLength(8);
+    const hours = result.slots.map((slot) => slot.start.slice(11, 16));
+    expect(hours).toContain('13:00');
+    expect(hours).toContain('13:30');
+    expect(hours).not.toContain('10:00');
+  });
+
+  it('writes the note in the reply language', async () => {
+    const result = MISSED.parse(
+      await run(
+        chatTools(context({ timeZone: 'Asia/Singapore', language: 'es' })),
+        'book_meeting',
+        {
+          slot: '2027-01-05T09:00:00+08:00',
+          topic: 'Automate our inbox triage',
+        },
+      ),
+    );
+    expect(result.note).toBe(
+      'Esa hora no está libre; las horas libres de ese día están en slots.',
+    );
   });
 });
 

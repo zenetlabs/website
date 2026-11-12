@@ -4,6 +4,7 @@ import {
   asksOnlyToOpen,
   asksOversight,
   bookingIntent,
+  correctsOrChooses,
   faqTopic,
   messageIntent,
   requestedDays,
@@ -450,5 +451,32 @@ describe('asksAvailability', () => {
     'El lunes hablé con mi socio',
   ])('does not read %j as about free times', (message) => {
     expect(asksAvailability(message)).toBe(false);
+  });
+});
+
+describe('correctsOrChooses', () => {
+  it.each([
+    'Sorry, I made a mistake, I meant Tuesday.',
+    'Wednesday instead',
+    "I'd rather do Thursday",
+    'I prefer Monday',
+    'Actually, Tuesday',
+    'Can you change it to Tuesday?',
+    'Perdón, quería decir el martes',
+    'Mejor el jueves',
+    'En vez de lunes, martes',
+    'En lugar del lunes, el martes',
+    'Prefiero el miércoles',
+    'Cámbiala… cambia a martes',
+  ])('reads %j as a correction or a choice', (message) => {
+    expect(correctsOrChooses(message)).toBe(true);
+  });
+
+  it.each([
+    'Great, talk to you on Tuesday!',
+    'We go live Monday, can you integrate Holded?',
+    'El martes empezamos con Holded',
+  ])('reads %j as neither', (message) => {
+    expect(correctsOrChooses(message)).toBe(false);
   });
 });

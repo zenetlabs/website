@@ -4,6 +4,7 @@ import type { Locale } from '@/lib/i18n';
 import { PUBLIC_EMAIL } from '@/lib/site';
 import type { ResolvedDay } from '@/server/chat/intent';
 import {
+  abandonsCalendar,
   type OfferedSlot,
   repeatsBelow,
   slotBelow,
@@ -85,6 +86,7 @@ export type GuardKind =
   | 'price'
   | 'slot'
   | 'time'
+  | 'calendar'
   | 'claim'
   | 'weekday'
   | 'refusal'
@@ -99,6 +101,7 @@ export function replacesReply(guard: GuardKind | null): boolean {
   return (
     guard === 'price' ||
     guard === 'slot' ||
+    guard === 'calendar' ||
     guard === 'claim' ||
     guard === 'leak'
   );
@@ -414,6 +417,9 @@ type GuardOptions = {
   // The panel shows this turn's times as chips (times came back this turn and
   // no booking is proposed): a replaced time points at them, never lists any.
   chips?: boolean;
+  // book_meeting was asked for a time that was not free in this turn, and its
+  // answer carried the free times of that day.
+  missed?: boolean;
   // The days the visitor's words name, when the website worked them out.
   visitorDays?: readonly ResolvedDay[];
   facts?: Facts;
@@ -445,6 +451,7 @@ export function guardSentence(
     language = locale,
     slots,
     chips = false,
+    missed = false,
     visitorDays = [],
     facts,
     refusal = true,
@@ -491,6 +498,12 @@ export function guardSentence(
   const before = shown.slice(-PREVIOUS_CHARS);
   if (priceViolation(clean, before, locale, allowed)) {
     return { text: `${PRICE_FALLBACK[language]}${tail}`, guard: 'price' };
+  }
+  // With this turn's free times on screen the calendar answered: no "I can't
+  // see the calendar" and, after a missed booking, no way out to the form.
+  if (chips && abandonsCalendar(clean, missed)) {
+    const text = slotBelow(language, shown);
+    return { text: text === '' ? '' : `${text}${tail}`, guard: 'calendar' };
   }
   // Until check_availability has answered in this session there is nothing to
   // compare with, so the slot check waits for it.

@@ -11,6 +11,7 @@ import {
   isoWeekday,
   isTimeZone,
   type Slot,
+  zonedIso,
   zonedParts,
   zonedToInstant,
 } from '@/lib/slots';
@@ -129,6 +130,42 @@ describe('zonedToInstant', () => {
     );
     expect([utc(2026, 10, 25, 0, 30), utc(2026, 10, 25, 1, 30)]).toContain(
       repeated,
+    );
+  });
+});
+
+describe('zonedIso', () => {
+  // Tuesday 17 November 2026, 09:00 UTC: an offered slot.
+  const SLOT = utc(2026, 11, 17, 9);
+
+  it.each([
+    ['Asia/Singapore', '2026-11-17T17:00:00+08:00'],
+    ['Europe/Madrid', '2026-11-17T10:00:00+01:00'],
+    ['Pacific/Honolulu', '2026-11-16T23:00:00-10:00'],
+    ['Asia/Kathmandu', '2026-11-17T14:45:00+05:45'],
+    ['Asia/Kolkata', '2026-11-17T14:30:00+05:30'],
+    ['America/St_Johns', '2026-11-17T05:30:00-03:30'],
+    ['UTC', '2026-11-17T09:00:00+00:00'],
+  ])('writes the slot in %s wall time with its offset', (zone, iso) => {
+    expect(zonedIso(SLOT, zone)).toBe(iso);
+    expect(Date.parse(iso)).toBe(SLOT);
+  });
+
+  it('follows DST: Madrid is +02:00 in summer, +01:00 in winter', () => {
+    expect(zonedIso(utc(2027, 7, 12, 7), MADRID)).toBe(
+      '2027-07-12T09:00:00+02:00',
+    );
+    expect(zonedIso(utc(2027, 3, 28, 1), MADRID)).toBe(
+      '2027-03-28T03:00:00+02:00',
+    );
+    expect(zonedIso(utc(2027, 3, 28, 0, 30), MADRID)).toBe(
+      '2027-03-28T01:30:00+01:00',
+    );
+    expect(zonedIso(utc(2026, 10, 25, 0, 30), MADRID)).toBe(
+      '2026-10-25T02:30:00+02:00',
+    );
+    expect(zonedIso(utc(2026, 10, 25, 1, 30), MADRID)).toBe(
+      '2026-10-25T02:30:00+01:00',
     );
   });
 });

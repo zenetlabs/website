@@ -31,6 +31,7 @@ import {
   asksOnlyToOpen,
   asksOversight,
   bookingIntent,
+  correctsOrChooses,
   faqTopic,
   messageIntent,
   requestedDays,
@@ -45,7 +46,12 @@ import {
 } from '@/server/chat/prompt';
 import { relatedPage } from '@/server/chat/related-page';
 import { chatRequestSchema, splitTest } from '@/server/chat/schema';
-import { type OfferedSlot, slotsOf, toolSlots } from '@/server/chat/slot-guard';
+import {
+  namesTime,
+  type OfferedSlot,
+  slotsOf,
+  toolSlots,
+} from '@/server/chat/slot-guard';
 import {
   claimTurn,
   countAddressTurn,
@@ -56,7 +62,12 @@ import {
   reserveNeurons,
   todayNeurons,
 } from '@/server/chat/store';
-import { aiTools, chatToolNames, chatTools } from '@/server/chat/tools';
+import {
+  aiTools,
+  chatToolNames,
+  chatTools,
+  proposalMade,
+} from '@/server/chat/tools';
 import {
   estimateTokens,
   NO_USAGE,
@@ -71,6 +82,7 @@ import { errorName, jsonError } from '@/server/responses';
 const MAX_BODY_BYTES = 8192;
 const MAX_STEPS = 4;
 const MAX_OUTPUT_TOKENS = 600;
+const SLOT_TOOLS = new Set(['check_availability', 'book_meeting']);
 
 export type ChatDeps = BookingDeps & {
   limiter: Limiter;
@@ -222,8 +234,9 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
   ]);
   const now = deps.now();
   const booking = isPublished('book', deps.site);
-  // One accumulator for the slot guard and the chips: the chips are what
-  // check_availability returned in this turn (from `pastSlots` on).
+  // One accumulator for the slot guard and the chips: the chips are the times
+  // check_availability (or a missed book_meeting) returned in this turn, from
+  // `pastSlots` on.
   const slots = toolSlots(past.messages);
   const pastSlots = slots.length;
   // With booking dark there is no calendar to offer from, and no slot check.
@@ -237,9 +250,18 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
     ? resolvedDays(turn.message, now, turn.timeZone)
     : [];
   // A visitor who asks for a call gets the calendar on the first step, not a
-  // question about whether to look at it.
+  // question about whether to look at it. So does one who, after times were
+  // shown and before any card, names a day and no time while asking about
+  // times or correcting a choice ("Sorry, I meant Tuesday"): that is a day to
+  // look at, never a time to book.
   const forceAvailability =
-    booking && slots.length === 0 && bookingIntent(turn.message);
+    booking &&
+    (slots.length === 0
+      ? bookingIntent(turn.message)
+      : visitorDays.length > 0 &&
+        !namesTime(turn.message) &&
+        !proposalMade(past.messages) &&
+        (asksAvailability(turn.message) || correctsOrChooses(turn.message)));
   // The market's FAQ answers the market questions; who owns the code is the
   // same everywhere, so it is quoted in the language of the reply.
   const answerOf = (id: string, entries = faq) =>
@@ -331,6 +353,12 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
   // The reply pointed at the chips; a proposal that lands later in the same
   // step clears them, so they are sent again after the booking card.
   let pointedAtChips = false;
+  // book_meeting was asked for a time that was not free; its answer carried
+  // that day's free times, which are the chips from then on (never cut by
+  // times shown earlier in the turn), so the pointer at them is true.
+  let missed = false;
+  let recovered: OfferedSlot[] | null = null;
+  const chipSlots = () => recovered ?? slots.slice(pastSlots);
   const speak = (sentence: string) => {
     if (stopped || muted) return;
     const chips = slots.length > pastSlots && pending.proposal === null;
@@ -342,6 +370,7 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
       now,
       slots: offeredSlots,
       chips,
+      missed,
       visitorDays,
       facts,
       refusal,
@@ -357,7 +386,11 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
     }
     say(guarded.text);
     if (guarded.guard === 'price') offer('pricing');
-    if (guarded.guard === 'slot' || guarded.guard === 'time') {
+    if (
+      guarded.guard === 'slot' ||
+      guarded.guard === 'time' ||
+      guarded.guard === 'calendar'
+    ) {
       if (chips) pointedAtChips = true;
       offer('book');
     }
@@ -369,6 +402,7 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
   const tools = chatTools({
     locale,
     timeZone: turn.timeZone,
+    language,
     requestedDays: requestedDays(turn.message, now, turn.timeZone),
     site: deps.site,
     run: {
@@ -449,15 +483,23 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
         outcome.tools.push(part.toolName);
         turn.emit({ t: 'tool', name: part.toolName });
         break;
-      case 'tool-result':
+      case 'tool-result': {
         for (const value of numbersIn(part.output)) allowed.add(value);
-        if (part.toolName === 'check_availability') {
-          slots.push(...slotsOf(part.output));
+        // check_availability's times, or the free times a book_meeting for a
+        // time that was not free answered with.
+        const free = SLOT_TOOLS.has(part.toolName) ? slotsOf(part.output) : [];
+        if (part.toolName === 'book_meeting' && free.length > 0) {
+          missed = true;
+          recovered = free;
+        }
+        if (part.toolName === 'check_availability' || free.length > 0) {
+          slots.push(...free);
           // Before any text, so the panel never shows a list that then goes.
-          const shown = turnSlots(slots.slice(pastSlots));
+          const shown = turnSlots(chipSlots());
           if (shown !== null && !stopped) turn.emit(shown);
         }
         break;
+      }
       case 'tool-error':
         console.error('chat: tool failed', {
           session: turn.sessionId,
@@ -479,7 +521,7 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
   if (!stopped) speak(buffer.flush());
   if (pending.proposal !== null && !stopped) {
     turn.emit({ t: 'confirm_booking', proposal: pending.proposal });
-    const chips = pointedAtChips ? turnSlots(slots.slice(pastSlots)) : null;
+    const chips = pointedAtChips ? turnSlots(chipSlots()) : null;
     if (chips !== null) turn.emit(chips);
   }
   const related = stopped ? null : relatedPage(turn.message, locale, deps.site);

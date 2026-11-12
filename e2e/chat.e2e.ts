@@ -382,6 +382,21 @@ test.describe('booking from the chat', () => {
     ).toBeVisible();
   });
 
+  test('answers a time that was never offered with the chips, never "can\'t see the calendar"', async ({
+    page,
+  }) => {
+    await openChat(page, 'en');
+    await say(page, 'en', 'Book me in the wrong zone');
+    const log = page.getByRole('log');
+    await expect(log).toContainText(
+      'The free times I have are shown below; pick the one that suits you.',
+    );
+    await expect(log).not.toContainText("can't see the calendar");
+    await expect(log).not.toContainText('contact form');
+    await expect(page.locator('[data-chat-slots]')).toBeVisible();
+    await expect(log).not.toContainText('Confirm the details');
+  });
+
   for (const locale of ['en', 'es'] as const) {
     test(`draws the times check_availability returned as the desk's chips (${locale})`, async ({
       page,

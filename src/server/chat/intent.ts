@@ -384,6 +384,16 @@ export function asksAvailability(message: string): boolean {
   return bookingIntent(message) || AVAILABILITY.test(text) || onlyDays(text);
 }
 
+// A correction or a choice ("Sorry, I meant Tuesday", "actually Wednesday",
+// "mejor el jueves", "en vez de lunes, martes"): with a day named and times
+// already shown, it asks to look at that day.
+const CORRECTION =
+  /\b(?:meant|instead|rather|prefer|actually|change (?:it |that )?to|queria decir|quise decir|mejor|en vez del?|en lugar del?|prefiero|cambia(?:lo)? a)\b/;
+
+export function correctsOrChooses(message: string): boolean {
+  return CORRECTION.test(fold(message));
+}
+
 // The few words that tie day names together ("¿lunes o martes?", "on Monday
 // or Tuesday", "¿y el jueves que viene?").
 const DAY_GLUE =

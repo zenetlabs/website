@@ -257,7 +257,9 @@ test.describe('the emailed confirm link', () => {
       page.getByRole('heading', { name: 'Your call is booked' }),
     ).toBeVisible({ timeout: 30_000 });
     expect(
-      (await googleEvents()).filter((event) => event.start.dateTime === slot),
+      (await googleEvents()).filter(
+        (event) => Date.parse(event.start.dateTime) === Date.parse(slot),
+      ),
     ).toHaveLength(1);
   });
 });
