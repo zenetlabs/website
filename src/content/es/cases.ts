@@ -9,10 +9,10 @@ export const viatsy = {
     'Viatsy organiza viajes en grupo reducido a Japón, China, Corea, Taiwán y Hong Kong. Cada viaje supone consultas por varios canales, una propuesta a medida y muchas reservas con proveedores.',
   // TODO(albert): confirm
   automated: [
-    'Un primer borrador de respuesta para cada consulta, que una persona revisa y envía',
+    'Borradores de respuesta que una persona corrige y envía',
     'Propuestas redactadas a partir de lo que pide el cliente y del catálogo de viajes',
     'Las confirmaciones de proveedores se pasan a la reserva y con ellas se monta la documentación del viaje',
-    'Solicitudes de pago y recordatorios enviados a su debido tiempo',
+    'Solicitudes de pago y recordatorios con fecha programada',
   ],
   metrics: [
     // TODO(albert): [X]

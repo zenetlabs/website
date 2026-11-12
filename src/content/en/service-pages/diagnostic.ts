@@ -115,7 +115,7 @@ export const diagnostic = {
     },
     text: 'Before we build an automation for a client, we run it in a business we own. At Viatsy, our travel company, agents prepare replies and proposals and a person reviews what reaches a customer.',
     points: [
-      'A drafted first reply to every inquiry, which a person reviews and sends',
+      'Drafted replies that a person edits and sends',
       "Supplier confirmations read into the booking, and the client's travel pack assembled from them",
     ],
     page: 'viatsyCase',

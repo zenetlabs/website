@@ -13,7 +13,7 @@ export const contactPage = {
     emphasis: 'still does by hand',
     after: '',
   },
-  lead: 'Tell us which tools you use. A person reads every message, replies personally and agrees the next step with you.',
+  lead: 'Mention the tools you use, too. A person reads every message, replies personally and agrees the next step with you.',
   slots: slotsCopy,
   form: {
     title: { before: '', emphasis: 'Write to us', after: '' },

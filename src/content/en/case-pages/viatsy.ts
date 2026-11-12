@@ -5,14 +5,14 @@ export const viatsyCase = {
   meta: {
     metaTitle: 'How AI agents run Viatsy, a travel company | Zenet Labs',
     description:
-      'How Viatsy, our own small-group travel company, runs enquiries, proposals, supplier bookings and payments with AI agents and a person approving each step.',
+      'How Viatsy, our travel company, runs enquiries, proposals, supplier bookings and payments with AI agents and a person approving every reply and proposal.',
   },
   title: {
     before: 'Viatsy, a travel company ',
     emphasis: 'run with AI agents',
     after: '',
   },
-  lead: 'Viatsy is a travel company we own and run. It organises small-group trips to Japan, China, Korea, Taiwan and Hong Kong, and every trip involves enquiries on several channels, a tailored proposal and many supplier bookings. We built the systems that let a small team handle that work: AI agents prepare replies, proposals, booking records and payment reminders, and a person approves every step that reaches a customer.',
+  lead: 'Viatsy is a travel company we own and run. It organises small-group trips to Japan, China, Korea, Taiwan and Hong Kong, and every trip involves enquiries on several channels, a tailored proposal and many supplier bookings. We built the systems that let a small team handle that work: AI agents prepare replies, proposals, booking records and payment reminders, and a person approves every reply and proposal.',
   published: '2026-10-31',
   labels: { published: 'Published', updated: 'Updated' },
   facts: [
@@ -36,7 +36,7 @@ export const viatsyCase = {
       id: 'approach',
       label: 'How it runs',
       value:
-        'Agents prepare the work; a person approves anything a customer sees',
+        'Agents prepare the work; a person approves every reply and proposal',
     },
   ],
   problem: {
@@ -61,7 +61,7 @@ export const viatsyCase = {
       {
         id: 'replies',
         title: 'Drafted replies',
-        text: 'An agent drafts each reply from the trip details and the house rules the team has written, and a person edits and sends it. What the team changes is recorded, so the drafts improve.',
+        text: 'An agent drafts replies from the trip details and the house rules the team has written, and a person edits and sends them. What the team changes is recorded, so the drafts improve.',
       },
       {
         id: 'proposals',
@@ -104,7 +104,7 @@ export const viatsyCase = {
         label:
           'The agent reads it into the booking and flags what does not match',
       },
-      { actor: 'human', label: 'A person checks only what is flagged' },
+      { actor: 'human', label: 'A person checks what the system flags' },
     ],
   },
   operations: {
@@ -113,7 +113,7 @@ export const viatsyCase = {
       {
         id: 'enquiry',
         label: 'Enquiry',
-        text: 'A message arrives. The agent identifies the customer and the trip and drafts a reply; a person reviews it and sends it.',
+        text: 'A message arrives. The agent identifies the customer and the trip and, where it can, drafts a reply; a person reviews it before anything is sent.',
       },
       {
         id: 'proposal',
@@ -123,7 +123,7 @@ export const viatsyCase = {
       {
         id: 'booking',
         label: 'Booking',
-        text: "When the customer accepts, the supplier bookings are made and each confirmation is read into the booking. The system flags what doesn't match.",
+        text: "When the customer accepts, the supplier bookings are made and confirmations are read into the booking. The system flags what doesn't match.",
       },
       {
         id: 'trip',
@@ -135,9 +135,9 @@ export const viatsyCase = {
   results: {
     title: { before: 'What has ', emphasis: 'changed', after: '' },
     points: [
-      'Nobody copies supplier confirmations into bookings by hand any more; a person checks only what the system flags.',
-      'Every enquiry gets a drafted first reply, so the team starts from an answer instead of a blank page.',
-      'Payment requests and reminders no longer depend on someone remembering them.',
+      'Supplier confirmations are read into the booking, and a person checks what the system flags.',
+      'Replies are drafted for a person to edit before anything is sent.',
+      "Payment requests and reminders follow each booking's payment plan, so they don't depend on anyone remembering them.",
       'What we built for Viatsy became Taplany, our software for travel agencies.',
     ],
   },

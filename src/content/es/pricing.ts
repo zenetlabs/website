@@ -84,7 +84,7 @@ export const pricingPage = {
   calculator: {
     title: '¿No sabes qué línea encaja?',
     text: 'Responde seis preguntas y verás un rango orientativo para tu proyecto, sin dejar tu correo.',
-    link: 'Abrir la calculadora de precio',
+    link: 'Abrir la calculadora de precios',
   },
   faq: {
     title: {

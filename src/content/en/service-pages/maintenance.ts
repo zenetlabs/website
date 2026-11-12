@@ -120,8 +120,8 @@ export const maintenance = {
     },
     text: 'The agents and automations at Viatsy run every day, and a person reviews what they draft before it goes out. Maintenance applies the same routine to yours.',
     points: [
-      'A drafted first reply to every inquiry, which a person reviews and sends',
-      'Payment requests and reminders sent on schedule',
+      'Drafted replies that a person edits and sends',
+      'Payment requests and reminders on a set schedule',
     ],
     page: 'viatsyCase',
     company: 'viatsy',

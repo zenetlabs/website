@@ -13,14 +13,14 @@ export const companies = {
   taplany: {
     category: 'SaaS · Travel agencies',
     description:
-      'The all-in-one platform for travel agencies: website, inquiries, proposals, bookings, payments and WhatsApp.',
+      'The all-in-one platform for travel agencies: website, enquiries, proposals, bookings, payments and WhatsApp.',
   },
   brisily: {
     category: 'Telecom · eSIM',
     description: 'Instant travel eSIMs for 200+ destinations.',
   },
   luce: {
-    category: 'E-commerce · Dental jewelry',
-    description: 'Exclusive dental jewelry.',
+    category: 'E-commerce · Dental jewellery',
+    description: 'Exclusive dental jewellery.',
   },
 } satisfies CompanyCopy;

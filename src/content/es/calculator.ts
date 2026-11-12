@@ -2,8 +2,8 @@ import type { CalculatorPageContent } from '@/content/types';
 
 export const calculatorPage = {
   meta: {
-    title: 'Calculadora de precio',
-    metaTitle: 'Calculadora de precio para automatización e IA | Zenet Labs',
+    title: 'Calculadora de precios',
+    metaTitle: 'Calculadora de precios para automatización e IA | Zenet Labs',
     description:
       'Responde seis preguntas y obtén un rango orientativo en euros (sin IVA) y un plazo. No es un presupuesto: el precio final sale del diagnóstico.',
   },
@@ -145,8 +145,8 @@ export const calculatorPage = {
     },
     lead: 'Déjanos tus datos y te responderemos personalmente. Tus respuestas y esta estimación se añaden al mensaje, así partimos de los mismos números. Es opcional: la estimación de arriba ya es tuya.',
     intro:
-      'Estimación de la calculadora de precio (orientativa, reglas {version}):',
+      'Estimación de la calculadora de precios (orientativa, reglas {version}):',
     page: 'Página del resultado',
-    mail: '¿Prefieres escribir? Escribe a',
+    mail: '¿Prefieres el correo? Escribe a',
   },
 } satisfies CalculatorPageContent;

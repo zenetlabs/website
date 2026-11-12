@@ -6,13 +6,13 @@ export const viatsy = {
   name: 'Viatsy',
   tag: 'Travel · Small-group tours to Asia',
   context:
-    'Viatsy runs small-group trips to Japan, China, Korea, Taiwan and Hong Kong. Every trip means inquiries on several channels, a tailored proposal and many supplier bookings.',
+    'Viatsy runs small-group trips to Japan, China, Korea, Taiwan and Hong Kong. Every trip means enquiries on several channels, a tailored proposal and many supplier bookings.',
   // TODO(albert): confirm
   automated: [
-    'A drafted first reply to every inquiry, which a person reviews and sends',
+    'Drafted replies that a person edits and sends',
     "Proposals drafted from the client's brief and the trip catalogue",
     "Supplier confirmations read into the booking, and the client's travel pack assembled from them",
-    'Payment requests and reminders sent on schedule',
+    'Payment requests and reminders on a set schedule',
   ],
   metrics: [
     // TODO(albert): [X]
@@ -33,11 +33,11 @@ export const viatsy = {
   link: { page: 'viatsyCase', label: viatsyCaseName },
   // TODO(albert): confirm the flow steps
   flow: {
-    caption: 'From inquiry to proposal',
+    caption: 'From enquiry to proposal',
     steps: [
       {
         actor: 'tool',
-        label: 'An inquiry arrives by email or WhatsApp',
+        label: 'An enquiry arrives by email or WhatsApp',
         tool: 'whatsapp',
       },
       { actor: 'agent', label: 'The agent drafts the reply and the proposal' },
@@ -51,10 +51,10 @@ export const taplany = {
   name: 'Taplany',
   tag: 'SaaS · Software for travel agencies',
   context:
-    "Taplany is the platform we built from Viatsy's automations so other travel agencies can use them: website, inquiries, proposals, bookings, payments and WhatsApp in one place.",
+    "Taplany is the platform we built from Viatsy's automations so other travel agencies can use them: website, enquiries, proposals, bookings, payments and WhatsApp in one place.",
   // TODO(albert): confirm
   automated: [
-    "Replies to inquiries drafted in the agency's tone, for a person to approve",
+    "Replies to enquiries drafted in the agency's tone, for a person to approve",
     'Itineraries and supplier confirmations pasted as text turned into structured bookings',
     'WhatsApp, email and payment links in the same timeline as each booking',
     'Website content drafted and fact-checked before it is published',

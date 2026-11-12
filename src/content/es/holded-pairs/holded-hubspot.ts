@@ -153,7 +153,7 @@ export const holdedHubspot = {
         id: 'holded-hubspot-holded-crm',
         question: 'Holded ya tiene CRM. ¿Por qué mantener HubSpot?',
         answer:
-          'Si tu equipo comercial ya trabaja en HubSpot, con sus secuencias, informes y automatizaciones, cambiar tiene un coste. Si solo usáis lo básico, quizá el CRM de Holded te baste y te ahorres la integración. Te lo diremos con franqueza en el diagnóstico.',
+          'Si tu equipo comercial ya trabaja en HubSpot, con sus secuencias, informes y automatizaciones, cambiar tiene un coste. Si solo usas lo básico, quizá el CRM de Holded te baste y te ahorres la integración. Te lo diremos con franqueza en el diagnóstico.',
       },
     ],
   },

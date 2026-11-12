@@ -119,8 +119,8 @@ const NEEDLES: Record<Kind, Partial<Record<Locale, string>>> = {
     es: 'En todos los casos, los agentes preparan',
   },
   contact: {
-    en: 'Tell us which tools you use. A person',
-    es: 'Cuéntanos qué herramientas usas. Una persona',
+    en: 'Mention the tools you use, too. A person',
+    es: 'Dinos también qué herramientas usas. Una persona',
   },
   diagnostic: {
     en: 'Do we need to know what to automate',

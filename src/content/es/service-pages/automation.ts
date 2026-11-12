@@ -111,11 +111,11 @@ export const automation = {
       emphasis: 'Viatsy',
       after: ' las confirmaciones de proveedores',
     },
-    text: 'Viatsy organiza viajes en grupo reducido a Asia, y cada viaje depende de muchas reservas con proveedores. Antes, cada confirmación se copiaba a mano en la reserva; ahora entra sola y una persona solo revisa lo que no cuadra.',
+    text: 'Viatsy organiza viajes en grupo reducido a Asia, y cada viaje depende de muchas reservas con proveedores. Antes, cada confirmación se copiaba a mano en la reserva; ahora se incorpora desde el correo o el texto pegado, y una persona revisa lo que no cuadra.',
     points: [
       'Las confirmaciones de proveedores se leen y se añaden a la reserva',
       'La documentación del viaje se monta a partir de esas confirmaciones',
-      'Las solicitudes de pago y los recordatorios salen a su debido tiempo',
+      'Las solicitudes de pago y los recordatorios se programan según el plan de pagos de cada reserva',
     ],
   },
   faq: {
