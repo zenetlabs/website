@@ -21,7 +21,7 @@ export const agents = {
       after: ', con una persona al mando',
     },
     // TODO(albert): confirm the timeline
-    lead: `Un agente de IA es un programa que lleva una tarea de principio a fin: lee una consulta o un documento, busca en tus sistemas lo que necesita, decide el siguiente paso y lo ejecuta, dentro de los límites que tú fijas. Implementamos agentes para pymes de 10 a 100 personas en tareas como clasificar consultas, redactar respuestas o procesar documentos, y una persona aprueba todo lo que tiene consecuencias. Un agente en producción cuesta ${price}, IVA no incluido, y el piloto suele estar trabajando con casos reales entre seis y diez semanas después del diagnóstico.`,
+    lead: `Un agente de IA es un programa que lleva una tarea de principio a fin: lee una consulta o un documento, busca en tus sistemas lo que necesita, decide el siguiente paso y lo lleva a cabo, dentro de los límites que tú fijas. Implementamos agentes para pymes de 10 a 100 personas en tareas como clasificar consultas, redactar respuestas o procesar documentos, y una persona aprueba todo lo que tiene consecuencias. Un agente en producción cuesta ${price}, IVA no incluido, y el piloto suele estar trabajando con casos reales entre seis y diez semanas después del diagnóstico.`,
   },
   facts: {
     who: 'Empresas con un flujo constante de consultas, documentos o peticiones que siguen patrones pero aún necesitan criterio',
@@ -94,7 +94,7 @@ export const agents = {
     detail:
       'Una respuesta redactada para un cliente espera a que una persona decida.',
     approve: 'Aprobar',
-    hold: 'Retener',
+    hold: 'Dejar en espera',
   },
   how: {
     title: {
@@ -116,7 +116,7 @@ export const agents = {
       {
         id: 'pilot',
         label: 'Piloto con aprobación',
-        text: 'El agente trabaja con casos reales mientras una persona aprueba cada acción. Lo ajustamos hasta que la tasa de aprobación demuestra que está listo.',
+        text: 'El agente trabaja con casos reales mientras una persona aprueba cada acción. Lo ajustamos hasta que la tasa de aprobación demuestre que está listo.',
       },
       {
         id: 'production',
@@ -129,10 +129,14 @@ export const agents = {
   case: {
     page: 'viatsyCase',
     company: 'viatsy',
-    title: { before: 'Primeras respuestas en ', emphasis: 'Viatsy', after: '' },
-    text: 'Viatsy recibe consultas de viaje por varios canales, y cada una necesita una respuesta a medida. Un agente redacta la primera respuesta y la propuesta, y el equipo las revisa antes de enviar nada.',
+    title: {
+      before: 'Respuestas y propuestas en ',
+      emphasis: 'Viatsy',
+      after: '',
+    },
+    text: 'Viatsy recibe consultas de viaje por varios canales, y cada una necesita una respuesta a medida. Un agente redacta respuestas y propuestas, y el equipo las revisa antes de enviar nada.',
     points: [
-      'Un primer borrador de respuesta para cada consulta, que una persona revisa y envía',
+      'Borradores de respuesta que una persona corrige y envía',
       'Propuestas redactadas a partir de lo que pide el cliente y del catálogo de viajes',
     ],
   },

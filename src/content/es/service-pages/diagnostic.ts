@@ -9,7 +9,7 @@ export const diagnostic = {
   meta: {
     metaTitle: 'Diagnóstico de automatización a precio cerrado | Zenet Labs',
     description:
-      'Diagnóstico de automatización en 1–2 semanas: mapeamos tus herramientas y te damos un plan con coste. Se descuenta del proyecto si sigues en 60 días.',
+      'Diagnóstico de automatización en 1–2 semanas: mapeamos tus herramientas y te damos un plan con precio. Se descuenta del proyecto si continúas en 60 días.',
   },
   hero: {
     title: {
@@ -118,7 +118,7 @@ export const diagnostic = {
     },
     text: 'Antes de construir una automatización para un cliente, la hacemos funcionar en un negocio nuestro. En Viatsy, nuestra empresa de viajes, los agentes preparan respuestas y propuestas y una persona revisa lo que llega a un cliente.',
     points: [
-      'Un primer borrador de respuesta para cada consulta, que una persona revisa y envía',
+      'Borradores de respuesta que una persona corrige y envía',
       'Las confirmaciones de proveedores se pasan a la reserva y con ellas se monta la documentación del viaje',
     ],
     page: 'viatsyCase',
@@ -135,7 +135,7 @@ export const diagnostic = {
         id: 'diagnostic-know-process',
         question: '¿Tenemos que saber qué automatizar antes de empezar?',
         answer:
-          'No. Averiguarlo es para lo que sirve el diagnóstico. Hablamos con quienes hacen el trabajo, medimos cuánto tarda cada proceso a mano y los ordenamos, para que el plan empiece por lo que más importa.',
+          'No. Para eso sirve el diagnóstico. Hablamos con quienes hacen el trabajo, medimos cuánto tarda cada proceso a mano y los ordenamos, para que el plan empiece por lo que más importa.',
       },
       {
         id: 'diagnostic-credit',

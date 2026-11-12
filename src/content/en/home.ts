@@ -122,7 +122,7 @@ export const home = {
     },
     lead: 'Before we build an automation for a client, we run it in a business we own.',
     more: 'All case studies',
-    automatedLabel: 'What runs on its own',
+    automatedLabel: 'What the system handles',
     actors: { tool: 'Your tools', agent: 'Agent', human: 'A person' },
     items: cases,
   },

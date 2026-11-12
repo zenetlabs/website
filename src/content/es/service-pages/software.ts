@@ -31,7 +31,7 @@ export const software = {
   },
   cta: {
     title: 'Describe la herramienta que te gustaría tener',
-    text: 'Cuéntanos qué está sorteando hoy tu equipo. En el diagnóstico vemos si conviene desarrollar, comprar o conectar, y cuánto costaría la primera versión.',
+    text: 'Cuéntanos qué apaños hace hoy tu equipo. En el diagnóstico vemos si conviene desarrollar, comprar o conectar, y cuánto costaría la primera versión.',
     button: 'Reservar una llamada',
   },
   useCases: {
@@ -82,7 +82,7 @@ export const software = {
   how: {
     title: {
       before: 'Entregas pequeñas y ',
-      emphasis: 'opiniones desde el principio',
+      emphasis: 'tu opinión desde el principio',
       after: '',
     },
     steps: [

@@ -13,16 +13,16 @@ export const contactPage = {
     emphasis: 'a mano',
     after: '',
   },
-  lead: 'Cuéntanos qué herramientas usas. Una persona lee cada mensaje, te responde personalmente y acuerda contigo el siguiente paso.',
+  lead: 'Dinos también qué herramientas usas. Una persona lee cada mensaje, te responde personalmente y acuerda contigo el siguiente paso.',
   slots: slotsCopy,
   form: {
     title: { before: '', emphasis: 'Escríbenos', after: '' },
     mail: '¿Prefieres el correo? Escribe a',
-    human: 'Te responde una persona, personalmente.',
+    human: 'Te responde una persona.',
     book: '¿Prefieres una llamada? Elige una hora',
     voice: {
       text: '¿Prefieres hablar? Nuestro asistente de voz es una IA, no una persona: responde tus dudas y te reserva una llamada.',
-      button: 'Habla con el asistente',
+      button: 'Hablar con el asistente',
     },
   },
   next: {

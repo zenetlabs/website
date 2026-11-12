@@ -51,7 +51,7 @@ export const travelAgencies = {
         today:
           'Llegan por WhatsApp, correo, Instagram y la web, y alguien las copia a una hoja para no perderlas.',
         automated:
-          'Todas entran en una sola bandeja con el cliente identificado, y un agente prepara un primer borrador de respuesta con los datos del viaje para que una persona lo revise y lo envíe.',
+          'Todas entran en una sola bandeja con el cliente identificado, y un agente prepara borradores de respuesta con los datos del viaje para que una persona los revise y los envíe.',
       },
       {
         id: 'proposals',
@@ -99,7 +99,7 @@ export const travelAgencies = {
   platform: {
     title: '¿Prefieres una plataforma ya hecha?',
     text: 'Con lo que aprendimos en Viatsy creamos Taplany, un software para agencias de viajes que reúne web, consultas, propuestas, reservas, pagos y WhatsApp en un solo sitio. Si encaja contigo, te lo diremos; si necesitas conectar lo que ya usas, lo hacemos a medida.',
-    link: 'Conoce Taplany',
+    link: 'Conocer Taplany',
   },
   case: {
     title: {
@@ -107,7 +107,7 @@ export const travelAgencies = {
       emphasis: 'Viatsy',
       after: ' con agentes de IA',
     },
-    text: 'Viatsy organiza viajes en grupo reducido a Asia. Los agentes preparan respuestas, propuestas, confirmaciones y cobros, y el equipo aprueba cada paso. Te contamos qué construimos y cómo funciona en el día a día.',
+    text: 'Viatsy organiza viajes en grupo reducido a Asia. Los agentes preparan respuestas, propuestas, confirmaciones y cobros, y el equipo aprueba cada respuesta y propuesta. Te contamos qué construimos y cómo funciona en el día a día.',
   },
   faq: {
     title: {

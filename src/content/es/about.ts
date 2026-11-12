@@ -5,7 +5,7 @@ export const aboutPage = {
     title: 'Sobre nosotros',
     metaTitle: 'Sobre Zenet Labs y su fundador, Albert Sabaté',
     description:
-      'Zenet Labs la dirige Albert Sabaté, con más de 15 años creando equipos de ingeniería, que automatiza sus propias empresas antes que las de sus clientes.',
+      'Zenet Labs la dirige Albert Sabaté, que lleva más de 15 años creando equipos de ingeniería y automatiza sus propias empresas antes que las de sus clientes.',
   },
   title: {
     before: 'Automatización hecha por gente que ',
@@ -17,7 +17,7 @@ export const aboutPage = {
     {
       id: 'track',
       parts: [
-        'Albert lleva más de 15 años creando y liderando equipos de ingeniería. Dirigió la ingeniería de Splyt mientras su red de movilidad global se expandía a varios países y ha contribuido al núcleo de ',
+        'Albert lleva más de 15 años creando y liderando equipos de ingeniería. Dirigió la ingeniería de Splyt mientras su red global de movilidad se expandía a varios países, y contribuyó al núcleo de ',
         { text: 'Brisa', href: 'https://brisa.build/' },
         ', un framework web de código abierto.',
       ],
@@ -57,7 +57,7 @@ export const aboutPage = {
   companies: {
     title: 'Las empresas que dirigimos',
     lead: 'Productos que construimos y operamos con automatizaciones y agentes. Ahí aprendemos qué funciona.',
-    cases: 'Lee los casos',
+    cases: 'Leer los casos',
   },
   vision: {
     title: 'Hacia dónde vamos',

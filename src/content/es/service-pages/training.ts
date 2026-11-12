@@ -30,7 +30,7 @@ export const training = {
   cta: {
     title: 'Planifica un taller para tu equipo',
     text: 'Cuéntanos cuántas personas sois, qué equipos y a qué dedican el día. Te respondemos con una propuesta de programa y un precio cerrado.',
-    button: 'Pregunta por un taller',
+    button: 'Preguntar por un taller',
   },
   useCases: {
     title: {
@@ -63,7 +63,7 @@ export const training = {
   },
   flow: {
     title: { before: 'Un taller, ', emphasis: 'paso a paso', after: '' },
-    caption: 'Un taller, sobre un proceso vuestro',
+    caption: 'Un taller, sobre un proceso de tu equipo',
     steps: [
       {
         actor: 'tool',

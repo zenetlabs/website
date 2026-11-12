@@ -5,7 +5,7 @@ export const services = {
     id: 'diagnostic',
     name: 'Diagnóstico de automatización',
     summary:
-      'Una o dos semanas analizando tus herramientas y el trabajo manual, con un plan con precio al final. Se descuenta del proyecto si sigues en 60 días.',
+      'Una o dos semanas analizando tus herramientas y el trabajo manual, con un plan con precio al final. Se descuenta del proyecto si sigues adelante en 60 días.',
     prices: [{ id: 'diagnostic', min: 1500, unit: 'one-off', currency: 'EUR' }],
   },
   integration: {

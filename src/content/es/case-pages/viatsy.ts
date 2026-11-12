@@ -3,7 +3,7 @@ import type { CasePageContent } from '@/content/types';
 
 export const viatsyCase = {
   meta: {
-    metaTitle: 'Caso Viatsy: agentes de IA en una agencia | Zenet Labs',
+    metaTitle: 'Caso de Viatsy: agentes de IA en una agencia | Zenet Labs',
     description:
       'Cómo Viatsy, nuestra agencia de viajes en grupo, lleva consultas, propuestas, reservas con proveedores y cobros con agentes de IA y una persona al mando.',
   },
@@ -12,7 +12,7 @@ export const viatsyCase = {
     emphasis: 'funciona con agentes de IA',
     after: '',
   },
-  lead: 'Viatsy es una agencia de viajes nuestra. Organiza viajes en grupo reducido a Japón, China, Corea, Taiwán y Hong Kong, y cada viaje supone consultas por varios canales, una propuesta a medida y muchas reservas con proveedores. Construimos los sistemas que permiten a un equipo pequeño llevar todo ese trabajo: los agentes de IA preparan respuestas, propuestas, reservas y recordatorios de pago, y una persona aprueba cada paso que llega al cliente.',
+  lead: 'Viatsy es nuestra propia agencia de viajes. Organiza viajes en grupo reducido a Japón, China, Corea, Taiwán y Hong Kong, y cada viaje supone consultas por varios canales, una propuesta a medida y muchas reservas con proveedores. Construimos los sistemas que permiten a un equipo pequeño llevar todo ese trabajo: los agentes de IA preparan respuestas, propuestas, reservas y recordatorios de pago, y una persona aprueba cada respuesta y propuesta.',
   published: '2026-10-31',
   labels: { published: 'Publicado', updated: 'Actualizado' },
   facts: [
@@ -36,7 +36,7 @@ export const viatsyCase = {
       id: 'approach',
       label: 'Cómo funciona',
       value:
-        'Los agentes preparan el trabajo; una persona aprueba todo lo que ve el cliente',
+        'Los agentes preparan el trabajo; una persona aprueba cada respuesta y propuesta',
     },
   ],
   problem: {
@@ -65,7 +65,7 @@ export const viatsyCase = {
       {
         id: 'replies',
         title: 'Respuestas redactadas',
-        text: 'Un agente redacta cada respuesta con los datos del viaje y las normas de la casa que ha escrito el equipo, y una persona la corrige y la envía. Lo que el equipo cambia queda registrado, y así los borradores mejoran.',
+        text: 'Un agente redacta borradores con los datos del viaje y las normas de la casa que ha escrito el equipo, y una persona los corrige y los envía. Lo que el equipo cambia queda registrado, y así los borradores mejoran.',
       },
       {
         id: 'proposals',
@@ -74,13 +74,13 @@ export const viatsyCase = {
       },
       {
         id: 'confirmations',
-        title: 'Confirmaciones de proveedores, leídas',
+        title: 'Confirmaciones de proveedores, incorporadas',
         text: 'Las confirmaciones pegadas como texto o reenviadas por correo se convierten en reservas estructuradas, y se marcan los huecos y lo que no cuadra.',
       },
       {
         id: 'payments',
         title: 'Cobros a su tiempo',
-        text: 'Las solicitudes de la señal y del resto, y sus recordatorios, siguen el plan de pagos de cada reserva.',
+        text: 'Las solicitudes de la señal y del pago final, y sus recordatorios, siguen el plan de pagos de cada reserva.',
       },
       {
         id: 'pack',
@@ -93,7 +93,7 @@ export const viatsyCase = {
   flow: {
     title: {
       before: 'Una confirmación, ',
-      emphasis: 'leída en la reserva',
+      emphasis: 'incorporada a la reserva',
       after: '',
     },
     caption: 'Una confirmación de proveedor, del correo a la reserva',
@@ -106,9 +106,9 @@ export const viatsyCase = {
       },
       {
         actor: 'agent',
-        label: 'El agente la lee en la reserva y marca lo que no cuadra',
+        label: 'El agente la incorpora a la reserva y marca lo que no cuadra',
       },
-      { actor: 'human', label: 'Una persona revisa solo lo marcado' },
+      { actor: 'human', label: 'Una persona revisa lo marcado' },
     ],
   },
   operations: {
@@ -117,7 +117,7 @@ export const viatsyCase = {
       {
         id: 'enquiry',
         label: 'Consulta',
-        text: 'Llega un mensaje. El agente identifica al cliente y el viaje y redacta una respuesta; una persona la revisa y la envía.',
+        text: 'Llega un mensaje. El agente identifica al cliente y el viaje y, si puede, redacta una respuesta que una persona revisa y envía.',
       },
       {
         id: 'proposal',
@@ -127,7 +127,7 @@ export const viatsyCase = {
       {
         id: 'booking',
         label: 'Reserva',
-        text: 'Cuando el cliente acepta, se hacen las reservas con los proveedores y cada confirmación se incorpora a la reserva. El sistema avisa de lo que no cuadra.',
+        text: 'Cuando el cliente acepta, se hacen las reservas con los proveedores y las confirmaciones pasan a la reserva. El sistema avisa de lo que no cuadra.',
       },
       {
         id: 'trip',
@@ -139,9 +139,9 @@ export const viatsyCase = {
   results: {
     title: { before: 'Qué ', emphasis: 'ha cambiado', after: '' },
     points: [
-      'Nadie copia ya a mano las confirmaciones de proveedores en las reservas; una persona solo revisa lo que el sistema marca.',
-      'Cada consulta tiene un primer borrador de respuesta, así que el equipo parte de una respuesta y no de una página en blanco.',
-      'Las solicitudes de pago y los recordatorios ya no dependen de que alguien se acuerde.',
+      'Las confirmaciones de proveedores se incorporan a la reserva, y una persona revisa lo que el sistema marca.',
+      'Las respuestas se preparan como borradores que una persona corrige antes de enviar nada.',
+      'Las solicitudes de pago y los recordatorios siguen el plan de pagos de cada reserva, sin depender de que alguien se acuerde.',
       'Lo que construimos para Viatsy se convirtió en Taplany, nuestro software para agencias de viajes.',
     ],
   },

@@ -111,11 +111,11 @@ export const automation = {
       emphasis: 'Viatsy',
       after: ' handles supplier confirmations',
     },
-    text: "Viatsy runs small-group trips to Asia, and every trip depends on many supplier bookings. Each confirmation used to be copied into the booking by hand; now it flows in on its own and a person checks only what doesn't match.",
+    text: "Viatsy runs small-group trips to Asia, and every trip depends on many supplier bookings. Each confirmation used to be copied into the booking by hand; now it is read in from the email or pasted text, and a person checks what doesn't match.",
     points: [
       'Supplier confirmations read and added to the booking',
       "The client's travel pack assembled from those confirmations",
-      'Payment requests and reminders sent on schedule',
+      'Payment requests and reminders on a set schedule',
     ],
   },
   faq: {

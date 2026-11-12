@@ -128,10 +128,14 @@ export const agents = {
   case: {
     page: 'viatsyCase',
     company: 'viatsy',
-    title: { before: 'First replies at ', emphasis: 'Viatsy', after: '' },
-    text: 'Viatsy receives travel enquiries on several channels, and each one needs a tailored answer. An agent drafts the first reply and the proposal, and the team reviews them before anything is sent.',
+    title: {
+      before: 'Replies and proposals at ',
+      emphasis: 'Viatsy',
+      after: '',
+    },
+    text: 'Viatsy receives travel enquiries on several channels, and each one needs a tailored answer. An agent drafts replies and proposals, and the team reviews them before anything is sent.',
     points: [
-      'A drafted first reply to every enquiry, which a person reviews and sends',
+      'Drafted replies that a person edits and sends',
       "Proposals drafted from the client's brief and the trip catalogue",
     ],
   },

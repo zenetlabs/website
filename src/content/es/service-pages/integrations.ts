@@ -31,7 +31,7 @@ export const integrations = {
   },
   cta: {
     title: 'Enséñanos qué herramientas usas',
-    text: 'Dinos qué programas usáis y dónde se siguen copiando datos a mano. En el diagnóstico confirmamos qué se puede conectar y cuánto cuesta.',
+    text: 'Dinos qué programas usas y dónde se siguen copiando datos a mano. En el diagnóstico confirmamos qué se puede conectar y cuánto cuesta.',
     button: 'Reservar una llamada',
   },
   useCases: {
@@ -70,11 +70,11 @@ export const integrations = {
   // TODO(albert): confirm the flow steps
   flow: {
     title: { before: 'Una conexión, ', emphasis: 'paso a paso', after: '' },
-    caption: 'Un negocio ganado, de HubSpot a Holded',
+    caption: 'Una oportunidad ganada, de HubSpot a Holded',
     steps: [
       {
         actor: 'tool',
-        label: 'Un negocio se marca como ganado en HubSpot',
+        label: 'Una oportunidad se marca como ganada en HubSpot',
         tool: 'hubspot',
       },
       {
@@ -144,7 +144,7 @@ export const integrations = {
         id: 'integrations-conflicts',
         question: '¿Qué pasa cuando dos sistemas no coinciden?',
         answer:
-          'Lo decidimos antes de construir. Cada campo tiene un sistema que manda, por ejemplo los precios en la tienda y el estado del cobro en Holded, y la integración nunca lo sobrescribe desde el otro lado. Si un registro no se puede emparejar, espera en una lista de revisión en lugar de adivinarse.',
+          'Lo decidimos antes de construir. Cada campo tiene un sistema que manda, por ejemplo los precios en la tienda y el estado del cobro en Holded, y la integración nunca lo sobrescribe desde el otro lado. Si un registro no se puede emparejar, espera en una lista de revisión en lugar de asignarse a ojo.',
       },
       {
         id: 'integrations-failures',

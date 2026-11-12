@@ -28,7 +28,7 @@ export const maintenance = {
   cta: {
     title: 'Mantén tu proyecto en marcha',
     text: 'Cuéntanos qué hemos construido para ti y qué necesitas vigilar. Te respondemos con el plan que encaje.',
-    button: 'Pregunta por el mantenimiento',
+    button: 'Preguntar por el mantenimiento',
   },
   useCases: {
     title: {
@@ -120,8 +120,8 @@ export const maintenance = {
     },
     text: 'Los agentes y las automatizaciones de Viatsy funcionan cada día, y una persona revisa lo que redactan antes de que salga. El mantenimiento aplica la misma rutina a los tuyos.',
     points: [
-      'Un primer borrador de respuesta para cada consulta, que una persona revisa y envía',
-      'Solicitudes de pago y recordatorios enviados a su debido tiempo',
+      'Borradores de respuesta que una persona corrige y envía',
+      'Solicitudes de pago y recordatorios con fecha programada',
     ],
     page: 'viatsyCase',
     company: 'viatsy',
