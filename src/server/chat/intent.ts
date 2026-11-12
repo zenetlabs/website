@@ -106,9 +106,60 @@ export function messageIntent(message: string): Intent {
 }
 
 // The FAQ entries whose answer must not be paraphrased into its opposite.
-export type GroundedFaq = 'ownership' | 'privacy' | 'models' | 'where';
+export type GroundedFaq =
+  | 'ownership'
+  | 'privacy'
+  | 'models'
+  | 'where'
+  | 'mistakes';
 
-const TOPICS: ReadonlyArray<[GroundedFaq, RegExp]> = [
+// Oversight and agent-mistake questions. An agent must be the subject of a
+// mistake ("I made a mistake" is the visitor's own), and a person checking
+// is only the topic with a scope word ("everything", "before"): "a person on
+// my team approves invoices" is not. 'models' comes first in TOPICS, so
+// "does a human check what ChatGPT writes?" is about the models.
+const OVERSIGHT = (subject: string, verb: string, scope: string) =>
+  new RegExp(
+    String.raw`^(?=.*\b(?:${subject})\b)(?=.*\b(?:${verb})\w*\b)(?=.*\b(?:${scope})\b)`,
+  );
+const MISTAKES: readonly RegExp[] = [
+  OVERSIGHT(
+    'person|persons|people|human|humans|someone|somebody|anyone',
+    'check|review|approv|verif|supervis|oversee',
+    'everything|every|before',
+  ),
+  OVERSIGHT(
+    'persona|personas|humano|humanos|alguien',
+    'revis|aprueb|aprob|supervis|comprueb|verific',
+    'todo|cada|antes',
+  ),
+  /\bhuman in the loop\b|\bhuman (?:oversight|review)\b|\bsupervision humana\b|\brevision humana\b/,
+  /\b(?:agents?|ai|bot|assistant|system|it)\b(?:\s+\w+){0,3}\s+(?:(?:makes?|made) (?:a |any )?mistakes?|goes? wrong|went wrong|gets? (?:it|things|something) wrong)\b/,
+  /\b(?:agentes?|ia|sistema|asistente)\b(?:\s+\w+){0,3}\s+(?:se equivoc(?:a|an|ue|uen)\b|comete(?:n)? (?:un )?error|sale(?:n)? mal\b)/,
+];
+
+// The oversight kind of the topic: a person checking things, not an agent's
+// mistake ("what if an agent makes a mistake?" is not asked about a person).
+export function asksOversight(message: string): boolean {
+  const text = fold(message);
+  return MISTAKES.slice(0, 3).some((pattern) => pattern.test(text));
+}
+
+// A request that only asks to open a page, with no question in it: "take me to
+// pricing", "llévame a precios". "Show me how much it costs" is a question.
+const OPEN_ONLY = [
+  /^(?:please |can you |could you )?(?:take me to|bring me to|go to|open|show me)\b(?!\s+(?:how|what|why|when|which|who|where|if)\b)(?:\s+\w+){1,5}\s*[.!]?$/,
+  /^(?:por favor )?(?:llevame a|abre|abreme|ensename|ve a|ir a)\b(?!\s+(?:cuanto|cuantos|como|que|por que|cuando|cual|cuales|quien|donde|si)\b)(?:\s+\w+){1,5}\s*[.!]?$/,
+];
+
+export function asksOnlyToOpen(message: string): boolean {
+  const text = fold(message).trim();
+  return !text.includes('?') && OPEN_ONLY.some((pattern) => pattern.test(text));
+}
+
+const TOPICS: ReadonlyArray<
+  [GroundedFaq, { test: (text: string) => boolean }]
+> = [
   [
     'ownership',
     /\bwho owns\b|\bowns? the (?:code|data|software|ip)\b|\bownership\b|\bintellectual property\b|\bde quien (?:es|son|sera|seran)\b.*\b(?:codigo|datos|software)\b|\bpropiedad (?:del|de los|intelectual)\b|\bpropietari|\bduen[oa]s?\b/,
@@ -125,6 +176,7 @@ const TOPICS: ReadonlyArray<[GroundedFaq, RegExp]> = [
     'models',
     /\b(?:which|what) (?:ai |llm )?models?\b|\b(?:llms?|openai|chatgpt|gpt|claude|anthropic|gemini)\b|\bque modelos?\b|\bmodelos? de (?:ia|lenguaje)\b/,
   ],
+  ['mistakes', { test: (text) => MISTAKES.some((p) => p.test(text)) }],
 ];
 
 // The FAQ entry a question is clearly about, or null.

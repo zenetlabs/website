@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   asksAvailability,
+  asksOnlyToOpen,
+  asksOversight,
   bookingIntent,
   faqTopic,
   messageIntent,
@@ -137,6 +139,78 @@ describe('requestedDays', () => {
 it('ties an office question to the "where" FAQ', () => {
   expect(faqTopic('Do you have an office in Tokyo?')).toBe('where');
   expect(faqTopic('¿Tenéis oficina en Madrid?')).toBe('where');
+});
+
+describe('the "mistakes" FAQ topic', () => {
+  it.each([
+    'Does a person check everything before customers see it?',
+    'Is everything checked by a person before it goes out?',
+    'Is there a human in the loop?',
+    'Do you offer human oversight?',
+    'What happens if an agent makes a mistake?',
+    'What if the AI goes wrong?',
+    '¿Revisa una persona todo antes de que lo vean los clientes?',
+    '¿Hay supervisión humana?',
+    '¿Qué pasa si el agente se equivoca?',
+    '¿Y si el sistema sale mal?',
+  ])('ties %j to it', (message) => {
+    expect(faqTopic(message)).toBe('mistakes');
+  });
+
+  it.each([
+    'Sorry, I made a mistake, I meant Tuesday',
+    'I made a mistake in my email',
+    'A person on my team approves invoices, can I automate that?',
+    'How much does an AI agent cost?',
+    'Perdón, me he equivocado, quería decir martes',
+    'El calendario se equivoca de hora',
+    'Una persona de mi equipo aprueba las facturas, ¿se puede automatizar?',
+  ])('does not tie %j to it', (message) => {
+    expect(faqTopic(message)).toBeNull();
+  });
+
+  it('lets the models topic win', () => {
+    expect(faqTopic('Does a human check everything ChatGPT writes?')).toBe(
+      'models',
+    );
+  });
+});
+
+describe('asksOversight', () => {
+  it('is true for a person checking everything, not for an agent mistake', () => {
+    expect(
+      asksOversight('Does a person check everything before customers see it?'),
+    ).toBe(true);
+    expect(asksOversight('¿Revisa una persona todo antes?')).toBe(true);
+    expect(asksOversight('What happens if an agent makes a mistake?')).toBe(
+      false,
+    );
+    expect(asksOversight('¿Qué pasa si el agente se equivoca?')).toBe(false);
+  });
+});
+
+describe('asksOnlyToOpen', () => {
+  it.each([
+    'Take me to the pricing page.',
+    'Open the contact page',
+    'Show me prices',
+    'Llévame a precios',
+    'Abre la página de contacto',
+    'Enséñame los casos',
+  ])('is true for %j', (message) => {
+    expect(asksOnlyToOpen(message)).toBe(true);
+  });
+
+  it.each([
+    'Show me how much an agent costs',
+    'How do I open an account?',
+    'Can you open the pricing page and tell me the price of an agent?',
+    'Enséñame cuánto cuesta un agente',
+    '¿Puedes abrir precios?',
+    'How much does an AI agent cost?',
+  ])('is false for %j', (message) => {
+    expect(asksOnlyToOpen(message)).toBe(false);
+  });
 });
 
 describe('unlistedTool', () => {

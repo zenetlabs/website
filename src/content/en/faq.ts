@@ -74,7 +74,7 @@ export const faq = [
     group: 'trust',
     question: 'What happens if an agent makes a mistake?',
     answer:
-      "We plan for it. Agents work within limits you agree, actions with consequences, such as payments, refunds or messages to key customers, wait for a person's approval, and every action is logged. When something goes wrong, monitoring shows it, we fix the cause and add the case to the agent's tests.",
+      "We plan for it. Agents work within limits you agree. Routine steps, such as reading in supplier confirmations or sending scheduled reminders, can run without a person checking each one once they've proved reliable; you decide where that line sits. Actions with consequences, such as payments, refunds or messages to key customers, wait for a person's approval, and every action is logged. When something goes wrong, monitoring shows it, we fix the cause and add the case to the agent's tests.",
   },
   {
     id: 'models',
