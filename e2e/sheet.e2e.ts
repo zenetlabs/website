@@ -157,31 +157,60 @@ test.describe('the chat sheet', () => {
     page,
   }) => {
     await gotoHydrated(page, '/');
-    const cdp = await page.context().newCDPSession(page);
-    // Slowed tenfold, so the touch surely lands mid-rise.
-    await cdp.send('Animation.enable');
-    await cdp.send('Animation.setPlaybackRate', { playbackRate: 0.1 });
+    // Every motion the panel starts is frozen at 15% the moment it is created,
+    // so the touch always lands on a sheet that is still rising.
+    await page.evaluate(() => {
+      const animate = Element.prototype.animate;
+      Element.prototype.animate = function frozen(frames, options) {
+        const animation = animate.call(this, frames, options);
+        if (this.closest('dialog[data-chat-panel]')) {
+          const { duration } = animation.effect?.getTiming() ?? {};
+          animation.pause();
+          animation.currentTime =
+            typeof duration === 'number' ? duration * 0.15 : 0;
+        }
+        return animation;
+      };
+      window.addEventListener(
+        'sheet-unfreeze',
+        () => {
+          Element.prototype.animate = animate;
+        },
+        { once: true },
+      );
+    });
     await page.locator('.desk-chip').first().click();
     const sheet = page.locator(CHAT);
     await expect(sheet).toBeVisible();
-    await expect
-      .poll(() => sheetTop(page, CHAT), { timeout: 2000 })
-      .toBeGreaterThan(100);
+    await page.evaluate(() => dispatchEvent(new Event('sheet-unfreeze')));
     const top = await sheetTop(page, CHAT);
-    // Well inside the header row, so the rise still in flight can't move the
-    // sheet out from under the touch.
-    await touch(cdp, 'touchStart', [{ x: 195, y: top + 40 }]);
-    expect(
-      await page.evaluate(
-        (css) => document.querySelector(css)?.getAnimations().length,
-        CHAT,
-      ),
-    ).toBe(0);
-    const caught = await sheetTop(page, CHAT);
-    expect(caught).toBeLessThan(top);
-    expect(caught).toBeGreaterThan(12);
+    expect(top).toBeGreaterThan(100);
+    const header = await sheet.locator('header').boundingBox();
+    if (!header) throw new Error('no header');
+    const cdp = await page.context().newCDPSession(page);
+    await touch(cdp, 'touchStart', [
+      { x: header.x + header.width / 2, y: header.y + header.height / 2 },
+    ]);
+    // Caught: the rise on the sheet and its content is gone (the backdrop now
+    // follows the drag), and the drag holds the sheet where the rise left it.
+    const held = await page.evaluate((css) => {
+      const dialog = document.querySelector(css);
+      if (!(dialog instanceof HTMLElement)) return null;
+      const rising = dialog
+        .getAnimations({ subtree: true })
+        .filter(
+          (animation) =>
+            animation.effect instanceof KeyframeEffect &&
+            animation.effect.pseudoElement === null &&
+            !('animationName' in animation) &&
+            !('transitionProperty' in animation),
+        );
+      return { rising: rising.length, transform: dialog.style.transform };
+    }, CHAT);
+    expect(held?.rising).toBe(0);
+    expect(held?.transform).toMatch(/^translateY\(/);
+    expect(await sheetTop(page, CHAT)).toBeCloseTo(top, 0);
     await touch(cdp, 'touchEnd', []);
-    await cdp.send('Animation.setPlaybackRate', { playbackRate: 1 });
     await cdp.detach();
     await settleAnimations(page);
     await expect(sheet).toBeVisible();
