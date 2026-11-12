@@ -4,7 +4,7 @@ import { LEAD } from '@/components/ui';
 import type { TitleParts } from '@/content/types';
 
 // One wrap for every section (1312px of content between the gutters), or the
-// narrow reading column for legal pages and /book.
+// narrow column for /book.
 const WIDTHS = {
   wrap: 'max-w-[calc(82rem+2*var(--spacing-gutter))]',
   narrow: 'max-w-3xl',

@@ -117,12 +117,12 @@
     --duration-hover: 160ms;
     --logo-h: 1.25rem;
     --launcher-reserve: 5.5rem;
-    --consent-reserve: 12.5rem;
+    --consent-reserve: 13.5rem;
   }
 
   @media (max-width: 359px) {
     html {
-      --consent-reserve: 14.5rem;
+      --consent-reserve: 14.75rem;
     }
   }
 
@@ -130,14 +130,14 @@
     html {
       --header-h: 4.5rem;
       --logo-h: 2rem;
-      --consent-reserve: 11rem;
+      --consent-reserve: 14.75rem;
       --spacing-gutter: 2.5rem;
     }
   }
 
   @media (min-width: 1024px) {
     html {
-      --consent-reserve: 9.5rem;
+      --consent-reserve: 9.25rem;
     }
   }
 
@@ -445,6 +445,23 @@
 
   .fold-summary::-webkit-details-marker {
     display: none;
+  }
+
+  .legal-contents > summary::after {
+    content: "";
+    flex: none;
+    width: 0.5rem;
+    height: 0.5rem;
+    margin-inline-end: 0.25rem;
+    border-right: 2px solid var(--muted-fg);
+    border-bottom: 2px solid var(--muted-fg);
+    rotate: 45deg;
+    translate: 0 -0.125rem;
+  }
+
+  .legal-contents[open] > summary::after {
+    rotate: 225deg;
+    translate: 0 0.125rem;
   }
 
   .faq-summary {
@@ -1468,7 +1485,12 @@
     @apply fixed inset-0 m-auto h-fit max-h-[90dvh] w-[min(100%-2rem,34rem)] overflow-y-auto overscroll-contain rounded-ticket border border-hairline bg-surface p-6 text-fg shadow-raised md:p-8;
   }
 
-  .webmcp-dialog::backdrop {
+  .webmcp-dialog::backdrop,
+  .consent-dialog {
+    @apply m-auto h-fit max-h-[calc(100dvh-2rem)] w-[min(100%-2rem,34rem)] overflow-y-auto overscroll-contain rounded-ticket border border-hairline bg-surface p-6 text-fg shadow-raised;
+  }
+
+  .consent-dialog::backdrop {
     background: color-mix(in oklab, var(--fg) 32%, transparent);
   }
 

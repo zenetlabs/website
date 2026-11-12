@@ -301,9 +301,13 @@ function checkPages(states: typeof STATES, gaId: string | null) {
       expect(body).not.toMatch(PLACEHOLDER);
     });
 
-    it('links only to registry paths', () => {
+    it('links only to registry paths and to ids on the page', () => {
+      const { container } = render(<Page title="t" entity={entity} />);
       for (const href of hrefs(<Page title="t" entity={entity} />)) {
-        expect(KNOWN_HREFS.has(href), href).toBe(true);
+        const known = href.startsWith('#')
+          ? container.querySelector(`[id="${href.slice(1)}"]`) !== null
+          : KNOWN_HREFS.has(href);
+        expect(known, href).toBe(true);
       }
     });
   });
@@ -578,5 +582,53 @@ describe('WebMCP disclosure', () => {
   ])('%s says nothing about WebMCP while it is dark', (_name, Page) => {
     vi.stubGlobal('__WEBMCP__', false);
     expect(text(<Page title="t" entity={SPANISH} />)).not.toContain('WebMCP');
+  });
+});
+
+describe('contents list', () => {
+  afterAll(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const PAGES: ReadonlyArray<
+    readonly [string, LegalPageComponent, PublishedEntity]
+  > = [
+    ['CookiesEn', CookiesEn, SINGAPORE],
+    ['CookiesEs', CookiesEs, SPANISH],
+    ['PrivacyEn', PrivacyEn, SINGAPORE],
+    ['PrivacyEs', PrivacyEs, SPANISH],
+    ['LegalNoticeEs', LegalNoticeEs, SPANISH],
+  ];
+  const FLAGS = [true, false];
+  const GA_IDS = [null, 'G-TEST1234'];
+
+  describe.each(PAGES)('%s', (_name, Page, entity) => {
+    it.each(
+      FLAGS.flatMap((assistant) =>
+        FLAGS.flatMap((voice) =>
+          GA_IDS.map((gaId) => ({ assistant, voice, gaId })),
+        ),
+      ),
+    )('lists every section in order for %o', ({ assistant, voice, gaId }) => {
+      vi.stubGlobal('__ASSISTANT__', assistant);
+      vi.stubGlobal('__VOICE__', voice);
+      vi.stubGlobal('__GA4_ID__', gaId);
+      const { container } = render(<Page title="t" entity={entity} />);
+      const nav = container.querySelector('nav[aria-label]');
+      const listed = (selector: string) =>
+        [...(nav?.querySelectorAll(selector) ?? [])].map((a) => [
+          a.getAttribute('href'),
+          a.textContent,
+        ]);
+      const rendered = [...container.querySelectorAll('h2')].map((h2) => [
+        `#${h2.closest('section')?.id}`,
+        h2.textContent,
+      ]);
+      expect(rendered.length).toBeGreaterThan(0);
+      expect(listed('details a')).toEqual(rendered);
+      expect(listed(':scope > div a')).toEqual(rendered);
+      const ids = rendered.map(([id]) => id);
+      expect(new Set(ids).size).toBe(ids.length);
+    });
   });
 });

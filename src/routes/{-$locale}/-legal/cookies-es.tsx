@@ -1,10 +1,26 @@
 // TODO(albert): counsel sign-off of the 2026-11-05 draft
-import { LegalPage, LegalSection } from '@/components/legal-page';
+import {
+  LegalPage,
+  LegalSection,
+  type LegalSectionRef,
+} from '@/components/legal-page';
 import { TEXT_LINK } from '@/components/ui';
 import type { PublishedEntity } from '@/content/types';
 import { taxIdLabel } from '@/lib/content';
 import { pagePath } from '@/lib/page-registry';
 import { PUBLIC_EMAIL } from '@/lib/site';
+
+const SECTIONS = {
+  scope: { id: 'alcance', title: 'Qué cubre esta política' },
+  necessary: { id: 'necesarias', title: 'Estrictamente necesarias' },
+  analytics: { id: 'analiticas', title: 'Analíticas (solo si las aceptas)' },
+  attribution: { id: 'atribucion', title: 'Atribución (solo si la aceptas)' },
+  without: { id: 'sin-cookies', title: 'Sin cookies' },
+  used: { id: 'cookies-que-usamos', title: 'Cookies que usamos' },
+  forms: { id: 'formularios-turnstile', title: 'Formularios y Turnstile' },
+  gestionar: { id: 'manage', title: 'Gestionar las cookies' },
+  changes: { id: 'cambios', title: 'Cambios en esta política' },
+} as const satisfies Record<string, LegalSectionRef>;
 
 const CLOUDFLARE = (
   <p>
@@ -24,12 +40,28 @@ export function CookiesEs({
   entity: PublishedEntity;
 }) {
   const analytics = __GA4_ID__ !== null;
+  const contents = [
+    SECTIONS.scope,
+    ...(analytics
+      ? [
+          SECTIONS.necessary,
+          SECTIONS.analytics,
+          SECTIONS.attribution,
+          SECTIONS.without,
+        ]
+      : [SECTIONS.used]),
+    SECTIONS.forms,
+    SECTIONS.gestionar,
+    SECTIONS.changes,
+  ];
   return (
     <LegalPage
+      locale="es"
+      contents={contents}
       title={title}
       updated="Última actualización: 10 de noviembre de 2026"
     >
-      <LegalSection title="Qué cubre esta política">
+      <LegalSection section={SECTIONS.scope}>
         <p>
           Esta política explica cómo las páginas en español de zenetlabs.com,
           operadas por {entity.legalName} ({taxIdLabel(entity)}), usan cookies y
@@ -43,7 +75,7 @@ export function CookiesEs({
       </LegalSection>
       {analytics ? (
         <>
-          <LegalSection title="Estrictamente necesarias">
+          <LegalSection section={SECTIONS.necessary}>
             <p>
               <code>zenet-consent</code> (almacenamiento local, propio,
               zenetlabs.com): guarda tu elección durante 12 meses para no
@@ -51,7 +83,7 @@ export function CookiesEs({
             </p>
             {CLOUDFLARE}
           </LegalSection>
-          <LegalSection title="Analíticas (solo si las aceptas)">
+          <LegalSection section={SECTIONS.analytics}>
             <p>
               Google Analytics 4, un servicio de Google, mide las visitas y lo
               que se hace en la web, como pulsar nuestros botones o enviar una
@@ -67,7 +99,7 @@ export function CookiesEs({
               Google para publicidad.
             </p>
           </LegalSection>
-          <LegalSection title="Atribución (solo si la aceptas)">
+          <LegalSection section={SECTIONS.attribution}>
             <p>
               <code>zenet-first-touch</code> (almacenamiento local, propio,
               máximo 90 días) guarda la primera página a la que llegaste, el
@@ -77,7 +109,7 @@ export function CookiesEs({
               lo recibe.
             </p>
           </LegalSection>
-          <LegalSection title="Sin cookies">
+          <LegalSection section={SECTIONS.without}>
             <p>
               Medimos el tráfico general con Cloudflare Web Analytics, que
               funciona sin cookies y se usa elijas lo que elijas.
@@ -91,7 +123,7 @@ export function CookiesEs({
           </LegalSection>
         </>
       ) : (
-        <LegalSection title="Cookies que usamos">
+        <LegalSection section={SECTIONS.used}>
           <p>
             No usamos cookies analíticas ni publicitarias y no te seguimos entre
             sitios. Medimos el tráfico con Cloudflare Web Analytics, que
@@ -100,7 +132,7 @@ export function CookiesEs({
           {CLOUDFLARE}
         </LegalSection>
       )}
-      <LegalSection title="Formularios y Turnstile">
+      <LegalSection section={SECTIONS.forms}>
         <p>
           Cloudflare Turnstile distingue a las personas de los bots en el
           formulario de contacto
@@ -113,7 +145,7 @@ export function CookiesEs({
           pides.
         </p>
       </LegalSection>
-      <LegalSection id="manage" title="Gestionar las cookies">
+      <LegalSection section={SECTIONS.gestionar}>
         {analytics ? (
           <p>
             Puedes cambiar o retirar tu elección cuando quieras desde
@@ -141,7 +173,7 @@ export function CookiesEs({
           .
         </p>
       </LegalSection>
-      <LegalSection title="Cambios en esta política">
+      <LegalSection section={SECTIONS.changes}>
         <p>
           Si cambiamos las cookies que usamos, actualizaremos esta política y la
           fecha de arriba y, si hace falta, te volveremos a pedir tu
