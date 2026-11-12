@@ -1,6 +1,7 @@
 import { useId, useRef, useState } from 'react';
 import { ContactLinks } from '@/components/contact-links';
 import { LazyTurnstile } from '@/components/form-parts';
+import { useSheetDrag } from '@/components/sheet-drag';
 import { SECONDARY_BUTTON_SM, TEXT_LINK } from '@/components/ui';
 import { useChallengeOnDemand } from '@/components/use-challenge-on-demand';
 import type { VoiceCopy } from '@/content/types';
@@ -10,6 +11,7 @@ import { SITE } from '@/lib/site';
 import { noop } from '@/lib/time';
 import { requestMic, voiceSupported } from '@/lib/voice-device';
 import {
+  callBusy,
   endCall,
   resetCall,
   startCall,
@@ -135,6 +137,12 @@ export function VoicePanel({
   const busy = state.phase === 'connecting' || state.phase === 'live';
   // The full disclosure is open before the first call, folded once one runs.
   const notice = noticeOpen ?? state.phase === 'intro';
+  // Closing ends a call, so while one connects or runs the sheet only gives.
+  const drag = useSheetDrag({
+    held: callBusy,
+    modal: false,
+    close: () => void close(),
+  });
 
   // The button that was pressed leaves the page with its state, so focus goes
   // to the title, which stays and keeps Escape working from the keyboard.
@@ -178,12 +186,14 @@ export function VoicePanel({
       }}
       aria-labelledby={titleId}
       aria-describedby={noticeId}
+      {...drag}
       data-voice-panel
       data-voice-state={state.phase}
       className="voice-panel"
     >
-      <div className="grid gap-4 p-4 md:p-5">
-        <header className="flex items-center gap-3">
+      <div className="grid gap-4 px-4 pb-4 md:px-5 md:pb-5">
+        <header data-sheet-handle className="voice-head">
+          <span aria-hidden="true" className="sheet-grabber" />
           <span aria-hidden="true" className="desk-mark" />
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <h2

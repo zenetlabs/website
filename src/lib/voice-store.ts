@@ -106,6 +106,11 @@ export function useVoiceState(): VoiceState {
   );
 }
 
+// Read when it happens, not at the last render: closing the panel ends a call.
+export function callBusy(): boolean {
+  return state.phase === 'connecting' || state.phase === 'live';
+}
+
 // Called when the panel opens, so the SDK's audio unlock is armed before the
 // visitor taps "Start call" (iOS Safari plays nothing otherwise).
 export function warmSdk(): Promise<VoiceSdk> {

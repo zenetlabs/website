@@ -16,6 +16,7 @@ import { ChatSlots } from '@/components/chat/chat-slots';
 import { usePanelMotion } from '@/components/chat/panel-motion';
 import { ContactLinks } from '@/components/contact-links';
 import { LazyTurnstile } from '@/components/form-parts';
+import { useSheetDrag } from '@/components/sheet-drag';
 import { useChallengeOnDemand } from '@/components/use-challenge-on-demand';
 import type { ChatCopy } from '@/content/types';
 import { CHAT_LIMITS } from '@/lib/assistant-limits';
@@ -113,7 +114,7 @@ function ChatHeader({
   onClose: () => void;
 }) {
   return (
-    <header className="chat-head">
+    <header data-sheet-handle className="chat-head">
       <span aria-hidden="true" className="desk-mark" />
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5">
         <h2 id={titleId} className="desk-name leading-tight">
@@ -496,6 +497,11 @@ export function ChatPanel({
   const queueTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const motion = usePanelMotion(from);
   const { dialogRef, content, dismiss } = motion;
+  const drag = useSheetDrag({
+    held: () => false,
+    modal: true,
+    close: () => dialogRef.current?.close(),
+  });
   const opened = useRef(false);
   const titleId = useId();
   const noticeId = useId();
@@ -611,11 +617,13 @@ export function ChatPanel({
       }}
       aria-labelledby={titleId}
       aria-describedby={noticeId}
+      {...drag}
       data-chat-panel
       data-chat-state={state.status}
       className="chat-panel"
     >
       <div ref={content} className="flex h-full min-h-0 flex-col">
+        <span aria-hidden="true" className="sheet-grabber" />
         <ChatHeader
           copy={copy}
           titleId={titleId}
