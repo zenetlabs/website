@@ -1055,6 +1055,92 @@ describe('the stream', () => {
     );
   });
 
+  it('stops after one model call when one step both answers and opens the page', async () => {
+    const spy = scripted(
+      sayAndCall(
+        'An AI agent in production costs S$15,000–35,000. I opened the pricing page.',
+        'navigate',
+        { page: 'pricing' },
+      ),
+      say('Never read.'),
+    );
+    model = spy;
+    const { list } = await start('How much is an AI agent? Show me prices.');
+    expect(spy.doStreamCalls).toHaveLength(1);
+    expect(textOf(list)).toBe(
+      'An AI agent in production costs S$15,000–35,000. I opened the pricing page.',
+    );
+    expect(list.some((event) => event.t === 'navigate')).toBe(true);
+  });
+
+  it('keeps the refusal sentence out of an answer to the oversight question', async () => {
+    model = scripted(say(`${REFUSAL.en} `, 'Routine steps run unchecked.'));
+    const { list } = await start(
+      'Does a person check everything before customers see it?',
+    );
+    expect(textOf(list)).not.toContain(REFUSAL.en);
+  });
+
+  it('turns a yes to "does a person check everything" into "Not everything:" (en)', async () => {
+    model = scripted(
+      say('Yes. ', 'Actions with consequences wait for a person.'),
+    );
+    const { list } = await start(
+      'Does a person check everything before customers see it?',
+    );
+    expect(textOf(list)).toBe(
+      'Not everything: Actions with consequences wait for a person.',
+    );
+    expect(logs).toContainEqual([
+      'chat: guard',
+      { session: expect.any(String), kind: 'oversight' },
+    ]);
+  });
+
+  it('turns a sí to "¿revisa una persona todo?" into "No todo:" (es)', async () => {
+    model = scripted(
+      say('Sí, ', 'las acciones con consecuencias esperan aprobación.'),
+    );
+    const { list } = await start(
+      '¿Revisa una persona todo antes de que lo vean los clientes?',
+      { locale: 'es', page: '/es' },
+    );
+    expect(textOf(list).startsWith('No todo:')).toBe(true);
+    expect(textOf(list)).toContain('las acciones con consecuencias');
+  });
+
+  it('leaves a No to the oversight question alone', async () => {
+    model = scripted(say('No. Routine steps can run unchecked.'));
+    const { list } = await start(
+      'Does a person check everything before customers see it?',
+    );
+    expect(textOf(list)).toBe('No. Routine steps can run unchecked.');
+  });
+
+  it('leaves a Yes to an agent-mistake question alone', async () => {
+    model = scripted(say('Yes, we plan for it.'));
+    const { list } = await start('What happens if an agent makes a mistake?');
+    expect(textOf(list)).toBe('Yes, we plan for it.');
+  });
+
+  it('tells the model a plain request to open a page only needs the page', async () => {
+    const spy = scripted(say('Opening it.'));
+    model = spy;
+    await start('Take me to the pricing page.');
+    expect(JSON.stringify(spy.doStreamCalls[0]?.prompt)).toContain(
+      'The visitor only asked to open a page',
+    );
+  });
+
+  it('grounds a question about checking everything on the mistakes FAQ entry', async () => {
+    const spy = scripted(say('Routine steps run unchecked.'));
+    model = spy;
+    await start('Does a person check everything before customers see it?');
+    const sent = JSON.stringify(spy.doStreamCalls[0]?.prompt);
+    expect(sent).toContain('The official FAQ answer to this question');
+    expect(sent).toContain('Routine steps, such as reading in supplier');
+  });
+
   it('quotes the ownership answer in the language of the reply', async () => {
     const { list } = await start('Who owns the code you build?', {
       locale: 'es',

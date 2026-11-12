@@ -28,6 +28,8 @@ import {
 } from '@/server/chat/guard';
 import {
   asksAvailability,
+  asksOnlyToOpen,
+  asksOversight,
   bookingIntent,
   faqTopic,
   messageIntent,
@@ -258,9 +260,12 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
       ? undefined
       : { ownership, ...(unlisted ? { unlisted } : {}) };
   // The refusal sentence belongs to off-topic and injection messages only.
+  const intent = messageIntent(turn.message);
   const refusal =
-    messageIntent(turn.message) !== 'on-topic' &&
-    !asksAvailability(turn.message);
+    intent === 'injection' ||
+    (topic === null &&
+      intent !== 'on-topic' &&
+      !asksAvailability(turn.message));
   let refusalDropped = false;
   // The time and the messages left change every turn, so they ride with the
   // visitor's message and the system prompt stays one cacheable prefix.
@@ -274,8 +279,13 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
     official:
       topic === null
         ? null
-        : answerOf(topic, topic === 'ownership' ? replyFaq : faq),
+        : answerOf(
+            topic,
+            topic === 'ownership' || topic === 'mistakes' ? replyFaq : faq,
+          ),
     topic,
+    oversight: topic === 'mistakes' && asksOversight(turn.message),
+    openOnly: asksOnlyToOpen(turn.message),
     booking,
     unlisted: unlisted ?? null,
     availability,
@@ -335,6 +345,7 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
       visitorDays,
       facts,
       refusal,
+      oversight: topic === 'mistakes' && asksOversight(turn.message),
     });
     if (guarded.guard === 'refusal') refusalDropped = true;
     if (guarded.guard !== null) {

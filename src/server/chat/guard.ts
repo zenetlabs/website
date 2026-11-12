@@ -90,6 +90,7 @@ export type GuardKind =
   | 'refusal'
   | 'link'
   | 'email'
+  | 'oversight'
   | 'leak';
 
 // A guard that replaced the whole sentence: the rest of the reply is dropped,
@@ -417,6 +418,15 @@ type GuardOptions = {
   visitorDays?: readonly ResolvedDay[];
   facts?: Facts;
   refusal?: boolean;
+  // The visitor asks whether a person checks everything: the answer is no.
+  oversight?: boolean;
+};
+
+const YES_OPENER =
+  /^(?:yes|yeah|yep|si|sí|claro|por supuesto|of course)(?=[\s,.:;!]|$)[,.:;!]*/i;
+const NOT_EVERYTHING: Record<Locale, string> = {
+  en: 'Not everything:',
+  es: 'No todo:',
 };
 
 // `previous` is what the visitor already saw just before this sentence, so a
@@ -438,6 +448,7 @@ export function guardSentence(
     visitorDays = [],
     facts,
     refusal = true,
+    oversight = false,
   } = options;
   const clean = stripMarkup(normalise(sentence));
   const tail = trailing(clean);
@@ -451,6 +462,14 @@ export function guardSentence(
       const kept = guardSentence(rest, options);
       return { text: kept.text, guard: kept.guard ?? 'refusal' };
     }
+  }
+  // The first sentence of an oversight answer must not say yes: routine steps
+  // run unchecked, so the opener becomes "Not everything:".
+  if (oversight && previous.trim() === '' && YES_OPENER.test(clean)) {
+    const rest = clean.replace(YES_OPENER, '');
+    const text = `${NOT_EVERYTHING[language]}${rest}`;
+    const kept = guardSentence(text, { ...options, oversight: false });
+    return { text: kept.text, guard: kept.guard ?? 'oversight' };
   }
   // A weekday beside a date it does not fall on is put right (any sentence,
   // booking or not); the rest is checked as usual.

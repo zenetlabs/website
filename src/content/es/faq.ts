@@ -81,7 +81,7 @@ export const faq = [
     group: 'trust',
     question: '¿Qué pasa si un agente se equivoca?',
     answer:
-      'Lo tenemos previsto. Los agentes trabajan dentro de los límites que acordamos contigo; las acciones con consecuencias, como pagos, devoluciones o mensajes a clientes importantes, esperan la aprobación de una persona, y todo queda registrado. Si algo falla, la monitorización lo detecta, corregimos la causa y añadimos el caso a las pruebas del agente.',
+      'Lo tenemos previsto. Los agentes trabajan dentro de los límites que acordamos contigo. Los pasos rutinarios, como incorporar confirmaciones de proveedores o enviar recordatorios programados, pueden ejecutarse sin que una persona revise cada uno cuando han demostrado funcionar; tú decides dónde está esa línea. Las acciones con consecuencias, como pagos, devoluciones o mensajes a clientes importantes, esperan la aprobación de una persona, y todo queda registrado. Si algo falla, la monitorización lo detecta, corregimos la causa y añadimos el caso a las pruebas del agente.',
   },
   {
     id: 'models',

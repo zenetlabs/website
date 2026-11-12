@@ -65,6 +65,10 @@ type Prompt = {
     official: string;
     // Added after the "where" answer: it names no office, so none is invented.
     noOffice: (booking: boolean) => string;
+    // Added when the visitor asks whether a person checks everything.
+    oversight: string;
+    // Added when the visitor only asks to open a page.
+    openOnly: string;
     // Added when the message names a product the tool list does not.
     unlisted: (name: string, answer: string) => string;
     // The single day the visitor's words name, worked out by the website.
@@ -96,7 +100,7 @@ const EN: Prompt = {
     personal:
       'Personal data. Ask for no personal data. If the visitor starts sharing passwords, health data or other sensitive information, ask them not to.',
     style:
-      "Style. Plain text only: no Markdown, tables, links or URLs (use navigate to open pages). Answer only what was asked, in at most 120 words and short paragraphs. Give one price, the one asked about, unless the visitor asks for the list; if no price answers the question, say so in one sentence and offer the pricing page. When you open a page, say so in one sentence and don't repeat its content. Use the refusal sentence of rule 4 only for the requests rule 4 names, never before an answer. Reply in the visitor's language if it is English or Spanish, otherwise in English. Be direct and friendly, without hype.",
+      "Style. Plain text only: no Markdown, tables, links or URLs (use navigate to open pages). Answer only what was asked, in at most 120 words and short paragraphs. Give one price, the one asked about, unless the visitor asks for the list; if no price answers the question, say so in one sentence and offer the pricing page. When you open a page to answer a question, answer it first in one or two sentences from KNOWLEDGE, then say you opened the page; never reply with only that the page is open, and don't repeat the page's content. Use the refusal sentence of rule 4 only for the requests rule 4 names, never before an answer. Reply in the visitor's language if it is English or Spanish, otherwise in English. Be direct and friendly, without hype.",
     honesty:
       'Honesty. If asked, say you are an AI assistant that can make mistakes, and that a person, the founder, reads every booking and message.',
     legal:
@@ -128,6 +132,10 @@ const EN: Prompt = {
       'The visitor writes in Spanish: reply in Spanish. Prices stay in Singapore dollars.',
     official:
       'The official FAQ answer to this question (say what it says, never the opposite)',
+    oversight:
+      'If asked whether a person checks everything, the answer is no: routine steps can run unchecked once proved; actions with consequences wait for approval.',
+    openOnly:
+      "The visitor only asked to open a page: open it and say so in one short sentence; don't list its content.",
     noOffice: (booking) =>
       `It names no office: never name a city, country or office it does not name, and offer ${booking ? 'a call' : 'the contact form'} or ${PUBLIC_EMAIL}.`,
     unlisted: (name, answer) =>
@@ -161,7 +169,7 @@ const ES: Prompt = {
     personal:
       'Datos personales. No pidas datos personales. Si el visitante empieza a compartir contraseñas, datos de salud u otra información sensible, pídele que no lo haga.',
     style:
-      'Estilo. Solo texto plano: sin Markdown, tablas, enlaces ni URL (usa navigate para abrir páginas). Responde solo a lo que te preguntan, en 120 palabras como máximo y párrafos cortos. Da un solo precio, el que te piden, salvo que el visitante pida la lista; si ningún precio responde a la pregunta, dilo en una frase y ofrece la página de precios. Cuando abras una página, dilo en una frase y no repitas su contenido. Usa la frase de rechazo de la regla 4 solo para las peticiones que nombra la regla 4, nunca antes de una respuesta. Responde en el idioma del visitante si es español o inglés; si no, en español. Trata de tú. Sé directo y cercano, sin exageraciones.',
+      'Estilo. Solo texto plano: sin Markdown, tablas, enlaces ni URL (usa navigate para abrir páginas). Responde solo a lo que te preguntan, en 120 palabras como máximo y párrafos cortos. Da un solo precio, el que te piden, salvo que el visitante pida la lista; si ningún precio responde a la pregunta, dilo en una frase y ofrece la página de precios. Cuando abras una página para responder a una pregunta, responde primero en una o dos frases con el CONOCIMIENTO y luego di que has abierto la página; no contestes nunca solo que la página está abierta, y no repitas su contenido. Usa la frase de rechazo de la regla 4 solo para las peticiones que nombra la regla 4, nunca antes de una respuesta. Responde en el idioma del visitante si es español o inglés; si no, en español. Trata de tú. Sé directo y cercano, sin exageraciones.',
     honesty:
       'Honestidad. Si te lo preguntan, di que eres un asistente de IA que puede equivocarse y que una persona, el fundador, lee cada reserva y cada mensaje.',
     legal:
@@ -193,6 +201,10 @@ const ES: Prompt = {
       'The visitor writes in English: reply in English. Los importes siguen en euros sin IVA.',
     official:
       'La respuesta oficial de las preguntas frecuentes a esta pregunta (di lo que dice, nunca lo contrario)',
+    oversight:
+      'Si preguntan si una persona revisa todo, la respuesta es no: los pasos rutinarios pueden ejecutarse sin revisión una vez demostrada su fiabilidad; las acciones con consecuencias esperan aprobación.',
+    openOnly:
+      'El visitante solo pidió abrir una página: ábrela y dilo en una frase corta; no enumeres su contenido.',
     noOffice: (booking) =>
       `No nombra ninguna oficina: no nombres ninguna ciudad, país u oficina que no nombre, y ofrece ${booking ? 'una llamada' : 'el formulario de contacto'} o ${PUBLIC_EMAIL}.`,
     unlisted: (name, answer) =>
@@ -298,6 +310,10 @@ export type Turn = {
   official?: string | null;
   // Which FAQ entry `official` is, and whether a call can be offered.
   topic?: string | null;
+  // The visitor asks whether a person checks everything.
+  oversight?: boolean;
+  // The visitor only asks to open a page.
+  openOnly?: boolean;
   booking?: boolean;
   // A product the message names that the official tool list does not, and
   // what to say about it (in the reply language, with the call or contact offer).
@@ -372,6 +388,8 @@ export function turnContext({
   language = locale,
   official = null,
   topic = null,
+  oversight = false,
+  openOnly = false,
   booking = false,
   unlisted = null,
   availability = false,
@@ -392,6 +410,8 @@ export function turnContext({
     ...(official !== null && topic === 'where'
       ? [`- ${turn.noOffice(booking)}`]
       : []),
+    ...(oversight ? [`- ${turn.oversight}`] : []),
+    ...(openOnly ? [`- ${turn.openOnly}`] : []),
     ...(unlisted === null
       ? []
       : [`- ${turn.unlisted(unlisted.name, unlisted.answer)}`]),
