@@ -148,6 +148,11 @@ beforeEach(() => {
   resetChat('en');
 });
 
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
 describe('ChatPanel semantics', () => {
   it('is a modal dialog named by its title and described by the AI notice', () => {
     open();
@@ -220,6 +225,40 @@ describe('ChatPanel semantics', () => {
     const { onClose } = open();
     fireEvent.click(screen.getByRole('button', { name: en.close }));
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('carries a hidden grabber, and the header row is the drag handle', () => {
+    open();
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.querySelector('.sheet-grabber')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    );
+    expect(
+      screen.getByRole('heading', { name: en.title }).closest('header'),
+    ).toHaveAttribute('data-sheet-handle');
+  });
+
+  it('never starts a drag on the talk or close button', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query.includes('width <'),
+    }));
+    vi.spyOn(Element.prototype, 'setPointerCapture').mockImplementation(
+      () => undefined,
+    );
+    voice.available = true;
+    const { onClose } = open();
+    const dialog = screen.getByRole('dialog');
+    const pointer = { isPrimary: true, button: 0, pointerId: 1 };
+    for (const name of [en.talk, en.close]) {
+      fireEvent.pointerDown(screen.getByRole('button', { name }), {
+        ...pointer,
+        clientY: 20,
+      });
+      fireEvent.pointerMove(dialog, { ...pointer, clientY: 400 });
+      expect(dialog.style.transform).toBe('');
+    }
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('offers the call suggestion and links only while booking is published', () => {

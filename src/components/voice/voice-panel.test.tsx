@@ -1,6 +1,12 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VoicePanel } from '@/components/voice/voice-panel';
 import { voiceCopy as en } from '@/content/en/voice';
 import { voiceCopy as es } from '@/content/es/voice';
@@ -126,6 +132,53 @@ beforeEach(async () => {
   device.state.mic = 'granted';
   delete window.__voiceFake;
   await act(() => resetCall());
+});
+
+// A phone; under reduced motion the release settles at once.
+function stubPhone({ reduced = true }: { reduced?: boolean } = {}) {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: query.includes('width <') || (reduced && query.includes('reduce')),
+  }));
+  vi.spyOn(Element.prototype, 'setPointerCapture').mockImplementation(
+    () => undefined,
+  );
+  vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue(
+    DOMRect.fromRect({ width: 390, height: 600 }),
+  );
+}
+
+const POINTER = { isPrimary: true, button: 0 };
+
+function sheet() {
+  const dialog = screen.getByRole('dialog');
+  const header = dialog.querySelector('header');
+  if (!header) throw new Error('no header');
+  return { dialog, header };
+}
+
+function press(target: Element, pointerId: number, clientY = 100) {
+  fireEvent.pointerDown(target, { ...POINTER, pointerId, clientY });
+}
+
+function moveTo(pointerId: number, clientY: number) {
+  fireEvent.pointerMove(sheet().dialog, { ...POINTER, pointerId, clientY });
+}
+
+function dragHeader(distance: number) {
+  const { dialog, header } = sheet();
+  press(header, 1);
+  moveTo(1, 100 + distance);
+  fireEvent.pointerUp(dialog, {
+    ...POINTER,
+    pointerId: 1,
+    clientY: 100 + distance,
+  });
+  return dialog;
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 async function start() {
@@ -373,6 +426,89 @@ describe('VoicePanel', () => {
     expect(window.__voiceFake).toBeDefined();
     await userEvent.click(screen.getByRole('button', { name: en.close }));
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(2));
+  });
+
+  it('closes from the intro when the sheet is dragged down', async () => {
+    stubPhone();
+    const onClose = mount();
+    dragHeader(360);
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
+
+  it('holds the sheet during a live call: a drag never ends it', async () => {
+    stubPhone();
+    const onClose = mount();
+    await start();
+    await screen.findByRole('button', { name: en.mute });
+    const dialog = dragHeader(360);
+    expect(dialog.style.transform).toBe('');
+    expect(screen.getByRole('status')).toHaveTextContent(en.listening);
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('holds the sheet while a call connects', async () => {
+    stubPhone();
+    mint.mockReturnValue(new Promise(() => {}));
+    const onClose = mount();
+    await start();
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(en.connecting),
+    );
+    dragHeader(360);
+    await act(() => new Promise((resolve) => setTimeout(resolve, 300)));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole('status')).toHaveTextContent(en.connecting);
+  });
+
+  it('keeps a call that starts while the sheet slides away', async () => {
+    stubPhone({ reduced: false });
+    const onClose = mount();
+    const button = screen.getByRole('button', { name: en.start });
+    await waitFor(() => expect(button).toBeEnabled());
+    dragHeader(360);
+    await userEvent.click(button);
+    await screen.findByRole('button', { name: en.mute });
+    await act(() => new Promise((resolve) => setTimeout(resolve, 400)));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole('status')).toHaveTextContent(en.listening);
+  });
+
+  for (const end of ['pointerCancel', 'lostPointerCapture'] as const) {
+    it(`puts the sheet back on ${end}, without closing`, () => {
+      stubPhone();
+      const onClose = mount();
+      const { dialog, header } = sheet();
+      press(header, 1);
+      moveTo(1, 460);
+      expect(dialog.style.transform).not.toBe('');
+      fireEvent[end](dialog, { ...POINTER, pointerId: 1, clientY: 460 });
+      expect(dialog.style.transform).toBe('');
+      moveTo(1, 600);
+      expect(dialog.style.transform).toBe('');
+      expect(onClose).not.toHaveBeenCalled();
+    });
+  }
+
+  it('recovers from a drag whose end never came', async () => {
+    stubPhone();
+    const onClose = mount();
+    const { dialog, header } = sheet();
+    press(header, 1);
+    moveTo(1, 460);
+    press(screen.getByRole('status'), 2);
+    expect(dialog.style.transform).toBe('');
+    dragHeader(360);
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
+
+  it('never starts a drag on a header control', () => {
+    stubPhone();
+    const onClose = mount();
+    const { dialog } = sheet();
+    press(screen.getByRole('button', { name: en.close }), 1);
+    moveTo(1, 460);
+    expect(dialog.style.transform).toBe('');
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('closes from the intro with Not now', async () => {

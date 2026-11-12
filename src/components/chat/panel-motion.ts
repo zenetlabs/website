@@ -28,7 +28,7 @@ function motionFrom(
   }
   const origin = from.getBoundingClientRect();
   if (!onScreen(origin)) return null;
-  if (!matchMedia('(min-width: 768px)').matches) {
+  if (!matchMedia('(width >= 48rem)').matches) {
     return {
       frames: [{ transform: 'translateY(100%)' }, { transform: 'none' }],
       easing: SHEET_EASE,
@@ -115,9 +115,13 @@ export function usePanelMotion(from: Element | null) {
     closing.current = true;
     const back = inFlight.length > 0 ? inFlight : play(dialog, true);
     for (const animation of inFlight) animation.reverse();
-    void Promise.all(back.map((animation) => animation.finished))
-      .catch(() => undefined)
-      .then(() => dialog.close());
+    // A sheet caught by a drag cancels the motion: it stays open.
+    Promise.all(back.map((animation) => animation.finished)).then(
+      () => dialog.close(),
+      () => {
+        closing.current = false;
+      },
+    );
   }
 
   return {
