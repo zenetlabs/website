@@ -26,7 +26,12 @@ import {
   TEST_CALENDAR,
   uniqueEmail,
 } from './fakes';
-import { BOOKING_PUBLISHED, gotoHydrated, settleAnimations } from './helpers';
+import {
+  ASSISTANT_PUBLISHED,
+  BOOKING_PUBLISHED,
+  gotoHydrated,
+  settleAnimations,
+} from './helpers';
 
 test.skip(!BOOKING_PUBLISHED, 'booking is not published in this build');
 test.describe.configure({ mode: 'serial' });
@@ -651,6 +656,11 @@ test.describe('when Google fails', () => {
         name: "Online booking isn't available right now",
       }),
     ).toBeVisible();
+    await page.waitForSelector('body[data-hydrated="true"]');
+    if (ASSISTANT_PUBLISHED) {
+      await expect(page.locator('[data-chat-launcher]')).toHaveCount(1);
+      await expect(page.locator('[data-chat-launcher]')).toBeHidden();
+    }
     await expect(
       page.getByRole('form', { name: 'Contact form' }),
     ).toBeVisible();

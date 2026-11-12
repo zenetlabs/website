@@ -1006,7 +1006,8 @@
       @apply bg-fg text-bg;
     }
 
-    .desk-send:hover {
+    .desk-send:hover,
+    .contact-book .slot-more:hover {
       @apply bg-cta-hover;
     }
 
@@ -1055,6 +1056,7 @@
     .desk-chip:active,
     .slot-chip:active,
     .chat-talk:active,
+    .contact-book .slot-more:active,
     .desk-call-button:active {
       scale: 0.97;
     }
@@ -1080,6 +1082,12 @@
 
     .slot-more > .icon {
       transition: translate var(--duration-hover) var(--ease-out);
+    }
+
+    .contact-book .slot-more {
+      transition:
+        background-color var(--duration-press) ease-out,
+        scale var(--duration-press) var(--ease-out);
     }
   }
 
@@ -1237,6 +1245,12 @@
   /* All times: a full-width outlined button on a phone, a link beside the chips from `sm` */
   .slot-more {
     @apply inline-flex min-h-13 items-center justify-center gap-1.5 rounded-button border border-fg px-2 font-semibold sm:border-transparent sm:text-link;
+  }
+
+  /* On contact it is the card's one primary: ink, the same height as the chips */
+  .contact-book .slot-more {
+    @apply border-transparent bg-cta text-cta-fg sm:px-5;
+    transition: background-color var(--duration-press) ease-out;
   }
 
   .slot-alt {
@@ -1973,7 +1987,9 @@
    It gets no scroll-padding-bottom of its own, only footer padding (on the footer's own
    ground) to keep the last footer links clear: it is small, and the banner and voice
    panel below are what cover content. */
-html:has([data-chat-launcher]) body > footer {
+html:has([data-chat-launcher]):not(:has(main section[data-booking]))
+  body
+  > footer {
   padding-bottom: 5rem;
 }
 
@@ -1983,13 +1999,20 @@ html:has([data-consent-banner]) [data-chat-launcher] {
   translate: 0 calc(-1 * var(--consent-reserve));
 }
 
+/* No chat launcher on /book, in any server-rendered state */
+html:has(main section[data-booking]) [data-chat-launcher] {
+  display: none;
+}
+
 @media (max-width: 767px) {
   html:has(header details[open]) [data-chat-launcher] {
     visibility: hidden;
   }
 }
 
-html:has([data-consent-banner]):has([data-chat-launcher]) {
+html:has([data-consent-banner]):has([data-chat-launcher]):not(
+  :has(main section[data-booking])
+) {
   scroll-padding-bottom: calc(var(--consent-reserve) + 5rem);
 }
 

@@ -1,6 +1,11 @@
 import { expect, type Page, test } from '@playwright/test';
 import { siteConfig } from '../site.config';
-import { ASSISTANT_PUBLISHED, CTA, gotoHydrated } from './helpers';
+import {
+  ASSISTANT_PUBLISHED,
+  BOOKING_PUBLISHED,
+  CTA,
+  gotoHydrated,
+} from './helpers';
 
 const BAR = '[data-sticky-cta]';
 const GA_ID = siteConfig(undefined).ga4Id;
@@ -160,4 +165,40 @@ test.describe('with the consent banner', () => {
     await page.locator('#services').scrollIntoViewIfNeeded();
     await expect(page.locator(BAR)).toBeHidden();
   });
+});
+
+test.describe('the assistant launcher', () => {
+  test.skip(!ASSISTANT_PUBLISHED, 'the assistant is not published here');
+  const LAUNCHER = '[data-chat-launcher]';
+
+  for (const path of ['/', '/contact', '/pricing']) {
+    test(`shows on ${path}`, async ({ page }) => {
+      await gotoHydrated(page, path);
+      await expect(page.locator(LAUNCHER)).toHaveCount(1);
+      await expect(page.locator(LAUNCHER)).toBeVisible();
+    });
+  }
+
+  for (const path of ['/book', '/es/reservar']) {
+    test(`is absent on ${path} (open)`, async ({ page }) => {
+      test.skip(!BOOKING_PUBLISHED, 'booking is not published in this build');
+      await gotoHydrated(page, path);
+      await expect(page.locator('main section[data-booking]')).toHaveCount(1);
+      await expect(page.locator(LAUNCHER)).toHaveCount(1);
+      await expect(page.locator(LAUNCHER)).toBeHidden();
+    });
+
+    test(`is absent on ${path} (confirm)`, async ({ page }) => {
+      test.skip(!BOOKING_PUBLISHED, 'booking is not published in this build');
+      await gotoHydrated(
+        page,
+        `${path}?confirm=${crypto.randomUUID()}.${'A'.repeat(43)}`,
+      );
+      await expect(
+        page.locator('main section[data-booking="confirm"]'),
+      ).toHaveCount(1);
+      await expect(page.locator(LAUNCHER)).toHaveCount(1);
+      await expect(page.locator(LAUNCHER)).toBeHidden();
+    });
+  }
 });

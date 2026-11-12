@@ -139,6 +139,46 @@ test('the booking card shows the next free times as chips, in the same box', asy
   );
 });
 
+for (const viewport of [
+  { width: 390, height: 844 },
+  { width: 1440, height: 900 },
+]) {
+  test(`the booking card has one ink primary in the first viewport at ${viewport.width}`, async ({
+    page,
+  }) => {
+    test.skip(!BOOKING_PUBLISHED, 'booking is not published in this build');
+    await page.setViewportSize(viewport);
+    await gotoHydrated(page, CONTACT_PAIR.en);
+    const card = page.locator('.contact-book');
+    await expect(card.locator('.slot-chip').first()).toBeVisible({
+      timeout: 15_000,
+    });
+    const more = card.locator('.slot-more');
+    await expect(more).toBeInViewport();
+    const inks = await page.evaluate(() => {
+      const ink = getComputedStyle(
+        document.querySelector('.slot-more') ?? document.body,
+      ).backgroundColor;
+      return Array.from(document.querySelectorAll('a, button'))
+        .filter((element) => {
+          const box = element.getBoundingClientRect();
+          return (
+            element.checkVisibility({
+              opacityProperty: true,
+              visibilityProperty: true,
+            }) &&
+            box.width > 0 &&
+            box.top < window.innerHeight &&
+            box.bottom > 0 &&
+            getComputedStyle(element).backgroundColor === ink
+          );
+        })
+        .map((element) => element.className);
+    });
+    expect(inks).toEqual([await more.getAttribute('class')]);
+  });
+}
+
 test('a filled honeypot gets a silent success and sends nothing', async ({
   page,
 }) => {
