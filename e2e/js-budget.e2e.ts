@@ -10,6 +10,7 @@ import { pricingPage as enPricing } from '../src/content/en/pricing';
 import { aboutPage as esAbout } from '../src/content/es/about';
 import { calculatorPage as esCalculator } from '../src/content/es/calculator';
 import { home as esHome } from '../src/content/es/home';
+import { legalNotice } from '../src/content/es/legal-notice';
 import { pricingPage as esPricing } from '../src/content/es/pricing';
 import {
   CALCULATOR_PAIR,
@@ -254,6 +255,22 @@ for (const path of URLS) {
 }
 
 const LEGAL_PATHS = new Set(['/privacy', '/cookies']);
+
+// The Spanish aviso legal meta loads from its route loader, not the entry.
+test('the aviso legal meta stays out of the up-front scripts of other pages', async ({
+  request,
+}) => {
+  for (const path of ['/', '/es', '/book', '/contact']) {
+    const html = await (await request.get(path)).text();
+    const scripts = await upFrontScripts(request, html);
+    expect(scripts.length).toBeGreaterThan(0);
+    for (const script of scripts) {
+      expect(script.text, `${script.source} in ${path}`).not.toContain(
+        legalNotice.description.slice(0, 28),
+      );
+    }
+  }
+});
 
 test('the chat panel, its copy and the system prompt stay out of the up-front scripts', async ({
   request,

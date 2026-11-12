@@ -1,28 +1,30 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { legalNotice } from '@/content/es/legal-notice';
+import { loadLegalNotice } from '@/content/load';
 import { legalEntity } from '@/lib/content';
 import { useLocale } from '@/lib/i18n';
 import { breadcrumbStructuredData } from '@/lib/page-structured-data';
-import { pageHeadFor } from '@/lib/pages';
+import { contentHead } from '@/lib/pages';
 import { LegalNoticeEs } from './-legal/legal-notice-es';
 
 export const Route = createFileRoute('/{-$locale}/legal-notice')({
   staticData: { page: 'legalNotice' },
-  head: ({ match }) => pageHeadFor(match.context.locale, 'legalNotice'),
-  scripts: ({ match }) =>
-    breadcrumbStructuredData(
-      match.context.locale,
-      'legalNotice',
-      legalNotice.title,
-    ),
+  loader: loadLegalNotice,
+  head: ({ match, loaderData }) =>
+    loaderData
+      ? contentHead(match.context.locale, 'legalNotice', loaderData)
+      : {},
+  scripts: ({ match, loaderData }) =>
+    loaderData
+      ? breadcrumbStructuredData(
+          match.context.locale,
+          'legalNotice',
+          loaderData.title,
+        )
+      : [],
   component: LegalNotice,
 });
 
 function LegalNotice() {
-  return (
-    <LegalNoticeEs
-      title={legalNotice.title}
-      entity={legalEntity(useLocale())}
-    />
-  );
+  const { title } = Route.useLoaderData();
+  return <LegalNoticeEs title={title} entity={legalEntity(useLocale())} />;
 }

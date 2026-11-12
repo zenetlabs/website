@@ -9,6 +9,7 @@ import { aboutPage as esAbout } from '@/content/es/about';
 import { faq as esFaq } from '@/content/es/faq';
 import { home as esHome } from '@/content/es/home';
 import { legalMeta as esLegalMeta } from '@/content/es/legal-meta';
+import { legalNotice } from '@/content/es/legal-notice';
 import { llms as esLlms } from '@/content/es/llms';
 import { pricingPage as esPricing } from '@/content/es/pricing';
 import { services as esServices } from '@/content/es/services';
@@ -300,6 +301,7 @@ export function metaOf(
   if (page === 'privacy' || page === 'cookies') {
     return contentMeta(LEGAL_META[locale][legalMetaKey(page)]);
   }
+  if (page === 'legalNotice') return contentMeta(legalNotice);
   return pageCopy(locale, page);
 }
 
