@@ -343,6 +343,10 @@ export async function loadCaseContent(locale: Locale): Promise<{
   return { copy: viatsyCase, hub: servicesHub, metrics: viatsy.metrics };
 }
 
+export function loadLegalNotice() {
+  return import('@/content/es/legal-notice').then((m) => m.legalNotice);
+}
+
 export function loadLegalMeta(locale: Locale) {
   return LEGAL_META[locale]();
 }

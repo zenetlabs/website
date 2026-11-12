@@ -1,19 +1,17 @@
-import { legalNotice } from '@/content/es/legal-notice';
 import { type Locale, messages } from '@/lib/i18n';
 import type { PageId } from '@/lib/page-registry';
 import { pageHead } from '@/lib/seo';
 
-export type StaticPageId = Extract<PageId, 'home' | 'legalNotice'>;
+export type StaticPageId = Extract<PageId, 'home'>;
 
 export function pageCopy(
   locale: Locale,
   page: StaticPageId,
 ): { title: string; description: string } {
-  if (page === 'home') return messages[locale].meta;
-  return {
-    title: legalNotice.metaTitle,
-    description: legalNotice.description,
+  const copy: Record<StaticPageId, { title: string; description: string }> = {
+    home: messages[locale].meta,
   };
+  return copy[page];
 }
 
 export function legalMetaKey(
