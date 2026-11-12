@@ -19,7 +19,7 @@ import { COOKIE_SETTINGS_ID, openCookieSettings } from '@/lib/cookie-settings';
 import type { Locale } from '@/lib/i18n';
 import { pagePath } from '@/lib/page-registry';
 
-const CHECKBOX = 'mt-1 size-6 shrink-0 accent-accent';
+const CHECKBOX = 'size-6 accent-accent';
 
 function trackBannerHeight(node: HTMLElement): () => void {
   const root = document.documentElement;
@@ -67,10 +67,10 @@ function ConsentBanner({
     >
       <Container className="grid gap-3 py-3 md:grid-cols-[1fr_auto] md:items-center md:gap-10 md:py-4">
         <div>
-          <h2 id={titleId} className="font-sans text-base font-semibold">
+          <h2 id={titleId} className="text-ui-m">
             {copy.title}
           </h2>
-          <p className="mt-1 max-w-3xl text-sm leading-snug text-muted-fg">
+          <p className="mt-1 max-w-3xl text-ui-s text-fg-soft">
             <span id={textId}>
               <span className={expanded ? 'hidden' : 'sm:hidden'}>
                 {copy.textShort}
@@ -136,21 +136,23 @@ function ToggleRow({
   return (
     <label className="flex cursor-pointer items-start justify-between gap-4 border-t border-hairline py-4">
       <span>
-        <span id={`${id}-name`} className="block font-semibold">
+        <span id={`${id}-name`} className="block text-ui-m font-semibold">
           {label}
         </span>
-        <span id={`${id}-text`} className="mt-1 block text-sm text-muted-fg">
+        <span id={`${id}-text`} className="mt-1 block text-ui-s text-fg-soft">
           {text}
         </span>
       </span>
-      <input
-        type="checkbox"
-        name={name}
-        aria-labelledby={`${id}-name`}
-        aria-describedby={`${id}-text`}
-        defaultChecked={checked}
-        className={CHECKBOX}
-      />
+      <span className="-mt-2.5 -mr-2.5 grid size-11 shrink-0 place-items-center">
+        <input
+          type="checkbox"
+          name={name}
+          aria-labelledby={`${id}-name`}
+          aria-describedby={`${id}-text`}
+          defaultChecked={checked}
+          className={CHECKBOX}
+        />
+      </span>
     </label>
   );
 }
@@ -182,7 +184,7 @@ function ConsentSettings({
       id={COOKIE_SETTINGS_ID}
       aria-labelledby="consent-settings-title"
       onClose={reset}
-      className="m-auto max-h-[calc(100dvh-2rem)] w-[min(34rem,calc(100%-2rem))] overflow-y-auto rounded-card border border-border bg-bg p-6 text-fg shadow-raised backdrop:bg-bg/80"
+      className="consent-dialog"
     >
       <form
         key={consent?.at ?? 0}
@@ -193,22 +195,19 @@ function ConsentSettings({
           });
         }}
       >
-        <h2
-          id="consent-settings-title"
-          className="font-sans text-base font-semibold"
-        >
+        <h2 id="consent-settings-title" className="text-h3">
           {dialog.title}
         </h2>
-        <p className="mt-2 text-sm text-muted-fg">{dialog.intro}</p>
+        <p className="mt-2 text-ui-s text-fg-soft">{dialog.intro}</p>
         <div className="mt-4">
           <div className="flex items-start justify-between gap-4 border-t border-hairline py-4">
             <div>
-              <p className="font-semibold">{dialog.necessary}</p>
-              <p className="mt-1 text-sm text-muted-fg">
+              <p className="text-ui-m font-semibold">{dialog.necessary}</p>
+              <p className="mt-1 text-ui-s text-fg-soft">
                 {dialog.necessaryText}
               </p>
             </div>
-            <span className="shrink-0 text-sm font-medium">
+            <span className="shrink-0 text-ui-s font-semibold">
               {dialog.alwaysOn}
             </span>
           </div>
@@ -225,7 +224,7 @@ function ConsentSettings({
             checked={consent?.attribution ?? false}
           />
         </div>
-        <div className="grid gap-3 border-t border-hairline pt-4">
+        <div className="sticky bottom-0 -mx-6 -mb-6 grid gap-3 border-t border-hairline bg-surface px-6 pt-4 pb-6">
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"

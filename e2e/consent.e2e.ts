@@ -12,6 +12,7 @@ import { NOTIFY_TO, sentFor, uniqueEmail } from './fakes';
 import {
   BOOKING_PUBLISHED,
   gotoHydrated,
+  OBSERVER,
   PAGES,
   settleAnimations,
 } from './helpers';
@@ -47,6 +48,7 @@ const LABELS = {
     settings: 'Settings',
     cookieSettings: 'Cookie settings',
     save: 'Save choices',
+    close: 'Close',
     analytics: 'Analytics',
     attribution: 'Attribution',
   },
@@ -57,6 +59,7 @@ const LABELS = {
     settings: 'Configurar',
     cookieSettings: 'Configuración de cookies',
     save: 'Guardar selección',
+    close: 'Cerrar',
     analytics: 'Analíticas',
     attribution: 'Atribución',
   },
@@ -567,6 +570,98 @@ test.describe('accessibility', () => {
       expect((await scan()).violations).toEqual([]);
       await context.close();
     });
+  }
+
+  for (const viewport of [
+    { width: 320, height: 568 },
+    { width: 390, height: 844 },
+    { width: 768, height: 1024 },
+    { width: 1280, height: 900 },
+  ]) {
+    for (const [locale, path] of [
+      ['en', '/privacy'],
+      ['es', '/es/privacidad'],
+    ] as const) {
+      test(`the banner on ${path} at ${viewport.width}px reserves its height and shifts nothing`, async ({
+        browser,
+      }) => {
+        const context = await browser.newContext({
+          viewport,
+          storageState: { cookies: [], origins: [] },
+        });
+        const page = await context.newPage();
+        await watch(page);
+        await page.addInitScript(OBSERVER);
+        await gotoHydrated(page, path);
+        const banner = page.locator(BANNER);
+        await expect(banner).toBeVisible();
+        await settleAnimations(page);
+        const box = await banner.boundingBox();
+        const reserve = await page.evaluate(() =>
+          Number.parseFloat(
+            document.documentElement.style.getPropertyValue(
+              '--consent-reserve',
+            ),
+          ),
+        );
+        expect(reserve).toBe(Math.ceil(box?.height ?? 0));
+        expect(await page.evaluate(() => window.__layoutShift)).toBe(0);
+
+        await banner
+          .getByRole('button', { name: LABELS[locale].settings })
+          .click();
+        const box44 = await page
+          .getByRole('dialog')
+          .getByRole('checkbox')
+          .first()
+          .evaluate((node) => node.parentElement?.getBoundingClientRect());
+        expect(box44?.width).toBeGreaterThanOrEqual(44);
+        expect(box44?.height).toBeGreaterThanOrEqual(44);
+        await context.close();
+      });
+    }
+  }
+
+  for (const viewport of [
+    { width: 320, height: 568 },
+    { width: 390, height: 844 },
+  ]) {
+    for (const [locale, path] of [
+      ['en', '/privacy'],
+      ['es', '/es/privacidad'],
+    ] as const) {
+      test(`the dialog on ${path} at ${viewport.width}x${viewport.height} shows all four buttons when it opens`, async ({
+        browser,
+      }) => {
+        const context = await browser.newContext({
+          viewport,
+          storageState: { cookies: [], origins: [] },
+        });
+        const page = await context.newPage();
+        await watch(page);
+        await gotoHydrated(page, path);
+        await page
+          .locator(BANNER)
+          .getByRole('button', { name: LABELS[locale].settings })
+          .click();
+        const dialog = page.getByRole('dialog');
+        await expect(dialog).toBeVisible();
+        await settleAnimations(page);
+        for (const name of [
+          LABELS[locale].reject,
+          LABELS[locale].accept,
+          LABELS[locale].save,
+          LABELS[locale].close,
+        ]) {
+          const box = await dialog.getByRole('button', { name }).boundingBox();
+          expect(box, name).not.toBeNull();
+          expect((box?.y ?? 0) + (box?.height ?? 0), name).toBeLessThanOrEqual(
+            viewport.height,
+          );
+        }
+        await context.close();
+      });
+    }
   }
 
   test('keyboard: the banner is next after the skip link, and Settings opens a modal that returns focus', async ({

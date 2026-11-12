@@ -1,5 +1,9 @@
 // TODO(albert): counsel sign-off of the 2026-11-05 draft
-import { LegalPage, LegalSection } from '@/components/legal-page';
+import {
+  LegalPage,
+  LegalSection,
+  type LegalSectionRef,
+} from '@/components/legal-page';
 import { TEXT_LINK } from '@/components/ui';
 import type { PublishedEntity } from '@/content/types';
 import { formatAddress, legalEntity, taxIdLabel } from '@/lib/content';
@@ -19,6 +23,28 @@ import {
   VoiceTransfer,
   WebMcpUse,
 } from '@/routes/{-$locale}/-legal/privacy-extras-en';
+import {
+  ASSISTANT_SECTION,
+  VOICE_SECTION,
+} from '@/routes/{-$locale}/-legal/privacy-extras-sections';
+
+const SECTIONS = {
+  responsible: { id: 'responsible', title: 'Who is responsible for your data' },
+  collect: { id: 'what-we-collect', title: 'What we collect and why' },
+  store: { id: 'where-we-store-it', title: 'Where we store it' },
+  basis: { id: 'legal-basis', title: 'Legal basis' },
+  recipients: { id: 'recipients', title: 'Who receives your data' },
+  transfers: {
+    id: 'international-transfers',
+    title: 'International transfers',
+  },
+  retention: { id: 'retention', title: 'How long we keep it' },
+  rights: { id: 'your-rights', title: 'Your rights' },
+  security: { id: 'security', title: 'Security' },
+  children: { id: 'children', title: 'Children' },
+  cookies: { id: 'cookies', title: 'Cookies' },
+  changes: { id: 'changes', title: 'Changes to this policy' },
+} as const satisfies Record<string, LegalSectionRef>;
 
 const EMAIL = (
   <a href={`mailto:${PUBLIC_EMAIL}`} className={TEXT_LINK}>
@@ -40,10 +66,31 @@ export function PrivacyEn({
   entity: PublishedEntity;
 }) {
   const spanish = legalEntity('es');
+  const contents = [
+    SECTIONS.responsible,
+    SECTIONS.collect,
+    SECTIONS.store,
+    ...(__ASSISTANT__ ? [ASSISTANT_SECTION.en] : []),
+    ...(__VOICE__ ? [VOICE_SECTION.en] : []),
+    SECTIONS.basis,
+    SECTIONS.recipients,
+    SECTIONS.transfers,
+    SECTIONS.retention,
+    SECTIONS.rights,
+    SECTIONS.security,
+    SECTIONS.children,
+    SECTIONS.cookies,
+    SECTIONS.changes,
+  ];
 
   return (
-    <LegalPage title={title} updated="Last updated: 10 November 2026">
-      <LegalSection title="Who is responsible for your data">
+    <LegalPage
+      locale="en"
+      contents={contents}
+      title={title}
+      updated="Last updated: 10 November 2026"
+    >
+      <LegalSection section={SECTIONS.responsible}>
         <p>
           The controller of the personal data collected through the English
           pages of zenetlabs.com is {entity.legalName} ({taxIdLabel(entity)}),{' '}
@@ -68,7 +115,7 @@ export function PrivacyEn({
         </p>
       </LegalSection>
       <Collection />
-      <LegalSection title="Where we store it">
+      <LegalSection section={SECTIONS.store}>
         <p>
           We store each enquiry, and a record of the emails we send about it, in
           a database run by Cloudflare in the European Union. Only the owner of
@@ -90,7 +137,7 @@ export function PrivacyEn({
 function Collection() {
   const analytics = __GA4_ID__ !== null;
   return (
-    <LegalSection title="What we collect and why">
+    <LegalSection section={SECTIONS.collect}>
       <p>
         From the contact form we collect what you type into it: your name, email
         address, company (optional) and message. We use it to read and reply to
@@ -182,7 +229,7 @@ function Collection() {
 function Bases() {
   const analytics = __GA4_ID__ !== null;
   return (
-    <LegalSection title="Legal basis">
+    <LegalSection section={SECTIONS.basis}>
       <p>Each purpose has a single legal basis under the GDPR:</p>
       <ul>
         <li>
@@ -234,7 +281,7 @@ function Recipients() {
   const analytics = __GA4_ID__ !== null;
   return (
     <>
-      <LegalSection title="Who receives your data">
+      <LegalSection section={SECTIONS.recipients}>
         <p>
           We do not sell your data or share it with third parties, except where
           the law requires it (for example, to authorities or courts that ask
@@ -261,7 +308,7 @@ function Recipients() {
           ) : null}
         </ul>
       </LegalSection>
-      <LegalSection title="International transfers">
+      <LegalSection section={SECTIONS.transfers}>
         <p>
           These providers may process data outside your country, including in
           the United States and Singapore. When we transfer personal data
@@ -293,7 +340,7 @@ function Recipients() {
 function Retention() {
   const analytics = __GA4_ID__ !== null;
   return (
-    <LegalSection title="How long we keep it">
+    <LegalSection section={SECTIONS.retention}>
       <ul>
         <li>
           Enquiries and bookings, with their source data, the record of the
@@ -349,7 +396,7 @@ function Retention() {
 function Rights() {
   return (
     <>
-      <LegalSection title="Your rights">
+      <LegalSection section={SECTIONS.rights}>
         <p>
           Under the PDPA you can ask us for access to your personal data and how
           we have used it, ask us to correct it, and withdraw your consent. We
@@ -376,7 +423,7 @@ function Rights() {
           the data protection authority of the country where you live or work.
         </p>
       </LegalSection>
-      <LegalSection title="Security">
+      <LegalSection section={SECTIONS.security}>
         <p>
           We protect your data with reasonable security arrangements: the site
           only works over encrypted connections (HTTPS), only the owner can open
@@ -384,14 +431,14 @@ function Rights() {
           keep only the data we need, for the periods above.
         </p>
       </LegalSection>
-      <LegalSection title="Children">
+      <LegalSection section={SECTIONS.children}>
         <p>
           Our services are for businesses and professionals. We do not knowingly
           collect personal data from children; if you are under 18, please do
           not send us personal data through this site.
         </p>
       </LegalSection>
-      <LegalSection title="Cookies">
+      <LegalSection section={SECTIONS.cookies}>
         <p>
           The cookies and similar technologies we use are described in our{' '}
           <a href={pagePath('en', 'cookies')} className={TEXT_LINK}>
@@ -400,7 +447,7 @@ function Rights() {
           .
         </p>
       </LegalSection>
-      <LegalSection title="Changes to this policy">
+      <LegalSection section={SECTIONS.changes}>
         <p>
           If we change this policy, we will publish the new version here and
           update the date above.

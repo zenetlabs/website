@@ -1,11 +1,34 @@
 // TODO(albert): counsel sign-off of the 2026-11-05 draft
-import { LegalPage, LegalSection } from '@/components/legal-page';
+import {
+  LegalPage,
+  LegalSection,
+  type LegalSectionRef,
+} from '@/components/legal-page';
 import { TEXT_LINK } from '@/components/ui';
 import type { PublishedEntity } from '@/content/types';
 import { describeEntity } from '@/lib/content';
 import { legalClausesFor } from '@/lib/legal-clauses';
 import { pagePath } from '@/lib/page-registry';
 import { PUBLIC_EMAIL } from '@/lib/site';
+
+const SECTIONS = {
+  identity: { id: 'datos-identificativos', title: 'Datos identificativos' },
+  object: { id: 'objeto', title: 'Objeto' },
+  prices: { id: 'precios', title: 'Precios' },
+  terms: { id: 'condiciones-de-uso', title: 'Condiciones de uso' },
+  ip: {
+    id: 'propiedad-intelectual',
+    title: 'Propiedad intelectual e industrial',
+  },
+  liability: { id: 'responsabilidad', title: 'Responsabilidad' },
+  links: { id: 'enlaces', title: 'Enlaces' },
+  data: { id: 'proteccion-de-datos', title: 'Protección de datos y cookies' },
+  law: {
+    id: 'legislacion-aplicable',
+    title: 'Legislación aplicable y jurisdicción',
+  },
+  changes: { id: 'cambios', title: 'Cambios' },
+} as const satisfies Record<string, LegalSectionRef>;
 
 export function LegalNoticeEs({
   title,
@@ -15,13 +38,16 @@ export function LegalNoticeEs({
   entity: PublishedEntity;
 }) {
   const legalEs = legalClausesFor(entity);
+  const contents = Object.values(SECTIONS);
 
   return (
     <LegalPage
+      locale="es"
+      contents={contents}
       title={title}
       updated="Última actualización: 5 de noviembre de 2026"
     >
-      <LegalSection title="Datos identificativos">
+      <LegalSection section={SECTIONS.identity}>
         <p>
           En cumplimiento del artículo 10 de la Ley 34/2002, de servicios de la
           sociedad de la información y de comercio electrónico (LSSI-CE), te
@@ -40,7 +66,7 @@ export function LegalNoticeEs({
           .
         </p>
       </LegalSection>
-      <LegalSection title="Objeto">
+      <LegalSection section={SECTIONS.object}>
         <p>
           Este sitio web presenta los servicios de consultoría de IA de Zenet
           Labs (formación, implementación de agentes y automatizaciones,
@@ -51,7 +77,7 @@ export function LegalNoticeEs({
           aparte. El titular no está adherido a ningún código de conducta.
         </p>
       </LegalSection>
-      <LegalSection title="Precios">
+      <LegalSection section={SECTIONS.prices}>
         <p>
           Los precios que se muestran en este sitio web están expresados en
           euros y no incluyen el IVA ni otros impuestos indirectos aplicables.
@@ -68,7 +94,7 @@ export function LegalNoticeEs({
           </p>
         ) : null}
       </LegalSection>
-      <LegalSection title="Condiciones de uso">
+      <LegalSection section={SECTIONS.terms}>
         <p>
           El acceso al sitio es gratuito y no requiere registro. Te comprometes
           a usarlo de forma lícita y de buena fe: sin dañar el sitio ni sus
@@ -78,7 +104,7 @@ export function LegalNoticeEs({
           limitar el acceso de quien incumpla estas condiciones.
         </p>
       </LegalSection>
-      <LegalSection title="Propiedad intelectual e industrial">
+      <LegalSection section={SECTIONS.ip}>
         <p>
           Los contenidos, el diseño, el logotipo y el código de este sitio
           pertenecen al titular o a sus licenciantes y están protegidos por la
@@ -90,7 +116,7 @@ export function LegalNoticeEs({
           identificar sus productos.
         </p>
       </LegalSection>
-      <LegalSection title="Responsabilidad">
+      <LegalSection section={SECTIONS.liability}>
         <p>
           La información del sitio es de carácter general y no constituye
           asesoramiento profesional, fiscal ni jurídico. El titular procura que
@@ -100,7 +126,7 @@ export function LegalNoticeEs({
           permita excluir esa responsabilidad.
         </p>
       </LegalSection>
-      <LegalSection title="Enlaces">
+      <LegalSection section={SECTIONS.links}>
         <p>
           El sitio enlaza a productos que opera el titular y a sitios de
           terceros. El titular no controla los sitios de terceros ni responde de
@@ -108,7 +134,7 @@ export function LegalNoticeEs({
           con diligencia (art. 17 de la LSSI).
         </p>
       </LegalSection>
-      <LegalSection title="Protección de datos y cookies">
+      <LegalSection section={SECTIONS.data}>
         <p>
           Consulta cómo tratamos tus datos en la{' '}
           <a href={pagePath('es', 'privacy')} className={TEXT_LINK}>
@@ -121,10 +147,10 @@ export function LegalNoticeEs({
           .
         </p>
       </LegalSection>
-      <LegalSection title="Legislación aplicable y jurisdicción">
+      <LegalSection section={SECTIONS.law}>
         <p>{legalEs.governingLaw}</p>
       </LegalSection>
-      <LegalSection title="Cambios">
+      <LegalSection section={SECTIONS.changes}>
         <p>
           Podemos actualizar este aviso legal. Publicaremos la nueva versión
           aquí y actualizaremos la fecha de arriba.

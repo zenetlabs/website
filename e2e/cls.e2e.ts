@@ -1,25 +1,10 @@
 import { expect, type Page, test } from '@playwright/test';
-import { gotoHydrated, PAGE_TYPE_URLS } from './helpers';
+import { gotoHydrated, OBSERVER, PAGE_TYPE_URLS } from './helpers';
 
 const WIDTHS = [
   { width: 390, height: 844 },
   { width: 1440, height: 900 },
 ] as const;
-
-const OBSERVER = `
-  window.__layoutShift = 0;
-  new PerformanceObserver((list) => {
-    for (const entry of list.getEntries()) {
-      if (!entry.hadRecentInput) window.__layoutShift += entry.value;
-    }
-  }).observe({ type: 'layout-shift', buffered: true });
-`;
-
-declare global {
-  interface Window {
-    __layoutShift?: number;
-  }
-}
 
 async function scrollThrough(page: Page) {
   const height = await page.evaluate(() => document.body.scrollHeight);

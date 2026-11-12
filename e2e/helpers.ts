@@ -7,6 +7,21 @@ import { decodeEntities, tidy } from '../src/lib/markdown';
 import type { ServicePageId } from '../src/lib/page-registry';
 import { G5 } from '../test/calculator-fixtures';
 
+export const OBSERVER = `
+  window.__layoutShift = 0;
+  new PerformanceObserver((list) => {
+    for (const entry of list.getEntries()) {
+      if (!entry.hadRecentInput) window.__layoutShift += entry.value;
+    }
+  }).observe({ type: 'layout-shift', buffered: true });
+`;
+
+declare global {
+  interface Window {
+    __layoutShift?: number;
+  }
+}
+
 export const SERVICES_HUB = { en: '/services', es: '/es/servicios' } as const;
 
 export const SERVICE_PAIRS = {

@@ -1,5 +1,9 @@
 // TODO(albert): counsel sign-off of the 2026-11-05 draft
 import { LegalSection } from '@/components/legal-page';
+import {
+  ASSISTANT_SECTION,
+  VOICE_SECTION,
+} from '@/routes/{-$locale}/-legal/privacy-extras-sections';
 
 // The parts of the privacy page that depend on a flagged feature, so the page
 // itself reads straight through. Each renders nothing while its feature is dark.
@@ -7,7 +11,7 @@ import { LegalSection } from '@/components/legal-page';
 export function AssistantSection() {
   if (!__ASSISTANT__) return null;
   return (
-    <LegalSection title="El asistente de la web">
+    <LegalSection section={ASSISTANT_SECTION.es}>
       <p>
         Nuestra web tiene un asistente de IA. Antes de que le escribas, te
         indica que es un sistema de IA y no una persona (art. 50 del Reglamento
@@ -48,7 +52,7 @@ export function AssistantSection() {
 export function VoiceSection() {
   if (!__VOICE__) return null;
   return (
-    <LegalSection title="Llamadas de voz">
+    <LegalSection section={VOICE_SECTION.es}>
       <p>
         Antes de empezar una llamada de voz con el asistente, te indicamos que
         hablarás con un sistema de IA y que la voz que oirás está generada por

@@ -1,5 +1,9 @@
 // TODO(albert): counsel sign-off of the 2026-11-05 draft
-import { LegalPage, LegalSection } from '@/components/legal-page';
+import {
+  LegalPage,
+  LegalSection,
+  type LegalSectionRef,
+} from '@/components/legal-page';
 import { TEXT_LINK } from '@/components/ui';
 import type { PublishedEntity, SpanishLegalClauses } from '@/content/types';
 import { describeEntity } from '@/lib/content';
@@ -20,6 +24,34 @@ import {
   VoiceTransfer,
   WebMcpUse,
 } from '@/routes/{-$locale}/-legal/privacy-extras-es';
+import {
+  ASSISTANT_SECTION,
+  VOICE_SECTION,
+} from '@/routes/{-$locale}/-legal/privacy-extras-sections';
+
+const SECTIONS = {
+  responsible: {
+    id: 'responsable',
+    title: 'Quién es el responsable de tus datos',
+  },
+  datos: {
+    id: 'datos-que-recogemos',
+    title: 'Qué datos recogemos y para qué',
+  },
+  store: { id: 'donde-los-guardamos', title: 'Dónde los guardamos' },
+  basis: { id: 'base-juridica', title: 'Base jurídica' },
+  recipients: { id: 'destinatarios', title: 'Quién recibe tus datos' },
+  transfers: {
+    id: 'transferencias-internacionales',
+    title: 'Transferencias internacionales',
+  },
+  retention: { id: 'conservacion', title: 'Cuánto tiempo los conservamos' },
+  rights: { id: 'tus-derechos', title: 'Tus derechos' },
+  security: { id: 'seguridad', title: 'Seguridad' },
+  children: { id: 'menores', title: 'Menores de edad' },
+  cookies: { id: 'cookies', title: 'Cookies' },
+  changes: { id: 'cambios', title: 'Cambios en esta política' },
+} as const satisfies Record<string, LegalSectionRef>;
 
 const EMAIL = (
   <a href={`mailto:${PUBLIC_EMAIL}`} className={TEXT_LINK}>
@@ -35,13 +67,31 @@ export function PrivacyEs({
   entity: PublishedEntity;
 }) {
   const legalEs = legalClausesFor(entity);
+  const contents = [
+    SECTIONS.responsible,
+    SECTIONS.datos,
+    SECTIONS.store,
+    ...(__ASSISTANT__ ? [ASSISTANT_SECTION.es] : []),
+    ...(__VOICE__ ? [VOICE_SECTION.es] : []),
+    SECTIONS.basis,
+    SECTIONS.recipients,
+    SECTIONS.transfers,
+    SECTIONS.retention,
+    SECTIONS.rights,
+    SECTIONS.security,
+    SECTIONS.children,
+    SECTIONS.cookies,
+    SECTIONS.changes,
+  ];
 
   return (
     <LegalPage
+      locale="es"
+      contents={contents}
       title={title}
       updated="Última actualización: 10 de noviembre de 2026"
     >
-      <LegalSection title="Quién es el responsable de tus datos">
+      <LegalSection section={SECTIONS.responsible}>
         <p>{describeEntity(legalEs.controller, entity, 'es')}</p>
         <p>
           {legalEs.dataProtectionOfficer} Para cualquier cuestión sobre
@@ -55,7 +105,7 @@ export function PrivacyEs({
         </p>
       </LegalSection>
       <Collection />
-      <LegalSection title="Dónde los guardamos">
+      <LegalSection section={SECTIONS.store}>
         <p>
           Guardamos cada consulta, y el registro de los correos que enviamos
           sobre ella, en una base de datos de Cloudflare ubicada en la Unión
@@ -80,7 +130,7 @@ type Parts = { legalEs: SpanishLegalClauses };
 function Collection() {
   const analytics = __GA4_ID__ !== null;
   return (
-    <LegalSection title="Qué datos recogemos y para qué">
+    <LegalSection section={SECTIONS.datos}>
       <p>
         Del formulario de contacto recogemos lo que escribes en él: tu nombre,
         tu correo electrónico, tu empresa (opcional) y tu mensaje. Los usamos
@@ -176,7 +226,7 @@ function Collection() {
 function Bases({ legalEs }: Parts) {
   const analytics = __GA4_ID__ !== null;
   return (
-    <LegalSection title="Base jurídica">
+    <LegalSection section={SECTIONS.basis}>
       <p>Tratamos tus datos con estas bases jurídicas, una por finalidad:</p>
       <ul>
         <li>
@@ -225,7 +275,7 @@ function Recipients({ legalEs }: Parts) {
   const analytics = __GA4_ID__ !== null;
   return (
     <>
-      <LegalSection title="Quién recibe tus datos">
+      <LegalSection section={SECTIONS.recipients}>
         <p>
           No vendemos tus datos ni los cedemos a terceros, salvo obligación
           legal (por ejemplo, a las autoridades o a los juzgados que los
@@ -251,7 +301,7 @@ function Recipients({ legalEs }: Parts) {
           ) : null}
         </ul>
       </LegalSection>
-      <LegalSection title="Transferencias internacionales">
+      <LegalSection section={SECTIONS.transfers}>
         <p>
           Algunos de estos proveedores pueden tratar datos fuera del Espacio
           Económico Europeo, {legalEs.transferPlaces}. Esas transferencias se
@@ -282,7 +332,7 @@ function Recipients({ legalEs }: Parts) {
 function Retention({ legalEs }: Parts) {
   const analytics = __GA4_ID__ !== null;
   return (
-    <LegalSection title="Cuánto tiempo los conservamos">
+    <LegalSection section={SECTIONS.retention}>
       <ul>
         <li>
           Consultas y reservas, con sus datos de origen, el registro de tu
@@ -342,7 +392,7 @@ function Retention({ legalEs }: Parts) {
 function Rights({ legalEs }: Parts) {
   return (
     <>
-      <LegalSection title="Tus derechos">
+      <LegalSection section={SECTIONS.rights}>
         <p>
           Puedes ejercer en cualquier momento, y de forma gratuita, tus derechos
           de acceso, rectificación, supresión, limitación del tratamiento,
@@ -365,7 +415,7 @@ function Rights({ legalEs }: Parts) {
           ante una autoridad de control: {legalEs.authorities}
         </p>
       </LegalSection>
-      <LegalSection title="Seguridad">
+      <LegalSection section={SECTIONS.security}>
         <p>
           Aplicamos medidas técnicas y organizativas adecuadas al riesgo (art.
           32 del RGPD): el sitio solo funciona con conexiones cifradas (HTTPS),
@@ -374,7 +424,7 @@ function Rights({ legalEs }: Parts) {
           que necesitamos y durante los plazos indicados.
         </p>
       </LegalSection>
-      <LegalSection title="Menores de edad">
+      <LegalSection section={SECTIONS.children}>
         <p>
           Nuestros servicios se dirigen a empresas y profesionales. No recogemos
           de forma consciente datos de menores de 14 años (art. 7 de la
@@ -382,7 +432,7 @@ function Rights({ legalEs }: Parts) {
           través de este sitio.
         </p>
       </LegalSection>
-      <LegalSection title="Cookies">
+      <LegalSection section={SECTIONS.cookies}>
         <p>
           Qué cookies y tecnologías similares usamos se explica en la{' '}
           <a href={pagePath('es', 'cookies')} className={TEXT_LINK}>
@@ -391,7 +441,7 @@ function Rights({ legalEs }: Parts) {
           .
         </p>
       </LegalSection>
-      <LegalSection title="Cambios en esta política">
+      <LegalSection section={SECTIONS.changes}>
         <p>
           Si cambiamos esta política, publicaremos la nueva versión aquí y
           actualizaremos la fecha de arriba.

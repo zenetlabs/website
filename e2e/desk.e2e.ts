@@ -4,24 +4,10 @@ import {
   ASSISTANT_PUBLISHED,
   BOOKING_PUBLISHED,
   gotoHydrated,
+  OBSERVER,
 } from './helpers';
 
 const { desk } = en;
-
-const OBSERVER = `
-  window.__layoutShift = 0;
-  new PerformanceObserver((list) => {
-    for (const entry of list.getEntries()) {
-      if (!entry.hadRecentInput) window.__layoutShift += entry.value;
-    }
-  }).observe({ type: 'layout-shift', buffered: true });
-`;
-
-declare global {
-  interface Window {
-    __layoutShift?: number;
-  }
-}
 
 function chatDialog(page: Page) {
   return page.locator('dialog[data-chat-panel]');
