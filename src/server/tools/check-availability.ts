@@ -2,7 +2,12 @@ import { z } from 'zod';
 import { DEFAULT_ZONE } from '@/content/booking-rules';
 import { locales } from '@/lib/i18n';
 import { formatSlotLabel } from '@/lib/slot-format';
-import { canonicalZone, isTimeZone, zonedToInstant } from '@/lib/slots';
+import {
+  canonicalZone,
+  isTimeZone,
+  zonedIso,
+  zonedToInstant,
+} from '@/lib/slots';
 import { availability } from '@/server/booking';
 import { contactFor, contactSchema } from '@/server/tools/contact';
 import { defineTool, isTestContext } from '@/server/tools/types';
@@ -50,8 +55,8 @@ const output = z.discriminatedUnion('status', [
 export const checkAvailability = defineTool({
   name: 'check_availability',
   description: {
-    en: 'Returns free 30-minute call slots with Zenet Labs, optionally between two dates in a time zone. Only offer times returned by this tool.',
-    es: 'Devuelve las horas libres para una llamada de 30 minutos con Zenet Labs, opcionalmente entre dos fechas en una zona horaria. Ofrece solo horas que devuelva esta herramienta.',
+    en: "Returns free 30-minute call slots with Zenet Labs, optionally between two dates in a time zone. Each start is already in the visitor's time zone, with its offset, and its label says the same time in words. Only offer times returned by this tool, and book one by copying its start exactly as written.",
+    es: 'Devuelve las horas libres para una llamada de 30 minutos con Zenet Labs, opcionalmente entre dos fechas en una zona horaria. Cada start ya está en la zona horaria del visitante, con su desfase, y su label dice la misma hora en palabras. Ofrece solo horas que devuelva esta herramienta y, para reservar una, copia su start tal cual está escrito.',
   },
   input: z.object({
     from: z.iso
@@ -90,8 +95,8 @@ export const checkAvailability = defineTool({
       status: 'ok',
       timeZone: zone,
       slots: result.slots.slice(0, SLOT_LIMIT).map(({ start, end }) => ({
-        start: new Date(start).toISOString(),
-        end: new Date(end).toISOString(),
+        start: zonedIso(start, zone),
+        end: zonedIso(end, zone),
         label: formatSlotLabel(locale, start, zone),
       })),
       more: result.slots.length > SLOT_LIMIT,

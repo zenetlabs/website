@@ -77,6 +77,20 @@ function wallClock(instant: number, zone: string): number {
   return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute);
 }
 
+// An instant as ISO 8601 in the zone's own wall clock with its offset
+// ("2026-11-17T17:00:00+08:00"): the same moment as the UTC form, but a reader
+// can't take its hour for the visitor's. Minute precision, as slots are.
+export function zonedIso(instant: number, zone: string): string {
+  const minute = Math.floor(instant / 60_000) * 60_000;
+  const p = zonedParts(minute, zone);
+  const wall = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute);
+  const offset = Math.round((wall - minute) / 60_000);
+  const sign = offset < 0 ? '-' : '+';
+  const abs = Math.abs(offset);
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${dateKey(p)}T${pad(p.hour)}:${pad(p.minute)}:00${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
+}
+
 export function zonedToInstant(
   date: LocalDate,
   minutes: number,

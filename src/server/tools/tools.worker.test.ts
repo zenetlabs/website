@@ -258,10 +258,55 @@ describe('check_availability', () => {
     const result = SLOTS_RESULT.parse(outcome.result);
     expect(result).toMatchObject({ timeZone: 'Asia/Singapore', more: true });
     expect(result.slots).toHaveLength(30);
+    // The start is the visitor's wall clock with its offset, so the hour in it
+    // is the hour in the label; it is the same instant as 09:00 UTC.
     expect(result.slots[0]).toEqual({
-      start: '2027-01-05T09:00:00.000Z',
-      end: '2027-01-05T09:30:00.000Z',
+      start: '2027-01-05T17:00:00+08:00',
+      end: '2027-01-05T17:30:00+08:00',
       label: 'Tuesday 5 January, 5:00 pm',
+    });
+    expect(Date.parse(result.slots[0]?.start ?? '')).toBe(
+      Date.UTC(2027, 0, 5, 9),
+    );
+  });
+
+  it.each([
+    [
+      'Europe/Madrid',
+      '2027-01-05T10:00:00+01:00',
+      'Tuesday 5 January, 10:00 am',
+    ],
+    [
+      'Pacific/Honolulu',
+      '2027-01-04T23:00:00-10:00',
+      'Monday 4 January, 11:00 pm',
+    ],
+  ])(
+    'writes each start in %s with its offset, matching the label',
+    async (timeZone, start, label) => {
+      const outcome = await call('check_availability', { timeZone });
+      if (!outcome.ok) throw new Error('expected result');
+      const result = SLOTS_RESULT.parse(outcome.result);
+      expect(result.slots[0]).toMatchObject({ start, label });
+    },
+  );
+
+  it('takes an offset start back as the same slot in book_meeting', async () => {
+    const offered = await call('check_availability', {
+      timeZone: 'Asia/Singapore',
+    });
+    if (!offered.ok) throw new Error('expected result');
+    const [first] = SLOTS_RESULT.parse(offered.result).slots;
+    const booked = await call('book_meeting', {
+      slot: first?.start,
+      name: 'Ada Lovelace',
+      email: 'ada@example.com',
+      topic: 'We want to automate our inbox triage.',
+      timeZone: 'Asia/Singapore',
+    });
+    expect(booked).toMatchObject({
+      ok: true,
+      result: { status: 'pending', start: '2027-01-05T09:00:00.000Z' },
     });
   });
 

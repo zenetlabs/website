@@ -520,7 +520,7 @@ describe('the stream', () => {
   it('tells the model an invented slot is invalid and emits no proposal', async () => {
     const spy = scripted(
       call('book_meeting', {
-        slot: '2027-01-05T09:00:00.000Z',
+        slot: '2027-01-05T09:07:00.000Z',
         topic: 'Automation diagnostic call',
       }),
       say('Sorry, that time is not available.'),
@@ -956,6 +956,241 @@ describe('the stream', () => {
     expect(next.doStreamCalls[0]?.toolChoice).not.toEqual({
       type: 'tool',
       toolName: 'check_availability',
+    });
+  });
+
+  describe('the Singapore "I meant Tuesday" turn', () => {
+    const SINGAPORE_TUESDAY = /^2027-01-05T\d\d:\d\d:00\+08:00$/;
+    const startsIn = (prompt: unknown) =>
+      [...JSON.stringify(prompt).matchAll(/"start":"([^"]+)"/g)].map(
+        (match) => match[1] ?? '',
+      );
+
+    async function showNextWeek(): Promise<string> {
+      model = scripted(
+        call('check_availability', {}),
+        say('The free times next week are below; which one suits you?'),
+      );
+      const { id } = await start("I'd like a call next week");
+      return id;
+    }
+
+    it('looks at Tuesday first, then answers an invented 09:00 with the free Tuesday times and never says the calendar is out', async () => {
+      const id = await showNextWeek();
+      let recovered: unknown = null;
+      const spy = scripted(
+        call('check_availability', {}),
+        // A 09:00 read off a UTC start as Singapore time: never offered.
+        call('book_meeting', {
+          slot: '2027-01-05T09:00:00+08:00',
+          topic: 'Automation diagnostic call',
+        }),
+        (prompt) => {
+          recovered = prompt;
+          return say(
+            "I can't see the calendar right now, so I can't propose a Tuesday slot. ",
+            'Please use the contact form or write to hello@zenetlabs.com.',
+          );
+        },
+      );
+      model = spy;
+      const list = await events(
+        await later(id, 'Sorry, I made a mistake, I meant Tuesday.'),
+      );
+      expect(spy.doStreamCalls[0]?.toolChoice).toEqual({
+        type: 'tool',
+        toolName: 'check_availability',
+      });
+      const shown = startsIn(spy.doStreamCalls[1]?.prompt).slice(-3);
+      expect(shown.length).toBeGreaterThan(0);
+      for (const value of shown) expect(value).toMatch(SINGAPORE_TUESDAY);
+      expect(list.some((event) => event.t === 'confirm_booking')).toBe(false);
+      const missed = JSON.stringify(recovered);
+      expect(missed).toContain('invalid_slot');
+      expect(missed).toContain('That time is not free');
+      const text = textOf(list);
+      expect(text).toBe(
+        'The free times I have are shown below; pick the one that suits you. ',
+      );
+      expect(text).not.toMatch(/calendar|contact form|hello@/i);
+      const chips = list.filter((event) => event.t === 'slots');
+      expect(chips.length).toBeGreaterThan(0);
+      for (const event of chips) {
+        if (event.t !== 'slots') continue;
+        expect(event.zone).toBe('Asia/Singapore');
+        for (const at of event.starts) {
+          expect(new Date(at + 8 * 3_600_000).getUTCDate()).toBe(5);
+        }
+      }
+      expect(logs).toContainEqual([
+        'chat: guard',
+        { session: expect.any(String), kind: 'calendar' },
+      ]);
+    });
+
+    it('shows the free Tuesday times as chips even when the model skips the check and books an invented time', async () => {
+      const id = await showNextWeek();
+      model = scripted(
+        call('book_meeting', {
+          slot: '2027-01-05T09:00:00+08:00',
+          topic: 'Automation diagnostic call',
+        }),
+        say('That time is not free; the free Tuesday times are below.'),
+      );
+      const list = await events(await later(id, 'Tuesday at 9 am please'));
+      const chips = list.filter((event) => event.t === 'slots');
+      expect(chips).toHaveLength(1);
+      expect(list.some((event) => event.t === 'confirm_booking')).toBe(false);
+      expect(textOf(list)).toBe(
+        'That time is not free; the free Tuesday times are below.',
+      );
+    });
+
+    it('proposes a start copied from the Tuesday times, and the card still asks the visitor', async () => {
+      const id = await showNextWeek();
+      model = scripted(
+        call('check_availability', {}),
+        (prompt) =>
+          call('book_meeting', {
+            slot: startsIn(prompt).at(-1) ?? '',
+            topic: 'Automation diagnostic call',
+          }),
+        say('Fill in your details in the card below.'),
+      );
+      const list = await events(
+        await later(id, 'Sorry, I made a mistake, I meant Tuesday.'),
+      );
+      const card = list.find((event) => event.t === 'confirm_booking');
+      expect(card).toBeDefined();
+      if (card?.t !== 'confirm_booking') return;
+      expect(card.proposal.slot).toMatch(/^2027-01-05T\d\d:\d\d:00\.000Z$/);
+      expect(
+        await DB.prepare('SELECT COUNT(*) AS n FROM bookings').first(),
+      ).toEqual({ n: 0 });
+    });
+
+    it('ends the scripted wrong-zone booking on the chips pointer, with no card', async () => {
+      const { list } = await start('Book me in the wrong zone');
+      expect(textOf(list)).toBe(
+        'The free times I have are shown below; pick the one that suits you. ',
+      );
+      expect(list.some((event) => event.t === 'confirm_booking')).toBe(false);
+      expect(
+        list.filter((event) => event.t === 'slots').length,
+      ).toBeGreaterThan(0);
+    });
+
+    it('keeps the chips on the missed day when earlier times this turn already filled eight', async () => {
+      model = scripted(
+        call('check_availability', {}),
+        // Thursday 14 January, 17:07 in Singapore: never offered, off the grid.
+        call('book_meeting', {
+          slot: '2027-01-14T17:07:00+08:00',
+          topic: 'Automation diagnostic call',
+        }),
+        say('That time is not free; the free times that day are below.'),
+      );
+      const { list } = await start('a call please');
+      const chips = list.filter((event) => event.t === 'slots');
+      expect(chips).toHaveLength(2);
+      const last = chips.at(-1);
+      if (last?.t !== 'slots') throw new Error('expected chips');
+      expect(last.starts.length).toBeGreaterThan(0);
+      for (const at of last.starts) {
+        expect(new Date(at + 8 * 3_600_000).getUTCDate()).toBe(14);
+      }
+    });
+
+    it('lets an honest "couldn\'t check the calendar" through when the lookup fails and no chips show', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      world.freebusyStatus = 500;
+      const spy = scripted(
+        call('book_meeting', {
+          slot: '2027-01-05T09:07:00+08:00',
+          topic: 'Automation diagnostic call',
+        }),
+        say(
+          "I couldn't check the calendar just now. ",
+          'You can use the contact form or write to hello@zenetlabs.com.',
+        ),
+      );
+      model = spy;
+      const { list } = await start('a call on Tuesday at 9:07');
+      expect(JSON.stringify(spy.doStreamCalls[1]?.prompt)).toContain(
+        'the calendar could not be checked',
+      );
+      expect(list.some((event) => event.t === 'slots')).toBe(false);
+      expect(textOf(list)).toBe(
+        "I couldn't check the calendar just now. You can use the contact form or write to hello@zenetlabs.com.",
+      );
+    });
+
+    it.each([
+      'Sorry, I made a mistake, I meant Tuesday.',
+      'Actually, Tuesday would be better',
+      'Perdón, quería decir el martes',
+      'Tuesday?',
+    ])('forces a look at the day for %j', async (message) => {
+      const id = await showNextWeek();
+      const spy = scripted(call('check_availability', {}), say('Below.'));
+      model = spy;
+      await events(await later(id, message));
+      expect(spy.doStreamCalls[0]?.toolChoice).toEqual({
+        type: 'tool',
+        toolName: 'check_availability',
+      });
+    });
+
+    it('does not force a look for a day said in passing', async () => {
+      const id = await showNextWeek();
+      const spy = scripted(say('Yes, we connect Holded.'));
+      model = spy;
+      await events(
+        await later(id, 'We go live Monday, can you integrate Holded?'),
+      );
+      expect(spy.doStreamCalls[0]?.toolChoice).not.toEqual({
+        type: 'tool',
+        toolName: 'check_availability',
+      });
+    });
+
+    it('does not force a look once a booking card was proposed', async () => {
+      const firstStart = (prompt: unknown) =>
+        /"start":"([^"]+)"/.exec(JSON.stringify(prompt))?.[1] ?? '';
+      model = scripted(
+        call('check_availability', {}),
+        (prompt) =>
+          call('book_meeting', {
+            slot: firstStart(prompt),
+            topic: 'Automation diagnostic call',
+          }),
+        say('Fill in the card below.'),
+      );
+      const { id, list } = await start('a call please');
+      expect(list.some((event) => event.t === 'confirm_booking')).toBe(true);
+      for (const message of [
+        'Great, talk to you on Tuesday!',
+        'Actually, Tuesday instead?',
+      ]) {
+        const spy = scripted(say('Talk soon.'));
+        model = spy;
+        await events(await later(id, message));
+        expect(spy.doStreamCalls[0]?.toolChoice).not.toEqual({
+          type: 'tool',
+          toolName: 'check_availability',
+        });
+      }
+    });
+
+    it('leaves the model free when the visitor names a time with the day', async () => {
+      const id = await showNextWeek();
+      const spy = scripted(say('Fine.'));
+      model = spy;
+      await events(await later(id, 'Tuesday at 5:30 pm please'));
+      expect(spy.doStreamCalls[0]?.toolChoice).not.toEqual({
+        type: 'tool',
+        toolName: 'check_availability',
+      });
     });
   });
 

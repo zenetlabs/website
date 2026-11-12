@@ -142,6 +142,10 @@ const FAKE_TIME = ['fake time', 'hora falsa'];
 // Asks the calendar and names the day, leaving the times to the panel's
 // chips: the chips e2e.
 const FREE_TIMES = ['what times', 'qué horas'];
+// Asks the calendar, books a time it never returned (as a model converting a
+// zone does), then says the calendar can't be seen: the recovery e2e.
+const WRONG_ZONE = ['wrong zone', 'zona equivocada'];
+const OFF_GRID_MS = 7 * 60_000;
 
 function script({ es, question, results }: Reading): StreamPart[] {
   const [last] = results.slice(-1);
@@ -151,6 +155,16 @@ function script({ es, question, results }: Reading): StreamPart[] {
         ? 'Te propongo el domingo 1 de marzo a las 03:17. Es una gran hora.'
         : 'How about Sunday 1 March at 3:17 am? It is a great time.',
     );
+  }
+  if (last?.tool === 'check_availability' && has(question, WRONG_ZONE)) {
+    const slots = slotsSchema.safeParse(last.value);
+    const first = slots.success ? slots.data.slots[0] : undefined;
+    return first === undefined
+      ? say(NO_CALENDAR[es ? 'es' : 'en'])
+      : call('book_meeting', {
+          slot: new Date(Date.parse(first.start) + OFF_GRID_MS).toISOString(),
+          topic: 'Automation diagnostic call',
+        });
   }
   if (last?.tool === 'check_availability' && has(question, FREE_TIMES)) {
     const slots = slotsSchema.safeParse(last.value);
@@ -186,6 +200,13 @@ function script({ es, question, results }: Reading): StreamPart[] {
           topic: 'Automation diagnostic call',
         });
   }
+  if (last?.tool === 'book_meeting' && has(question, WRONG_ZONE)) {
+    return say(
+      es
+        ? 'Ahora mismo no puedo ver la agenda. Usa el formulario de contacto.'
+        : "I can't see the calendar right now. Please use the contact form.",
+    );
+  }
   if (last?.tool === 'book_meeting') {
     return say(
       es
@@ -208,6 +229,7 @@ function script({ es, question, results }: Reading): StreamPart[] {
   }
   if (has(question, FAKE_TIME)) return call('check_availability', {});
   if (has(question, FREE_TIMES)) return call('check_availability', {});
+  if (has(question, WRONG_ZONE)) return call('check_availability', {});
   // The refusal said where it does not belong, and an inverted FAQ answer:
   // the server takes the first out and replaces the second.
   if (has(question, ['tokyo', 'tokio']))

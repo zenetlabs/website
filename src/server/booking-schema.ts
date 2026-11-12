@@ -19,7 +19,7 @@ export const bookingInputSchema = z.object({
   slot: z.iso
     .datetime({ offset: true })
     .describe(
-      'Exact start of a slot returned by check_availability (ISO 8601).',
+      'The start of a slot returned by check_availability, copied character for character (ISO 8601 with its offset). Never compute or convert a time.',
     ),
   name: singleLine(BOOKING_LIMITS.name)
     .min(1)

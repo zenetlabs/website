@@ -406,7 +406,9 @@ for (const locale of ['en', 'es'] as const) {
     expect(await fetched.text()).not.toContain('Lovelace');
     expect((await request.head(link, { maxRedirects: 0 })).status()).toBe(200);
     const mine = async () =>
-      (await googleEvents()).filter((event) => event.start.dateTime === slot);
+      (await googleEvents()).filter(
+        (event) => Date.parse(event.start.dateTime) === Date.parse(slot),
+      );
     expect(await mine()).toEqual([]);
 
     await gotoHydrated(page, link.replace(/^https?:\/\/[^/]+/, ''));
@@ -612,7 +614,9 @@ test('two parallel bookings of one slot give exactly one booked and one slot_tak
     reason: 'slot_taken',
   });
   expect(
-    (await googleEvents()).filter((event) => event.start.dateTime === slot),
+    (await googleEvents()).filter(
+      (event) => Date.parse(event.start.dateTime) === Date.parse(slot),
+    ),
   ).toHaveLength(0);
 });
 

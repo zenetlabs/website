@@ -2,6 +2,8 @@ import type { ModelMessage } from 'ai';
 import { describe, expect, it } from 'vitest';
 import { guardSentence } from '@/server/chat/guard';
 import {
+  abandonsCalendar,
+  namesTime,
   type OfferedSlot,
   repeatsBelow,
   slotFallback,
@@ -71,6 +73,130 @@ describe('slotsOf and toolSlots', () => {
       },
     ];
     expect(toolSlots(messages)).toEqual(SLOTS);
+  });
+
+  it('reads the free times a missed book_meeting answered with, not its other answers', () => {
+    const messages: ModelMessage[] = [
+      {
+        role: 'tool',
+        content: [
+          {
+            type: 'tool-result',
+            toolCallId: 'a',
+            toolName: 'book_meeting',
+            output: {
+              type: 'json',
+              value: { ...AVAILABILITY, status: 'invalid_slot' },
+            },
+          },
+          {
+            type: 'tool-result',
+            toolCallId: 'b',
+            toolName: 'book_meeting',
+            output: { type: 'json', value: { status: 'invalid_slot' } },
+          },
+          {
+            type: 'tool-result',
+            toolCallId: 'c',
+            toolName: 'book_meeting',
+            output: {
+              type: 'json',
+              value: { status: 'awaiting_confirmation' },
+            },
+          },
+        ],
+      },
+    ];
+    expect(toolSlots(messages)).toEqual(SLOTS);
+  });
+
+  it('reads a start written with the visitor offset as the same instant', () => {
+    expect(
+      slotsOf({
+        timeZone: 'Asia/Singapore',
+        slots: [
+          {
+            start: '2026-11-17T17:00:00+08:00',
+            end: '2026-11-17T17:30:00+08:00',
+          },
+        ],
+      }),
+    ).toEqual([
+      {
+        start: Date.UTC(2026, 10, 17, 9),
+        end: Date.UTC(2026, 10, 17, 9, 30),
+        zone: 'Asia/Singapore',
+      },
+    ]);
+  });
+});
+
+describe('namesTime', () => {
+  it.each([
+    'Tuesday at 5:30 pm please',
+    'The 17:00 one',
+    'Tuesday 5pm',
+    'el martes a las 5',
+    'martes a las 17:30',
+    'at noon on Tuesday',
+  ])('finds a time in %j', (message) => {
+    expect(namesTime(message)).toBe(true);
+  });
+
+  it.each([
+    'Sorry, I made a mistake, I meant Tuesday.',
+    'Perdón, quería decir el martes',
+    'Tuesday 17 November',
+    'next Tuesday or Wednesday',
+  ])('finds none in %j', (message) => {
+    expect(namesTime(message)).toBe(false);
+  });
+});
+
+describe('abandonsCalendar', () => {
+  it.each([
+    "I can't see the calendar right now, so I can't propose a Tuesday slot.",
+    'I’m unable to access the calendar at the moment.',
+    'I cannot check availability right now.',
+    'The calendar is unavailable at the moment.',
+    "I don't have access to the calendar right now.",
+    'There was an error checking availability.',
+    'The booking system is down at the moment.',
+    'Ahora mismo no puedo ver la agenda.',
+    'No tengo acceso a la agenda en este momento.',
+    'No he podido consultar la agenda.',
+    'La agenda no está disponible ahora mismo.',
+    'Ha habido un error al consultar el calendario.',
+  ])('reads %j as the calendar being out', (sentence) => {
+    expect(abandonsCalendar(sentence, false)).toBe(true);
+  });
+
+  it.each([
+    'Please use the contact form or write to hello@zenetlabs.com.',
+    'Puedes usar el formulario de contacto.',
+    'Write to hello@zenetlabs.com instead.',
+    'Use the contact page.',
+  ])('reads %j as a way out only after a missed booking', (sentence) => {
+    expect(abandonsCalendar(sentence, false)).toBe(false);
+    expect(abandonsCalendar(sentence, true)).toBe(true);
+  });
+
+  it.each([
+    "That time isn't free; the free Tuesday times are below.",
+    'Esa hora no está libre; las horas libres del martes están debajo.',
+    'Tuesday 5 January at 9:00 am is not available.',
+    "If you can't see a slot that suits you, pick another day.",
+    'Availability is below; scroll down to pick one.',
+    'The calendar shows 9:00 is not available, but 5:00 pm is.',
+    'Looking at the calendar, 5:07 pm is not available.',
+    'I narrowed it down to Tuesday.',
+    'En la agenda, esa hora no está libre.',
+    'No puedo reservar la llamada por ti, pero elige una hora de abajo.',
+    'La disponibilidad no está completa el martes, elige una hora.',
+    'Rellena el formulario de la tarjeta para pedirla.',
+    'Si no ves una hora que te vaya bien, elige otro día.',
+  ])('leaves %j alone', (sentence) => {
+    expect(abandonsCalendar(sentence, true)).toBe(false);
   });
 });
 
@@ -281,6 +407,45 @@ describe('the replacement while chips show the times', () => {
       expect(guarded.text).not.toMatch(/\d/);
     },
   );
+
+  it.each([
+    [
+      'en',
+      false,
+      "I can't see the calendar right now, so I can't propose a Tuesday slot. ",
+      'The free times I have are shown below; pick the one that suits you. ',
+    ],
+    [
+      'es',
+      false,
+      'Ahora mismo no puedo ver la agenda. ',
+      'Las horas libres que tengo están debajo; elige la que te vaya bien. ',
+    ],
+    [
+      'en',
+      true,
+      'Please use the contact form or write to hello@zenetlabs.com. ',
+      'The free times I have are shown below; pick the one that suits you. ',
+    ],
+  ] as const)(
+    'replaces a calendar the chips prove wrong with the pointer (%s, missed %s)',
+    (locale, missed, sentence, expected) => {
+      expect(
+        guardSentence(sentence, { ...base, locale, chips: true, missed }),
+      ).toEqual({ text: expected, guard: 'calendar' });
+    },
+  );
+
+  it('leaves the calendar sentence alone with no chips: it may be true', () => {
+    expect(
+      guardSentence("I can't see the calendar right now.", {
+        ...base,
+        locale: 'en',
+        chips: false,
+        missed: true,
+      }),
+    ).toEqual({ text: "I can't see the calendar right now.", guard: null });
+  });
 
   it('keeps listing the nearest times when no chips show (a proposal turn)', () => {
     expect(
