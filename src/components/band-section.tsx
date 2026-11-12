@@ -7,13 +7,11 @@ const BAND = sectionFrame('band');
 export function BandSection({
   id,
   labelledBy,
-  booking,
   containerClassName = '',
   children,
 }: {
   id?: string;
   labelledBy?: string;
-  booking?: 'open' | 'unavailable';
   containerClassName?: string;
   children: ReactNode;
 }) {
@@ -21,7 +19,6 @@ export function BandSection({
     <section
       id={id}
       aria-labelledby={labelledBy}
-      data-booking={booking}
       data-ground={BAND.ground}
       className={BAND.bg}
     >
