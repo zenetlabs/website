@@ -91,6 +91,13 @@ describe.each([
     ).toHaveAttribute('href', 'mailto:hello@zenetlabs.com');
   });
 
+  it('heads the card with the shared desk head', () => {
+    vi.stubGlobal('__ASSISTANT__', false);
+    view(NO_BOOKING);
+    const head = card().querySelector(':scope > .desk-head');
+    expect(head?.querySelector('.desk-id')).not.toBeNull();
+  });
+
   it('adds the times to the card while booking is on', () => {
     vi.stubGlobal('__ASSISTANT__', false);
     view(BOOKING);

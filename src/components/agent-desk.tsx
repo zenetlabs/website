@@ -26,20 +26,18 @@ import { voiceAvailable } from '@/lib/voice-entry';
 export function DeskHead({
   as: Heading,
   id,
-  className,
   title,
   badge,
   children,
 }: {
   as: 'h2' | 'h3';
   id?: string;
-  className: string;
   title: string;
   badge: string;
   children?: ReactNode;
 }) {
   return (
-    <div className={className}>
+    <div className="desk-head">
       <span aria-hidden="true" className="desk-mark" />
       <div className="desk-id">
         <Heading id={id} className="desk-name">
@@ -177,7 +175,6 @@ export function AgentDesk({
       <DeskHead
         as="h2"
         id="desk-title"
-        className="desk-head"
         title={words.title}
         badge={copy.intro.badge}
       >

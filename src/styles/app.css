@@ -117,7 +117,8 @@
     --duration-press: 160ms;
     --duration-hover: 160ms;
     --logo-h: 1.25rem;
-    --launcher-reserve: 5.5rem;
+    --launcher-inset: 1.5rem;
+    --launcher-reserve: calc(var(--launcher-inset) + 4rem);
     --consent-reserve: 13.5rem;
   }
 
@@ -306,7 +307,14 @@
 
   /* The home hero: copy on 5 columns, the desk on 7, one screen tall from lg */
   .hero-grid {
-    @apply grid grid-cols-[minmax(0,1fr)] gap-8 pt-9 pb-10 max-sm:gap-4 max-sm:pt-5 max-sm:pb-4 md:gap-10 md:py-16 lg:min-h-[calc(100svh-var(--header-h))] lg:grid-cols-12 lg:content-center lg:items-start lg:gap-6 lg:py-14;
+    --hero-pad: 3.5rem;
+    --hero-step: 2rem;
+    --hero-lead: 1.5rem;
+    @apply grid grid-cols-[minmax(0,1fr)] gap-8 pt-9 pb-10 max-sm:gap-4 max-sm:pt-5 max-sm:pb-4 md:gap-10 md:py-16 lg:min-h-[calc(100svh-var(--header-h))] lg:grid-cols-12 lg:content-center lg:items-start lg:gap-6 lg:py-(--hero-pad);
+  }
+
+  .hero-lead {
+    @apply mt-3 md:mt-(--hero-lead);
   }
 
   .tier-summary {
@@ -322,11 +330,11 @@
   }
 
   .hero-facts {
-    @apply mt-4 grid max-w-[34em] gap-1 text-ui-s md:gap-1.5 text-fg-soft md:mt-8;
+    @apply mt-4 grid max-w-[34em] gap-1 text-ui-s md:gap-1.5 text-fg-soft md:mt-(--hero-step);
   }
 
   .hero-actions {
-    @apply mt-5 flex flex-wrap items-center gap-3 md:mt-8;
+    @apply mt-5 flex flex-wrap items-center gap-3 md:mt-(--hero-step);
   }
 
   .offer-links {
@@ -893,7 +901,7 @@
     }
   }
 
-  /* The home process: a ruled rail whose first step is the ticket's stub, torn along a perforation */
+  /* The home process: a ruled rail whose first step is the ticket's stub, torn along a perforation (stroke shared with `.ticket-stub`) */
   .rail {
     @apply grid;
     counter-reset: step;
@@ -914,7 +922,7 @@
   }
 
   .rail > li:first-child {
-    @apply rounded-t-ticket border-t-0 border-b-2 border-dashed border-highlight bg-agent-soft p-4 md:rounded-l-ticket md:rounded-tr-none md:border-r-2 md:border-b-0 md:p-8;
+    @apply rounded-t-ticket border-t-0 border-b-2 bg-agent-soft p-4 md:rounded-l-ticket md:rounded-tr-none md:border-r-2 md:border-b-0 md:p-8;
   }
 
   .rail > li:first-child::before {
@@ -1033,7 +1041,7 @@
   }
 
   .launcher {
-    @apply fixed right-6 bottom-[calc(0.625rem+env(safe-area-inset-bottom))] z-30 inline-flex size-13 items-center justify-center rounded-button border border-transparent bg-agent text-agent-fg shadow-raised select-none lg:bottom-6 lg:max-xl:right-3 print:hidden;
+    @apply fixed right-(--launcher-inset) bottom-[calc(0.625rem+env(safe-area-inset-bottom))] z-30 inline-flex size-13 items-center justify-center rounded-button border border-transparent bg-agent text-agent-fg shadow-raised select-none lg:bottom-6 lg:max-xl:[--launcher-inset:0.75rem] print:hidden;
     transition: background-color var(--duration-press) ease-out;
   }
 
@@ -1081,7 +1089,7 @@
       @apply bg-cta-hover;
     }
 
-    .desk-call-button:hover {
+    .voice-start:hover {
       @apply bg-agent-press;
     }
 
@@ -1127,7 +1135,7 @@
     .slot-chip:active,
     .chat-talk:active,
     .contact-book .slot-more:active,
-    .desk-call-button:active {
+    .voice-start:active {
       scale: 0.97;
     }
 
@@ -1135,29 +1143,8 @@
       scale: 0.94;
     }
 
-    .desk-chip,
-    .slot-chip {
-      transition:
-        border-color var(--duration-hover) ease,
-        background-color var(--duration-hover) ease,
-        scale var(--duration-press) var(--ease-out);
-    }
-
-    .desk-send,
-    .desk-call-button {
-      transition:
-        background-color var(--duration-press) ease-out,
-        scale var(--duration-press) var(--ease-out);
-    }
-
     .slot-more > .icon {
       transition: translate var(--duration-hover) var(--ease-out);
-    }
-
-    .contact-book .slot-more {
-      transition:
-        background-color var(--duration-press) ease-out,
-        scale var(--duration-press) var(--ease-out);
     }
   }
 
@@ -1172,15 +1159,27 @@
 
   /* The Agent Desk: the home hero's working product object */
   .desk {
+    --desk-pad: 1.25rem;
     @apply overflow-hidden rounded-card border border-hairline bg-surface shadow-raised;
   }
 
+  @media (width >= 48rem) {
+    .desk {
+      --desk-pad: 1.5rem;
+    }
+  }
+
   .desk-head {
-    @apply flex items-center gap-3 px-5 pt-4 max-sm:gap-2 max-sm:px-4 max-sm:pt-3 md:px-6;
+    @apply flex items-center gap-3;
   }
 
   .desk-id {
     @apply flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5 max-sm:gap-x-1.5;
+  }
+
+  /* The hero desk's head pads itself and tightens on a phone so the Call fits beside the name */
+  .desk > .desk-head {
+    @apply px-(--desk-pad) pt-4 max-sm:gap-2 max-sm:px-4 max-sm:pt-3;
   }
 
   .desk-mark,
@@ -1196,11 +1195,11 @@
     @apply text-ui-l font-semibold tracking-normal;
   }
 
-  .desk-head .desk-mark {
+  .desk .desk-mark {
     @apply max-sm:size-8;
   }
 
-  .desk-head .desk-name {
+  .desk .desk-name {
     @apply max-sm:text-ui-s;
   }
 
@@ -1209,7 +1208,7 @@
   }
 
   .desk-body {
-    @apply grid grid-cols-[minmax(0,1fr)] gap-3 px-5 py-4 max-sm:gap-2 max-sm:py-2.5 md:px-6 md:py-5;
+    @apply grid grid-cols-[minmax(0,1fr)] gap-3 px-(--desk-pad) py-4 max-sm:gap-2 max-sm:py-2.5 md:py-5;
   }
 
   .desk-bubble {
@@ -1218,7 +1217,7 @@
 
   /* One swipeable line of chips on a phone, wrapping from `sm` */
   .desk-chips {
-    @apply -mx-5 flex gap-2 overflow-x-auto overscroll-x-contain px-5 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0;
+    @apply -mx-(--desk-pad) flex gap-2 overflow-x-auto overscroll-x-contain px-(--desk-pad) sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0;
     scrollbar-width: none;
   }
 
@@ -1269,13 +1268,8 @@
     transition: background-color var(--duration-press) ease-out;
   }
 
-  .desk-call-button {
-    @apply inline-flex min-h-13 items-center justify-center gap-2.5 rounded-button bg-agent px-5 font-semibold text-agent-fg select-none;
-    transition: background-color var(--duration-press) ease-out;
-  }
-
   .desk-rail {
-    @apply grid grid-cols-[minmax(0,1fr)] gap-3 px-5 pt-2 pb-5 max-sm:pb-4 md:px-6;
+    @apply grid grid-cols-[minmax(0,1fr)] gap-3 px-(--desk-pad) pt-2 pb-5 max-sm:pb-4;
   }
 
   .slot-card,
@@ -1283,12 +1277,12 @@
     @apply grid grid-cols-[minmax(0,1fr)] gap-4;
   }
 
-  .close-desk-rail {
-    @apply mt-2 border-t border-hairline pt-6;
+  .close-desk {
+    --desk-pad: 1.5rem;
   }
 
-  .close-desk .desk-chips {
-    @apply max-sm:-mx-6 max-sm:px-6;
+  .close-desk-rail {
+    @apply mt-2 border-t border-hairline pt-6;
   }
 
   /* Never wraps from `sm`: a longer day and zone truncate instead of adding a line */
@@ -1366,6 +1360,30 @@
 
   .voice-stage[data-phase="live"] .voice-wave {
     @apply bg-agent text-agent-fg;
+  }
+
+  .voice-start {
+    @apply inline-flex min-h-13 items-center justify-center gap-2.5 rounded-button bg-agent px-5 font-semibold text-agent-fg select-none;
+    transition: background-color var(--duration-press) ease-out;
+  }
+
+  /* After the bases above, so the press scale eases instead of snapping */
+  @media (prefers-reduced-motion: no-preference) {
+    .desk-chip,
+    .slot-chip {
+      transition:
+        border-color var(--duration-hover) ease,
+        background-color var(--duration-hover) ease,
+        scale var(--duration-press) var(--ease-out);
+    }
+
+    .desk-send,
+    .voice-start,
+    .contact-book .slot-more {
+      transition:
+        background-color var(--duration-press) ease-out,
+        scale var(--duration-press) var(--ease-out);
+    }
   }
 
   .chat-head {
@@ -1652,7 +1670,13 @@
   }
 
   .ticket-stub {
-    @apply border-t-2 border-dashed border-highlight px-4 py-4 md:p-10 lg:border-t-0 lg:border-l-2;
+    @apply border-t-2 px-4 py-4 md:p-10 lg:border-t-0 lg:border-l-2;
+  }
+
+  /* The ticket's perforation: its stub, and the home rail's first step torn from it */
+  .ticket-stub,
+  .rail > li:first-child {
+    @apply border-dashed border-highlight;
   }
 
   /* Sized by the ticket's own width, so the price never clips (down to 320px) */
@@ -2203,18 +2227,24 @@ html[lang="es"] h1.text-display-1 {
   font-size: clamp(2.625rem, 1.75rem + 3.6vw, 4rem);
 }
 
-/* Short desktop screens: the hero steps down so its button stays above the consent banner.
-   Unlayered, so it beats the utilities and the Spanish rule above. */
-@media (min-width: 1024px) and (max-height: 860px) {
+/* Short desktop screens: the hero's tokens step down so its button stays above the consent banner.
+   Unlayered, so they beat the defaults. Same rem width as the `lg:` utilities that read them. */
+@media (width >= 64rem) and (max-height: 860px) {
   .hero-grid {
-    padding-block: 2.5rem;
+    --hero-pad: 2.5rem;
+    --hero-step: 1.5rem;
   }
+}
 
-  .hero-facts,
-  .hero-actions {
-    margin-top: 1.5rem;
+@media (width >= 64rem) and (max-height: 760px) {
+  .hero-grid {
+    --hero-pad: 1.5rem;
+    --hero-lead: 1rem;
   }
+}
 
+/* The h1 steps down on the same short screens. Unlayered, so it beats the display utility. */
+@media (min-width: 1024px) and (max-height: 860px) {
   .hero-grid {
     --hero-h1: 3.75rem;
   }
@@ -2229,14 +2259,6 @@ html[lang="es"] h1.text-display-1 {
 }
 
 @media (min-width: 1024px) and (max-height: 760px) {
-  .hero-grid {
-    padding-block: 1.5rem;
-  }
-
-  .hero-lead {
-    margin-top: 1rem;
-  }
-
   html[lang] .hero-grid {
     --hero-h1: 3.25rem;
   }

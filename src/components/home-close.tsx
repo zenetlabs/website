@@ -93,12 +93,7 @@ export function HomeClose({
         data-close-desk
         className={`lg:col-span-6 ${BAND_CARD} close-desk`}
       >
-        <DeskHead
-          as="h3"
-          className="flex items-center gap-3"
-          title={words.title}
-          badge={desk.intro.badge}
-        />
+        <DeskHead as="h3" title={words.title} badge={desk.intro.badge} />
         <DeskAsk
           copy={desk}
           booking={booking}
