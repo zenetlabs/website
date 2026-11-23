@@ -747,17 +747,33 @@ test.describe('accessibility', () => {
       await watch(page);
       await gotoHydrated(page, '/');
       await expect(page.locator(BANNER)).toBeVisible();
-      const fit = await page.evaluate(() => ({
-        banner:
-          document
-            .querySelector('[data-consent-banner]')
-            ?.getBoundingClientRect().height ?? 0,
-        reserve: Number.parseFloat(
-          getComputedStyle(document.body).paddingBottom,
-        ),
-      }));
+      const fit = await page.evaluate(() => {
+        const footer = document.querySelector('body > footer');
+        return {
+          banner:
+            document
+              .querySelector('[data-consent-banner]')
+              ?.getBoundingClientRect().height ?? 0,
+          reserve: footer
+            ? footer.appendChild(
+                Object.assign(document.createElement('div'), {
+                  style: 'height: var(--consent-clear, 0px)',
+                }),
+              ).offsetHeight
+            : 0,
+          bodyPadding: Number.parseFloat(
+            getComputedStyle(document.body).paddingBottom,
+          ),
+          footerEnd: footer
+            ? footer.getBoundingClientRect().bottom + window.scrollY
+            : 0,
+          pageHeight: document.documentElement.scrollHeight,
+        };
+      });
       expect(fit.banner).toBeGreaterThan(0);
       expect(fit.banner).toBeLessThanOrEqual(fit.reserve);
+      expect(fit.bodyPadding).toBe(0);
+      expect(Math.abs(fit.footerEnd - fit.pageHeight)).toBeLessThanOrEqual(1);
 
       const targets = page.locator('footer a, footer button');
       const count = await targets.count();

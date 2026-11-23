@@ -117,9 +117,10 @@ describe('FactsHero', () => {
       'href',
       navHref('es', CTA_TARGET),
     );
-    expect(
-      screen.getByRole('link', { name: `${labels.pricing} →` }),
-    ).toHaveAttribute('href', '/es/precios');
+    expect(screen.getByRole('link', { name: labels.pricing })).toHaveAttribute(
+      'href',
+      '/es/precios',
+    );
   });
 
   it('spaces the heading only under a breadcrumb', () => {

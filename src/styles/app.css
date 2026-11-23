@@ -111,6 +111,7 @@
     -webkit-tap-highlight-color: transparent;
     text-size-adjust: 100%;
     scrollbar-color: var(--line-strong) transparent;
+    overflow-x: clip;
     scroll-padding-top: 6rem;
     --header-h: 4rem;
     --duration-press: 160ms;
@@ -150,6 +151,7 @@
   body {
     font-size: var(--text-base);
     line-height: var(--text-base--line-height);
+    overflow-x: clip;
   }
 
   @media (min-width: 1024px) {
@@ -166,10 +168,6 @@
 
   html:has([data-consent-banner]) {
     scroll-padding-bottom: var(--consent-reserve);
-  }
-
-  body:has([data-consent-banner]) {
-    padding-bottom: var(--consent-reserve);
   }
 
   h1,
@@ -308,7 +306,7 @@
 
   /* The home hero: copy on 5 columns, the desk on 7, one screen tall from lg */
   .hero-grid {
-    @apply grid grid-cols-[minmax(0,1fr)] gap-8 pt-9 pb-10 md:gap-10 md:py-16 lg:min-h-[calc(100svh-var(--header-h))] lg:grid-cols-12 lg:items-center lg:gap-6 lg:py-14;
+    @apply grid grid-cols-[minmax(0,1fr)] gap-8 pt-9 pb-10 md:gap-10 md:py-16 lg:min-h-[calc(100svh-var(--header-h))] lg:grid-cols-12 lg:content-center lg:items-start lg:gap-6 lg:py-14;
   }
 
   .tier-summary {
@@ -355,6 +353,31 @@
 
   .job-check {
     @apply mr-1.5 align-[-0.125em] text-agent;
+  }
+
+  /* The three jobs as one white sheet of ruled rows, each with its flow wire edge to edge */
+  .jobs {
+    @apply rounded-card border border-hairline bg-surface px-5 md:px-8;
+  }
+
+  .jobs-head {
+    @apply hidden pt-6 text-ui-s font-semibold text-muted-fg lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,4fr)_minmax(0,4fr)] lg:gap-x-10;
+  }
+
+  .jobs-head > :first-child {
+    @apply lg:col-start-2;
+  }
+
+  .jobs-row {
+    @apply grid gap-3 py-5 md:gap-4 md:py-7 lg:grid-cols-[minmax(0,3fr)_minmax(0,4fr)_minmax(0,4fr)] lg:gap-x-10 lg:gap-y-5;
+  }
+
+  .jobs-row + .jobs-row {
+    @apply max-md:border-t max-md:border-hairline;
+  }
+
+  .jobs-label {
+    @apply font-semibold text-fg lg:sr-only;
   }
 
   .offer-alongside {
@@ -874,8 +897,42 @@
     }
   }
 
-  .price-chip {
-    @apply mt-2 bg-agent-soft text-ui-s font-semibold text-agent;
+  /* The home process: a ruled rail whose first step is the ticket's stub, torn along a perforation */
+  .rail {
+    @apply grid;
+    counter-reset: step;
+  }
+
+  .rail > li {
+    @apply border-t border-line-strong py-4 max-md:grid max-md:grid-cols-[1.25rem_minmax(0,1fr)] max-md:gap-x-3 md:py-0 md:pt-6 md:pl-6;
+    counter-increment: step;
+  }
+
+  .rail > li::before {
+    content: counter(step) / "";
+    @apply block text-ui-s font-semibold text-muted-fg max-md:pt-0.5 md:mb-1;
+  }
+
+  .rail > li > p {
+    @apply max-md:col-start-2;
+  }
+
+  .rail > li:first-child {
+    @apply rounded-t-ticket border-t-0 border-b-2 border-dashed border-highlight bg-agent-soft p-4 md:rounded-l-ticket md:rounded-tr-none md:border-r-2 md:border-b-0 md:p-8;
+  }
+
+  .rail > li:first-child::before {
+    @apply text-agent;
+  }
+
+  .rail > li:nth-child(2) {
+    @apply max-md:border-t-0;
+  }
+
+  @media (min-width: 768px) {
+    .rail {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
   }
 
   .step-text {
@@ -980,7 +1037,7 @@
   }
 
   .launcher {
-    @apply fixed right-6 bottom-[calc(0.625rem+env(safe-area-inset-bottom))] z-30 inline-flex size-13 items-center justify-center gap-2 rounded-button border border-transparent bg-agent text-ui-m font-semibold text-agent-fg shadow-raised select-none lg:bottom-6 lg:w-auto lg:px-4.5 print:hidden;
+    @apply fixed right-6 bottom-[calc(0.625rem+env(safe-area-inset-bottom))] z-30 inline-flex size-13 items-center justify-center rounded-button border border-transparent bg-agent text-agent-fg shadow-raised select-none lg:bottom-6 lg:max-xl:right-3 print:hidden;
     transition: background-color var(--duration-press) ease-out;
   }
 
@@ -1225,8 +1282,17 @@
     @apply grid grid-cols-[minmax(0,1fr)] gap-3 border-t border-hairline bg-tint px-5 py-4 md:px-6;
   }
 
-  .slot-card {
+  .slot-card,
+  .close-desk {
     @apply grid grid-cols-[minmax(0,1fr)] gap-4;
+  }
+
+  .close-desk-rail {
+    @apply mt-2 border-t border-hairline pt-6;
+  }
+
+  .close-desk .desk-chips {
+    @apply max-sm:-mx-6 max-sm:px-6;
   }
 
   /* Never wraps from `sm`: a longer day and zone truncate instead of adding a line */
@@ -1577,6 +1643,10 @@
 
   .flow-wire[data-to="human"] {
     @apply border-human-ring;
+  }
+
+  .jobs-wire .flow-wire {
+    flex: 1 1 0;
   }
 
   /* The diagnostic as an entry ticket: a perforation between the offer and its stub */
@@ -2020,14 +2090,21 @@
   }
 }
 
-/* The launcher is fixed bottom-right. These rules are unlayered so they beat its utilities.
-   It gets no scroll-padding-bottom of its own, only footer padding (on the footer's own
-   ground) to keep the last footer links clear: it is small, and the banner and voice
-   panel below are what cover content. */
+/* The launcher and the consent banner are fixed over the page bottom. Their reserves are
+   footer padding, on the footer's own ground, so the last links stay clear and no white
+   strip shows under the tinted footer. Unlayered, so they beat the utilities. */
+body > footer {
+  padding-bottom: calc(var(--launcher-clear, 0px) + var(--consent-clear, 0px));
+}
+
+body:has([data-consent-banner]) > footer {
+  --consent-clear: var(--consent-reserve);
+}
+
 html:has([data-chat-launcher]):not(:has(main section[data-booking]))
   body
   > footer {
-  padding-bottom: 5rem;
+  --launcher-clear: 5rem;
 }
 
 /* A transform, not a new `bottom`: the banner appears after hydration and a
@@ -2085,7 +2162,7 @@ html:has([data-chat-launcher]) [data-sticky-cta] {
 /* The open mobile menu covers the page below the header; the page under it stays put. */
 @media (max-width: 767px) {
   html:has(header details[open]) {
-    overflow: hidden;
+    overflow-y: hidden;
   }
 }
 
@@ -2099,4 +2176,50 @@ html:has([data-voice-panel][open]) [data-sticky-cta] {
    Unlayered, so it wins over the display utility. */
 html[lang="es"] h1.text-display-1 {
   font-size: clamp(2.625rem, 1.75rem + 3.6vw, 4rem);
+}
+
+/* Short desktop screens: the hero steps down so its button stays above the consent banner.
+   Unlayered, so it beats the utilities and the Spanish rule above. */
+@media (min-width: 1024px) and (max-height: 860px) {
+  .hero-grid {
+    padding-block: 2.5rem;
+  }
+
+  .hero-fact {
+    margin-top: 1rem;
+  }
+
+  .hero-actions {
+    margin-top: 1.5rem;
+  }
+
+  .hero-grid {
+    --hero-h1: 3.75rem;
+  }
+
+  html[lang="es"] .hero-grid {
+    --hero-h1: 3.5rem;
+  }
+
+  html .hero-grid h1.text-display-1 {
+    font-size: var(--hero-h1);
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 760px) {
+  .hero-grid {
+    padding-block: 1.5rem;
+  }
+
+  .hero-lead {
+    margin-top: 1rem;
+  }
+
+  html[lang] .hero-grid {
+    --hero-h1: 3.25rem;
+  }
+
+  html[lang="es"] .hero-grid {
+    --hero-h1: 2.875rem;
+  }
 }

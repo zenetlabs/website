@@ -107,7 +107,7 @@ function About() {
                 href={pagePath(locale, 'cases')}
                 className={`font-medium ${TEXT_LINK}`}
               >
-                {page.companies.cases} →
+                {page.companies.cases}
               </a>
             </p>
           </Container>

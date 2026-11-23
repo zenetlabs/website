@@ -1,11 +1,14 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import { priceParts } from '../src/lib/money';
 import { SERVICES } from '../test/page-content';
 import {
+  ASSISTANT_PUBLISHED,
+  BOOKING_PUBLISHED,
   CASES_HUB,
   CTA,
   gotoHydrated,
   navLinks,
+  settleAnimations,
   waitForHydration,
 } from './helpers';
 
@@ -199,9 +202,10 @@ test('the Verifactu strip is Spanish only and dated', async ({ page }) => {
   ]) {
     await expect(strip).toContainText(text);
   }
-  await expect(
-    strip.getByRole('link', { name: /Verifactu →$/ }),
-  ).toHaveAttribute('href', '/es/verifactu-integracion');
+  await expect(strip.getByRole('link', { name: 'Verifactu' })).toHaveAttribute(
+    'href',
+    '/es/verifactu-integracion',
+  );
 });
 
 test('marks the current page in the header', async ({ page }) => {
@@ -254,4 +258,123 @@ test.describe('case bullets fold on mobile only', () => {
     await expect(first.locator('ul li').first()).toBeVisible();
     await expect(first.locator('summary')).toBeHidden();
   });
+});
+
+const BANNER = '[data-consent-banner]';
+const PATHS = ['/', '/es'] as const;
+const DESKTOP = { width: 1280, height: 800 };
+const SHORT = { width: 1280, height: 720 };
+const VIEWPORTS = [DESKTOP, SHORT];
+const NO_CONSENT = { cookies: [], origins: [] };
+
+test.describe('the hero button clears the consent banner', () => {
+  test.use({ storageState: NO_CONSENT });
+
+  for (const path of PATHS) {
+    for (const viewport of VIEWPORTS) {
+      test(`${path} at ${viewport.width}x${viewport.height}`, async ({
+        page,
+      }) => {
+        await page.setViewportSize(viewport);
+        await gotoHydrated(page, path);
+        await expect(page.locator(BANNER)).toBeVisible();
+        const edges = await page.evaluate(() => {
+          const cta = document.querySelector('.hero-actions a');
+          const banner = document.querySelector('[data-consent-banner]');
+          return {
+            cta: cta?.getBoundingClientRect().bottom ?? Number.NaN,
+            banner: banner?.getBoundingClientRect().top ?? Number.NaN,
+          };
+        });
+        expect(edges.cta).toBeLessThanOrEqual(edges.banner - 8);
+      });
+    }
+  }
+});
+
+async function launcherHits(page: Page): Promise<string[]> {
+  await expect(page.locator('[data-desk] .slot-chip').first()).toBeVisible();
+  return page.evaluate(() => {
+    const launcher = document
+      .querySelector('[data-chat-launcher]')
+      ?.getBoundingClientRect();
+    if (!launcher) return ['no launcher'];
+    return [
+      ...document.querySelectorAll(
+        '[data-desk] a, [data-desk] [data-slot-meta], .handoff',
+      ),
+    ]
+      .filter((element) => {
+        const box = element.getBoundingClientRect();
+        return (
+          box.width > 0 &&
+          box.left < launcher.right &&
+          box.right > launcher.left &&
+          box.top < launcher.bottom &&
+          box.bottom > launcher.top
+        );
+      })
+      .map((element) => element.textContent?.trim() ?? '');
+  });
+}
+
+test.describe('the launcher covers nothing in the desk', () => {
+  test.skip(
+    !(ASSISTANT_PUBLISHED && BOOKING_PUBLISHED),
+    'needs the assistant and booking published',
+  );
+
+  test.describe('with the banner', () => {
+    test.use({ storageState: NO_CONSENT });
+
+    for (const path of PATHS) {
+      test(`${path} at ${DESKTOP.width}x${DESKTOP.height} with the banner`, async ({
+        page,
+      }) => {
+        await page.setViewportSize(DESKTOP);
+        await gotoHydrated(page, path);
+        await expect(page.locator(BANNER)).toBeVisible();
+        expect(await launcherHits(page)).toEqual([]);
+      });
+    }
+  });
+
+  test.describe('without the banner', () => {
+    for (const path of PATHS) {
+      for (const viewport of [...VIEWPORTS, { width: 1366, height: 768 }]) {
+        test(`${path} at ${viewport.width}x${viewport.height}`, async ({
+          page,
+        }) => {
+          await page.setViewportSize(viewport);
+          await gotoHydrated(page, path);
+          expect(await launcherHits(page)).toEqual([]);
+        });
+      }
+    }
+  });
+});
+
+test.describe('the home height at 390', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  for (const [path, budget] of [
+    ['/', 8500],
+    ['/es', 9500],
+  ] as const) {
+    test(`${path} stays within ${budget}`, async ({ page }) => {
+      await gotoHydrated(page, path);
+      await page.evaluate(() => document.fonts.ready);
+      await settleAnimations(page);
+      await expect(
+        page
+          .locator('[data-desk] [data-slot-rail]')
+          .locator('.slot-chip, [data-slot-fallback]')
+          .first(),
+      ).toBeVisible();
+      const height = await page.evaluate(
+        () => document.documentElement.scrollHeight,
+      );
+      expect(height).toBeLessThanOrEqual(budget);
+    });
+  }
 });

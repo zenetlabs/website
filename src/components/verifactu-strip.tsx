@@ -35,7 +35,7 @@ export function VerifactuStrip({
             href={pagePath(locale, 'verifactu')}
             className={`font-medium ${TEXT_LINK}`}
           >
-            {copy.cta} →
+            {copy.cta}
           </a>
           <p className="text-sm text-fg-soft">{copy.checked}</p>
         </div>

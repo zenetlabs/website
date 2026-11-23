@@ -80,7 +80,7 @@ export function SectorPage({
                   href={TAPLANY.href}
                   className={`mt-6 inline-block font-medium ${TEXT_LINK}`}
                 >
-                  {platform.link} →
+                  {platform.link}
                 </a>
               </div>
             </div>
@@ -92,7 +92,7 @@ export function SectorPage({
             href={pagePath(locale, 'viatsyCase')}
             className={`mt-6 inline-block font-medium ${TEXT_LINK}`}
           >
-            {crumbName(names, 'viatsyCase')} →
+            {crumbName(names, 'viatsyCase')}
           </a>
         </Section>
         <Faq copy={copy.faq} items={copy.faq.items} />

@@ -150,10 +150,6 @@ export const home = {
     },
   },
   doors: {
-    ask: {
-      title: 'Ask the agent',
-      text: 'About our services, prices or how a project works.',
-    },
     call: {
       title: 'Call the agent',
       text: 'Our voice assistant is an AI, not a person.',

@@ -60,7 +60,7 @@ export function CompaniesStrip({
               href={pagePath(locale, 'cases')}
               className={`inline-flex min-h-11 items-center font-medium ${TEXT_LINK}`}
             >
-              {more} →
+              {more}
             </a>
           ) : null}
         </div>

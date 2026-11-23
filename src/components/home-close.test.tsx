@@ -1,8 +1,9 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HomeClose } from '@/components/home-close';
 import { home as enHome } from '@/content/en/home';
 import { home as esHome } from '@/content/es/home';
+import { contactWithMessage } from '@/lib/nav';
 import type { SiteFlags } from '@/lib/page-registry';
 
 const voice = vi.hoisted(() => ({ available: false }));
@@ -53,7 +54,7 @@ describe.each([
       <HomeClose
         copy={home.contact}
         doors={home.doors}
-        slots={home.desk.slots}
+        desk={home.desk}
         locale={locale}
         site={site}
       />,
@@ -66,7 +67,13 @@ describe.each([
     return list;
   }
 
-  it('keeps only the write door, in two columns, with chat, voice and booking all off', () => {
+  function card() {
+    const element = document.querySelector<HTMLElement>('[data-close-desk]');
+    if (!element) throw new Error('no card');
+    return element;
+  }
+
+  it('keeps only the write door, in one column, with chat, voice and booking all off', () => {
     vi.stubGlobal('__ASSISTANT__', false);
     view(NO_BOOKING);
     const list = doors();
@@ -77,35 +84,70 @@ describe.each([
           accessible.startsWith(home.doors.write.title),
       }),
     ).toHaveAttribute('href', contact);
-    expect(list).toHaveClass('md:grid-cols-2');
+    expect(list).not.toHaveClass('md:grid-cols-2');
     expect(document.querySelector('.slot-card')).toBeNull();
     expect(
       screen.getByRole('link', { name: 'hello@zenetlabs.com' }),
     ).toHaveAttribute('href', 'mailto:hello@zenetlabs.com');
   });
 
-  it('adds the times card beside one column of doors while booking is on', () => {
+  it('adds the times to the card while booking is on', () => {
     vi.stubGlobal('__ASSISTANT__', false);
     view(BOOKING);
-    expect(doors()).not.toHaveClass('md:grid-cols-2');
-    const card = document.querySelector<HTMLElement>('.slot-card');
-    if (!card) throw new Error('no card');
+    const slots = card().querySelector<HTMLElement>('.slot-card');
+    if (!slots) throw new Error('no rail');
     expect(
-      within(card).getByRole('link', { name: home.desk.slots.seeAvailable }),
+      within(slots).getByRole('link', { name: home.desk.slots.seeAvailable }),
     ).toHaveAttribute('href', book);
   });
 
-  it('opens the chat from the ask door once the assistant is live, tracked as the close', () => {
+  it('keeps the card with the human words and no badge while the assistant is dark', () => {
+    vi.stubGlobal('__ASSISTANT__', false);
+    view(NO_BOOKING);
+    expect(
+      within(card()).getByRole('heading', { name: home.desk.human.title }),
+    ).toBeInTheDocument();
+    expect(card().querySelector('.desk-badge')).toBeNull();
+  });
+
+  it('links the chips and sends the composer to the contact page with the message', () => {
+    vi.stubGlobal('__ASSISTANT__', false);
+    view(NO_BOOKING);
+    for (const suggestion of home.desk.intro.suggestions) {
+      expect(
+        within(card()).getByRole('link', { name: suggestion }),
+      ).toHaveAttribute('href', contactWithMessage(locale, suggestion));
+    }
+    const form = card().querySelector('form');
+    expect(form).toHaveAttribute('action', contact);
+    expect(form).toHaveAttribute('method', 'get');
+    expect(
+      within(card()).getByLabelText(home.desk.human.label),
+    ).toHaveAttribute('name', 'message');
+  });
+
+  it('opens the chat out of the card from a chip, tracked as the close', () => {
     vi.stubGlobal('__ASSISTANT__', true);
     view(NO_BOOKING);
-    const ask = within(doors()).getByRole('link', {
-      name: (accessible: string) => accessible.startsWith(home.doors.ask.title),
-    });
-    expect(ask).toHaveAttribute('aria-haspopup', 'dialog');
-    expect(ask.closest('li')).toHaveAttribute('data-needs-js');
-    ask.click();
-    expect(requestChat).toHaveBeenCalledWith(null, null);
+    const [suggestion = ''] = home.desk.intro.suggestions;
+    const chip = within(card()).getByRole('link', { name: suggestion });
+    expect(chip).toHaveAttribute('aria-haspopup', 'dialog');
+    fireEvent.click(chip, { detail: 1 });
+    expect(requestChat).toHaveBeenCalledWith(suggestion, card());
     expect(track).toHaveBeenCalledWith('chat_open', { entry: 'close' });
+  });
+
+  it('sends what was typed in the composer and clears it', () => {
+    vi.stubGlobal('__ASSISTANT__', true);
+    view(NO_BOOKING);
+    const input = within(card()).getByLabelText(home.desk.label);
+    fireEvent.change(input, { target: { value: 'How long does it take?' } });
+    const form = card().querySelector('form');
+    if (!form) throw new Error('no form');
+    fireEvent.submit(form);
+    expect(requestChat).toHaveBeenCalledWith('How long does it take?', null);
+    expect(track).toHaveBeenCalledWith('chat_open', { entry: 'close' });
+    expect(input).toHaveValue('');
   });
 
   it('adds the call door only while voice is live', () => {

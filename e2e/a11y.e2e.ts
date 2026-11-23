@@ -120,6 +120,9 @@ for (const url of OVERFLOW_URLS) {
   test(`${url} has no horizontal scroll on mobile`, async ({ page }) => {
     await page.setViewportSize({ width: 412, height: 915 });
     await gotoHydrated(page, url);
+    await page.addStyleTag({
+      content: 'html, body { overflow-x: visible !important }',
+    });
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - window.innerWidth,
     );

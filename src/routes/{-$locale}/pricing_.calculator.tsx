@@ -88,7 +88,7 @@ function Calculator() {
               href={pagePath(locale, 'pricing')}
               className={`font-medium ${TEXT_LINK}`}
             >
-              {copy.pricingLink} →
+              {copy.pricingLink}
             </a>
           </p>
         </Container>

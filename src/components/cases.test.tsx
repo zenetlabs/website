@@ -26,7 +26,7 @@ describe.each([
       'href',
       locale === 'en' ? '/case-studies' : '/es/casos',
     );
-    expect(link?.textContent).toBe(`${home.cases.more} →`);
+    expect(link?.textContent).toBe(home.cases.more);
   });
 
   it('links only the Viatsy card, to its case page by name', () => {
@@ -38,7 +38,7 @@ describe.each([
       locale === 'en' ? '/case-studies/viatsy' : '/es/casos/viatsy',
     );
     expect(links[0]?.textContent).toBe(
-      `${locale === 'en' ? 'Viatsy case study' : 'Caso de Viatsy'} →`,
+      locale === 'en' ? 'Viatsy case study' : 'Caso de Viatsy',
     );
     expect(links[0]?.closest('li')?.querySelector('h3')?.textContent).toBe(
       'Viatsy',

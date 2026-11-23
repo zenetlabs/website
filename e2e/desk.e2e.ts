@@ -26,8 +26,9 @@ test.describe('the desk slots', () => {
       await page.setViewportSize(viewport);
       await page.addInitScript(OBSERVER);
       await gotoHydrated(page, '/');
-      await page.locator('[data-desk]').scrollIntoViewIfNeeded();
-      await expect(page.locator('[data-desk] .slot-chip').first()).toBeVisible({
+      const deskBox = page.locator('[data-desk]');
+      await deskBox.scrollIntoViewIfNeeded();
+      await expect(deskBox.locator('.slot-chip').first()).toBeVisible({
         timeout: 15_000,
       });
       expect(
@@ -105,22 +106,25 @@ test.describe('the desk chat', () => {
     page,
   }) => {
     await page.goto('/');
-    const head = page.locator('[data-desk]');
+    const deskBox = page.locator('[data-desk]');
     await expect(
-      head.getByRole('heading', { name: desk.intro.title }),
+      deskBox.getByRole('heading', { name: desk.intro.title }),
     ).toBeVisible();
-    await expect(head.locator('.desk-badge')).toHaveText(desk.intro.badge);
-    await expect(head.locator('.desk-bubble')).toContainText(
+    await expect(deskBox.locator('.desk-badge')).toHaveText(desk.intro.badge);
+    await expect(deskBox.locator('.desk-bubble')).toContainText(
       desk.intro.welcome,
     );
-    await expect(head).not.toContainText(desk.human.title);
+    await expect(deskBox).not.toContainText(desk.human.title);
   });
 
   test('a chip opens the chat from the desk with the question already sent', async ({
     page,
   }) => {
     await gotoHydrated(page, '/');
-    await page.getByRole('link', { name: desk.intro.suggestions[0] }).click();
+    const deskBox = page.locator('[data-desk]');
+    await deskBox
+      .getByRole('link', { name: desk.intro.suggestions[0] })
+      .click();
     const dialog = chatDialog(page);
     await expect(dialog).toBeVisible();
     await expect(page).toHaveURL('/');
@@ -137,7 +141,8 @@ test.describe('the desk chat', () => {
 
   test('the composer sends what the visitor typed', async ({ page }) => {
     await gotoHydrated(page, '/');
-    const box = page.getByLabel(desk.label);
+    const deskBox = page.locator('[data-desk]');
+    const box = deskBox.getByLabel(desk.label);
     await box.fill('What does the automation diagnostic include?');
     await box.press('Enter');
     const dialog = chatDialog(page);
@@ -148,12 +153,31 @@ test.describe('the desk chat', () => {
     await expect(box).toHaveValue('');
   });
 
+  test('the close composer opens the chat with the typed question', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/');
+    const closeBox = page.locator('[data-close-desk]');
+    const box = closeBox.getByLabel(desk.label);
+    await box.fill('Do you work with Shopify stores?');
+    await box.press('Enter');
+    const dialog = chatDialog(page);
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('log')).toContainText(
+      'Do you work with Shopify stores?',
+    );
+    await expect(box).toHaveValue('');
+  });
+
   test('under reduced motion the panel swaps in with no animation', async ({
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await gotoHydrated(page, '/');
-    await page.getByRole('link', { name: desk.intro.suggestions[1] }).click();
+    const deskBox = page.locator('[data-desk]');
+    await deskBox
+      .getByRole('link', { name: desk.intro.suggestions[1] })
+      .click();
     await expect(chatDialog(page)).toBeVisible();
     // Colour transitions may run; nothing moves.
     expect(
@@ -171,7 +195,10 @@ test.describe('the desk chat', () => {
     page,
   }) => {
     await gotoHydrated(page, '/');
-    await page.getByRole('link', { name: desk.intro.suggestions[1] }).click();
+    const deskBox = page.locator('[data-desk]');
+    await deskBox
+      .getByRole('link', { name: desk.intro.suggestions[1] })
+      .click();
     const dialog = chatDialog(page);
     await expect(dialog).toBeVisible();
     await page.waitForTimeout(400);

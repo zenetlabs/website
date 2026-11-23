@@ -50,17 +50,14 @@ function MoreAbout({
   const pages = pagesForService(id);
   if (pages.length === 0) return null;
   return (
-    <p className="text-ui-s">
-      <span className="text-muted-fg">{label}</span>{' '}
-      {pages.map((target, index) => {
+    <p className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-ui-s">
+      <span className="text-muted-fg">{label}</span>
+      {pages.map((target) => {
         const { href, name } = names(target);
         return (
-          <span key={target}>
-            {index > 0 ? ' · ' : ''}
-            <a href={href} className={TEXT_LINK}>
-              {name}
-            </a>
-          </span>
+          <a key={target} href={href} className={TEXT_LINK}>
+            {name}
+          </a>
         );
       })}
     </p>

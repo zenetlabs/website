@@ -79,7 +79,7 @@ describe('ChatLauncher', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('is a labelled dialog button with a visible name', () => {
+  it('is an icon-only dialog button that keeps its name', () => {
     render(<ChatLauncher />);
     const button = screen.getByRole('button', {
       name: 'Open the AI assistant',
@@ -87,7 +87,7 @@ describe('ChatLauncher', () => {
     expect(button).toHaveAttribute('aria-haspopup', 'dialog');
     expect(button).toHaveAttribute('aria-expanded', 'false');
     expect(button).toHaveAttribute('data-chat-launcher');
-    expect(button).toHaveTextContent('AI assistant');
+    expect(button).toHaveTextContent('');
   });
 
   it('speaks Spanish on the Spanish site', () => {
@@ -95,7 +95,7 @@ describe('ChatLauncher', () => {
     render(<ChatLauncher />);
     expect(
       screen.getByRole('button', { name: 'Abrir el asistente de IA' }),
-    ).toHaveTextContent('Asistente IA');
+    ).toHaveTextContent('');
   });
 
   it('imports the panel only on interaction, not on render', async () => {

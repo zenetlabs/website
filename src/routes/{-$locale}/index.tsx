@@ -45,10 +45,7 @@ function Home() {
         />
         <Problems copy={home.problems} />
         <OfferSystem copy={home.services} services={services} locale={locale} />
-        <Process
-          copy={home.process}
-          price={formatPriceSummary(locale, services.diagnostic.prices)}
-        />
+        <Process copy={home.process} rail />
         {home.verifactu ? (
           <VerifactuStrip copy={home.verifactu} locale={locale} />
         ) : null}
@@ -57,7 +54,7 @@ function Home() {
       <HomeClose
         copy={home.contact}
         doors={home.doors}
-        slots={home.desk.slots}
+        desk={home.desk}
         locale={locale}
       />
     </>

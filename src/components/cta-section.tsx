@@ -38,7 +38,7 @@ export function CtaSection({
           </CtaLink>
           {secondary ? (
             <a href={secondary.href} className={`font-medium ${TEXT_LINK}`}>
-              {secondary.label} →
+              {secondary.label}
             </a>
           ) : null}
         </div>

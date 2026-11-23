@@ -61,7 +61,7 @@ export function Cases({
                     href={pagePath(locale, item.link.page)}
                     className={`mt-6 inline-block font-medium ${TEXT_LINK}`}
                   >
-                    {item.link.label} →
+                    {item.link.label}
                   </a>
                 ) : null}
               </div>
@@ -87,7 +87,7 @@ export function Cases({
             href={pagePath(locale, 'cases')}
             className={`font-medium ${TEXT_LINK}`}
           >
-            {copy.more} →
+            {copy.more}
           </a>
         </p>
       ) : null}
