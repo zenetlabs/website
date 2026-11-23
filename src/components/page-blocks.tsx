@@ -61,14 +61,14 @@ export function CaseCallout({
                 href={pagePath(locale, copy.page)}
                 className={`font-medium ${TEXT_LINK}`}
               >
-                {crumbName(names, copy.page)} →
+                {crumbName(names, copy.page)}
               </a>
             ) : null}
             <a
               href={pagePath(locale, 'cases')}
               className={`font-medium ${TEXT_LINK}`}
             >
-              {crumbName(names, 'cases')} →
+              {crumbName(names, 'cases')}
             </a>
           </p>
         </div>
@@ -230,7 +230,7 @@ export function FactsHero({
                   href={pagePath(locale, 'pricing')}
                   className={`font-medium ${TEXT_LINK}`}
                 >
-                  {labels.pricing} →
+                  {labels.pricing}
                 </a>
               </div>
             }

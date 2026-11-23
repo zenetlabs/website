@@ -62,7 +62,7 @@ describe('the calculator, published', () => {
       />,
     );
     expect(
-      screen.getByRole('link', { name: `${enHome.services.calculator} →` }),
+      screen.getByRole('link', { name: enHome.services.calculator }),
     ).toHaveAttribute('href', pagePath('en', 'calculator'));
     rerender(
       <OfferSystem
@@ -73,7 +73,7 @@ describe('the calculator, published', () => {
       />,
     );
     expect(
-      screen.queryByRole('link', { name: `${enHome.services.calculator} →` }),
+      screen.queryByRole('link', { name: enHome.services.calculator }),
     ).toBeNull();
   });
 
@@ -91,7 +91,7 @@ describe('the calculator, published', () => {
         />,
       );
       expect(
-        screen.getByRole('link', { name: `${pricing.calculator.link} →` }),
+        screen.getByRole('link', { name: pricing.calculator.link }),
       ).toHaveAttribute('href', href);
       expect(
         screen.getByRole('heading', { name: pricing.calculator.title }),
@@ -103,7 +103,9 @@ describe('the calculator, published', () => {
           site={OFF}
         />,
       );
-      expect(screen.queryByRole('link', { name: /→/ })).toBeNull();
+      expect(
+        screen.queryByRole('link', { name: pricing.calculator.link }),
+      ).toBeNull();
       expect(screen.queryByText(pricing.calculator.title)).toBeNull();
     },
   );

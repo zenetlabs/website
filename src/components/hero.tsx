@@ -28,7 +28,7 @@ export function Hero({
           <h1 className="text-display-1">
             <EmphasisTitle parts={copy.title} />
           </h1>
-          <p className={`mt-5 md:mt-6 ${LEAD}`}>{copy.lead}</p>
+          <p className={`hero-lead mt-5 md:mt-6 ${LEAD}`}>{copy.lead}</p>
           <p className="hero-fact">
             {factBefore}
             <strong className="font-semibold text-fg">{diagnosticPrice}</strong>

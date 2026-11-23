@@ -82,8 +82,9 @@ describe.each([
         locale={locale}
       />,
     );
-    expect(
-      screen.getByRole('link', { name: `${home.cases.more} →` }),
-    ).toHaveAttribute('href', pagePath(locale, 'cases'));
+    expect(screen.getByRole('link', { name: home.cases.more })).toHaveAttribute(
+      'href',
+      pagePath(locale, 'cases'),
+    );
   });
 });

@@ -28,6 +28,10 @@ import {
 
 test.use({ javaScriptEnabled: false });
 
+const QUESTION = {
+  en: 'Can you read our supplier PDFs?',
+  es: '¿Podéis leer los PDF de proveedores?',
+} as const;
 const HOMES = LOCALES.map((locale) => ({ locale, path: PAIRS[0][locale] }));
 const PRICING = LOCALES.map((locale) => ({ locale, path: PAIRS[1][locale] }));
 
@@ -98,16 +102,14 @@ for (const { path, locale } of HOMES) {
     page,
   }) => {
     const { desk } = HOME_COPY[locale];
+    const question = QUESTION[locale];
     await page.goto(path);
     for (const hidden of await page.locator('[data-needs-js]').all()) {
       await expect(hidden).toBeHidden();
     }
-    const question =
-      locale === 'en'
-        ? 'Can you read our supplier PDFs?'
-        : '¿Podéis leer los PDF de proveedores?';
-    await page.getByLabel(desk.label).fill(question);
-    await page.getByRole('button', { name: desk.intro.send }).click();
+    const deskBox = page.locator('[data-desk]');
+    await deskBox.getByLabel(desk.label).fill(question);
+    await deskBox.getByRole('button', { name: desk.intro.send }).click();
     await expect(page).toHaveURL(
       `${CONTACT_PAIR[locale]}?${new URLSearchParams({ message: question })}`,
     );
@@ -121,7 +123,40 @@ for (const { path, locale } of HOMES) {
   }) => {
     const { desk } = HOME_COPY[locale];
     await page.goto(path);
-    await page.getByRole('link', { name: desk.intro.suggestions[0] }).click();
+    const deskBox = page.locator('[data-desk]');
+    await deskBox
+      .getByRole('link', { name: desk.intro.suggestions[0] })
+      .click();
+    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page.locator('textarea[name="message"]')).toHaveValue(
+      desk.intro.suggestions[0],
+    );
+  });
+
+  test(`${path} close composer sends the question to the contact form without JavaScript`, async ({
+    page,
+  }) => {
+    const { desk } = HOME_COPY[locale];
+    await page.goto(path);
+    const question = QUESTION[locale];
+    const close = page.locator('#contact [data-close-desk]');
+    await close.getByLabel(desk.label).fill(question);
+    await close.getByRole('button', { name: desk.intro.send }).click();
+    await expect(page).toHaveURL(
+      `${CONTACT_PAIR[locale]}?${new URLSearchParams({ message: question })}`,
+    );
+    await expect(page.locator('textarea[name="message"]')).toHaveValue(
+      question,
+    );
+  });
+
+  test(`${path} close chips open the contact form with the question`, async ({
+    page,
+  }) => {
+    const { desk } = HOME_COPY[locale];
+    await page.goto(path);
+    const close = page.locator('#contact [data-close-desk]');
+    await close.getByRole('link', { name: desk.intro.suggestions[0] }).click();
     await expect(page.locator('h1')).toHaveCount(1);
     await expect(page.locator('textarea[name="message"]')).toHaveValue(
       desk.intro.suggestions[0],

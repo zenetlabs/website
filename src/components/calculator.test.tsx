@@ -282,7 +282,7 @@ describe.each(['en', 'es'] as const)('EstimatePanel (%s)', (locale) => {
       screen.getByRole('link', { name: copy.result.change }),
     ).toHaveAttribute('href', '#questions');
     expect(
-      screen.getByRole('link', { name: `${copy.pricingLink} →` }),
+      screen.getByRole('link', { name: copy.pricingLink }),
     ).toHaveAttribute('href', locale === 'en' ? '/pricing' : '/es/precios');
   });
 });

@@ -1,19 +1,17 @@
-import { useHydrated } from '@tanstack/react-router';
-import type { ReactNode } from 'react';
+import { type ReactNode, useRef } from 'react';
+import { DeskAsk, DeskHead } from '@/components/agent-desk';
 import { BandSection } from '@/components/band-section';
 import { CtaLink } from '@/components/cta-link';
 import { SlotRail } from '@/components/next-slots';
 import { EmphasisTitle } from '@/components/section';
 import { BAND_CARD, LEAD, TEXT_LINK } from '@/components/ui';
 import { CallLink } from '@/components/voice-button';
-import type { DoorCopy, HomeContent } from '@/content/types';
-import { requestChat } from '@/lib/chat-open';
+import type { DeskCopy, DoorCopy, HomeContent } from '@/content/types';
+import { deskWords } from '@/lib/desk-words';
 import type { Locale } from '@/lib/i18n';
 import { navHref } from '@/lib/nav';
 import { isPublished, type SiteFlags } from '@/lib/page-registry';
-import { isPlainClick } from '@/lib/plain-click';
 import { PUBLIC_EMAIL, SITE } from '@/lib/site';
-import { track } from '@/lib/track';
 import { voiceAvailable } from '@/lib/voice-entry';
 
 function DoorText({ copy }: { copy: DoorCopy }) {
@@ -28,51 +26,26 @@ function DoorText({ copy }: { copy: DoorCopy }) {
   );
 }
 
-function AskDoor({ copy, locale }: { copy: DoorCopy; locale: Locale }) {
-  const hydrated = useHydrated();
-  return (
-    <CtaLink
-      cta="close_ask"
-      href={navHref(locale, { page: 'contact' })}
-      popup={hydrated ? 'dialog' : undefined}
-      onClick={(event) => {
-        if (!hydrated || !isPlainClick(event)) return;
-        event.preventDefault();
-        track('chat_open', { entry: 'close' });
-        requestChat(null, null);
-      }}
-      className="door"
-    >
-      <DoorText copy={copy} />
-    </CtaLink>
-  );
-}
-
-// The close, the desk again on the band: the doors that are live (ask, call),
-// the contact form one step away, and, while booking is published, the next
-// free times in a card.
+// The close, the desk again on the band: the live doors (call, write), and a
+// card with the desk's chips and composer and, while booking is published, the
+// next free times.
 export function HomeClose({
   copy,
   doors,
-  slots,
+  desk,
   locale,
   site = SITE,
 }: {
   copy: HomeContent['contact'];
   doors: HomeContent['doors'];
-  slots: HomeContent['desk']['slots'];
+  desk: DeskCopy;
   locale: Locale;
   site?: SiteFlags;
 }) {
   const booking = isPublished('book', site);
+  const card = useRef<HTMLDivElement>(null);
+  const words = deskWords(desk, booking);
   const list: ReactNode[] = [];
-  if (__ASSISTANT__) {
-    list.push(
-      <li key="ask" data-needs-js>
-        <AskDoor copy={doors.ask} locale={locale} />
-      </li>,
-    );
-  }
   if (doors.call && voiceAvailable(locale)) {
     list.push(
       <li key="call" data-needs-js>
@@ -99,15 +72,12 @@ export function HomeClose({
       labelledBy="contact-title"
       containerClassName="grid gap-10 lg:grid-cols-12 lg:items-start lg:gap-16"
     >
-      <div className={booking ? 'lg:col-span-6' : 'lg:col-span-8'}>
+      <div className="lg:col-span-6">
         <h2 id="contact-title">
           <EmphasisTitle parts={copy.title} />
         </h2>
         {copy.lead ? <p className={`mt-5 ${LEAD}`}>{copy.lead}</p> : null}
-        <ul
-          data-doors
-          className={`mt-8 grid gap-3 ${booking ? '' : 'md:grid-cols-2'}`}
-        >
+        <ul data-doors className="mt-8 grid gap-3">
           {list}
         </ul>
         <p className="mt-8">
@@ -118,16 +88,34 @@ export function HomeClose({
         </p>
         <p className="mt-2 text-ui-s text-muted-fg">{copy.human}</p>
       </div>
-      {booking ? (
-        <div className={`lg:col-span-6 ${BAND_CARD}`}>
+      <div
+        ref={card}
+        data-close-desk
+        className={`lg:col-span-6 ${BAND_CARD} close-desk`}
+      >
+        <DeskHead
+          as="h3"
+          className="flex items-center gap-3"
+          title={words.title}
+          badge={desk.intro.badge}
+        />
+        <DeskAsk
+          copy={desk}
+          booking={booking}
+          locale={locale}
+          entry="close"
+          inputId="close-message"
+          from={card}
+        />
+        {booking ? (
           <SlotRail
-            copy={slots}
+            copy={desk.slots}
             locale={locale}
             booking
-            className="slot-card"
+            className="slot-card close-desk-rail"
           />
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </BandSection>
   );
 }

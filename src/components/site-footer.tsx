@@ -90,9 +90,9 @@ export function SiteFooter({ locale }: { locale: Locale }) {
           <LanguageSwitch locale={locale} footer className="-ml-3" />
         </div>
         <div className="grid gap-1 border-t border-hairline pt-6 text-ui-s text-muted-fg md:col-span-12">
-          <p>
-            © {entity.legalName} · {taxIdLabel(entity)} ·{' '}
-            {formatAddress(entity.address, locale)}
+          <p className="flex flex-wrap gap-x-4 gap-y-1">
+            <span>© {entity.legalName}</span> <span>{taxIdLabel(entity)}</span>{' '}
+            <span>{formatAddress(entity.address, locale)}</span>
           </p>
           {founded && <p>{founded}</p>}
         </div>

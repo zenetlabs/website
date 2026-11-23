@@ -367,14 +367,14 @@ export function OfferSystem({
             href={pagePath(locale, 'pricing')}
             className={`font-medium ${TEXT_LINK}`}
           >
-            {copy.more} →
+            {copy.more}
           </a>
           {isPublished('calculator', site) ? (
             <a
               href={pagePath(locale, 'calculator')}
               className={`font-medium ${TEXT_LINK}`}
             >
-              {copy.calculator} →
+              {copy.calculator}
             </a>
           ) : null}
         </p>

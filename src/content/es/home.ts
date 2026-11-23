@@ -167,10 +167,6 @@ export const home = {
     },
   },
   doors: {
-    ask: {
-      title: 'Pregunta al agente',
-      text: 'Sobre nuestros servicios, precios o cómo trabajamos.',
-    },
     call: {
       title: 'Llama al agente',
       text: 'Nuestro asistente de voz es una IA, no una persona.',

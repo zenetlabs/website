@@ -139,7 +139,6 @@ export function LauncherButton({
       >
         <path d="M4 5h16v11H9l-5 4z" />
       </svg>
-      <span className="max-lg:sr-only">{chat.launcher}</span>
     </button>
   );
 }

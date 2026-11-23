@@ -23,8 +23,9 @@ describe('CtaSection', () => {
       'href',
       navHref('en', CTA_TARGET),
     );
-    expect(
-      screen.getByRole('link', { name: 'Read the FAQ →' }),
-    ).toHaveAttribute('href', '/#faq');
+    expect(screen.getByRole('link', { name: 'Read the FAQ' })).toHaveAttribute(
+      'href',
+      '/#faq',
+    );
   });
 });

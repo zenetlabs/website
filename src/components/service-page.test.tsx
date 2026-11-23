@@ -92,9 +92,10 @@ describe.each(CASES)('ServicePage (%s %s)', (locale, page) => {
     for (const button of buttons) {
       expect(button).toHaveAttribute('href', navHref(locale, CTA_TARGET));
     }
-    expect(
-      screen.getByRole('link', { name: `${labels.pricing} →` }),
-    ).toHaveAttribute('href', pagePath(locale, 'pricing'));
+    expect(screen.getByRole('link', { name: labels.pricing })).toHaveAttribute(
+      'href',
+      pagePath(locale, 'pricing'),
+    );
   });
 
   it('renders four collapsed questions with anchors and no script', () => {
@@ -135,7 +136,7 @@ describe('ServicePage links', () => {
   it('sends training to the pricing page and a workshop label', () => {
     const { copy } = view('en', 'training');
     expect(copy.cta.button).toBe('Ask about a workshop');
-    expect(screen.getByRole('link', { name: 'See pricing →' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'See pricing' })).toHaveAttribute(
       'href',
       '/pricing',
     );
@@ -154,7 +155,7 @@ describe('ServicePage links', () => {
 
   it('sends automation to the pricing page', () => {
     view('es', 'automation');
-    expect(screen.getByRole('link', { name: 'Ver precios →' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Ver precios' })).toHaveAttribute(
       'href',
       '/es/precios',
     );
@@ -185,10 +186,10 @@ describe('ServicePage links into R5 pages', () => {
   });
 
   it.each([
-    ['en', 'automation', '/case-studies/viatsy', 'Viatsy case study →'],
-    ['en', 'agents', '/case-studies/viatsy', 'Viatsy case study →'],
-    ['es', 'automation', '/es/casos/viatsy', 'Caso de Viatsy →'],
-    ['es', 'agents', '/es/casos/viatsy', 'Caso de Viatsy →'],
+    ['en', 'automation', '/case-studies/viatsy', 'Viatsy case study'],
+    ['en', 'agents', '/case-studies/viatsy', 'Viatsy case study'],
+    ['es', 'automation', '/es/casos/viatsy', 'Caso de Viatsy'],
+    ['es', 'agents', '/es/casos/viatsy', 'Caso de Viatsy'],
   ] as const)('links the case page from %s %s', (locale, page, href, text) => {
     view(locale, page);
     expect(screen.getByRole('link', { name: text })).toHaveAttribute(

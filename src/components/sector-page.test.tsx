@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { SectorPage } from '@/components/sector-page';
 import { pagePath } from '@/lib/page-registry';
@@ -34,12 +34,14 @@ describe('SectorPage', () => {
   });
 
   it('links the case page by name and the platform site', () => {
-    view();
+    const { container } = view();
+    const section = container.querySelector<HTMLElement>('#case');
+    if (!section) throw new Error('no case section');
     expect(
-      screen.getByRole('link', { name: `${HUB_ES.landing.viatsyCase} →` }),
+      within(section).getByRole('link', { name: HUB_ES.landing.viatsyCase }),
     ).toHaveAttribute('href', pagePath('es', 'viatsyCase'));
     expect(
-      screen.getByRole('link', { name: `${copy.platform.link} →` }),
+      screen.getByRole('link', { name: copy.platform.link }),
     ).toHaveAttribute('href', 'https://taplany.com');
   });
 

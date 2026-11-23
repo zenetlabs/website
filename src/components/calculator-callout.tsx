@@ -34,7 +34,7 @@ export function CalculatorCallout({
           href={pagePath(locale, 'calculator')}
           className={`shrink-0 font-medium ${TEXT_LINK}`}
         >
-          {copy.link} →
+          {copy.link}
         </a>
       </Container>
     </section>

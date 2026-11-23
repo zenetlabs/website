@@ -185,7 +185,7 @@ test.describe(VERIFACTU_PAGE, () => {
   test('is linked from the Spanish home strip', async ({ page }) => {
     await gotoHydrated(page, '/es');
     await expect(
-      page.locator('#verifactu').getByRole('link', { name: /Verifactu →$/ }),
+      page.locator('#verifactu').getByRole('link', { name: 'Verifactu' }),
     ).toHaveAttribute('href', VERIFACTU_PAGE);
   });
 });
@@ -196,12 +196,11 @@ test.describe(SECTOR_PAGE, () => {
   }) => {
     await gotoHydrated(page, SECTOR_PAGE);
     await expect(page.locator('#work li')).toHaveCount(6);
-    await expect(
-      page.locator('#case').getByRole('link', { name: /→$/ }),
-    ).toHaveAttribute('href', CASE_PAIR.es);
-    await expect(
-      page.getByRole('link', { name: /Taplany →$/ }),
-    ).toHaveAttribute('href', 'https://taplany.com');
+    await expect(page.locator(`#case a[href="${CASE_PAIR.es}"]`)).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Taplany' })).toHaveAttribute(
+      'href',
+      'https://taplany.com',
+    );
   });
 
   test('describes a service, a breadcrumb and a FAQ in JSON-LD', async ({
@@ -291,11 +290,8 @@ test('the automation and agents pages link the case in both languages', async ({
     ['/es/servicios/agentes-de-ia', CASE_PAIR.es],
   ] as const) {
     await gotoHydrated(page, path);
-    const links = page.locator('#case').getByRole('link', { name: /→$/ });
-    await expect(links.first()).toHaveAttribute('href', href);
-    await expect(links.last()).toHaveAttribute(
-      'href',
-      path.startsWith('/es') ? '/es/casos' : '/case-studies',
-    );
+    const hub = path.startsWith('/es') ? '/es/casos' : '/case-studies';
+    await expect(page.locator(`#case a[href="${href}"]`)).toBeVisible();
+    await expect(page.locator(`#case a[href="${hub}"]`)).toBeVisible();
   }
 });

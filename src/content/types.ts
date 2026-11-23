@@ -219,7 +219,6 @@ export type HomeContent = {
   // The doors in the closing band. `call` is present only while voice is
   // published; the loader drops it otherwise.
   doors: {
-    ask: DoorCopy;
     call?: DoorCopy;
     write: DoorCopy;
   };
