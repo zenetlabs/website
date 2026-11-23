@@ -17,6 +17,7 @@ import { usePanelMotion } from '@/components/chat/panel-motion';
 import { ContactLinks } from '@/components/contact-links';
 import { LazyTurnstile } from '@/components/form-parts';
 import { useSheetDrag } from '@/components/sheet-drag';
+import { SECONDARY_BUTTON_SM } from '@/components/ui';
 import { useChallengeOnDemand } from '@/components/use-challenge-on-demand';
 import type { ChatCopy } from '@/content/types';
 import { CHAT_LIMITS } from '@/lib/assistant-limits';
@@ -27,10 +28,10 @@ import {
   chatIdle,
   dismissProposal,
   ensureLocale,
-  hasChatSession,
   proposeSlot,
   send,
   shownText,
+  unsentMessage,
   useChatState,
 } from '@/lib/chat-store';
 import type { Locale } from '@/lib/i18n';
@@ -39,7 +40,6 @@ import { isPlainClick } from '@/lib/plain-click';
 import { openVoice, voiceAvailable } from '@/lib/voice-entry';
 
 const LOW_REMAINING = 5;
-const CHALLENGE_WAIT_MS = 20_000;
 const FALLBACK: ReadonlySet<string> = new Set([
   'budget',
   'unavailable',
@@ -67,10 +67,13 @@ function labelFor(item: NavigateItem, copy: ChatCopy) {
     : copy.sections[item.section];
 }
 
-function statusText(state: ChatState, copy: ChatCopy, queued: boolean): string {
-  if (state.status === 'verifying' || (queued && state.status === 'idle')) {
-    return copy.verifying;
-  }
+function statusText(
+  state: ChatState,
+  copy: ChatCopy,
+  ticking: boolean,
+): string {
+  if (ticking) return copy.verifyTick;
+  if (state.status === 'verifying') return copy.verifying;
   if (state.status === 'tool' && state.tool !== null) {
     return toolLabel(copy, state.tool);
   }
@@ -174,6 +177,21 @@ function ChatPerson({
   );
 }
 
+// The dots stand for work in progress: alone while the reply is written, with
+// the words for the check and the tool steps, and gone while the visitor is
+// asked to tick the box (nothing works then).
+type Typing = { words: string; dots: boolean };
+
+function typingBubble(
+  state: ChatState,
+  status: string,
+  ticking: boolean,
+): Typing | null {
+  if (status === '') return null;
+  const writing = state.status === 'writing' && !ticking;
+  return { words: writing ? '' : status, dots: !ticking };
+}
+
 function ChatLog({
   copy,
   locale,
@@ -188,7 +206,7 @@ function ChatLog({
   locale: Locale;
   welcome: string;
   state: ChatState;
-  typing: string;
+  typing: Typing | null;
   onNavigate: (
     item: NavigateItem,
     event: MouseEvent<HTMLAnchorElement>,
@@ -268,14 +286,16 @@ function ChatLog({
             {streamed}
           </li>
         )}
-        {typing === '' || streamed !== '' ? null : (
+        {typing === null || streamed !== '' ? null : (
           <li aria-hidden="true" data-chat-typing className="chat-typing">
-            <span className="chat-dots">
-              <span />
-              <span />
-              <span />
-            </span>
-            {typing}
+            {typing.dots ? (
+              <span className="chat-dots">
+                <span />
+                <span />
+                <span />
+              </span>
+            ) : null}
+            {typing.words}
           </li>
         )}
       </ol>
@@ -321,14 +341,16 @@ function ChatAlerts({
   booking,
   state,
   unsent,
-  challengeFailed,
+  canRetry,
+  onRetry,
 }: {
   copy: ChatCopy;
   locale: Locale;
   booking: boolean;
   state: ChatState;
   unsent: string | null;
-  challengeFailed: boolean;
+  canRetry: boolean;
+  onRetry: () => void;
 }) {
   const showFallback = state.failure !== null && FALLBACK.has(state.failure);
   // The contact link carries what the visitor typed, so it is never lost.
@@ -357,9 +379,17 @@ function ChatAlerts({
           {copy.errorRate}
         </p>
       ) : null}
-      {state.failure === 'captcha' || challengeFailed ? (
+      {state.failure === 'captcha' ? (
         <div role="alert" className="chat-alert" data-chat-alert="captcha">
           <p>{copy.errorCaptcha}</p>
+          <button
+            type="button"
+            disabled={!canRetry}
+            onClick={onRetry}
+            className={`${SECONDARY_BUTTON_SM} justify-self-start`}
+          >
+            {copy.retry}
+          </button>
           <ContactLinks
             locale={locale}
             booking={booking}
@@ -406,7 +436,6 @@ function ChatComposer({
   inputRef,
   draft,
   canSubmit,
-  locked,
   onDraftChange,
   onSubmit,
 }: {
@@ -415,8 +444,6 @@ function ChatComposer({
   inputRef: Ref<HTMLTextAreaElement>;
   draft: string;
   canSubmit: boolean;
-  // A message waiting for the challenge: no edit may be lost meanwhile.
-  locked: boolean;
   onDraftChange: (value: string) => void;
   onSubmit: () => void;
 }) {
@@ -444,7 +471,6 @@ function ChatComposer({
           onChange={(event) => onDraftChange(event.target.value)}
           onKeyDown={onKeyDown}
           maxLength={CHAT_LIMITS.messageChars}
-          readOnly={locked}
           rows={1}
           placeholder={copy.placeholder}
           className="chat-input"
@@ -481,20 +507,14 @@ export function ChatPanel({
   const router = useRouter();
   // The desk's message waits in the composer until it is sent, so a slow or
   // failed challenge never loses it.
-  const [draft, setDraft] = useState(initialMessage ?? '');
-  // The challenge has loaded: read only when a message is sent.
-  const ready = useRef(false);
-  const [queued, setQueued] = useState(false);
+  const [draft, setDraft] = useState(initialMessage ?? unsentMessage());
   const [noticeOpen, setNoticeOpen] = useState<boolean | null>(null);
-  const [challengeFailed, setChallengeFailed] = useState(false);
   const isOnline = useSyncExternalStore(subscribeOnline, online, alwaysOnline);
   const [zone] = useState(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone,
   );
-  const challenge = useChallengeOnDemand(challengeDown);
+  const challenge = useChallengeOnDemand('chat');
   const input = useRef<HTMLTextAreaElement>(null);
-  const pendingMessage = useRef(initialMessage);
-  const queueTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const motion = usePanelMotion(from);
   const { dialogRef, content, dismiss } = motion;
   const drag = useSheetDrag({
@@ -507,17 +527,11 @@ export function ChatPanel({
   const noticeId = useId();
   const inputId = useId();
   const busy = state.status !== 'idle';
-  const canSend = () => !busy && (state.sessionId !== null || ready.current);
-  // A message typed before the challenge has loaded waits for it, shown as the
-  // check it is, instead of a send button that does nothing.
-  // Once the challenge has failed only a session can carry a message: the
-  // captcha alert (with the draft in its contact link) takes over.
-  const canQueue =
-    !busy &&
-    !queued &&
-    isOnline &&
-    (state.sessionId !== null || !challengeFailed);
-  const status = statusText(state, copy, queued);
+  // A message sent before the challenge has loaded waits for it as the check
+  // it is. A failed check never locks the composer or the chips: the alert
+  // offers a fresh one, and the message is back in the box.
+  const canQueue = !busy && isOnline;
+  const status = statusText(state, copy, challenge.interactive);
   const notice = noticeOpen ?? state.items.length === 0;
   const welcome = booking ? copy.welcome + copy.welcomeBooking : copy.welcome;
   const suggestions = booking
@@ -528,38 +542,15 @@ export function ChatPanel({
     return canQueue && text.trim() !== '';
   }
 
-  function submit(text: string) {
-    if (!canSendText(text)) return;
-    if (canSend()) {
-      sendText(text);
-      return;
-    }
-    pendingMessage.current = text;
-    setQueued(true);
-    // A challenge that never loads must not leave the message checking forever.
-    clearTimeout(queueTimer.current);
-    queueTimer.current = setTimeout(challengeDown, CHALLENGE_WAIT_MS);
+  // Only the composer's own text empties the composer; a chip leaves it be.
+  function submit(text: string, fromComposer: boolean) {
+    if (canSendText(text)) sendText(text, fromComposer);
   }
 
-  // The challenge failed or never loaded: nothing waits for it any more, and
-  // the typed message stays in the composer and in the alert's contact link.
-  function challengeDown() {
-    clearTimeout(queueTimer.current);
-    pendingMessage.current = null;
-    setQueued(false);
-    setChallengeFailed(true);
-  }
-
-  // The desk's message goes out like a typed one once a session or a
-  // Turnstile token can carry it. While a reply is still streaming it stays
-  // in the composer for the visitor to send.
+  // The desk's message goes out like a typed one. While a reply is still
+  // streaming it stays in the composer for the visitor to send.
   function sendPending() {
-    clearTimeout(queueTimer.current);
-    const text = pendingMessage.current;
-    setQueued(false);
-    if (text === null) return;
-    pendingMessage.current = null;
-    if (chatIdle()) sendText(text);
+    if (initialMessage !== null && chatIdle()) sendText(initialMessage, true);
   }
 
   function openPanel(dialog: HTMLDialogElement) {
@@ -567,11 +558,11 @@ export function ChatPanel({
     dialog.showModal();
     input.current?.focus();
     motion.grow(dialog);
-    if (hasChatSession()) sendPending();
+    sendPending();
   }
 
-  function sendText(text: string) {
-    setDraft('');
+  function sendText(text: string, fromComposer: boolean) {
+    if (fromComposer) setDraft('');
     void send(text, {
       locale,
       page: location.pathname,
@@ -579,7 +570,19 @@ export function ChatPanel({
       newSession: copy.newSession,
       resetToken: () => challenge.widget.current?.reset(),
       token: challenge.token,
+    }).then((unsent) => {
+      // Back in the composer, ahead of anything typed while it was checking.
+      if (unsent !== null) {
+        setDraft((current) =>
+          current.trim() === '' ? unsent : `${unsent}\n\n${current}`,
+        );
+      }
     });
+  }
+
+  function tryAgain() {
+    input.current?.focus();
+    submit(draft, true);
   }
 
   // A page opened from the chat: inside the app, so the conversation stays.
@@ -651,19 +654,35 @@ export function ChatPanel({
               locale={locale}
               welcome={welcome}
               state={state}
-              typing={status}
+              typing={typingBubble(state, status, challenge.interactive)}
               onNavigate={navigate}
               onOpen={open}
               onPickSlot={(start) => {
                 proposeSlot(start);
               }}
             />
+            <div
+              data-chat-check
+              className={challenge.interactive ? 'mt-3' : undefined}
+            >
+              <LazyTurnstile
+                engaged
+                action="chat"
+                hint={null}
+                locale={locale}
+                {...challenge.widgetProps}
+                options={{
+                  appearance: 'interaction-only',
+                  execution: 'execute',
+                }}
+              />
+            </div>
             {state.items.length === 0 ? (
               <>
                 <ChatSuggestions
                   suggestions={suggestions}
                   canSend={canQueue}
-                  onPick={submit}
+                  onPick={(text) => submit(text, false)}
                 />
                 <ChatPerson copy={copy} locale={locale} booking={booking} />
               </>
@@ -694,7 +713,8 @@ export function ChatPanel({
               booking={booking}
               state={state}
               unsent={draft.trim() === '' ? null : draft.trim()}
-              challengeFailed={challengeFailed}
+              canRetry={canSendText(draft)}
+              onRetry={tryAgain}
             />
           </div>
         </div>
@@ -710,20 +730,8 @@ export function ChatPanel({
           inputRef={input}
           draft={draft}
           canSubmit={canSendText(draft)}
-          locked={queued}
           onDraftChange={setDraft}
-          onSubmit={() => submit(draft)}
-        />
-        <LazyTurnstile
-          engaged
-          action="chat"
-          locale={locale}
-          {...challenge.widgetProps}
-          onLoad={() => {
-            ready.current = true;
-            sendPending();
-          }}
-          options={{ appearance: 'interaction-only', execution: 'execute' }}
+          onSubmit={() => submit(draft, true)}
         />
       </div>
     </dialog>

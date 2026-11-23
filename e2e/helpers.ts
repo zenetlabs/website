@@ -242,13 +242,26 @@ export async function gotoHydrated(
 export async function settleAnimations(page: Page) {
   await page.evaluate(() =>
     Promise.all(
-      document.getAnimations().map((animation) =>
-        animation.finished.catch((error: unknown) => {
-          if (!(error instanceof DOMException && error.name === 'AbortError')) {
-            throw error;
-          }
-        }),
-      ),
+      document
+        .getAnimations()
+        // The chat's typing dots loop, so they never settle.
+        .filter(
+          (animation) =>
+            !(
+              animation.effect?.getComputedTiming().endTime === Infinity &&
+              animation.effect instanceof KeyframeEffect &&
+              animation.effect.target?.closest('[data-chat-typing]')
+            ),
+        )
+        .map((animation) =>
+          animation.finished.catch((error: unknown) => {
+            if (
+              !(error instanceof DOMException && error.name === 'AbortError')
+            ) {
+              throw error;
+            }
+          }),
+        ),
     ),
   );
 }

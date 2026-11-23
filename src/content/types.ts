@@ -802,6 +802,8 @@ export type ChatCopy = {
   send: string;
   close: string;
   verifying: string;
+  verifyTick: string;
+  retry: string;
   writing: string;
   tools: Record<
     | 'get_faq'

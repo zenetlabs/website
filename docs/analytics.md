@@ -24,7 +24,8 @@ GA4 events (`src/lib/track.ts`, typed, no free-text params):
 | `book_request` | none | a booking request was held and its confirm link emailed: the `/book` form, the chat card, the WebMCP dialog and a voice call |
 | `book_meeting` | none | the page behind the emailed link, once, when the booking is confirmed (every channel). Failed confirms (`taken`, `failed`, `unknown`) do not count; D1 stays the source of truth |
 | `chat_open` | `entry`: `launcher`, `desk`, `close` | every open: the floating launcher, the home desk (a chip or the composer), or the chips or composer in the home close |
-| `chat_message` | none | the chat panel, for each visitor message actually sent (never its text) |
+| `chat_message` | none | the chat panel, once the server accepted a visitor message (never its text; a failed bot check or a refused turn is not counted) |
+| `challenge_error` | `challenge`: `chat`, `voice`, `lead`, `book-page`, `book-chat`, `book-webmcp`; `code`: Turnstile's client error code (1 to 6 digits), `unsupported`, `other`, or, from the chat and voice panels' hook only, `not_loaded` (the widget never loaded in 20 s), `timeout` (30 s working alone) and `limit` (180 s) | the Turnstile widget, on every error callback of every surface (Turnstile may call it again on each retry), plus the hook's own timeouts, so nothing counts twice |
 | `voice_call_start` | none | the voice panel, each time a call connects |
 
 Lead attribution: with **attribution** consent the first landing page, referrer and campaign tags are kept in `localStorage` for 90 days and sent with each lead instead of the current page load. Without it a lead carries only the page load it was sent from. The request shape and the server do not change.
@@ -62,7 +63,7 @@ Cookie banners are not shown when `ga4Id` is `null`, because nothing optional wo
 
 ## 3. Adding an event
 
-Extend `ParamEvents` or `PlainEvent` in `src/lib/track.ts`, then call `track()`. Params are literal unions so free text (personal data) cannot be passed. Register new params as custom dimensions in GA4. A new CTA gets a `CtaId` and uses `CtaLink`; `e2e/consent.e2e.ts` fails for any booking CTA without `data-cta`.
+Extend `ParamEvents` or `PlainEvent` in `src/lib/track.ts`, then call `track()`. Params are literal unions (or digits checked by a guard, like `code`) so free text (personal data) cannot be passed. Register new params as custom dimensions in GA4. A new CTA gets a `CtaId` and uses `CtaLink`; `e2e/consent.e2e.ts` fails for any booking CTA without `data-cta`.
 
 ## 4. Verify
 
@@ -81,7 +82,7 @@ Extend `ParamEvents` or `PlainEvent` in `src/lib/track.ts`, then call `track()`.
 2. **Enhanced measurement:** keep page views, scrolls and outbound clicks. Turn off form interactions (they duplicate `generate_lead`) and video.
 3. **Data retention:** 14 months. **Google signals: off** (if you turn it on, update the cookies page and bump the revision).
 4. **Data processing terms:** accept them under Admin, Account details.
-5. **Custom dimensions** (event-scoped): `method` and `cta_id`.
+5. **Custom dimensions** (event-scoped): `method`, `cta_id`, `challenge` and `code`.
 6. **Key events:** create `generate_lead` and `book_meeting` (Admin, Key events, New key event). In Google Ads these are called conversions.
 7. **Search Console link:** Admin, Product links, Search Console links.
 8. **Internal traffic (optional):** define your IP.

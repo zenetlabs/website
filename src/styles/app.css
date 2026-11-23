@@ -1179,14 +1179,6 @@
     @apply flex items-center gap-3 px-5 pt-4 max-sm:gap-2 max-sm:px-4 max-sm:pt-3 md:px-6;
   }
 
-  .desk-head .desk-mark {
-    @apply max-sm:size-8;
-  }
-
-  .desk-head .desk-name {
-    @apply max-sm:text-ui-s;
-  }
-
   .desk-id {
     @apply flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5 max-sm:gap-x-1.5;
   }
@@ -1202,6 +1194,14 @@
 
   .desk-name {
     @apply text-ui-l font-semibold tracking-normal;
+  }
+
+  .desk-head .desk-mark {
+    @apply max-sm:size-8;
+  }
+
+  .desk-head .desk-name {
+    @apply max-sm:text-ui-s;
   }
 
   .desk-badge {
@@ -1445,7 +1445,8 @@
     @apply justify-self-end rounded-tr-sm bg-cta text-cta-fg;
   }
 
-  /* Static on purpose: the words say what is happening, and nothing loops */
+  /* The dots pulse while a reply or the bot check is pending (owner exception to
+     "nothing loops"); they stand still under reduced motion. */
   .chat-typing {
     @apply inline-flex items-center gap-2.5 justify-self-start rounded-inner rounded-tl-sm bg-agent-soft px-3.5 py-2.5 text-ui-s text-fg-soft;
   }
@@ -2052,6 +2053,34 @@
   from {
     opacity: 0;
     transform: translateY(-0.5rem);
+  }
+}
+
+@keyframes chat-dot {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* The bubble is mounted only while something is pending, so the loop ends with it */
+@media (prefers-reduced-motion: no-preference) {
+  .chat-dots > span {
+    animation: chat-dot 1200ms var(--ease-out) infinite both;
+  }
+
+  .chat-dots > span:nth-child(2) {
+    animation-delay: 150ms;
+  }
+
+  .chat-dots > span:nth-child(3) {
+    animation-delay: 300ms;
   }
 }
 

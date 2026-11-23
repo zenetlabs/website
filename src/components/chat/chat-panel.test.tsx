@@ -1,5 +1,6 @@
 import {
   act,
+  cleanup,
   fireEvent,
   render,
   screen,
@@ -7,6 +8,7 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatPanel } from '@/components/chat/chat-panel';
 import { chatCopy as en } from '@/content/en/chat';
@@ -24,19 +26,34 @@ const widget = vi.hoisted(() => {
     ready: boolean;
     fail: boolean;
     interactive: boolean;
+    // Executes that answer with an error before one succeeds: Turnstile's own
+    // retries. A reset stops the pending retry.
+    errors: number;
+    generation: number;
     handlers: {
+      onError: (code: string) => void;
       onSuccess: (token: string) => void;
       onTimeout: () => void;
       onBeforeInteractive: () => void;
       onAfterInteractive: () => void;
     } | null;
-  } = { ready: true, fail: false, interactive: false, handlers: null };
+  } = {
+    ready: true,
+    fail: false,
+    interactive: false,
+    errors: 0,
+    generation: 0,
+    handlers: null,
+  };
   return state;
 });
 const voice = vi.hoisted(() => ({ available: false, openVoice: vi.fn() }));
 
 vi.mock('@/lib/chat-client', () => ({ postChat }));
-vi.mock('@/lib/track', () => ({ track }));
+vi.mock('@/lib/track', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/track')>()),
+  track,
+}));
 vi.mock('@/lib/voice-entry', () => ({
   openVoice: voice.openVoice,
   voiceAvailable: () => voice.available,
@@ -51,7 +68,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
   }) => select({ locale: 'en' }),
 }));
 vi.mock('@marsidev/react-turnstile', async () => {
-  const { useImperativeHandle } = await import('react');
+  const { useEffect, useImperativeHandle } = await import('react');
   return {
     Turnstile: ({
       ref,
@@ -61,24 +78,37 @@ vi.mock('@marsidev/react-turnstile', async () => {
     }: {
       ref: React.Ref<{ reset: () => void; execute: () => void }>;
       onWidgetLoad?: () => void;
-      onError: () => void;
+      onError: (code: string) => void;
       onSuccess: (token: string) => void;
       onTimeout: () => void;
       onBeforeInteractive: () => void;
       onAfterInteractive: () => void;
     }) => {
-      widget.handlers = handlers;
+      widget.handlers = { ...handlers, onError };
       useImperativeHandle(ref, () => ({
-        reset: () => {},
-        execute: () =>
-          queueMicrotask(() =>
-            widget.interactive
-              ? handlers.onBeforeInteractive()
-              : handlers.onSuccess('tok'),
-          ),
+        reset: () => {
+          widget.generation += 1;
+        },
+        execute: () => {
+          const generation = widget.generation;
+          const attempt = () => {
+            if (generation !== widget.generation) return;
+            if (widget.errors > 0) {
+              widget.errors -= 1;
+              onError('300030');
+              setTimeout(attempt, 5);
+              return;
+            }
+            if (widget.interactive) handlers.onBeforeInteractive();
+            else handlers.onSuccess('tok');
+          };
+          queueMicrotask(attempt);
+        },
       }));
-      if (widget.fail) queueMicrotask(onError);
-      else if (widget.ready) queueMicrotask(() => onWidgetLoad?.());
+      useEffect(() => {
+        if (widget.fail) queueMicrotask(() => onError('300030'));
+        else if (widget.ready) queueMicrotask(() => onWidgetLoad?.());
+      }, []);
       return null;
     },
   };
@@ -143,6 +173,8 @@ beforeEach(() => {
   widget.ready = true;
   widget.fail = false;
   widget.interactive = false;
+  widget.errors = 0;
+  widget.generation = 0;
   voice.available = false;
   voice.openVoice.mockReset();
   resetChat('en');
@@ -307,17 +339,20 @@ describe('sending', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('clears the composer when a suggestion is sent', async () => {
+  it('leaves the composer alone when a suggestion is sent', async () => {
     postChat.mockResolvedValue(ok({ t: 'done', remaining: 18 }));
     open();
     const { box } = await ask('half-typed');
     expect(box).toHaveValue('half-typed');
     fireEvent.click(screen.getByRole('button', { name: en.suggestions[0] }));
     await waitFor(() => expect(postChat).toHaveBeenCalledTimes(1));
-    expect(box).toHaveValue('');
+    expect(postChat.mock.calls[0]?.[0]).toMatchObject({
+      message: en.suggestions[0],
+    });
+    expect(box).toHaveValue('half-typed');
   });
 
-  it('holds a message typed before the bot check has loaded, and says so', async () => {
+  it('sends a message typed before the bot check has loaded and says it is checking', async () => {
     widget.ready = false;
     open();
     const user = userEvent.setup();
@@ -326,11 +361,8 @@ describe('sending', () => {
     expect(screen.getByRole('button', { name: en.send })).toBeEnabled();
     await user.type(box, '{Enter}');
     expect(postChat).not.toHaveBeenCalled();
-    expect(box).toHaveValue('hello');
     expect(screen.getByRole('status')).toHaveTextContent(en.verifying);
     expect(screen.getByRole('button', { name: en.send })).toBeDisabled();
-    // Locked while it waits, so no edit is lost.
-    expect(box).toHaveAttribute('readonly');
   });
 
   it('a challenge that never loads stops checking after 20 s and offers the contact link with the draft', async () => {
@@ -346,15 +378,17 @@ describe('sending', () => {
       act(() => {
         vi.advanceTimersByTime(20_000);
       });
-      const alert = screen.getByRole('alert');
+      const alert = await screen.findByRole('alert');
       expect(alert).toHaveTextContent(en.errorCaptcha);
       expect(
         within(alert).getByRole('link', { name: en.fallback.form }),
       ).toHaveAttribute('href', '/contact?message=hello+there');
       expect(box).not.toHaveAttribute('readonly');
       expect(box).toHaveValue('hello there');
-      expect(screen.getByRole('button', { name: en.send })).toBeDisabled();
+      expect(screen.getByRole('button', { name: en.send })).toBeEnabled();
       expect(postChat).not.toHaveBeenCalled();
+      await user.click(within(alert).getByRole('button', { name: en.retry }));
+      expect(screen.getByRole('status')).toHaveTextContent(en.verifying);
     } finally {
       vi.useRealTimers();
     }
@@ -373,9 +407,9 @@ describe('sending', () => {
       );
       await user.type(box, 'hello');
       await user.type(box, '{Enter}');
-      expect(
-        await screen.findByText('Tick the box to continue.'),
-      ).toBeInTheDocument();
+      await waitFor(() =>
+        expect(screen.getByRole('status')).toHaveTextContent(en.verifyTick),
+      );
       // Past the 30 s limit the token wait keeps while the widget works alone.
       act(() => {
         vi.advanceTimersByTime(60_000);
@@ -402,7 +436,9 @@ describe('sending', () => {
     open();
     const { user } = await ask('hello');
     await user.keyboard('{Enter}');
-    await screen.findByText('Tick the box to continue.');
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(en.verifyTick),
+    );
     act(() => widget.handlers?.onTimeout());
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     act(() => {
@@ -414,45 +450,193 @@ describe('sending', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('closing the panel mid-check and opening it again shows no failure', async () => {
+  it('closing the panel mid-check drops the bubble and gives the message back on reopening', async () => {
     widget.interactive = true;
     const { unmount } = open();
     const { user } = await ask('hello');
     await user.keyboard('{Enter}');
-    await screen.findByText('Tick the box to continue.');
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(en.verifyTick),
+    );
     fireEvent.click(screen.getByRole('button', { name: en.close }));
     unmount();
+    await act(async () => {
+      await Promise.resolve();
+    });
     widget.interactive = false;
     open();
-    await screen.findByLabelText(en.inputLabel);
+    const box = await screen.findByLabelText(en.inputLabel);
+    expect(box).toHaveValue('hello');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.queryByText(en.errorCaptcha)).not.toBeInTheDocument();
-    expect(screen.queryByText('Tick the box to continue.')).toBeNull();
+    expect(screen.getByRole('status')).not.toHaveTextContent(en.verifyTick);
+    const log = screen.getByRole('log');
+    expect(within(log).queryByText('hello')).toBeNull();
     expect(postChat).not.toHaveBeenCalled();
-    // The composer is free again: the next message goes out.
+    // The composer is free again: the message goes out.
     postChat.mockResolvedValue(ok({ t: 'done', remaining: 19 }));
-    const next = await ask('again');
-    await next.user.keyboard('{Enter}');
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: en.send })).toBeEnabled(),
+    );
+    await user.type(box, '{Enter}');
     await waitFor(() => expect(postChat).toHaveBeenCalledTimes(1));
   });
 
-  it('a challenge error drops the queued message: no send, the captcha alert carries the draft', async () => {
+  it('a failed check never locks the chat', async () => {
+    widget.errors = Number.POSITIVE_INFINITY;
+    open();
+    const { user } = await ask('hello');
+    await user.keyboard('{Enter}');
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(en.errorCaptcha);
+    const retry = within(alert).getByRole('button', { name: en.retry });
+    expect(screen.getByLabelText(en.inputLabel)).toHaveValue('hello');
+    expect(screen.getByRole('button', { name: en.send })).toBeEnabled();
+    expect(
+      screen.getByRole('button', { name: en.suggestions[0] }),
+    ).toBeEnabled();
+    expect(postChat).not.toHaveBeenCalled();
+    postChat.mockResolvedValue(ok({ t: 'done', remaining: 19 }));
+    widget.errors = 0;
+    await user.click(retry);
+    await waitFor(() => expect(postChat).toHaveBeenCalledTimes(1));
+    expect(postChat.mock.calls[0]?.[0]).toMatchObject({
+      message: 'hello',
+      turnstileToken: 'tok',
+    });
+  });
+
+  it('an error before any send shows nothing and locks nothing', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      widget.ready = false;
+      widget.fail = true;
+      open();
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      const box = await screen.findByLabelText(en.inputLabel);
+      act(() => {
+        vi.advanceTimersByTime(10);
+      });
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      await user.type(box, 'hello');
+      expect(screen.getByRole('button', { name: en.send })).toBeEnabled();
+      await user.type(box, '{Enter}');
+      act(() => {
+        vi.advanceTimersByTime(20_000);
+      });
+      const alert = await screen.findByRole('alert');
+      expect(alert).toHaveTextContent(en.errorCaptcha);
+      expect(
+        within(alert).getByRole('button', { name: en.retry }),
+      ).toBeEnabled();
+      expect(box).toHaveValue('hello');
+      expect(screen.getByRole('button', { name: en.send })).toBeEnabled();
+      expect(
+        within(alert).getByRole('link', { name: en.fallback.form }),
+      ).toHaveAttribute('href', '/contact?message=hello');
+      expect(postChat).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('a first error is not final: the retried token sends the message, with no alert', async () => {
+    widget.errors = 1;
+    postChat.mockResolvedValue(ok({ t: 'done', remaining: 19 }));
+    open();
+    const { user } = await ask('hello');
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(postChat).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(postChat.mock.calls[0]?.[0]).toMatchObject({
+      message: 'hello',
+      turnstileToken: 'tok',
+    });
+  });
+
+  it('shows the checkbox inside the conversation: the bubble asks for the tick, with no dots and no widget hint', async () => {
+    widget.interactive = true;
+    open();
+    const { user } = await ask('hello');
+    await user.keyboard('{Enter}');
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(en.verifyTick),
+    );
+    const bubble = document.querySelector('[data-chat-typing]');
+    expect(bubble).toHaveTextContent(en.verifyTick);
+    expect(bubble?.querySelector('.chat-dots')).toBeNull();
+    expect(screen.queryByText('Tick the box to continue.')).toBeNull();
+    const check = document.querySelector('[data-chat-check]');
+    const log = screen.getByRole('log');
+    expect(log.contains(check)).toBe(false);
+    expect(
+      log.compareDocumentPosition(check ?? log) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('shows the dots alone while the reply is written, and the dots with the words while checking', async () => {
+    let release: (value: unknown) => void = () => {};
+    postChat.mockReturnValue(
+      new Promise((resolve) => {
+        release = resolve;
+      }),
+    );
     widget.ready = false;
-    widget.fail = true;
     open();
     const user = userEvent.setup();
     const box = await screen.findByLabelText(en.inputLabel);
+    await user.type(box, 'hello{Enter}');
+    let bubble = document.querySelector('[data-chat-typing]');
+    expect(bubble).toHaveTextContent(en.verifying);
+    expect(bubble?.querySelector('.chat-dots')).not.toBeNull();
+    widget.ready = true;
+    cleanup();
+    resetChat('en');
+    widget.ready = true;
+    open();
+    const next = await ask('again');
+    await next.user.keyboard('{Enter}');
+    await waitFor(() =>
+      expect(document.querySelector('[data-chat-typing]')).not.toBeNull(),
+    );
+    bubble = document.querySelector('[data-chat-typing]');
+    expect(bubble?.textContent).toBe('');
+    expect(bubble?.querySelector('.chat-dots')).not.toBeNull();
+    release(ok({ t: 'done', remaining: 19 }));
+  });
+
+  it('a suggestion after a failed check leaves the restored message in the composer', async () => {
+    widget.errors = Number.POSITIVE_INFINITY;
+    open();
+    const { user, box } = await ask('hello');
+    await user.keyboard('{Enter}');
+    await screen.findByRole('alert');
+    expect(box).toHaveValue('hello');
+    widget.errors = 0;
+    postChat.mockResolvedValue(ok({ t: 'done', remaining: 19 }));
+    await user.click(screen.getByRole('button', { name: en.suggestions[0] }));
+    await waitFor(() => expect(postChat).toHaveBeenCalledTimes(1));
+    expect(postChat.mock.calls[0]?.[0]).toMatchObject({
+      message: en.suggestions[0],
+    });
+    expect(box).toHaveValue('hello');
+  });
+
+  it('keeps both texts when the visitor typed while the check ran', async () => {
+    widget.interactive = true;
+    open();
+    const { user, box } = await ask('hello');
+    await user.keyboard('{Enter}');
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(en.verifyTick),
+    );
+    await user.type(box, 'and more');
+    act(() => widget.handlers?.onError('110200'));
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent(en.errorCaptcha);
-    await user.type(box, 'hello');
-    expect(screen.getByRole('button', { name: en.send })).toBeDisabled();
-    await user.type(box, '{Enter}');
+    await waitFor(() => expect(box).toHaveValue('hello\n\nand more'));
     expect(postChat).not.toHaveBeenCalled();
-    expect(
-      within(screen.getByRole('alert')).getByRole('link', {
-        name: en.fallback.form,
-      }),
-    ).toHaveAttribute('href', '/contact?message=hello');
   });
 
   it('draws the times check_availability returned as chips, without the plain list', async () => {
@@ -770,19 +954,31 @@ describe('opened from the home desk', () => {
     expect(track).toHaveBeenCalledWith('chat_message');
   });
 
-  it('keeps the desk message in the composer until the challenge can carry it', async () => {
-    stubMotion(true);
-    widget.ready = false;
-    openFromDesk('Can you read our PDFs?');
-    expect(await screen.findByLabelText(en.inputLabel)).toHaveValue(
-      'Can you read our PDFs?',
-    );
-    expect(postChat).not.toHaveBeenCalled();
+  it('sends the desk message at once and gives it back when the challenge never loads', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      stubMotion(true);
+      widget.ready = false;
+      openFromDesk('Can you read our PDFs?');
+      const box = await screen.findByLabelText(en.inputLabel);
+      expect(screen.getByRole('status')).toHaveTextContent(en.verifying);
+      expect(box).toHaveValue('');
+      act(() => {
+        vi.advanceTimersByTime(20_000);
+      });
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        en.errorCaptcha,
+      );
+      expect(box).toHaveValue('Can you read our PDFs?');
+      expect(postChat).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('keeps the text and offers the contact form with it when the challenge fails', async () => {
     stubMotion(true);
-    widget.fail = true;
+    widget.errors = Number.POSITIVE_INFINITY;
     openFromDesk('Can you read our PDFs?');
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent(en.errorCaptcha);
@@ -795,6 +991,29 @@ describe('opened from the home desk', () => {
     expect(screen.getByLabelText(en.inputLabel)).toHaveValue(
       'Can you read our PDFs?',
     );
+  });
+
+  it('sends the desk message once under StrictMode, with the check carrying it', async () => {
+    stubMotion(true);
+    postChat.mockResolvedValue(ok({ t: 'done', remaining: 19 }));
+    render(
+      <StrictMode>
+        <ChatPanel
+          locale="en"
+          copy={en}
+          booking
+          initialMessage="How much does an AI agent cost?"
+          from={desk()}
+          onClose={vi.fn()}
+        />
+      </StrictMode>,
+    );
+    await waitFor(() => expect(postChat).toHaveBeenCalledTimes(1));
+    expect(postChat.mock.calls[0]?.[0]).toMatchObject({
+      message: 'How much does an AI agent cost?',
+      turnstileToken: 'tok',
+    });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('opens empty when the desk had no message', async () => {

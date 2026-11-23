@@ -25,7 +25,10 @@ const PROPOSAL = {
 const widget = vi.hoisted(() => ({ solve: () => {}, fail: () => {} }));
 vi.mock('@/lib/booking-client', () => ({ submitBooking }));
 vi.mock('@/lib/lead-client', () => ({ attribution }));
-vi.mock('@/lib/track', () => ({ track }));
+vi.mock('@/lib/track', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/track')>()),
+  track,
+}));
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@tanstack/react-router')>()),
   useRouteContext: ({

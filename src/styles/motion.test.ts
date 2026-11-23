@@ -27,10 +27,18 @@ describe('motion policy', () => {
     expect(CSS).not.toMatch(/scroll-behavior:\s*smooth/);
   });
 
-  it('animates nothing on load: the one keyframe set is the menu opening', () => {
+  it("animates nothing on load: the keyframes are the menu opening and the chat's typing dots", () => {
     expect(
       [...CSS.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]),
-    ).toEqual(['menu-in']);
+    ).toEqual(['menu-in', 'chat-dot']);
+    const dots = blockAfter(
+      '@media (prefers-reduced-motion: no-preference) {\n  .chat-dots',
+    );
+    expect(dots).toMatch(/\.chat-dots > span\s*\{[^}]*animation:\s*chat-dot/);
+    expect(CSS.replace(dots, '')).not.toMatch(/animation:\s*chat-dot/);
+    expect(blockAfter('@keyframes chat-dot')).not.toMatch(
+      /(?<![-\w])(?!opacity|transform)[a-z-]+\s*:/,
+    );
     const gated = blockAfter(
       '@media (prefers-reduced-motion: no-preference) {\n  details[open] > .menu-panel',
     );

@@ -11,6 +11,7 @@ import type { ProjectType } from '@/lib/calculator-answers';
 import {
   type CtaId,
   type LeadMethod,
+  parseChallengeCode,
   track,
   trackBookingConfirm,
 } from '@/lib/track';
@@ -84,5 +85,15 @@ describe('track', () => {
       ['calculator_complete', { project_type: ProjectType }]
     >();
     expectTypeOf(track).toBeCallableWith('pricing_view');
+  });
+});
+
+describe('parseChallengeCode', () => {
+  it('keeps 1 to 6 digits, "unsupported" and calls everything else other', () => {
+    expect(parseChallengeCode('300030')).toBe('300030');
+    expect(parseChallengeCode('unsupported')).toBe('unsupported');
+    for (const code of ['', '1234567', 'network down', '60001a']) {
+      expect(parseChallengeCode(code)).toBe('other');
+    }
   });
 });

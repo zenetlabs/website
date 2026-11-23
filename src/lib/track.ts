@@ -1,3 +1,4 @@
+import type { SURFACE_ACTION, Surface } from '@/lib/booking-surfaces';
 import type { ProjectType } from '@/lib/calculator-answers';
 
 export type LeadMethod =
@@ -35,7 +36,34 @@ export type CtaId =
 // chips and composer in the home close.
 export type ChatEntry = 'launcher' | 'desk' | 'close';
 
+export type ChallengeAction =
+  | 'chat'
+  | 'voice'
+  | 'lead'
+  | (typeof SURFACE_ACTION)[Surface];
+export type ChallengeCode =
+  | `${number}`
+  | 'unsupported'
+  | 'other'
+  // The on-demand hook's own endings, with no Turnstile error behind them.
+  | 'not_loaded'
+  | 'timeout'
+  | 'limit';
+
+function isCode(value: string): value is `${number}` {
+  return /^\d{1,6}$/.test(value);
+}
+
+// Turnstile's client error code when it is 1 to 6 digits, else a literal.
+export function parseChallengeCode(
+  code: string,
+): Extract<ChallengeCode, `${number}` | 'unsupported' | 'other'> {
+  if (isCode(code)) return code;
+  return code === 'unsupported' ? code : 'other';
+}
+
 type ParamEvents = {
+  challenge_error: { challenge: ChallengeAction; code: ChallengeCode };
   generate_lead: { method: LeadMethod };
   cta_click: { cta_id: CtaId };
   calculator_complete: { project_type: ProjectType };

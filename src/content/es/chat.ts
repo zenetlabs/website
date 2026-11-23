@@ -27,6 +27,8 @@ export const chatCopy = {
   send: assistantIntro.send,
   close: 'Cerrar el asistente',
   verifying: 'Comprobando que no eres un bot…',
+  verifyTick: 'Marca la casilla de abajo para enviar tu mensaje.',
+  retry: 'Volver a intentarlo',
   writing: 'El asistente está escribiendo…',
   tools: {
     get_faq: 'Consultando las preguntas frecuentes…',
@@ -43,7 +45,7 @@ export const chatCopy = {
   errorRate:
     'Estás enviando mensajes demasiado rápido. Espera un minuto y vuelve a intentarlo.',
   errorCaptcha:
-    'No hemos podido verificar tu navegador. Vuelve a intentarlo o escribe a hello@zenetlabs.com.',
+    'No hemos podido verificar tu navegador, así que tu mensaje no se ha enviado. Sigue en el cuadro de abajo.',
   errorReply:
     'La respuesta se ha cortado. Puedes volver a preguntar o contactarnos directamente:',
   fallback: {

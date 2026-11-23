@@ -130,7 +130,7 @@ export function VoicePanel({
   const [zone] = useState(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone,
   );
-  const challenge = useChallengeOnDemand();
+  const challenge = useChallengeOnDemand('voice', () => setReady(true));
   const title = useRef<HTMLHeadingElement>(null);
   const titleId = useId();
   const noticeId = useId();
@@ -354,7 +354,6 @@ export function VoicePanel({
           action="voice"
           locale={locale}
           {...challenge.widgetProps}
-          onLoad={() => setReady(true)}
           options={{ appearance: 'interaction-only', execution: 'execute' }}
         />
       </div>
