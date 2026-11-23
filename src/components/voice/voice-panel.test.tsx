@@ -190,6 +190,16 @@ async function start() {
   await userEvent.click(button);
 }
 
+async function ticking(copy: { verifyTick: string }) {
+  await waitFor(() =>
+    expect(screen.getByRole('status')).toHaveTextContent(copy.verifyTick),
+  );
+}
+
+function notTicking() {
+  expect(screen.getByRole('status')).not.toHaveTextContent(en.verifyTick);
+}
+
 describe('VoicePanel', () => {
   it('opens non-modal, labelled, with the AI notice, the privacy link and no microphone request', async () => {
     mount();
@@ -255,9 +265,8 @@ describe('VoicePanel', () => {
     widget.interactive = true;
     mount();
     await start();
-    expect(
-      await screen.findByText('Tick the box to continue.'),
-    ).toBeInTheDocument();
+    await ticking(en);
+    expect(screen.queryByText('Tick the box to continue.')).toBeNull();
     expect(screen.queryByText(en.errorCaptcha)).not.toBeInTheDocument();
     expect(mint).not.toHaveBeenCalled();
     act(() => {
@@ -271,19 +280,37 @@ describe('VoicePanel', () => {
       expect.objectContaining({ turnstileToken: 'tok' }),
       undefined,
     );
+    notTicking();
+  });
+
+  it('asks for the tick in Spanish, without the widget hint', async () => {
+    widget.interactive = true;
+    mount('es');
+    const button = screen.getByRole('button', { name: es.start });
+    await waitFor(() => expect(button).toBeEnabled());
+    await userEvent.click(button);
+    await ticking(es);
+    expect(screen.queryByText('Marca la casilla para continuar.')).toBeNull();
+  });
+
+  it('keeps the AI notice as the dialog description while the tick line shows', async () => {
+    widget.interactive = true;
+    mount();
+    await start();
+    await ticking(en);
     expect(
-      screen.queryByText('Tick the box to continue.'),
-    ).not.toBeInTheDocument();
+      screen.getByRole('dialog', { name: en.title }),
+    ).toHaveAccessibleDescription(/not a person/);
   });
 
   it('keeps waiting through an interactive timeout: the fresh checkbox still starts the call', async () => {
     widget.interactive = true;
     mount();
     await start();
-    await screen.findByText('Tick the box to continue.');
+    await ticking(en);
     act(() => widget.handlers?.onTimeout());
     expect(screen.queryByText(en.errorCaptcha)).not.toBeInTheDocument();
-    expect(screen.getByText('Tick the box to continue.')).toBeInTheDocument();
+    await ticking(en);
     act(() => {
       widget.handlers?.onBeforeInteractive();
       widget.handlers?.onAfterInteractive();
@@ -300,14 +327,14 @@ describe('VoicePanel', () => {
     widget.interactive = true;
     mount();
     await start();
-    await screen.findByText('Tick the box to continue.');
+    await ticking(en);
     // Turnstile retries on its own: the first two errors are not final.
     act(() => widget.handlers?.onError('300030'));
     act(() => widget.handlers?.onError('300030'));
     expect(screen.queryByText(en.errorCaptcha)).toBeNull();
     act(() => widget.handlers?.onError('300030'));
     expect(await screen.findByText(en.errorCaptcha)).toBeInTheDocument();
-    expect(screen.queryByText('Tick the box to continue.')).toBeNull();
+    notTicking();
     expect(mint).not.toHaveBeenCalled();
     widget.interactive = false;
     widget.order.length = 0;
@@ -329,13 +356,13 @@ describe('VoicePanel', () => {
       widget.interactive = true;
       mount();
       await start();
-      await screen.findByText('Tick the box to continue.');
+      await ticking(en);
       act(() => {
         if (name === 'onUnsupported') widget.handlers?.onUnsupported();
         else widget.handlers?.onError(code ?? '');
       });
       expect(await screen.findByText(en.errorCaptcha)).toBeInTheDocument();
-      expect(screen.queryByText('Tick the box to continue.')).toBeNull();
+      notTicking();
       widget.order.length = 0;
       await userEvent.click(screen.getByRole('button', { name: en.again }));
       await start();
@@ -345,14 +372,14 @@ describe('VoicePanel', () => {
     },
   );
 
-  it('ending the call while the checkbox shows takes the hint along', async () => {
+  it('ending the call while the checkbox shows takes the tick line along', async () => {
     widget.interactive = true;
     mount();
     await start();
-    await screen.findByText('Tick the box to continue.');
+    await ticking(en);
     await userEvent.click(screen.getByRole('button', { name: en.end }));
     expect(screen.getByRole('status')).toHaveTextContent(en.ended);
-    expect(screen.queryByText('Tick the box to continue.')).toBeNull();
+    notTicking();
     expect(screen.queryByText(en.errorCaptcha)).toBeNull();
     expect(widget.order.at(-1)).toBe('reset');
     expect(mint).not.toHaveBeenCalled();

@@ -49,6 +49,10 @@ function callDoor(page: Page, locale: 'en' | 'es') {
 const VOICE_CHUNK =
   /\/assets\/(?:voice-(?:open|panel|store|sdk|fake|client|device|tools)|livekit)[\w-]*\.js/;
 
+function status(page: Page) {
+  return page.getByRole('status');
+}
+
 async function openPanel(page: Page, locale: 'en' | 'es') {
   await gotoHydrated(page, HOME[locale]);
   await callDoor(page, locale).click();
@@ -61,7 +65,7 @@ async function startCall(page: Page, locale: 'en' | 'es') {
   const start = page.getByRole('button', { name: COPY[locale].start });
   await expect(start).toBeEnabled({ timeout: 30_000 });
   await start.click();
-  await expect(page.getByRole('status')).toHaveText(COPY[locale].listening, {
+  await expect(status(page)).toHaveText(COPY[locale].listening, {
     timeout: 30_000,
   });
 }
@@ -177,21 +181,39 @@ test('asks for the tick while Turnstile is interactive, then starts the call onc
   await start.click();
   const box = page.getByRole('button', { name: 'Fake Turnstile checkbox' });
   await expect(box).toBeVisible();
-  await expect(page.getByText('Tick the box to continue.')).toBeVisible();
+  await expect(status(page)).toHaveText(en.verifyTick);
+  await expect(page.getByText('Tick the box to continue.')).toHaveCount(0);
   // Past the 30 s the check gets while it works alone, then past a minute.
   await page.clock.fastForward('00:31');
   await expect(page.getByText(en.errorCaptcha)).toHaveCount(0);
   await expect(box).toBeVisible();
   await page.clock.fastForward('00:30');
   await expect(page.getByText(en.errorCaptcha)).toHaveCount(0);
-  await expect(page.getByText('Tick the box to continue.')).toBeVisible();
+  await expect(status(page)).toHaveText(en.verifyTick);
   expect(mints).toEqual([]);
   await box.click();
-  await expect(page.getByRole('status')).toHaveText(en.listening, {
+  await expect(status(page)).toHaveText(en.listening, {
     timeout: 30_000,
   });
   expect(mints).toEqual([200]);
-  await expect(page.getByText('Tick the box to continue.')).toHaveCount(0);
+  await expect(status(page)).not.toHaveText(en.verifyTick);
+});
+
+test('asks for the tick in Spanish, then starts the call once it is ticked', async ({
+  page,
+}) => {
+  await forceInteractiveTurnstile(page);
+  await openPanel(page, 'es');
+  const start = page.getByRole('button', { name: es.start });
+  await expect(start).toBeEnabled({ timeout: 30_000 });
+  await start.click();
+  const box = page.getByRole('button', { name: 'Fake Turnstile checkbox' });
+  await expect(box).toBeVisible();
+  await expect(status(page)).toHaveText(es.verifyTick);
+  await box.click();
+  await expect(status(page)).toHaveText(es.listening, {
+    timeout: 30_000,
+  });
 });
 
 test.describe('on a phone', () => {
@@ -214,7 +236,7 @@ test.describe('on a phone', () => {
     await page.evaluate(() =>
       window.__voiceFake?.callClientTool('navigate', { page: 'pricing' }),
     );
-    await expect(page.getByRole('status')).toContainText('Abierto');
+    await expect(status(page)).toContainText('Abierto');
     const box = await page.locator('dialog[data-voice-panel]').boundingBox();
     expect(box?.width).toBe(412);
     await settleAnimations(page);
@@ -236,9 +258,7 @@ test('opens a page for the agent without ending the call, in the call locale', a
   );
   expect(result).toBe('opened');
   await expect(page).toHaveURL(/\/es\/precios$/);
-  await expect(page.getByRole('status')).toContainText(
-    `Abierto: ${es.pages.pricing}`,
-  );
+  await expect(status(page)).toContainText(`Abierto: ${es.pages.pricing}`);
   await expect(page.getByRole('button', { name: es.end })).toBeVisible();
 });
 
@@ -361,7 +381,7 @@ test.describe('the tools an agent calls', () => {
         }),
       ),
     );
-    await expect(page.getByRole('status')).toContainText(
+    await expect(status(page)).toContainText(
       'Held for Tuesday 3 November, 5:00 pm. Check your email to confirm.',
     );
   });
@@ -443,7 +463,7 @@ test('runs end to end with the keyboard alone, and Escape ends the call and retu
   await expect(start).toBeEnabled({ timeout: 30_000 });
   await start.focus();
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('status')).toHaveText(en.listening, {
+  await expect(status(page)).toHaveText(en.listening, {
     timeout: 30_000,
   });
   await page.keyboard.press('Tab');

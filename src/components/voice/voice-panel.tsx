@@ -39,7 +39,11 @@ function failureText(copy: VoiceCopy, failure: VoiceFailure): string {
   }
 }
 
-function statusText(copy: VoiceCopy, state: VoiceState): string {
+function statusText(
+  state: VoiceState,
+  copy: VoiceCopy,
+  ticking: boolean,
+): string {
   const { notice } = state;
   const noticeText =
     notice === null
@@ -48,7 +52,9 @@ function statusText(copy: VoiceCopy, state: VoiceState): string {
           '{label}',
           notice.label,
         );
-  if (state.phase === 'connecting') return copy.connecting;
+  if (state.phase === 'connecting') {
+    return ticking ? copy.verifyTick : copy.connecting;
+  }
   if (state.phase === 'ended') {
     return [noticeText, copy.ended].filter(Boolean).join(' ');
   }
@@ -131,6 +137,7 @@ export function VoicePanel({
     () => Intl.DateTimeFormat().resolvedOptions().timeZone,
   );
   const challenge = useChallengeOnDemand('voice', () => setReady(true));
+  const status = statusText(state, copy, challenge.interactive);
   const title = useRef<HTMLHeadingElement>(null);
   const titleId = useId();
   const noticeId = useId();
@@ -239,13 +246,9 @@ export function VoicePanel({
           <div className="min-w-0">
             <p
               role="status"
-              className={
-                statusText(copy, state) === ''
-                  ? 'sr-only'
-                  : 'text-ui-m font-semibold'
-              }
+              className={status === '' ? 'sr-only' : 'text-ui-m font-semibold'}
             >
-              {statusText(copy, state)}
+              {status}
             </p>
             {state.phase === 'intro' ? (
               <p className="text-ui-s text-fg-soft">{copy.micNote}</p>
@@ -353,6 +356,7 @@ export function VoicePanel({
           engaged
           action="voice"
           locale={locale}
+          hint={null}
           {...challenge.widgetProps}
           options={{ appearance: 'interaction-only', execution: 'execute' }}
         />

@@ -1,5 +1,5 @@
 import type { TurnstileInstance } from '@marsidev/react-turnstile';
-import { useEffect, useRef, useState } from 'react';
+import { type RefObject, useEffect, useRef, useState } from 'react';
 import {
   CHALLENGE_WAIT_LIMIT_MS,
   ChallengeCancelled,
@@ -23,15 +23,52 @@ const NOT_RETRIED: ReadonlySet<string> = new Set([
   '400021',
   '400070',
 ]);
-// The widget has not loaded at all (blocked script, dead network).
-const LOAD_LIMIT_MS = 20_000;
-// While the widget works alone, before any checkbox has shown.
-const SOLO_LIMIT_MS = 30_000;
+type Deadline = { ms: number; message: string; code: ChallengeCode };
 
-type Waiter = {
+// The widget has not loaded at all (blocked script, dead network).
+const LOAD: Deadline = {
+  ms: 20_000,
+  message: 'challenge never loaded',
+  code: 'not_loaded',
+};
+// While the widget works alone, before any checkbox has shown.
+const SOLO: Deadline = {
+  ms: 30_000,
+  message: 'challenge timed out',
+  code: 'timeout',
+};
+// The cap on the whole wait, from token(), however long a checkbox shows.
+const LIMIT: Deadline = {
+  ms: CHALLENGE_WAIT_LIMIT_MS,
+  message: 'challenge took too long',
+  code: 'limit',
+};
+
+type Timer = ReturnType<typeof setTimeout>;
+
+// One wait for a token. It owns its error count and its timers, so a new wait
+// starts clean and a settled one leaves nothing running.
+type Wait = {
   resolve: (token: string) => void;
   reject: (error: Error) => void;
+  errors: number;
+  // reset() and execute() have run for this wait
+  running: boolean;
+  checkbox: boolean;
+  // LOAD until the widget runs, then SOLO; none while a checkbox shows
+  phase: Timer | undefined;
+  limit: Timer;
 };
+
+// Takes the wait off the hook and stops its timers.
+function detach(wait: RefObject<Wait | null>) {
+  const current = wait.current;
+  wait.current = null;
+  if (current === null) return null;
+  clearTimeout(current.phase);
+  clearTimeout(current.limit);
+  return current;
+}
 
 // For the panels that run the challenge themselves ('execute' mode): `token()`
 // waits for the widget to load, resets it, runs it and waits for its answer. A
@@ -46,62 +83,42 @@ export function useChallengeOnDemand(
   onLoad?: () => void,
 ) {
   const widget = useRef<TurnstileInstance>(undefined);
-  const waiter = useRef<Waiter | null>(null);
+  const wait = useRef<Wait | null>(null);
   const loaded = useRef(false);
   // An error Turnstile will not retry, even one that came before any wait.
   const notRetried = useRef(false);
   const alive = useRef(true);
-  const load = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const solo = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const limit = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const errors = useRef(0);
-  const started = useRef(false);
-  const showing = useRef(false);
   const [interactive, setInteractive] = useState(false);
 
-  function showCheckbox(active: boolean) {
-    if (showing.current === active) return;
-    showing.current = active;
-    setInteractive(active);
+  function deadline(limit: Deadline) {
+    return setTimeout(() => fail(limit), limit.ms);
   }
 
-  function clearTimers() {
-    clearTimeout(load.current);
-    clearTimeout(solo.current);
-    clearTimeout(limit.current);
+  function arm(current: Wait, next: Deadline | null) {
+    clearTimeout(current.phase);
+    current.phase = next === null ? undefined : deadline(next);
   }
 
   function settle(outcome: string | Error) {
-    clearTimers();
-    showCheckbox(false);
-    started.current = false;
-    const current = waiter.current;
-    waiter.current = null;
+    const current = detach(wait);
     if (current === null) return;
+    if (current.checkbox) setInteractive(false);
     if (typeof outcome === 'string') current.resolve(outcome);
     else current.reject(outcome);
   }
 
   // `code` is set for the hook's own timeouts: Turnstile's errors were already
   // recorded by the widget.
-  function fail(message: string, code?: ChallengeCode) {
+  function fail({ message, code }: { message: string; code?: ChallengeCode }) {
     if (code !== undefined)
       track('challenge_error', { challenge: action, code });
     settle(new Error(message));
     widget.current?.reset();
   }
 
-  function armSolo() {
-    clearTimeout(solo.current);
-    solo.current = setTimeout(
-      () => fail('challenge timed out', 'timeout'),
-      SOLO_LIMIT_MS,
-    );
-  }
-
-  function run(instance: TurnstileInstance) {
-    started.current = true;
-    armSolo();
+  function run(current: Wait, instance: TurnstileInstance) {
+    current.running = true;
+    arm(current, SOLO);
     instance.reset();
     instance.execute();
   }
@@ -114,11 +131,7 @@ export function useChallengeOnDemand(
       alive.current = false;
       queueMicrotask(() => {
         if (alive.current) return;
-        clearTimeout(load.current);
-        clearTimeout(solo.current);
-        clearTimeout(limit.current);
-        waiter.current?.reject(new ChallengeCancelled());
-        waiter.current = null;
+        detach(wait)?.reject(new ChallengeCancelled());
       });
     };
   }, []);
@@ -133,21 +146,19 @@ export function useChallengeOnDemand(
           reject(new Error('challenge failed'));
           return;
         }
-        waiter.current = { resolve, reject };
-        errors.current = 0;
-        limit.current = setTimeout(
-          () => fail('challenge took too long', 'limit'),
-          CHALLENGE_WAIT_LIMIT_MS,
-        );
+        const current: Wait = {
+          resolve,
+          reject,
+          errors: 0,
+          running: false,
+          checkbox: false,
+          phase: undefined,
+          limit: deadline(LIMIT),
+        };
+        wait.current = current;
         const instance = widget.current;
-        if (loaded.current && instance) {
-          run(instance);
-          return;
-        }
-        load.current = setTimeout(
-          () => fail('challenge never loaded', 'not_loaded'),
-          LOAD_LIMIT_MS,
-        );
+        if (loaded.current && instance) run(current, instance);
+        else arm(current, LOAD);
       }),
     cancel: () => {
       settle(new ChallengeCancelled());
@@ -158,10 +169,10 @@ export function useChallengeOnDemand(
       onLoad: () => {
         loaded.current = true;
         onLoad?.();
+        const current = wait.current;
         const instance = widget.current;
-        if (waiter.current === null || started.current || !instance) return;
-        clearTimeout(load.current);
-        run(instance);
+        if (current === null || current.running || !instance) return;
+        run(current, instance);
       },
       onToken: (token: string) => {
         if (token === '') return;
@@ -170,20 +181,25 @@ export function useChallengeOnDemand(
       },
       onError: (code: string) => {
         if (NOT_RETRIED.has(code)) notRetried.current = true;
-        if (waiter.current === null) return;
-        errors.current += 1;
-        if (notRetried.current || errors.current >= MAX_ERRORS) {
-          fail('challenge failed');
+        const current = wait.current;
+        if (current === null) return;
+        current.errors += 1;
+        if (notRetried.current || current.errors >= MAX_ERRORS) {
+          fail({ message: 'challenge failed' });
           return;
         }
         // Turnstile retries alone, with no checkbox: the solo limit applies
         // again, so a retry that never answers cannot wait out the 180 s.
-        if (started.current) armSolo();
+        if (current.running) arm(current, SOLO);
       },
       onInteractive: (active: boolean) => {
-        if (waiter.current === null) return;
-        showCheckbox(active);
-        if (active) clearTimeout(solo.current);
+        const current = wait.current;
+        if (current === null) return;
+        if (current.checkbox !== active) {
+          current.checkbox = active;
+          setInteractive(active);
+        }
+        if (active && current.running) arm(current, null);
       },
     },
   };

@@ -268,6 +268,7 @@ export type VoiceCopy = {
   start: string;
   cancel: string;
   connecting: string;
+  verifyTick: string;
   listening: string;
   speaking: string;
   mute: string;
