@@ -1,4 +1,5 @@
 import { AgentDesk } from '@/components/agent-desk';
+import { FounderPortrait } from '@/components/companies-strip';
 import { CtaLink } from '@/components/cta-link';
 import { Container, EmphasisTitle } from '@/components/section';
 import { LEAD, PRIMARY_BUTTON_FULL, SECONDARY_BUTTON } from '@/components/ui';
@@ -28,12 +29,7 @@ export function Hero({
           <h1 className="text-display-1">
             <EmphasisTitle parts={copy.title} />
           </h1>
-          <p className={`hero-lead mt-5 md:mt-6 ${LEAD}`}>{copy.lead}</p>
-          <p className="hero-fact">
-            {factBefore}
-            <strong className="font-semibold text-fg">{diagnosticPrice}</strong>
-            {factAfter}
-          </p>
+          <p className={`hero-lead mt-3 md:mt-6 ${LEAD}`}>{copy.lead}</p>
           <div className="hero-actions">
             <CtaLink
               cta="hero"
@@ -51,10 +47,27 @@ export function Hero({
               {copy.secondary}
             </CtaLink>
           </div>
-          <p className="hero-audience">{copy.audience}</p>
+          <div className="hero-facts">
+            <p>
+              {factBefore}
+              <strong className="font-semibold text-fg">
+                {diagnosticPrice}
+              </strong>
+              {factAfter}
+            </p>
+            <p>{copy.audience}</p>
+          </div>
+          <a href={pagePath(locale, 'about')} className="handoff">
+            <FounderPortrait founder={founder} className="size-10 text-ui-s" />
+            <span className="leading-snug">
+              <span className="handoff-name font-semibold">{founder.name}</span>
+              , {founder.role}
+              <span className="block text-fg-soft">{copy.handoff}</span>
+            </span>
+          </a>
         </div>
         <div className="lg:col-span-7 lg:pl-4">
-          <AgentDesk copy={desk} locale={locale} founder={founder} />
+          <AgentDesk copy={desk} locale={locale} />
         </div>
       </Container>
     </section>

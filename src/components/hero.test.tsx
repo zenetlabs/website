@@ -52,6 +52,37 @@ describe.each([
     );
   });
 
+  it('keeps the copy to the headline, one sentence and its actions', () => {
+    const { container } = view();
+    const column = container.querySelector('.hero-grid > div:first-child');
+    const before = [...(column?.children ?? [])]
+      .slice(0, 3)
+      .map(
+        (el) =>
+          el.tagName + (el.className.includes('hero-actions') ? '.a' : ''),
+      );
+    expect(before).toEqual(['H1', 'P', 'DIV.a']);
+    expect(home.hero.lead).not.toMatch(/[()]/);
+    expect(home.hero.lead.match(/[.!?](\s|$)/g)).toHaveLength(1);
+  });
+
+  it('puts the facts and the founder after the actions', () => {
+    const { container } = view();
+    const column = container.querySelector('.hero-grid > div:first-child');
+    const classes = [...(column?.children ?? [])].map((el) => el.className);
+    const at = (name: string) => classes.findIndex((c) => c.includes(name));
+    expect(at('hero-actions')).toBeLessThan(at('hero-facts'));
+    expect(at('hero-facts')).toBeLessThan(at('handoff'));
+  });
+
+  it('hands over to the founder, in the amber of a person, linked to the about page', () => {
+    view();
+    const handoff = screen.getByRole('link', { name: /Albert/ });
+    expect(handoff).toHaveAttribute('href', pagePath(locale, 'about'));
+    expect(handoff).toHaveTextContent(home.hero.handoff);
+    expect(handoff.querySelector('.monogram')).toHaveTextContent('AS');
+  });
+
   it('carries the agent desk beside the copy', () => {
     const { container } = view();
     expect(container.querySelector('[data-desk]')).not.toBeNull();

@@ -38,8 +38,8 @@ const COPY = { en, es } as const;
 const HOME = { en: '/', es: '/es' } as const;
 // The desk's call door: a link to the contact page that starts the call once hydrated.
 const BUTTON = {
-  en: enHome.desk.call?.button ?? '',
-  es: esHome.desk.call?.button ?? '',
+  en: enHome.desk.call?.label ?? '',
+  es: esHome.desk.call?.label ?? '',
 };
 
 function callDoor(page: Page, locale: 'en' | 'es') {

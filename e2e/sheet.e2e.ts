@@ -263,7 +263,7 @@ test.describe('the voice sheet', () => {
   async function openVoice(page: Page) {
     await gotoHydrated(page, '/');
     await page
-      .getByRole('link', { name: home.desk.call?.button ?? '', exact: true })
+      .getByRole('link', { name: home.desk.call?.label ?? '', exact: true })
       .click();
     const sheet = page.locator(VOICE);
     await expect(sheet).toBeVisible();

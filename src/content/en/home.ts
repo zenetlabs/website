@@ -12,11 +12,12 @@ export const home = {
       emphasis: 'by hand',
       after: ' what your tools can do.',
     },
-    lead: 'We connect the tools your company already uses (ERP, online shop, CRM, WhatsApp, spreadsheets) and put AI agents on the repetitive work, so your team stops moving data by hand.',
+    lead: 'We connect the tools your company already uses and put AI agents on the repetitive work, so your team stops moving data by hand.',
     fact: '{price} fixed-price diagnostic, credited to the project if you continue within 60 days.',
     primary: 'Book a call',
     secondary: 'See pricing',
     audience: 'For companies of 10 to 100 people',
+    handoff: 'You work with the person who builds it.',
   },
   desk: {
     label: 'Ask the assistant',
@@ -29,11 +30,10 @@ export const home = {
       placeholder: 'Type your question',
     },
     call: {
-      text: 'Prefer to talk? Our voice assistant is an AI, not a person: it can answer questions and book a call.',
-      button: 'Call the agent',
+      button: 'Call',
+      label: 'Call the AI agent',
     },
     slots: slotsCopy,
-    handoff: 'You work with the person who builds it.',
   },
   companies: {
     title: 'We run our own companies with agents',

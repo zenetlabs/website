@@ -306,7 +306,7 @@
 
   /* The home hero: copy on 5 columns, the desk on 7, one screen tall from lg */
   .hero-grid {
-    @apply grid grid-cols-[minmax(0,1fr)] gap-8 pt-9 pb-10 md:gap-10 md:py-16 lg:min-h-[calc(100svh-var(--header-h))] lg:grid-cols-12 lg:content-center lg:items-start lg:gap-6 lg:py-14;
+    @apply grid grid-cols-[minmax(0,1fr)] gap-8 pt-9 pb-10 max-sm:gap-4 max-sm:pt-5 max-sm:pb-4 md:gap-10 md:py-16 lg:min-h-[calc(100svh-var(--header-h))] lg:grid-cols-12 lg:content-center lg:items-start lg:gap-6 lg:py-14;
   }
 
   .tier-summary {
@@ -321,20 +321,16 @@
     @apply mt-3 grid gap-2 text-ui-s md:mt-4 md:gap-3 md:text-ui-m;
   }
 
-  .hero-fact {
-    @apply mt-4 max-w-[34em] text-ui-m text-fg-soft md:mt-5;
+  .hero-facts {
+    @apply mt-4 grid max-w-[34em] gap-1 text-ui-s md:gap-1.5 text-fg-soft md:mt-8;
   }
 
   .hero-actions {
-    @apply mt-6 flex flex-wrap items-center gap-3 md:mt-8;
+    @apply mt-5 flex flex-wrap items-center gap-3 md:mt-8;
   }
 
   .offer-links {
     @apply mt-8 flex flex-wrap gap-x-8 gap-y-3 md:mt-10;
-  }
-
-  .hero-audience {
-    @apply mt-6 text-ui-s text-muted-fg max-sm:hidden;
   }
 
   /* A price in parts: large on a card, smaller in a tier list */
@@ -1097,8 +1093,8 @@
       @apply decoration-fg;
     }
 
-    .handoff:hover {
-      @apply border-line-strong;
+    .handoff:hover .handoff-name {
+      text-decoration: underline;
     }
   }
 
@@ -1175,16 +1171,24 @@
   }
 
   /* The Agent Desk: the home hero's working product object */
-  .desk-wrap {
-    @apply relative lg:pb-16;
-  }
-
   .desk {
     @apply overflow-hidden rounded-card border border-hairline bg-surface shadow-raised;
   }
 
   .desk-head {
-    @apply flex items-center gap-3 border-b border-hairline px-5 py-3 md:px-6 md:py-3.5;
+    @apply flex items-center gap-3 px-5 pt-4 max-sm:gap-2 max-sm:px-4 max-sm:pt-3 md:px-6;
+  }
+
+  .desk-head .desk-mark {
+    @apply max-sm:size-8;
+  }
+
+  .desk-head .desk-name {
+    @apply max-sm:text-ui-s;
+  }
+
+  .desk-id {
+    @apply flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5 max-sm:gap-x-1.5;
   }
 
   .desk-mark,
@@ -1205,11 +1209,11 @@
   }
 
   .desk-body {
-    @apply grid grid-cols-[minmax(0,1fr)] gap-3 px-5 py-4 md:px-6 md:py-5;
+    @apply grid grid-cols-[minmax(0,1fr)] gap-3 px-5 py-4 max-sm:gap-2 max-sm:py-2.5 md:px-6 md:py-5;
   }
 
   .desk-bubble {
-    @apply max-w-[34em] rounded-inner rounded-tl-sm bg-agent-soft px-4 py-3 text-ui-l;
+    @apply max-w-[34em] rounded-inner rounded-tl-sm bg-agent-soft px-4 py-3 text-ui-l max-sm:py-2.5 max-sm:text-ui-m;
   }
 
   /* One swipeable line of chips on a phone, wrapping from `sm` */
@@ -1265,21 +1269,13 @@
     transition: background-color var(--duration-press) ease-out;
   }
 
-  .desk-call {
-    @apply grid gap-3 border-t border-hairline px-5 py-4 sm:grid-cols-[auto_1fr_auto] sm:items-center md:px-6;
-  }
-
-  .desk-wave {
-    @apply grid size-11 place-items-center rounded-full bg-agent-soft text-agent max-sm:hidden;
-  }
-
   .desk-call-button {
     @apply inline-flex min-h-13 items-center justify-center gap-2.5 rounded-button bg-agent px-5 font-semibold text-agent-fg select-none;
     transition: background-color var(--duration-press) ease-out;
   }
 
   .desk-rail {
-    @apply grid grid-cols-[minmax(0,1fr)] gap-3 border-t border-hairline bg-tint px-5 py-4 md:px-6;
+    @apply grid grid-cols-[minmax(0,1fr)] gap-3 px-5 pt-2 pb-5 max-sm:pb-4 md:px-6;
   }
 
   .slot-card,
@@ -1584,7 +1580,7 @@
   }
 
   .handoff {
-    @apply mt-3 flex items-center gap-3.5 rounded-card border border-hairline bg-surface px-4 py-3 lg:absolute lg:bottom-0 lg:-left-10 lg:mt-0 lg:max-w-md lg:rounded-full lg:py-3 lg:pr-7 lg:pl-3 lg:shadow-raised;
+    @apply mt-3 flex w-fit items-center gap-3 text-ui-s leading-snug md:mt-6;
   }
 
   .monogram {
@@ -2185,10 +2181,7 @@ html[lang="es"] h1.text-display-1 {
     padding-block: 2.5rem;
   }
 
-  .hero-fact {
-    margin-top: 1rem;
-  }
-
+  .hero-facts,
   .hero-actions {
     margin-top: 1.5rem;
   }

@@ -161,5 +161,6 @@ describe.each([
     expect(call).toHaveAttribute('href', contact);
     expect(call).toHaveAttribute('data-voice-button');
     expect(within(doors()).getAllByRole('listitem')).toHaveLength(2);
+    expect(card().querySelector('[data-voice-button]')).toBeNull();
   });
 });

@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AgentDesk } from '@/components/agent-desk';
 import { home as enHome } from '@/content/en/home';
 import { home as esHome } from '@/content/es/home';
-import { CONTENT } from '@/lib/content';
 import { pagePath } from '@/lib/page-registry';
 
 function exactly(text: string): RegExp {
@@ -69,13 +68,7 @@ describe.each([
   const contact = pagePath(locale, 'contact');
 
   function view() {
-    return render(
-      <AgentDesk
-        copy={desk}
-        locale={locale}
-        founder={CONTENT[locale].founder}
-      />,
-    );
+    return render(<AgentDesk copy={desk} locale={locale} />);
   }
 
   it('names the AI assistant and its badge while the assistant is live', () => {
@@ -172,16 +165,37 @@ describe.each([
   });
 
   it('has no call door while voice is dark, and a link to the contact page when it is live', () => {
+    vi.stubGlobal('__ASSISTANT__', true);
     const { unmount } = view();
-    expect(document.querySelector('[data-desk-call]')).toBeNull();
+    expect(document.querySelector('[data-voice-button]')).toBeNull();
     unmount();
     flags.voice = true;
     view();
-    const door = screen.getByRole('link', { name: desk.call?.button });
+    const door = screen.getByRole('link', { name: desk.call?.label });
+    expect(door).toHaveTextContent(desk.call?.button ?? 'none');
     expect(door).toHaveAttribute('href', contact);
     expect(door).toHaveAttribute('data-voice-button');
     expect(door).toHaveAttribute('aria-haspopup', 'dialog');
-    expect(element('[data-desk-call]')).toHaveAttribute('data-needs-js');
+    expect(door).toHaveAttribute('data-needs-js');
+    expect(door.closest('.desk-head')).not.toBeNull();
+  });
+
+  it('offers no call from the human desk, even while voice is live', () => {
+    vi.stubGlobal('__ASSISTANT__', false);
+    flags.voice = true;
+    view();
+    expect(document.querySelector('[data-voice-button]')).toBeNull();
+    expect(
+      screen.getByRole('heading', { level: 2, name: desk.human.title }),
+    ).toBeInTheDocument();
+  });
+
+  it('is one surface: no call row and no wrapper around it', () => {
+    vi.stubGlobal('__ASSISTANT__', true);
+    flags.voice = true;
+    const { container } = view();
+    expect(container.querySelector('.desk-call, .desk-wrap')).toBeNull();
+    expect(container.firstElementChild).toHaveAttribute('data-desk');
   });
 
   it('offers a message instead of slots while booking is off', () => {
@@ -219,13 +233,5 @@ describe.each([
       'data-slot-rail',
       'live',
     );
-  });
-
-  it('hands over to the founder, in the amber of a person, linked to the about page', () => {
-    view();
-    const handoff = screen.getByRole('link', { name: /Albert/ });
-    expect(handoff).toHaveAttribute('href', pagePath(locale, 'about'));
-    expect(handoff).toHaveTextContent(desk.handoff);
-    expect(handoff.querySelector('.monogram')).toHaveTextContent('AS');
   });
 });

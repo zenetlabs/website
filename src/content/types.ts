@@ -168,6 +168,7 @@ export type HomeContent = {
     primary: string;
     secondary: string;
     audience: string;
+    handoff: string;
   };
   desk: DeskCopy;
   companies: { title: string; items: CompanyCopy };
@@ -243,7 +244,7 @@ export type DeskCopy = {
   // The desk while the assistant is dark: a person answers by email.
   human: { title: string; welcome: string; label: string; placeholder: string };
   // Present only while voice is published; the loader drops it otherwise.
-  call?: { text: string; button: string };
+  call?: { button: string; label: string };
   slots: {
     title: string;
     meta: string;
@@ -254,7 +255,6 @@ export type DeskCopy = {
     unavailable: string;
     message: string;
   };
-  handoff: string;
 };
 
 export type VoiceCopy = {

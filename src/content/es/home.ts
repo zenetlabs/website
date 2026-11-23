@@ -13,11 +13,12 @@ export const home = {
       emphasis: 'a mano',
       after: ' lo que puede hacerse solo.',
     },
-    lead: 'Conectamos las herramientas que ya usa tu empresa (ERP, tienda online, CRM, WhatsApp, Excel) y ponemos agentes de IA a hacer el trabajo repetitivo, para que tu equipo deje de pasar datos a mano.',
+    lead: 'Conectamos las herramientas que ya usa tu empresa y ponemos agentes de IA a hacer el trabajo repetitivo, para que tu equipo deje de pasar datos a mano.',
     fact: 'Diagnóstico a precio cerrado por {price}, que se descuenta del proyecto si sigues adelante en 60 días.',
     primary: 'Reservar una llamada',
     secondary: 'Ver precios',
     audience: 'Para pymes de 10 a 100 personas',
+    handoff: 'Trabajas con quien lo construye.',
   },
   desk: {
     label: 'Pregunta al asistente',
@@ -30,11 +31,10 @@ export const home = {
       placeholder: 'Escribe tu pregunta',
     },
     call: {
-      text: '¿Prefieres hablar? Nuestro asistente de voz es una IA, no una persona: responde tus dudas y te reserva una llamada.',
-      button: 'Llamar al agente',
+      button: 'Llamar',
+      label: 'Llamar al agente de IA',
     },
     slots: slotsCopy,
-    handoff: 'Trabajas con quien lo construye.',
   },
   companies: {
     title: 'Nuestras propias empresas ya funcionan con agentes',

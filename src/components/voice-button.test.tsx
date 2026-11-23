@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderToString } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { VoiceCallout } from '@/components/voice-button';
+import { CallLink, VoiceCallout } from '@/components/voice-button';
 
 const state = vi.hoisted(() => {
   vi.stubGlobal('__VOICE__', true);
@@ -35,6 +35,37 @@ beforeEach(() => {
   openVoice.mockReset();
   prefetchVoice.mockReset();
   push.mockReset();
+});
+
+describe('CallLink', () => {
+  it('is named by its label when one is given', () => {
+    render(
+      <CallLink
+        locale="en"
+        cta="desk_call"
+        label="Call the AI agent"
+        data-needs-js
+        className="x"
+      >
+        <span>Call</span>
+      </CallLink>,
+    );
+    const link = screen.getByRole('link', { name: 'Call the AI agent' });
+    expect(link).toHaveAttribute('aria-label', 'Call the AI agent');
+    expect(link).toHaveAttribute('data-needs-js');
+    expect(link).not.toHaveAttribute('title');
+  });
+
+  it('keeps the name of its children without a label', () => {
+    render(
+      <CallLink locale="en" cta="desk_call" className="x">
+        <span>Call the agent</span>
+      </CallLink>,
+    );
+    const link = screen.getByRole('link', { name: 'Call the agent' });
+    expect(link).not.toHaveAttribute('aria-label');
+    expect(link).not.toHaveAttribute('data-needs-js');
+  });
 });
 
 describe('VoiceCallout', () => {
