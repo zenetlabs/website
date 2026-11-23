@@ -13,11 +13,15 @@ export function CallLink({
   locale,
   cta,
   className,
+  label,
+  'data-needs-js': needsJs,
   children,
 }: {
   locale: Locale;
   cta: CtaId;
   className: string;
+  label?: string;
+  'data-needs-js'?: true;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -28,6 +32,8 @@ export function CallLink({
       href={navHref(locale, { page: 'contact' })}
       data-cta={cta}
       data-voice-button
+      aria-label={label}
+      data-needs-js={needsJs}
       aria-haspopup={hydrated ? 'dialog' : undefined}
       onPointerEnter={prefetch}
       onFocus={prefetch}

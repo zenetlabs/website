@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+import { home as enHome } from '../src/content/en/home';
 import { priceParts } from '../src/lib/money';
 import { SERVICES } from '../test/page-content';
 import {
@@ -9,6 +10,7 @@ import {
   gotoHydrated,
   navLinks,
   settleAnimations,
+  VOICE_PUBLISHED,
   waitForHydration,
 } from './helpers';
 
@@ -180,7 +182,7 @@ for (const home of HOMES) {
       page,
     }) => {
       await gotoHydrated(page, home.path);
-      const handoff = page.locator('main > section:first-child .handoff');
+      const handoff = page.locator('.hero-grid .handoff');
       await expect(handoff.locator('img')).toHaveCount(0);
       await expect(handoff.locator('[aria-hidden="true"]')).toHaveText('AS');
       await expect(handoff).toHaveAttribute('href', home.about);
@@ -264,7 +266,7 @@ const BANNER = '[data-consent-banner]';
 const PATHS = ['/', '/es'] as const;
 const DESKTOP = { width: 1280, height: 800 };
 const SHORT = { width: 1280, height: 720 };
-const VIEWPORTS = [DESKTOP, SHORT];
+const VIEWPORTS = [DESKTOP, SHORT, { width: 1024, height: 768 }];
 const NO_CONSENT = { cookies: [], origins: [] };
 
 test.describe('the hero button clears the consent banner', () => {
@@ -290,6 +292,46 @@ test.describe('the hero button clears the consent banner', () => {
       });
     }
   }
+});
+
+test.describe('the desk is one surface, its call in the head', () => {
+  test.use({ viewport: DESKTOP });
+
+  test('keeps no rule, tint or call row, and the call beside the badge', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/');
+    const style = await page.evaluate(() => {
+      const read = (selector: string) => {
+        const element = document.querySelector(selector);
+        if (!element) return null;
+        const css = getComputedStyle(element);
+        return {
+          bottom: css.borderBottomWidth,
+          top: css.borderTopWidth,
+          background: css.backgroundColor,
+        };
+      };
+      return {
+        head: read('[data-desk] .desk-head'),
+        rail: read('[data-desk] [data-slot-rail]'),
+      };
+    });
+    expect(style.head?.bottom).toBe('0px');
+    expect(style.rail?.top).toBe('0px');
+    expect(style.rail?.background).toBe('rgba(0, 0, 0, 0)');
+    await expect(page.locator('[data-desk] .desk-call')).toHaveCount(0);
+    const door = page.locator('[data-desk] .desk-head [data-voice-button]');
+    if (ASSISTANT_PUBLISHED && VOICE_PUBLISHED) {
+      await expect(door).toBeVisible();
+      await expect(door).toHaveAttribute(
+        'aria-label',
+        enHome.desk.call?.label ?? '',
+      );
+    } else {
+      await expect(door).toHaveCount(0);
+    }
+  });
 });
 
 async function launcherHits(page: Page): Promise<string[]> {
