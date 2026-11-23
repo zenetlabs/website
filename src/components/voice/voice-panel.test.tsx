@@ -33,7 +33,7 @@ const widget = vi.hoisted(() => {
     interactive: boolean;
     handlers: {
       onSuccess: (token: string) => void;
-      onError: () => void;
+      onError: (code: string) => void;
       onUnsupported: () => void;
       onTimeout: () => void;
       onBeforeInteractive: () => void;
@@ -43,7 +43,10 @@ const widget = vi.hoisted(() => {
   return state;
 });
 
-vi.mock('@/lib/track', () => ({ track }));
+vi.mock('@/lib/track', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/track')>()),
+  track,
+}));
 vi.mock('@/lib/voice-client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/voice-client')>()),
   mintVoiceSession: mint,
@@ -67,7 +70,7 @@ vi.mock('@marsidev/react-turnstile', async () => {
       ref: React.Ref<{ reset: () => void; execute: () => void }>;
       onWidgetLoad: () => void;
       onSuccess: (token: string) => void;
-      onError: () => void;
+      onError: (code: string) => void;
       onUnsupported: () => void;
       onTimeout: () => void;
       onBeforeInteractive: () => void;
@@ -293,26 +296,52 @@ describe('VoicePanel', () => {
     expect(screen.queryByText(en.errorCaptcha)).not.toBeInTheDocument();
   });
 
-  it.each(['onError', 'onUnsupported'] as const)(
-    '%s shows the captcha error, and "Try again" runs a fresh check',
-    async (name) => {
+  it('shows the captcha error after the third error, and "Try again" runs a fresh check', async () => {
+    widget.interactive = true;
+    mount();
+    await start();
+    await screen.findByText('Tick the box to continue.');
+    // Turnstile retries on its own: the first two errors are not final.
+    act(() => widget.handlers?.onError('300030'));
+    act(() => widget.handlers?.onError('300030'));
+    expect(screen.queryByText(en.errorCaptcha)).toBeNull();
+    act(() => widget.handlers?.onError('300030'));
+    expect(await screen.findByText(en.errorCaptcha)).toBeInTheDocument();
+    expect(screen.queryByText('Tick the box to continue.')).toBeNull();
+    expect(mint).not.toHaveBeenCalled();
+    widget.interactive = false;
+    widget.order.length = 0;
+    await userEvent.click(screen.getByRole('button', { name: en.again }));
+    await start();
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(en.listening),
+    );
+    expect(widget.order).toEqual(['mic', 'reset', 'execute']);
+    expect(mint).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['onUnsupported', undefined],
+    ['onError', '110200'],
+  ] as const)(
+    '%s shows the captcha error at once, and a new call fails at once too',
+    async (name, code) => {
       widget.interactive = true;
       mount();
       await start();
       await screen.findByText('Tick the box to continue.');
-      act(() => widget.handlers?.[name]());
+      act(() => {
+        if (name === 'onUnsupported') widget.handlers?.onUnsupported();
+        else widget.handlers?.onError(code ?? '');
+      });
       expect(await screen.findByText(en.errorCaptcha)).toBeInTheDocument();
       expect(screen.queryByText('Tick the box to continue.')).toBeNull();
-      expect(mint).not.toHaveBeenCalled();
-      widget.interactive = false;
       widget.order.length = 0;
       await userEvent.click(screen.getByRole('button', { name: en.again }));
       await start();
-      await waitFor(() =>
-        expect(screen.getByRole('status')).toHaveTextContent(en.listening),
-      );
-      expect(widget.order).toEqual(['mic', 'reset', 'execute']);
-      expect(mint).toHaveBeenCalledTimes(1);
+      expect(await screen.findByText(en.errorCaptcha)).toBeInTheDocument();
+      expect(widget.order).not.toContain('execute');
+      expect(mint).not.toHaveBeenCalled();
     },
   );
 

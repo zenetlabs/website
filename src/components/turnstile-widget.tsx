@@ -4,19 +4,24 @@ import {
   type TurnstileProps,
 } from '@marsidev/react-turnstile';
 import { type Ref, useImperativeHandle, useRef, useState } from 'react';
+import { type ChallengeAction, parseChallengeCode, track } from '@/lib/track';
 
 type Props = TurnstileProps & {
   instance: Ref<TurnstileInstance | undefined>;
-  hint: string;
-  onError: () => void;
+  action: ChallengeAction;
+  hint: string | null;
+  onError: (code: string) => void;
   onInteractive?: (active: boolean) => void;
 };
 
 // While Turnstile shows its checkbox the visitor is told to tick it: that is
 // a step, not a failure. Its own timeout puts up a fresh checkbox, so that is
-// one too; only an error or an unsupported browser reach `onError`.
+// one too. An error or an unsupported browser reaches `onError` with its code
+// (and the console); Turnstile may retry after an error and call it again, so
+// a handler never treats the first one as final.
 export default function TurnstileWidget({
   instance,
+  action,
   hint,
   onError,
   onInteractive,
@@ -27,6 +32,18 @@ export default function TurnstileWidget({
   // The forms keep the hint's line, so it appearing moves nothing; the panels,
   // which run the check on demand, keep it out of the layout until it shows.
   const reserve = props.options?.execution !== 'execute';
+
+  // Every error callback, so every surface records its code (the panels'
+  // hook adds only its own timeouts). An error ends the checkbox it came from.
+  function report(code: string) {
+    if (interactive) interact(false);
+    console.warn('turnstile: challenge error', { code });
+    track('challenge_error', {
+      challenge: action,
+      code: parseChallengeCode(code),
+    });
+    onError(code);
+  }
 
   function interact(active: boolean) {
     setInteractive(active);
@@ -63,24 +80,20 @@ export default function TurnstileWidget({
           setInteractive(false);
           props.onSuccess?.(token);
         }}
-        onError={() => {
-          setInteractive(false);
-          onError();
-        }}
-        onUnsupported={() => {
-          setInteractive(false);
-          onError();
-        }}
+        onError={report}
+        onUnsupported={() => report('unsupported')}
         onTimeout={() => interact(true)}
         onBeforeInteractive={() => interact(true)}
         onAfterInteractive={() => interact(false)}
       />
-      <p
-        aria-live="polite"
-        className={`text-ui-s text-fg-soft ${reserve ? 'min-h-[1lh]' : 'empty:sr-only'}`}
-      >
-        {interactive ? hint : null}
-      </p>
+      {hint === null ? null : (
+        <p
+          aria-live="polite"
+          className={`text-ui-s text-fg-soft ${reserve ? 'min-h-[1lh]' : 'empty:sr-only'}`}
+        >
+          {interactive ? hint : null}
+        </p>
+      )}
     </>
   );
 }

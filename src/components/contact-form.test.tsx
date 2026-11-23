@@ -41,7 +41,10 @@ vi.mock('@/lib/lead-client', () => ({
   attribution,
 }));
 
-vi.mock('@/lib/track', () => ({ track }));
+vi.mock('@/lib/track', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/track')>()),
+  track,
+}));
 
 // The real widget is an iframe a disabled fieldset cannot reach: `widget`
 // answers from outside the DOM while the form is locked.

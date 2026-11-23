@@ -27,6 +27,8 @@ export const chatCopy = {
   send: assistantIntro.send,
   close: 'Close the assistant',
   verifying: "Checking you're not a bot…",
+  verifyTick: 'Tick the box below to send your message.',
+  retry: 'Try again',
   writing: 'The assistant is writing…',
   tools: {
     get_faq: 'Checking our FAQ…',
@@ -41,7 +43,7 @@ export const chatCopy = {
   newSession: "This conversation had expired, so I've started a new one.",
   errorRate: "You're sending messages too fast. Wait a minute and try again.",
   errorCaptcha:
-    "We couldn't verify your browser. Try again, or write to hello@zenetlabs.com.",
+    "We couldn't verify your browser, so your message wasn't sent. It's still in the box below.",
   errorReply:
     'The reply was cut off. You can ask again, or contact us directly:',
   fallback: {

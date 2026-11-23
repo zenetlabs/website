@@ -1,12 +1,9 @@
 import type { TurnstileInstance } from '@marsidev/react-turnstile';
 import { type FormEvent, useEffect, useRef, useState } from 'react';
+import { CHALLENGE_WAIT_LIMIT_MS } from '@/lib/challenge-cancel';
 import { noop } from '@/lib/time';
 
 type SubmitLabels = { idle: string; pending: string; verifying: string };
-
-// However long Turnstile keeps asking (its checkbox refreshes after its own
-// timeout), a waiting submit gives up after this.
-const WAIT_LIMIT_MS = 180_000;
 
 // The Turnstile state the forms share: nothing mounts until the first focus,
 // and a failed submit clears the token and asks the widget for a new one.
@@ -61,7 +58,7 @@ export function useChallenge(onFailure: (waited: boolean) => void = noop) {
     setVerifying(true);
     setEngaged(true);
     clearTimeout(limit.current);
-    limit.current = setTimeout(fail, WAIT_LIMIT_MS);
+    limit.current = setTimeout(fail, CHALLENGE_WAIT_LIMIT_MS);
   }
 
   return {

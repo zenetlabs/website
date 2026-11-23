@@ -20,6 +20,10 @@ import {
   gotoHydrated,
   settleAnimations,
 } from './helpers';
+import {
+  fakeTurnstile,
+  forceInteractiveTurnstile,
+} from './turnstile-interactive';
 
 test.skip(!ASSISTANT_PUBLISHED, 'the assistant is not published in this build');
 test.describe.configure({ mode: 'serial' });
@@ -522,4 +526,149 @@ test.describe('booking from the chat', () => {
     ).toBeHidden();
     expect(await googleEvents()).toEqual([]);
   });
+});
+
+test.describe('the bot check', () => {
+  const REPLY = '[data-ai-generated]';
+
+  function chatRequests(page: Page): string[] {
+    const seen: string[] = [];
+    page.on('request', (request) => {
+      if (request.method() === 'POST' && request.url().endsWith('/api/chat')) {
+        seen.push(request.url());
+      }
+    });
+    return seen;
+  }
+
+  async function type(page: Page, locale: 'en' | 'es', text: string) {
+    const panel = page.locator('dialog[data-chat-panel]');
+    const box = panel.getByLabel(COPY[locale].inputLabel);
+    await box.fill(text);
+    await expect(
+      panel.getByRole('button', { name: COPY[locale].send, exact: true }),
+    ).toBeEnabled({ timeout: 30_000 });
+    await box.press('Enter');
+    return box;
+  }
+
+  test('a first Turnstile error is not final: the retried check sends the message', async ({
+    page,
+  }) => {
+    await fakeTurnstile(page, { errors: 1 });
+    const requests = chatRequests(page);
+    await openChat(page, 'en');
+    await type(page, 'en', 'How much does an AI agent cost?');
+    await expect(page.locator(REPLY).first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    expect(requests).toHaveLength(1);
+  });
+
+  test('a check that keeps failing gives the message back with a working Try again', async ({
+    page,
+  }) => {
+    await fakeTurnstile(page, { errors: 999 });
+    const requests = chatRequests(page);
+    const dialog = await openChat(page, 'en');
+    const box = await type(page, 'en', 'hello');
+    const alert = dialog.locator('[data-chat-alert="captcha"]');
+    await expect(alert).toContainText(en.errorCaptcha);
+    await expect(box).toHaveValue('hello');
+    await expect(
+      dialog.getByRole('button', { name: en.send, exact: true }),
+    ).toBeEnabled();
+    await expect(
+      dialog.getByRole('button', { name: en.suggestions[0] }),
+    ).toBeEnabled();
+    expect(requests).toHaveLength(0);
+    const results = await new AxeBuilder({ page })
+      .withTags(TAGS)
+      .exclude('iframe[src*="challenges.cloudflare.com"]')
+      .analyze();
+    expect(results.violations).toEqual([]);
+    const runs = await page.evaluate(() => window.__fakeTurnstile?.runs ?? 0);
+    await page.evaluate(() => {
+      if (window.__fakeTurnstile) window.__fakeTurnstile.errors = 0;
+    });
+    await alert.getByRole('button', { name: en.retry }).click();
+    await expect(page.locator(REPLY).first()).toBeVisible({ timeout: 30_000 });
+    expect(requests).toHaveLength(1);
+    expect(await page.evaluate(() => window.__fakeTurnstile?.runs)).toBe(
+      runs + 1,
+    );
+  });
+
+  for (const locale of ['en', 'es'] as const) {
+    test(`an interactive check shows the checkbox in the conversation, under the agent's line (${locale})`, async ({
+      page,
+    }) => {
+      await forceInteractiveTurnstile(page);
+      await openChat(page, locale);
+      await type(page, locale, 'hello');
+      const bubble = page.locator('[data-chat-typing]');
+      await expect(bubble).toContainText(COPY[locale].verifyTick);
+      await expect(bubble.locator('.chat-dots')).toHaveCount(0);
+      const box = page.getByRole('button', { name: 'Fake Turnstile checkbox' });
+      await expect(box).toBeVisible();
+      await expect(
+        page.locator('.chat-scroll').getByRole('button', {
+          name: 'Fake Turnstile checkbox',
+        }),
+      ).toHaveCount(1);
+      const above = await bubble.boundingBox();
+      const below = await box.boundingBox();
+      expect(below?.y).toBeGreaterThanOrEqual(
+        (above?.y ?? Infinity) + (above?.height ?? 0),
+      );
+      await expect(
+        page.getByText(
+          locale === 'en'
+            ? 'Tick the box to continue.'
+            : 'Marca la casilla para continuar.',
+        ),
+      ).toHaveCount(0);
+      await box.click();
+      await expect(page.locator(REPLY).first()).toBeVisible({
+        timeout: 30_000,
+      });
+    });
+  }
+
+  for (const reduced of [false, true]) {
+    test(`the typing dots ${reduced ? 'stand still under reduced motion' : 'pulse while a reply is pending'}`, async ({
+      page,
+    }) => {
+      await fakeTurnstile(page);
+      if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
+      let release: () => void = () => {};
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      await page.route('**/api/chat', async (route) => {
+        await gate;
+        await route.continue();
+      });
+      await openChat(page, 'en');
+      await type(page, 'en', 'hello');
+      const dots = page.locator('[data-chat-typing] .chat-dots > span');
+      await expect(dots).toHaveCount(3);
+      await expect(dots.first()).toBeVisible();
+      const running = await dots.evaluateAll(
+        (spans) =>
+          spans
+            .flatMap((span) => span.getAnimations())
+            .filter(
+              (animation) =>
+                animation instanceof CSSAnimation &&
+                animation.animationName === 'chat-dot' &&
+                animation.playState === 'running',
+            ).length,
+      );
+      expect(running).toBe(reduced ? 0 : 3);
+      release();
+      await expect(page.locator(REPLY).first()).toBeVisible({
+        timeout: 30_000,
+      });
+    });
+  }
 });

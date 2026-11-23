@@ -31,7 +31,10 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
 }));
 vi.mock('@/lib/booking-client', () => ({ submitBooking: vi.fn() }));
 vi.mock('@/lib/lead-client', () => ({ attribution: vi.fn() }));
-vi.mock('@/lib/track', () => ({ track: vi.fn() }));
+vi.mock('@/lib/track', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/track')>()),
+  track: vi.fn(),
+}));
 vi.mock('@marsidev/react-turnstile', () => ({ Turnstile: () => null }));
 
 const FROM = Date.UTC(2027, 0, 12, 0);

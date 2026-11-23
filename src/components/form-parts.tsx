@@ -6,6 +6,7 @@ import { legalEntity } from '@/lib/content';
 import { type Locale, messages } from '@/lib/i18n';
 import { pagePath } from '@/lib/page-registry';
 import { PUBLIC_EMAIL, SITE } from '@/lib/site';
+import type { ChallengeAction } from '@/lib/track';
 
 export const CONTROL =
   'min-h-12 w-full rounded-input border border-border bg-bg px-3.5 py-3 text-base';
@@ -161,16 +162,18 @@ export function LazyTurnstile({
   onError,
   onLoad,
   onInteractive,
+  hint = messages[locale].challenge.interactive,
   options,
 }: {
   engaged: boolean;
-  action: string;
+  action: ChallengeAction;
   locale: Locale;
   instance: Ref<TurnstileInstance | undefined>;
   onToken: (token: string) => void;
-  onError: () => void;
+  onError: (code: string) => void;
   onLoad?: () => void;
   onInteractive?: (active: boolean) => void;
+  hint?: string | null;
   options?: { appearance?: 'interaction-only'; execution?: 'execute' };
 }) {
   if (!engaged) return null;
@@ -184,9 +187,14 @@ export function LazyTurnstile({
           theme: 'light',
           language: locale,
           size: 'flexible',
+          // Cloudflare's defaults, pinned: the on-demand panels count their
+          // errors against these retries (see use-challenge-on-demand.ts).
+          retry: 'auto',
+          retryInterval: 8000,
           ...options,
         }}
-        hint={messages[locale].challenge.interactive}
+        action={action}
+        hint={hint}
         onWidgetLoad={onLoad}
         onSuccess={onToken}
         onExpire={() => onToken('')}

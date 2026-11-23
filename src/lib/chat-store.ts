@@ -155,7 +155,19 @@ export function fail(state: ChatState, error: ChatError): ChatState {
   return { ...settle(state), failure: error };
 }
 
+// The check failed, so nothing was sent: the visitor's bubble leaves the log
+// (the panel gives the text back) and the failure shows.
+function unverified(current: ChatState, id: number): ChatState {
+  return fail(
+    { ...current, items: current.items.filter((item) => item.id !== id) },
+    'captcha',
+  );
+}
+
 let state: ChatState = EMPTY;
+// A message that never reached the server because the panel closed during the
+// check: the next panel starts with it in the composer.
+let unsentText = '';
 let controller: AbortController | null = null;
 const listeners = new Set<() => void>();
 
@@ -175,10 +187,6 @@ function snapshot(): ChatState {
   return state;
 }
 
-export function hasChatSession(): boolean {
-  return state.sessionId !== null;
-}
-
 export function chatIdle(): boolean {
   return state.status === 'idle';
 }
@@ -187,9 +195,14 @@ export function useChatState(): ChatState {
   return useSyncExternalStore(subscribe, snapshot, snapshot);
 }
 
+export function unsentMessage(): string {
+  return unsentText;
+}
+
 export function resetChat(locale: Locale): void {
   controller?.abort();
   controller = null;
+  unsentText = '';
   setChatSessionId(null);
   set({ ...EMPTY, locale });
 }
@@ -255,25 +268,39 @@ async function consume(
   if (!signal.aborted && state.status !== 'idle') set(settle(state));
 }
 
-export async function send(text: string, context: SendContext): Promise<void> {
+// Resolves to the message when the bot check failed (or the panel closed
+// during it) and nothing was sent.
+export async function send(
+  text: string,
+  context: SendContext,
+): Promise<string | null> {
   const message = text.trim();
-  if (message === '' || state.status !== 'idle') return;
-  track('chat_message');
+  if (message === '' || state.status !== 'idle') return null;
   const abort = new AbortController();
   controller = abort;
   let viaSession = state.sessionId !== null;
+  const userId = state.nextId;
+  unsentText = '';
   set(begin(state, message, !viaSession));
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const origin = await source(viaSession, context);
+    // A reset conversation is somebody else's now.
+    if (abort.signal.aborted) return null;
     if (origin === 'cancelled') {
-      // The visitor closed the panel mid-check: the message stays, unsent,
-      // and nothing reports a failed check.
-      set(settle(state));
-      return;
+      // The visitor closed the panel mid-check: the bubble goes, the message
+      // is kept for the next panel, and nothing reports a failed check.
+      set(
+        settle({
+          ...state,
+          items: state.items.filter((item) => item.id !== userId),
+        }),
+      );
+      unsentText = message;
+      return message;
     }
     if (origin === null) {
-      set(fail(state, 'captcha'));
-      return;
+      set(unverified(state, userId));
+      return message;
     }
     set({ ...state, status: 'writing' });
     const response = await postChat(
@@ -286,10 +313,11 @@ export async function send(text: string, context: SendContext): Promise<void> {
       },
       abort.signal,
     );
-    if (abort.signal.aborted) return;
+    if (abort.signal.aborted) return null;
     if (response.ok) {
+      track('chat_message');
       await consume(response.events, abort.signal);
-      return;
+      return null;
     }
     if (response.error === 'session' && viaSession) {
       setChatSessionId(null);
@@ -307,7 +335,8 @@ export async function send(text: string, context: SendContext): Promise<void> {
       continue;
     }
     set(fail(state, response.error));
-    return;
+    return null;
   }
-  set(fail(state, 'captcha'));
+  set(unverified(state, userId));
+  return message;
 }

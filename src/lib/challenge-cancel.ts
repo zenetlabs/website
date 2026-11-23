@@ -6,3 +6,7 @@ export class ChallengeCancelled extends Error {
     this.name = 'ChallengeCancelled';
   }
 }
+
+// However long Turnstile keeps asking (its checkbox refreshes after its own
+// timeout), a waiting submit or message gives up after this.
+export const CHALLENGE_WAIT_LIMIT_MS = 180_000;

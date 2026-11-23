@@ -14,6 +14,7 @@ import {
   resetChat,
   type SendContext,
   send,
+  unsentMessage,
 } from '@/lib/chat-store';
 
 const postChat = vi.hoisted(() => vi.fn());
@@ -289,12 +290,13 @@ describe('send', () => {
     expect(state().failure).toBeNull();
     resetChat('en');
     postChat.mockResolvedValue(failure('captcha'));
-    await send('hello', ctx);
+    await expect(send('hello', ctx)).resolves.toBe('hello');
     expect(state().failure).toBe('captcha');
+    expect(state().items.some((item) => item.kind === 'user')).toBe(false);
   });
 
   it('reports a challenge that never produces a token', async () => {
-    await send(
+    const unsent = await send(
       'hello',
       context({
         token: vi.fn(async () => {
@@ -302,12 +304,28 @@ describe('send', () => {
         }),
       }),
     );
+    expect(unsent).toBe('hello');
     expect(postChat).not.toHaveBeenCalled();
     expect(state()).toMatchObject({ failure: 'captcha', status: 'idle' });
+    expect(state().items).toEqual([]);
   });
 
-  it('treats a cancelled challenge as a cancel: idle, no failure, the message kept', async () => {
-    await send(
+  it('tracks a message only once the server took it', async () => {
+    const ctx = context();
+    postChat.mockResolvedValueOnce(failure('captcha'));
+    postChat.mockResolvedValueOnce(failure('captcha'));
+    await send('hello', ctx);
+    postChat.mockResolvedValueOnce(failure('rate'));
+    await send('hello', ctx);
+    expect(track).not.toHaveBeenCalled();
+    postChat.mockResolvedValueOnce(ok({ t: 'done', remaining: 19 }));
+    await send('hello', ctx);
+    expect(track).toHaveBeenCalledOnce();
+    expect(track).toHaveBeenCalledWith('chat_message');
+  });
+
+  it('treats a cancelled challenge as a cancel: idle, no failure, no bubble, the message kept for the next panel', async () => {
+    const unsent = await send(
       'hello',
       context({
         token: vi.fn(async () => {
@@ -315,9 +333,14 @@ describe('send', () => {
         }),
       }),
     );
+    expect(unsent).toBe('hello');
     expect(postChat).not.toHaveBeenCalled();
     expect(state()).toMatchObject({ failure: null, status: 'idle' });
-    expect(state().items.at(-1)).toMatchObject({ kind: 'user', text: 'hello' });
+    expect(state().items).toEqual([]);
+    expect(unsentMessage()).toBe('hello');
+    postChat.mockResolvedValue(ok({ t: 'done', remaining: 19 }));
+    await send('again', context());
+    expect(unsentMessage()).toBe('');
   });
 
   it.each(['rate', 'budget', 'unavailable', 'session-full'] as const)(

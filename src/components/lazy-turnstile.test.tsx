@@ -5,9 +5,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LazyTurnstile } from '@/components/form-parts';
 import type { Locale } from '@/lib/i18n';
 
+const track = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/track', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/track')>()),
+  track,
+}));
+
 type Handlers = {
   onSuccess: (token: string) => void;
-  onError: () => void;
+  onError: (code: string) => void;
   onTimeout: () => void;
   onUnsupported: () => void;
   onBeforeInteractive: () => void;
@@ -34,13 +40,16 @@ vi.mock('@marsidev/react-turnstile', async () => {
   };
 });
 
-function fire(name: keyof Omit<Handlers, 'onSuccess'>) {
+function fire(
+  name: 'onTimeout' | 'onBeforeInteractive' | 'onAfterInteractive',
+) {
   act(() => widget.handlers?.[name]());
 }
 
 async function mount(
   locale: Locale = 'en',
   options?: { appearance: 'interaction-only'; execution: 'execute' },
+  hint?: string | null,
 ) {
   const onToken = vi.fn();
   const onError = vi.fn();
@@ -54,6 +63,7 @@ async function mount(
       action="lead"
       locale={locale}
       options={options}
+      hint={hint}
       instance={instance}
       onToken={onToken}
       onError={onError}
@@ -67,6 +77,7 @@ async function mount(
 beforeEach(() => {
   widget.handlers = null;
   reset.mockClear();
+  track.mockReset();
 });
 
 describe('LazyTurnstile', () => {
@@ -98,16 +109,75 @@ describe('LazyTurnstile', () => {
     expect(screen.queryByText('Tick the box to continue.')).toBeNull();
   });
 
-  it.each(['onError', 'onUnsupported'] as const)(
-    'reports a failure on %s and drops the hint',
-    async (name) => {
+  it.each([
+    ['onError', '300030'],
+    ['onUnsupported', 'unsupported'],
+  ] as const)(
+    'reports a failure on %s with its code and drops the hint',
+    async (name, code) => {
       const { onError } = await mount();
       fire('onBeforeInteractive');
-      fire(name);
+      act(() => {
+        if (name === 'onError') widget.handlers?.onError('300030');
+        else widget.handlers?.onUnsupported();
+      });
       expect(onError).toHaveBeenCalledOnce();
+      expect(onError).toHaveBeenCalledWith(code);
       expect(screen.queryByText('Tick the box to continue.')).toBeNull();
     },
   );
+
+  it('writes the code to the console, so a visitor can read it', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await mount();
+    act(() => widget.handlers?.onError('600010'));
+    act(() => widget.handlers?.onUnsupported());
+    expect(warn).toHaveBeenCalledWith('turnstile: challenge error', {
+      code: '600010',
+    });
+    expect(warn).toHaveBeenCalledWith('turnstile: challenge error', {
+      code: 'unsupported',
+    });
+    warn.mockRestore();
+  });
+
+  it("records every error with the widget's action, so every surface reports its codes", async () => {
+    await mount();
+    act(() => widget.handlers?.onError('300030'));
+    act(() => widget.handlers?.onError('network down'));
+    act(() => widget.handlers?.onUnsupported());
+    expect(track.mock.calls).toEqual([
+      ['challenge_error', { challenge: 'lead', code: '300030' }],
+      ['challenge_error', { challenge: 'lead', code: 'other' }],
+      ['challenge_error', { challenge: 'lead', code: 'unsupported' }],
+    ]);
+  });
+
+  it('an error during a checkbox ends it: onInteractive(false) before onError', async () => {
+    const { onError, onInteractive } = await mount();
+    fire('onBeforeInteractive');
+    act(() => widget.handlers?.onError('600010'));
+    expect(onInteractive).toHaveBeenLastCalledWith(false);
+    expect(onError).toHaveBeenCalledWith('600010');
+    expect(screen.queryByText('Tick the box to continue.')).toBeNull();
+  });
+
+  it('an error with no checkbox does not touch onInteractive', async () => {
+    const { onInteractive } = await mount();
+    act(() => widget.handlers?.onError('300030'));
+    expect(onInteractive).not.toHaveBeenCalled();
+  });
+
+  it('renders no hint line while the checkbox shows when the hint is null', async () => {
+    await mount(
+      'en',
+      { appearance: 'interaction-only', execution: 'execute' },
+      null,
+    );
+    fire('onBeforeInteractive');
+    expect(screen.queryByText('Tick the box to continue.')).toBeNull();
+    expect(document.querySelector('p[aria-live="polite"]')).toBeNull();
+  });
 
   it('treats its own timeout as the fresh checkbox it puts up, not a failure', async () => {
     const { onError, onInteractive } = await mount();

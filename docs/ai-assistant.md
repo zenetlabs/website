@@ -148,6 +148,10 @@ cron */10 (R6): deliverDue -> (03:00 UTC tick) purgeExpired (leads) -> purgeChat
 
 Files: `src/server/chat/` (`handler`, `store`, `guard`, `knowledge`, `prompt`, `tools`, `usage`, `schema`, `ndjson`, `model`, `fake-model`, `route`), `src/routes/api/chat.ts`, and in the browser `src/components/chat-launcher.tsx` (entry graph, about 1 KB) plus the lazy `src/components/chat/{chat-panel,booking-card}.tsx`, `src/lib/chat-{store,client,events,session}.ts` and the per-locale copy `src/content/{en,es}/chat.ts`.
 
+### The bot check (browser)
+
+`src/components/use-challenge-on-demand.ts` (shared with voice) runs Turnstile in `execute` mode, waits for the widget to load and lets its own retries run (`retry: 'auto'`, `retry-interval` 8000 pinned in `LazyTurnstile`; measured with the always-failing testing key: an error about every 11 s). A wait fails when the widget has not loaded after 20 s, at the third retryable error, at once on an error Turnstile never retries (`unsupported`, `110100`, `110110`, `110200`, `200100`, `400020`, `400021`, `400070`, even one that came before the wait), after 30 s working alone, or after 180 s once a checkbox has shown. A failure resets the widget, so nothing runs on, drops the unsent bubble and puts the message back in the composer ahead of anything typed meanwhile (closing mid-check keeps it for the next panel too). It never locks the composer or the chips, and a chip never empties the composer: "Try again" runs a fresh check. The checkbox renders in the conversation under the agent's line, outside the live log, and the bubble says "Tick the box below to send your message." `TurnstileWidget` writes every Turnstile error code to the console (`turnstile: challenge error`) and sends it to GA4 as `challenge_error { challenge, code }` with analytics consent, for every surface; the hook adds only its own endings (`not_loaded`, `timeout`, `limit`). The typing dots pulse (owner exception) while a reply or the check is pending.
+
 ### Gate
 
 `assistant.published` in `site.config.ts` (`true` locally and in production since 2026-11-06), the same pattern as `booking.published`. The build-time constant `__ASSISTANT__` carries it to the client, so a dark build ships no launcher, no panel chunk and no `/api/chat` client code. While `false`: the endpoint answers `503 unavailable` before reading the body, no D1 table is touched, the privacy page says nothing about the assistant, and `/api/health` reports `assistant:false`. `assistant:true` needs the flag and a model (the `AI` binding, or the scripted model in local builds).
@@ -238,7 +242,7 @@ The ordered recipe (owner steps, the flip PR with its `CONSENT_VERSION`, privacy
 
 ### Tests
 
-`pnpm test` covers the guard tables, usage, schema, knowledge, prompt goldens, the D1 store and the handler (every contract step, injection, leak, price guard, caps, disconnect, PII-free logs) against a scripted `MockLanguageModelV4`. `e2e/chat.e2e.ts` and `e2e/api-chat.e2e.ts` drive the real widget and endpoint against the scripted model, with axe in both locales and colour schemes. Workers AI is never called in CI.
+`pnpm test` covers the guard tables, usage, schema, knowledge, prompt goldens, the D1 store and the handler (every contract step, injection, leak, price guard, caps, disconnect, PII-free logs) against a scripted `MockLanguageModelV4`. `e2e/chat.e2e.ts` and `e2e/api-chat.e2e.ts` drive the real widget and endpoint against the scripted model, with axe in both locales and colour schemes; its "the bot check" tests use a scripted `api.js` (`e2e/turnstile-interactive.ts`) that errors, retries and asks for the checkbox: a first error is not final, a failing check gives the message back with a working Try again, the checkbox sits in the conversation, and the dots pulse or stand still under reduced motion. Workers AI is never called in CI.
 
 
 ## WebMCP (R11)
