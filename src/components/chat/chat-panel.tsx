@@ -177,27 +177,13 @@ function ChatPerson({
   );
 }
 
-// The dots stand for work in progress: alone while the reply is written, with
-// the words for the check and the tool steps, and gone while the visitor is
-// asked to tick the box (nothing works then).
-type Typing = { words: string; dots: boolean };
-
-function typingBubble(
-  state: ChatState,
-  status: string,
-  ticking: boolean,
-): Typing | null {
-  if (status === '') return null;
-  const writing = state.status === 'writing' && !ticking;
-  return { words: writing ? '' : status, dots: !ticking };
-}
-
 function ChatLog({
   copy,
   locale,
   welcome,
   state,
-  typing,
+  status,
+  ticking,
   onNavigate,
   onPickSlot,
   onOpen,
@@ -206,7 +192,8 @@ function ChatLog({
   locale: Locale;
   welcome: string;
   state: ChatState;
-  typing: Typing | null;
+  status: string;
+  ticking: boolean;
   onNavigate: (
     item: NavigateItem,
     event: MouseEvent<HTMLAnchorElement>,
@@ -217,6 +204,10 @@ function ChatLog({
   // The turn's chips show once the reply settles (a booking proposed later in
   // the turn drops them); the list the chips carry never shows in the text.
   const streamed = shownText(state.streaming, state.slots);
+  // The dots stand for work in progress: alone while the reply is written,
+  // with the words for the check and the tool steps, and gone while the visitor
+  // is asked to tick the box (nothing works then).
+  const words = ticking || state.status !== 'writing' ? status : '';
   return (
     <div role="log" aria-label={copy.logLabel}>
       <ol className="grid gap-3">
@@ -286,16 +277,16 @@ function ChatLog({
             {streamed}
           </li>
         )}
-        {typing === null || streamed !== '' ? null : (
+        {status === '' || streamed !== '' ? null : (
           <li aria-hidden="true" data-chat-typing className="chat-typing">
-            {typing.dots ? (
+            {ticking ? null : (
               <span className="chat-dots">
                 <span />
                 <span />
                 <span />
               </span>
-            ) : null}
-            {typing.words}
+            )}
+            {words}
           </li>
         )}
       </ol>
@@ -654,7 +645,8 @@ export function ChatPanel({
               locale={locale}
               welcome={welcome}
               state={state}
-              typing={typingBubble(state, status, challenge.interactive)}
+              status={status}
+              ticking={challenge.interactive}
               onNavigate={navigate}
               onOpen={open}
               onPickSlot={(start) => {

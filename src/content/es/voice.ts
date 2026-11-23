@@ -15,6 +15,7 @@ export const voiceCopy = {
   start: 'Empezar la llamada',
   cancel: 'Ahora no',
   connecting: 'Conectando…',
+  verifyTick: 'Marca la casilla de abajo para empezar la llamada.',
   listening: 'Te escucho',
   speaking: 'El asistente está hablando',
   mute: 'Silenciar micrófono',

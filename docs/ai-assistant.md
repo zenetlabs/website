@@ -150,7 +150,7 @@ Files: `src/server/chat/` (`handler`, `store`, `guard`, `knowledge`, `prompt`, `
 
 ### The bot check (browser)
 
-`src/components/use-challenge-on-demand.ts` (shared with voice) runs Turnstile in `execute` mode, waits for the widget to load and lets its own retries run (`retry: 'auto'`, `retry-interval` 8000 pinned in `LazyTurnstile`; measured with the always-failing testing key: an error about every 11 s). A wait fails when the widget has not loaded after 20 s, at the third retryable error, at once on an error Turnstile never retries (`unsupported`, `110100`, `110110`, `110200`, `200100`, `400020`, `400021`, `400070`, even one that came before the wait), after 30 s working alone, or after 180 s once a checkbox has shown. A failure resets the widget, so nothing runs on, drops the unsent bubble and puts the message back in the composer ahead of anything typed meanwhile (closing mid-check keeps it for the next panel too). It never locks the composer or the chips, and a chip never empties the composer: "Try again" runs a fresh check. The checkbox renders in the conversation under the agent's line, outside the live log, and the bubble says "Tick the box below to send your message." `TurnstileWidget` writes every Turnstile error code to the console (`turnstile: challenge error`) and sends it to GA4 as `challenge_error { challenge, code }` with analytics consent, for every surface; the hook adds only its own endings (`not_loaded`, `timeout`, `limit`). The typing dots pulse (owner exception) while a reply or the check is pending.
+`src/components/use-challenge-on-demand.ts` (shared with voice) runs Turnstile in `execute` mode, waits for the widget to load and lets its own retries run (`retry: 'auto'`, `retry-interval` 8000 pinned in `LazyTurnstile`; measured with the always-failing testing key: an error about every 11 s). A wait fails when the widget has not loaded after 20 s, at the third retryable error, at once on an error Turnstile never retries (`unsupported`, `110100`, `110110`, `110200`, `200100`, `400020`, `400021`, `400070`, even one that came before the wait), after 30 s working alone, or after 180 s once a checkbox has shown. A failure resets the widget, so nothing runs on, drops the unsent bubble and puts the message back in the composer ahead of anything typed meanwhile (closing mid-check keeps it for the next panel too). It never locks the composer or the chips, and a chip never empties the composer: "Try again" runs a fresh check. The checkbox renders in the conversation under the agent's line, outside the live log, and the bubble says "Tick the box below to send your message." The voice panel says it in its status line: "Tick the box below to start the call." Both panels turn the widget's own hint off. `TurnstileWidget` writes every Turnstile error code to the console (`turnstile: challenge error`) and sends it to GA4 as `challenge_error { challenge, code }` with analytics consent, for every surface; the hook adds only its own endings (`not_loaded`, `timeout`, `limit`). The typing dots pulse (owner exception) while a reply or the check is pending.
 
 ### Gate
 
@@ -231,7 +231,7 @@ When the visitor closes the tab mid-turn the model is not aborted: the stream is
 
 ### Activation
 
-The ordered recipe (owner steps, the flip PR with its `CONSENT_VERSION`, privacy and `lastmod` bumps, the preview check, the health check) is in [RUNBOOK.md](RUNBOOK.md) section 9, `assistant.published`; the kill switches are in section 10. Feature-specific verification stays here: run the 11 EN and 11 ES questions from the plan by hand on a preview alias built with the flag on (prices, discount attempt, injections, off-topic, booking), read the transcripts, and delete the test sessions afterwards (non-live hosts mark sessions `is_test`). After the first deploy `/api/health` must show `assistant:true`.
+The ordered recipe (owner steps, the flip PR with its `CONSENT_VERSION`, privacy and `lastmod` bumps, the preview check, the health check) is in [RUNBOOK.md](RUNBOOK.md) section 9, `assistant.published`; the kill switches are in section 10. Feature-specific verification stays here: run the 11 EN and 11 ES questions from the plan (prices, discount attempt, injections, off-topic, booking) by hand on a preview alias built with the flag on, in a clean browser profile ([owner checklist](owner-checklist.md), 'Which browser'), read the transcripts, and delete the test sessions afterwards (non-live hosts mark sessions `is_test`). After the first deploy `/api/health` must show `assistant:true`.
 
 ### Owner steps
 
@@ -384,7 +384,7 @@ Authentication on with no allowlist, no overrides, `record_voice: false`, `reten
 
 ### Activation
 
-The ordered recipe (owner steps, then one PR with the flag, the two agent ids and the `CONSENT_VERSION`, privacy, `lastmod` and test bumps; bookings first) is in [RUNBOOK.md](RUNBOOK.md) section 9, `voice.published`. After the deploy `/api/health` shows `"voice":true`. Feature-specific verification: acceptance calls per locale on a preview alias (sessions minted there are tests): a price (compare with the table), an FAQ, "open the pricing page", an off-topic request, an instruction override, a booking with the read-back, the 5-minute limit and 20 s of silence.
+The ordered recipe (owner steps, then one PR with the flag, the two agent ids and the `CONSENT_VERSION`, privacy, `lastmod` and test bumps; bookings first) is in [RUNBOOK.md](RUNBOOK.md) section 9, `voice.published`. After the deploy `/api/health` shows `"voice":true`. Feature-specific verification: acceptance calls per locale on a preview alias (sessions minted there are tests), in a clean browser profile ([owner checklist](owner-checklist.md), 'Which browser'): a price (compare with the table), an FAQ, "open the pricing page", an off-topic request, an instruction override, a booking with the read-back, the 5-minute limit and 20 s of silence.
 
 ### Owner steps
 
@@ -401,7 +401,7 @@ Rotation: new value in the Secrets Store, then `pnpm voice:apply --rotate-secret
 
 ### Panel behaviour
 
-- The panel is a non-modal `<dialog>` (bottom sheet on phones). It opens with focus on its title, "Start call" enabled once Turnstile has loaded; Escape, the close button and "Not now" end the call and close.
+- The panel is a non-modal `<dialog>` (bottom sheet on phones). It opens with focus on its title, "Start call" enabled once Turnstile has loaded; Escape, the close button and "Not now" end the call and close. While Turnstile shows its checkbox, the status line asks for the tick.
 - Order on Start: feature check, microphone (denial ends here, with no session and no cap used), Turnstile, mint, SDK.
 - The SDK (about 167 KB gzip with LiveKit) is imported when the panel opens, so its iOS audio unlock is armed before the Start tap.
 - The page carries only `src/lib/voice-entry.ts` and the callout button. The first click or hover dynamic-imports `voice-open.tsx`, which mounts the panel in its own React root on an appended node (like the WebMCP dialog), so no host sits in the page shell and `/book` pays nothing for voice.
