@@ -116,16 +116,127 @@ const OVERFLOW_URLS = [
   ...CALCULATOR_RESULTS,
 ];
 
+async function overflowing(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const limit = window.innerWidth + 0.5;
+    const clips = (el: Element) => {
+      const style = getComputedStyle(el);
+      return (
+        style.overflowX !== 'visible' ||
+        /paint|content|strict/.test(style.contain)
+      );
+    };
+    const fixed = (el: Element) => {
+      for (let node: Element | null = el; node; node = node.parentElement) {
+        if (getComputedStyle(node).position === 'fixed') return true;
+      }
+      return false;
+    };
+    const contained = (el: Element) => {
+      let node: Element | null =
+        getComputedStyle(el).position === 'absolute' &&
+        el instanceof HTMLElement
+          ? el.offsetParent
+          : el.parentElement;
+      while (
+        node &&
+        node !== document.body &&
+        node !== document.documentElement
+      ) {
+        if (clips(node) && node.getBoundingClientRect().right <= limit)
+          return true;
+        node = node.parentElement;
+      }
+      return false;
+    };
+    const name = (el: Element) => {
+      const attributes = el
+        .getAttributeNames()
+        .filter((attribute) => attribute.startsWith('data-'))
+        .map((attribute) => `[${attribute}]`)
+        .join('');
+      const classes = [...el.classList].map((item) => `.${item}`).join('');
+      return `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}${classes}${attributes}`;
+    };
+    const path = (el: Element) => {
+      const chain: string[] = [];
+      for (
+        let node: Element | null = el;
+        node && node !== document.body && chain.length < 3;
+        node = node.parentElement
+      ) {
+        chain.unshift(name(node));
+      }
+      return chain.join(' > ');
+    };
+    const flagged: Element[] = [];
+    for (const el of document.body.querySelectorAll('*')) {
+      const box = el.getBoundingClientRect();
+      if (
+        (box.width === 0 && box.height === 0) ||
+        (box.right <= limit &&
+          (clips(el) || box.left + el.scrollWidth <= limit)) ||
+        fixed(el) ||
+        contained(el)
+      ) {
+        continue;
+      }
+      flagged.push(el);
+    }
+    const reported = flagged.filter(
+      (el) => !flagged.some((other) => other !== el && el.contains(other)),
+    );
+    return reported
+      .slice(0, 5)
+      .map(
+        (el) =>
+          `${path(el)} ends at ${Math.round(Math.max(el.getBoundingClientRect().right, el.getBoundingClientRect().left + el.scrollWidth))}px of ${window.innerWidth}`,
+      );
+  });
+}
+
+async function sideways(page: Page): Promise<number> {
+  await page.addStyleTag({
+    content: 'html, body { overflow-x: visible !important }',
+  });
+  return page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+}
+
 for (const url of OVERFLOW_URLS) {
   test(`${url} has no horizontal scroll on mobile`, async ({ page }) => {
     await page.setViewportSize({ width: 412, height: 915 });
     await gotoHydrated(page, url);
-    await page.addStyleTag({
-      content: 'html, body { overflow-x: visible !important }',
-    });
-    const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth - window.innerWidth,
-    );
-    expect(overflow).toBeLessThanOrEqual(0);
+    const named = await overflowing(page);
+    expect(await sideways(page), named.join('\n')).toBeLessThanOrEqual(0);
   });
 }
+
+test("the overflow walk can't go blind", async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 915 });
+  await gotoHydrated(page, '/');
+  const probe = (html: string) =>
+    page.evaluate((markup) => {
+      document.querySelector('[data-probe-host]')?.remove();
+      const host = document.createElement('div');
+      host.setAttribute('data-probe-host', '');
+      host.innerHTML = markup;
+      document.querySelector('main')?.appendChild(host);
+    }, html);
+  const cases = [
+    '<div data-overflow-probe style="width:150vw;height:1px"></div>',
+    '<p data-overflow-probe style="width:200px;white-space:nowrap">Supercalifragilisticexpialidocious_and_a_very_long_unbreakable_word_that_runs_on</p>',
+    '<style>[data-overflow-probe]::after{content:"";position:absolute;left:0;top:0;width:150vw;height:1px}</style><div data-overflow-probe style="position:relative;height:1px"></div>',
+  ];
+  for (const markup of cases) {
+    await probe(markup);
+    const found = await overflowing(page);
+    expect(found.length, markup).toBeGreaterThan(0);
+    expect(found.join(' ')).toContain('data-overflow-probe');
+  }
+  await probe(
+    '<div style="overflow-x:auto"><div style="width:150vw;height:1px"></div></div>',
+  );
+  expect(await overflowing(page)).toEqual([]);
+});

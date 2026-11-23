@@ -29,7 +29,7 @@ export function Hero({
           <h1 className="text-display-1">
             <EmphasisTitle parts={copy.title} />
           </h1>
-          <p className={`hero-lead mt-3 md:mt-6 ${LEAD}`}>{copy.lead}</p>
+          <p className={`hero-lead ${LEAD}`}>{copy.lead}</p>
           <div className="hero-actions">
             <CtaLink
               cta="hero"

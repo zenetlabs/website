@@ -262,7 +262,7 @@ export function VoicePanel({
               disabled={!ready}
               aria-busy={!ready}
               onClick={begin}
-              className="desk-call-button"
+              className="voice-start"
             >
               <span aria-hidden="true" className="icon icon-phone size-5" />
               {copy.start}
