@@ -1,5 +1,6 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { jsonLdBlocks } from '../test/json-ld';
+import { test } from './fixtures';
 import {
   CASE_PAIR,
   CASES_HUB,

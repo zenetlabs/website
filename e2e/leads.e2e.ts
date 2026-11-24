@@ -1,7 +1,8 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { attemptsFor, failFor, NOTIFY_TO, sentFor, uniqueEmail } from './fakes';
+import { test } from './fixtures';
 import { gotoHydrated } from './helpers';
 
 const LABELS = {

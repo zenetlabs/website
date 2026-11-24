@@ -1,7 +1,8 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { home as enHome } from '../src/content/en/home';
 import { priceParts } from '../src/lib/money';
 import { SERVICES } from '../test/page-content';
+import { test } from './fixtures';
 import {
   ASSISTANT_PUBLISHED,
   BOOKING_PUBLISHED,
@@ -98,14 +99,15 @@ for (const home of HOMES) {
       }
     });
 
-    test('sends the hero CTAs to the booking target and the prices', async ({
-      page,
-    }) => {
+    test("the hero's only action is Book a call", async ({ page }) => {
       await gotoHydrated(page, home.path);
       const hero = page.locator('main > section').first();
-      const links = hero.getByRole('link');
-      await expect(links.first()).toHaveAttribute('href', home.cta);
-      await expect(links.nth(1)).toHaveAttribute('href', home.pricing);
+      await expect(hero.getByRole('link').first()).toHaveAttribute(
+        'href',
+        home.cta,
+      );
+      await expect(hero.locator('.hero-actions a')).toHaveCount(1);
+      await expect(hero.locator(`a[href="${home.pricing}"]`)).toHaveCount(0);
     });
 
     test('fits the heading, the button and the whole desk in the first screen', async ({
@@ -118,11 +120,11 @@ for (const home of HOMES) {
         if (!found) throw new Error(`${selector} has no box`);
         return found;
       };
-      const button = await box('main > section:first-child a');
+      const button = await box('.hero-actions a');
       const desk = await box('[data-desk]');
-      expect(button.y + button.height).toBeLessThanOrEqual(900);
       expect(desk.y + desk.height).toBeLessThanOrEqual(900);
-      expect(desk.x).toBeGreaterThan(button.x);
+      expect(desk.y).toBeGreaterThan(button.y + button.height);
+      expect(Math.abs(desk.x + desk.width / 2 - 720)).toBeLessThanOrEqual(2);
       await page.setViewportSize({ width: 390, height: 844 });
       await expect(
         page.locator('main > section:first-child a').first(),
@@ -182,7 +184,9 @@ for (const home of HOMES) {
       page,
     }) => {
       await gotoHydrated(page, home.path);
-      const handoff = page.locator('.hero-grid .handoff');
+      const handoff = page.locator(
+        'main > section:first-child .hero-pitch .handoff',
+      );
       await expect(handoff.locator('img')).toHaveCount(0);
       await expect(handoff.locator('[aria-hidden="true"]')).toHaveText('AS');
       await expect(handoff).toHaveAttribute('href', home.about);
@@ -393,6 +397,23 @@ test.describe('the launcher covers nothing in the desk', () => {
         });
       }
     }
+  });
+});
+
+test.describe('the launcher on a phone', () => {
+  test.skip(!ASSISTANT_PUBLISHED, 'needs the assistant published');
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test('gives way while the hero desk is in view and returns past it', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/');
+    const launcher = page.locator('[data-chat-launcher]');
+    await expect(page.locator('[data-desk]')).toBeInViewport();
+    await expect(launcher).toBeHidden();
+    await page.locator('#problems').scrollIntoViewIfNeeded();
+    await expect(page.locator('[data-desk]')).not.toBeInViewport();
+    await expect(launcher).toBeVisible();
   });
 });
 

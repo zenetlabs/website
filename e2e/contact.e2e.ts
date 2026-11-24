@@ -1,5 +1,6 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { attemptsFor, sentFor, uniqueEmail } from './fakes';
+import { test } from './fixtures';
 import { BOOKING_PUBLISHED, CONTACT_PAIR, gotoHydrated } from './helpers';
 import { forceInteractiveTurnstile } from './turnstile-interactive';
 

@@ -1,5 +1,6 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { siteConfig } from '../site.config';
+import { test } from './fixtures';
 import {
   ASSISTANT_PUBLISHED,
   BOOKING_PUBLISHED,

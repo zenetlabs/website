@@ -1,8 +1,9 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { decodeEntities } from '../src/lib/markdown';
 import { ogImagePath } from '../src/lib/og-image';
 import { PATH_CASES } from '../test/redirect-cases';
 import { parseSitemap } from '../test/sitemap';
+import { test } from './fixtures';
 import {
   CLUSTERS,
   gotoHydrated,

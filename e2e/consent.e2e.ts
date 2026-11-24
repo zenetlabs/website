@@ -4,11 +4,11 @@ import {
   expect,
   type Locator,
   type Page,
-  test,
 } from '@playwright/test';
 import { siteConfig } from '../site.config';
 import { COOKIE_CONSENT_REVISION } from '../src/lib/consent';
 import { NOTIFY_TO, sentFor, uniqueEmail } from './fakes';
+import { stillIntro, test } from './fixtures';
 import {
   BOOKING_PUBLISHED,
   gotoHydrated,
@@ -550,6 +550,7 @@ test.describe('accessibility', () => {
         viewport,
         storageState: { cookies: [], origins: [] },
       });
+      await context.addInitScript(stillIntro);
       const page = await context.newPage();
       await watch(page);
       await gotoHydrated(page, '/');

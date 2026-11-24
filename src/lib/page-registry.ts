@@ -82,7 +82,7 @@ export const PAGES: Record<
 > &
   Record<ServicePageId, ServicePageEntry> &
   Record<LandingPageId, LandingPageEntry> = {
-  home: { slugs: { en: '/', es: '/' }, lastmod: '2026-11-23' },
+  home: { slugs: { en: '/', es: '/' }, lastmod: '2026-11-24' },
   services: {
     slugs: { en: '/services', es: '/servicios' },
     lastmod: '2026-11-12',

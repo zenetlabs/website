@@ -1,4 +1,5 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
+import { test } from './fixtures';
 import { gotoHydrated, OBSERVER, PAGE_TYPE_URLS } from './helpers';
 
 const WIDTHS = [

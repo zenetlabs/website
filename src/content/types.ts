@@ -159,6 +159,28 @@ export type CompanyCopy = Record<
 
 export type SectionCopy = { title: TitleParts; lead?: string };
 
+// The tiles of the home hero's switchboard: the customer's tools and the person.
+export type StageTile =
+  | 'shopify'
+  | 'woocommerce'
+  | 'prestashop'
+  | 'gmail'
+  | 'whatsapp'
+  | 'sheets'
+  | 'xero'
+  | 'hubspot'
+  | 'human';
+export type StageJob = 'orders' | 'invoices' | 'customers';
+export type StageCopy = {
+  agent: string;
+  tools: Record<StageTile, string>;
+  jobs: Record<StageJob, { name: string; text: string }>;
+  skip: string;
+  replay: string;
+  // Read after the visible word, so the button's name is "Skip the animation"
+  control: string;
+};
+
 export type HomeContent = {
   hero: {
     title: TitleParts;
@@ -166,9 +188,9 @@ export type HomeContent = {
     // `{price}` is the diagnostic's price from the ladder.
     fact: string;
     primary: string;
-    secondary: string;
     audience: string;
     handoff: string;
+    stage: StageCopy;
   };
   desk: DeskCopy;
   companies: { title: string; items: CompanyCopy };

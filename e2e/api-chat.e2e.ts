@@ -1,5 +1,6 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { ORIGIN } from './fakes';
+import { test } from './fixtures';
 import { ASSISTANT_PUBLISHED } from './helpers';
 
 const GOOD = {

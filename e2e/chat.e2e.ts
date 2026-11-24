@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { chatCopy as en } from '../src/content/en/chat';
 import { services as enServices } from '../src/content/en/services';
 import { chatCopy as es } from '../src/content/es/chat';
@@ -14,6 +14,7 @@ import {
   sentFor,
   uniqueEmail,
 } from './fakes';
+import { test } from './fixtures';
 import {
   ASSISTANT_PUBLISHED,
   BOOKING_PUBLISHED,
@@ -38,6 +39,10 @@ const CHAT_CHUNK = /\/assets\/chat(?:-panel)?-(?!session)[\w-]+\.js/;
 
 async function openChat(page: Page, locale: 'en' | 'es', path?: string) {
   await gotoHydrated(page, path ?? (locale === 'en' ? '/' : '/es'));
+  // Below lg the launcher gives way while the home hero's desk is in view
+  if (await page.locator('#problems').count()) {
+    await page.locator('#problems').scrollIntoViewIfNeeded();
+  }
   await page.getByRole('button', { name: LAUNCHER[locale] }).click();
   const dialog = page.getByRole('dialog', { name: COPY[locale].title });
   await expect(dialog).toBeVisible();

@@ -2,7 +2,8 @@ import { AgentDesk } from '@/components/agent-desk';
 import { FounderPortrait } from '@/components/companies-strip';
 import { CtaLink } from '@/components/cta-link';
 import { Container, EmphasisTitle } from '@/components/section';
-import { LEAD, PRIMARY_BUTTON_FULL, SECONDARY_BUTTON } from '@/components/ui';
+import { Switchboard, useSwitchboard } from '@/components/switchboard';
+import { LEAD, PRIMARY_BUTTON_FULL } from '@/components/ui';
 import type { Founder, HomeContent } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { CTA_TARGET, navHref } from '@/lib/nav';
@@ -22,52 +23,66 @@ export function Hero({
   locale: Locale;
 }) {
   const [factBefore = '', factAfter = ''] = copy.fact.split('{price}');
+  const { intro, stop, press, click, stageRef, toggle } = useSwitchboard();
   return (
-    <section data-ground="tint" className="bg-tint">
+    <section
+      data-ground="tint"
+      className="bg-tint"
+      onPointerDownCapture={press}
+      onPointerUpCapture={press}
+      onClickCapture={click}
+      onKeyDownCapture={stop}
+      onFocusCapture={stop}
+    >
       <Container className="hero-grid">
-        <div className="lg:col-span-5 lg:pr-6">
-          <h1 className="text-display-1">
-            <EmphasisTitle parts={copy.title} />
-          </h1>
-          <p className={`hero-lead ${LEAD}`}>{copy.lead}</p>
-          <div className="hero-actions">
-            <CtaLink
-              cta="hero"
-              href={navHref(locale, CTA_TARGET)}
-              className={PRIMARY_BUTTON_FULL}
-            >
-              <span aria-hidden="true" className="icon icon-calendar size-5" />
-              {copy.primary}
-            </CtaLink>
-            <CtaLink
-              cta="hero_pricing"
-              href={pagePath(locale, 'pricing')}
-              className={`${SECONDARY_BUTTON} max-sm:hidden`}
-            >
-              {copy.secondary}
-            </CtaLink>
-          </div>
-          <div className="hero-facts">
-            <p>
-              {factBefore}
-              <strong className="font-semibold text-fg">
-                {diagnosticPrice}
-              </strong>
-              {factAfter}
-            </p>
-            <p>{copy.audience}</p>
-          </div>
-          <a href={pagePath(locale, 'about')} className="handoff">
-            <FounderPortrait founder={founder} className="size-10 text-ui-s" />
-            <span className="leading-snug">
-              <span className="handoff-name font-semibold">{founder.name}</span>
-              , {founder.role}
-              <span className="block text-fg-soft">{copy.handoff}</span>
-            </span>
-          </a>
+        <h1 className="text-display-1">
+          <EmphasisTitle parts={copy.title} />
+        </h1>
+        <div className="hero-actions">
+          <CtaLink
+            cta="hero"
+            href={navHref(locale, CTA_TARGET)}
+            className={PRIMARY_BUTTON_FULL}
+          >
+            <span aria-hidden="true" className="icon icon-calendar size-5" />
+            {copy.primary}
+          </CtaLink>
         </div>
-        <div className="lg:col-span-7 lg:pl-4">
+        <Switchboard
+          copy={copy.stage}
+          intro={intro}
+          stageRef={stageRef}
+          toggle={toggle}
+        >
           <AgentDesk copy={desk} locale={locale} />
+        </Switchboard>
+        <div className="hero-pitch">
+          <p className={`${LEAD} lg:col-span-7`}>{copy.lead}</p>
+          <div className="lg:col-span-5">
+            <div className="hero-facts">
+              <p>
+                {factBefore}
+                <strong className="font-semibold text-fg">
+                  {diagnosticPrice}
+                </strong>
+                {factAfter}
+              </p>
+              <p>{copy.audience}</p>
+            </div>
+            <a href={pagePath(locale, 'about')} className="handoff">
+              <FounderPortrait
+                founder={founder}
+                className="size-10 text-ui-s"
+              />
+              <span className="leading-snug">
+                <span className="handoff-name font-semibold">
+                  {founder.name}
+                </span>
+                , {founder.role}
+                <span className="block text-fg-soft">{copy.handoff}</span>
+              </span>
+            </a>
+          </div>
         </div>
       </Container>
     </section>

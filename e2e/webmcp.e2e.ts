@@ -1,12 +1,13 @@
 import { gzipSync } from 'node:zlib';
 import AxeBuilder from '@axe-core/playwright';
-import { type Browser, expect, type Page, test } from '@playwright/test';
+import { type Browser, expect, type Page } from '@playwright/test';
 import {
   confirmByLink,
   confirmLinkFor,
   googleEvents,
   uniqueEmail,
 } from './fakes';
+import { test } from './fixtures';
 import {
   BOOKING_PUBLISHED,
   gotoHydrated,

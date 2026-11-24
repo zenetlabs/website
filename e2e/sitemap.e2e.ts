@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
 import {
   faqVisibilityProblems,
   identityProblems,
@@ -7,6 +7,7 @@ import {
 } from '../test/json-ld';
 import { PLACEHOLDER } from '../test/placeholders';
 import { parseSitemap } from '../test/sitemap';
+import { test } from './fixtures';
 import { htmlLang, LLMS_PATHS, markdownPathOf, PAGES, tagsOf } from './helpers';
 
 const LASTMOD = /^\d{4}-\d{2}-\d{2}$/;

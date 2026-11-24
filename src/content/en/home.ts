@@ -15,9 +15,39 @@ export const home = {
     lead: 'We connect the tools your company already uses and put AI agents on the repetitive work, so your team stops moving data by hand.',
     fact: '{price} fixed-price diagnostic, credited to the project if you continue within 60 days.',
     primary: 'Book a call',
-    secondary: 'See pricing',
     audience: 'For companies of 10 to 100 people',
     handoff: 'You work with the person who builds it.',
+    stage: {
+      agent: 'AI agent',
+      tools: {
+        shopify: 'Shopify',
+        woocommerce: 'WooCommerce',
+        prestashop: 'PrestaShop',
+        gmail: 'Gmail',
+        whatsapp: 'WhatsApp',
+        sheets: 'Google Sheets',
+        xero: 'Xero',
+        hubspot: 'HubSpot',
+        human: 'Your team',
+      },
+      jobs: {
+        orders: {
+          name: 'Orders',
+          text: 'from Shopify into your spreadsheet, once.',
+        },
+        invoices: {
+          name: 'Invoices',
+          text: 'from Gmail into Xero. A person approves the exceptions.',
+        },
+        customers: {
+          name: 'Questions',
+          text: 'answered on WhatsApp. The rest goes to your team.',
+        },
+      },
+      skip: 'Skip',
+      replay: 'Replay',
+      control: 'the animation',
+    },
   },
   desk: {
     label: 'Ask the assistant',

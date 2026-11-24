@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
-import { type APIRequestContext, expect, test } from '@playwright/test';
+import { type APIRequestContext, expect } from '@playwright/test';
 import { accessToken, sentFor, uniqueEmail } from './fakes';
+import { test } from './fixtures';
 
 const TOKEN_HEADER = 'Cf-Access-Jwt-Assertion';
 const XSS_NAME = '<script>window.__xss = 1</script>';

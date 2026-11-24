@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
-import { type APIRequestContext, expect, test } from '@playwright/test';
+import { type APIRequestContext, expect } from '@playwright/test';
 import { siteConfig } from '../site.config';
 import { aboutPage as enAbout } from '../src/content/en/about';
 import { calculatorPage as enCalculator } from '../src/content/en/calculator';
@@ -12,6 +12,7 @@ import { calculatorPage as esCalculator } from '../src/content/es/calculator';
 import { home as esHome } from '../src/content/es/home';
 import { legalNotice } from '../src/content/es/legal-notice';
 import { pricingPage as esPricing } from '../src/content/es/pricing';
+import { test } from './fixtures';
 import {
   CALCULATOR_PAIR,
   CALCULATOR_PUBLISHED,

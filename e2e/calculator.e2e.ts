@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { calculatorPage as enCopy } from '../src/content/en/calculator';
 import { calculatorPage as esCopy } from '../src/content/es/calculator';
 import {
@@ -13,6 +13,7 @@ import { titleText } from '../src/lib/title-text';
 import { G2, G3 } from '../test/calculator-fixtures';
 import { CURRENCY, SERVICES } from '../test/page-content';
 import { attemptsFor, NOTIFY_TO, sentFor, uniqueEmail } from './fakes';
+import { test } from './fixtures';
 import { CALCULATOR_PAIR, gotoHydrated, LOCALES, normalise } from './helpers';
 
 const COPY = { en: enCopy, es: esCopy };
