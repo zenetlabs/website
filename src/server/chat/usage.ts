@@ -42,11 +42,13 @@ export function estimateTokens(chars: number): number {
 }
 
 // What a turn is expected to cost, set aside before it runs: `steps` model
-// calls that each send a 9,000-token prompt, and a full-length answer. Most
-// turns cost less; the day's total is corrected afterwards.
+// calls that each send a 16,000-token prompt (the Spanish prompt with the page
+// tools is about 11,200 by the chars/3 estimate, before history and tool
+// output), and a full-length answer. Most turns cost less; the day's total is
+// corrected afterwards.
 export function reservationFor(model: string, steps: number): number {
   return neuronsFor(model, {
-    inputTokens: 9_000 * steps,
+    inputTokens: 16_000 * steps,
     cachedInputTokens: 0,
     outputTokens: 600,
   });

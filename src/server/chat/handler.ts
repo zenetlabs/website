@@ -9,6 +9,7 @@ import { loadHomeContent, loadPricingContent } from '@/content/load';
 import { CHAT_LIMITS } from '@/lib/assistant-limits';
 import type { ChatError, ChatEvent, Proposal } from '@/lib/chat-events';
 import type { Locale } from '@/lib/i18n';
+import { isRecord } from '@/lib/is-record';
 import { isPublished, type PageId, pagePath } from '@/lib/page-registry';
 import { isLiveHost } from '@/lib/redirects';
 import { canonicalZone } from '@/lib/slots';
@@ -66,6 +67,7 @@ import {
   aiTools,
   chatToolNames,
   chatTools,
+  openingTools,
   proposalMade,
 } from '@/server/chat/tools';
 import {
@@ -78,6 +80,7 @@ import {
 import { ipBucket, type Limiter } from '@/server/rate-limit';
 import { gate, verifyHuman } from '@/server/request';
 import { errorName, jsonError } from '@/server/responses';
+import type { ClientTool } from '@/server/tools/types';
 
 const MAX_BODY_BYTES = 8192;
 const MAX_STEPS = 4;
@@ -195,24 +198,42 @@ function onlyAnnounces(text: string): boolean {
   );
 }
 
-// A step that wrote its answer and only opened a page is the whole reply:
-// navigate returns nothing to read, and a further step only restates the text.
-function answeredAndOpened({
-  steps,
-}: {
-  steps: ReadonlyArray<{
-    text: string;
-    toolCalls: ReadonlyArray<{ toolName: string }>;
-  }>;
-}): boolean {
-  const last = steps.at(-1);
-  return (
-    last !== undefined &&
-    last.text.trim() !== '' &&
-    !onlyAnnounces(last.text) &&
-    last.toolCalls.length > 0 &&
-    last.toolCalls.every((call) => call.toolName === 'navigate')
-  );
+// A step that wrote its answer and only opened something is the whole reply:
+// a client tool returns nothing to read, and a further step only restates the
+// text. A contact draft counts only when it was shown (not repeated or dropped).
+function answeredAndOpened(opening: ReadonlyMap<string, ClientTool['opens']>) {
+  return ({
+    steps,
+  }: {
+    steps: ReadonlyArray<{
+      text: string;
+      toolCalls: ReadonlyArray<{ toolName: string }>;
+      toolResults: ReadonlyArray<{ toolName: string; output?: unknown }>;
+    }>;
+  }): boolean => {
+    const last = steps.at(-1);
+    if (
+      last === undefined ||
+      last.text.trim() === '' ||
+      onlyAnnounces(last.text) ||
+      last.toolCalls.length === 0
+    ) {
+      return false;
+    }
+    return last.toolCalls.every((call) => {
+      const opens = opening.get(call.toolName);
+      if (opens === undefined) return false;
+      return (
+        opens === 'page' ||
+        last.toolResults.some(
+          (result) =>
+            result.toolName === call.toolName &&
+            isRecord(result.output) &&
+            result.output.status === 'shown',
+        )
+      );
+    });
+  };
 }
 
 async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
@@ -398,6 +419,7 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
     else if (replacesReply(guarded.guard)) muted = true;
   };
 
+  let drafted = false;
   const pending: { proposal: Proposal | null } = { proposal: null };
   const tools = chatTools({
     locale,
@@ -422,6 +444,32 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
     onProposal: (next) => {
       pending.proposal = next;
     },
+    onContactDraft: (message) => {
+      if (drafted) return 'already_shown';
+      if (stopped || muted) return 'dropped';
+      // The draft is the model's text going to the visitor: the same leak,
+      // price and claim checks as a reply sentence. A leak ends the turn.
+      const guarded = guardSentence(message, {
+        locale,
+        allowed,
+        now,
+        language,
+        slots: offeredSlots,
+        facts,
+      });
+      if (guarded.guard !== null) {
+        outcome.guards += 1;
+        console.log('chat: guard', {
+          session: turn.sessionId,
+          kind: guarded.guard,
+        });
+        if (guarded.guard === 'leak') stopped = true;
+        return 'dropped';
+      }
+      drafted = true;
+      turn.emit({ t: 'contact_draft', message });
+      return 'shown';
+    },
   });
 
   const result = streamText({
@@ -440,7 +488,11 @@ async function modelTurn(turn: Turn, outcome: Outcome): Promise<void> {
     ],
     tools: aiTools(tools),
     activeTools: names,
-    stopWhen: [isStepCount(MAX_STEPS), () => stopped, answeredAndOpened],
+    stopWhen: [
+      isStepCount(MAX_STEPS),
+      () => stopped,
+      answeredAndOpened(openingTools(deps.site)),
+    ],
     prepareStep: ({ stepNumber }) => {
       if (stepNumber >= MAX_STEPS - 1) return { toolChoice: 'none' };
       if (stepNumber === 0 && forceAvailability) {

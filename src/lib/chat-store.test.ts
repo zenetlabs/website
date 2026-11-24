@@ -52,6 +52,28 @@ describe('applyEvent', () => {
     expect(state.status).toBe('idle');
   });
 
+  it('holds the contact draft and settles it as a card after the reply', () => {
+    const held = reduce([
+      { t: 'tool', name: 'open_contact_form' },
+      { t: 'contact_draft', message: 'Sync Xero and Shopify.' },
+      { t: 'text', v: 'Here is a draft.' },
+    ]);
+    expect(held.items).toEqual([]);
+    expect(held.draft).toBe('Sync Xero and Shopify.');
+    const state = applyEvent(held, { t: 'done', remaining: 10 });
+    expect(state.items.map((item) => item.kind)).toEqual([
+      'assistant',
+      'contactDraft',
+    ]);
+    expect(state.items[1]).toMatchObject({ message: 'Sync Xero and Shopify.' });
+    expect(state.draft).toBeNull();
+  });
+
+  it('forgets an unsettled draft when the next message starts', () => {
+    const held = reduce([{ t: 'contact_draft', message: 'x' }]);
+    expect(begin(held, 'next', false).draft).toBeNull();
+  });
+
   it('drops the chips when the turn proposes a booking, and ignores an empty slots event', () => {
     const start = Date.UTC(2027, 0, 11, 8);
     const proposed = reduce([

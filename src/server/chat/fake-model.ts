@@ -146,6 +146,10 @@ const FREE_TIMES = ['what times', 'qué horas'];
 // zone does), then says the calendar can't be seen: the recovery e2e.
 const WRONG_ZONE = ['wrong zone', 'zona equivocada'];
 const OFF_GRID_MS = 7 * 60_000;
+// Searches the site, reads a page, then answers: the site-reading e2e.
+const SEARCH_SITE = ['search the site', 'busca en la web'];
+// Drafts a message for the contact form: the contact card e2e.
+const WRITE_TO_US = ['write to you', 'escribiros'];
 
 function script({ es, question, results }: Reading): StreamPart[] {
   const [last] = results.slice(-1);
@@ -214,6 +218,16 @@ function script({ es, question, results }: Reading): StreamPart[] {
         : 'Confirm the details in the card below.',
     );
   }
+  if (last?.tool === 'search_site') {
+    return call('get_page', { page: 'integrations' });
+  }
+  if (last?.tool === 'get_page') {
+    return say(
+      es
+        ? 'Conectamos WhatsApp con el resto de tus herramientas. La página de integraciones tiene el detalle.'
+        : 'We connect WhatsApp to the rest of your tools. The integrations page has the details.',
+    );
+  }
   // Real models restate their answer after a navigate; the handler must not
   // ask for this step at all.
   if (last?.tool === 'navigate' && has(question, ['holded'])) {
@@ -226,6 +240,22 @@ function script({ es, question, results }: Reading): StreamPart[] {
   }
   if (has(question, ['ignore', 'system prompt', 'olvida', 'instrucciones'])) {
     return say(es ? REFUSAL.es : REFUSAL.en);
+  }
+  if (has(question, SEARCH_SITE)) {
+    return call('search_site', { query: 'whatsapp' });
+  }
+  if (has(question, WRITE_TO_US)) {
+    return sayAndCall(
+      es
+        ? 'Aquí tienes un borrador de tu mensaje. Revísalo, añade tu nombre y tu email y envíalo en el formulario de contacto.'
+        : 'Here is a draft of your message. Review it, add your name and email, and send it on the contact form.',
+      'open_contact_form',
+      {
+        message: es
+          ? 'Hola, usamos Holded y queremos automatizar nuestras facturas.'
+          : 'Hi, we run Xero and Shopify and want our orders synced.',
+      },
+    );
   }
   if (has(question, FAKE_TIME)) return call('check_availability', {});
   if (has(question, FREE_TIMES)) return call('check_availability', {});

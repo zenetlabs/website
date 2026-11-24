@@ -90,6 +90,8 @@ describe('voiceAgentsFile', () => {
       'estimate_project',
       'check_availability',
       'book_meeting',
+      'get_page',
+      'search_site',
     ]);
     for (const tool of webhooks) {
       expect(tool.api_schema.url).toBe(
@@ -131,6 +133,9 @@ describe('the agents while bookings are dark', () => {
       'get_faq',
       'get_pricing',
       'navigate',
+      'get_page',
+      'search_site',
+      'open_contact_form',
     ]);
     for (const { config } of agents) {
       const text = JSON.stringify(config.conversation_config.agent);
@@ -171,6 +176,8 @@ const SAMPLES: Record<string, unknown> = {
   topic: 'We want to automate our inbox triage.',
   page: 'pricing',
   section: 'faq',
+  part: 1,
+  message: 'We use Xero and Shopify and want our orders synced.',
 };
 
 // A body the way the model would build it from the schema ElevenLabs was given.
@@ -200,7 +207,7 @@ function bodyOf(schema: ElevenLabsObject, withOptional: boolean) {
 describe('every tool the agents get', () => {
   it('accepts, on the server, a body built from the schema ElevenLabs was given', async () => {
     const { tools } = await voiceAgentsFile(LIVE);
-    const offered = offeredTools(LIVE);
+    const offered = offeredTools(LIVE, 'voice');
     expect(tools.map((tool) => tool.name)).toEqual(
       offered.map((tool) => tool.name),
     );
@@ -228,8 +235,17 @@ describe('every tool the agents get', () => {
     }
   });
 
+  it('gives the agents the page reader and the search as webhooks and the contact form as a client tool, and never the page list', async () => {
+    const { tools } = await voiceAgentsFile(LIVE);
+    const byName = (name: string) => tools.find((tool) => tool.name === name);
+    expect(byName('get_page')?.type).toBe('webhook');
+    expect(byName('search_site')?.type).toBe('webhook');
+    expect(byName('open_contact_form')?.type).toBe('client');
+    expect(byName('list_pages')).toBeUndefined();
+  });
+
   it('fails the server parser on a booking without the confirmation', () => {
-    const book = offeredTools(LIVE).find(
+    const book = offeredTools(LIVE, 'voice').find(
       (tool) => tool.name === 'book_meeting',
     );
     if (!book) throw new Error('no book_meeting');

@@ -1,4 +1,5 @@
 import type { VoiceCopy } from '@/content/types';
+import { contactDraftTarget } from '@/lib/contact-draft';
 import type { Locale } from '@/lib/i18n';
 import { isRecord } from '@/lib/is-record';
 import { resolveNavigation } from '@/lib/navigate';
@@ -35,6 +36,38 @@ export function navigateTool({
         ? copy.sections[parsed.section]
         : copy.pages[parsed.page],
     );
+    return 'opened';
+  };
+}
+
+type ContactResult = 'opened' | 'already_open' | 'invalid';
+
+// The tool the agent calls after a yes to put its message into the contact
+// form. Nothing is sent: the visitor adds their details and sends it. Already
+// on the contact page nothing is pushed, so what they typed stays.
+export function contactDraftTool({
+  locale,
+  copy,
+  push,
+  pathname,
+  onOpened,
+}: {
+  locale: Locale;
+  copy: Pick<VoiceCopy, 'pages'>;
+  push: (href: string) => void;
+  pathname: () => string;
+  onOpened: (label: string) => void;
+}): (params: unknown) => Promise<ContactResult> {
+  return async (params) => {
+    const target = contactDraftTarget(
+      locale,
+      pathname(),
+      isRecord(params) ? params.message : undefined,
+    );
+    if (target === null) return 'invalid';
+    if ('current' in target) return 'already_open';
+    push(target.url);
+    onOpened(copy.pages.contact);
     return 'opened';
   };
 }

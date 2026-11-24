@@ -119,7 +119,7 @@ describe('registerWebMcp', () => {
     expect(target.registerTool).not.toHaveBeenCalled();
   });
 
-  it('registers the six tools, in the page language, from the manifest', async () => {
+  it('registers the ten tools, in the page language, from the manifest', async () => {
     const target = context();
     const run = deps(() => json(manifest(FLAGS)), '/es/precios');
     await registerWebMcp(target, run.value);
@@ -130,6 +130,10 @@ describe('registerWebMcp', () => {
       'check_availability',
       'book_meeting',
       'navigate',
+      'list_pages',
+      'get_page',
+      'search_site',
+      'open_contact_form',
     ]);
     expect(target.tools[0]?.title).toBe('Buscar en las preguntas frecuentes');
     expect(run.calls.map((call) => call.url)).toEqual(['/api/tools']);
@@ -146,7 +150,7 @@ describe('registerWebMcp', () => {
       }),
     };
     await registerWebMcp(target, deps(() => json(manifest(FLAGS))).value);
-    expect(seen).toHaveLength(6);
+    expect(seen).toHaveLength(10);
   });
 });
 
@@ -431,6 +435,101 @@ describe('executorsFor', () => {
     expect(run.assign).not.toHaveBeenCalled();
     run.tasks[0]?.();
     expect(run.assign).toHaveBeenCalledWith('/pricing');
+  });
+});
+
+describe('the reading tools', () => {
+  it.each(['list_pages', 'get_page', 'search_site'] as const)(
+    'posts %s with the page locale over what the agent sent',
+    async (name) => {
+      const run = deps(() => json({ ok: true, result: { pages: [] } }), '/es');
+      await executorsFor(run.value)[name]({ locale: 'en', query: 'holded' });
+      expect(run.calls[0]).toMatchObject({
+        url: `/api/tools/${name}`,
+        body: { locale: 'es', query: 'holded' },
+      });
+    },
+  );
+});
+
+describe('open_contact_form', () => {
+  it('goes to the contact page with the message, in each language, and sends nothing', async () => {
+    const english = deps(() => json({}), '/');
+    const envelope = await executorsFor(english.value).open_contact_form({
+      message: 'We use Xero & Shopify: sync orders?',
+    });
+    expect(envelope).toEqual({
+      ok: true,
+      result: {
+        url: '/contact?message=We+use+Xero+%26+Shopify%3A+sync+orders%3F',
+      },
+    });
+    expect(english.assign).not.toHaveBeenCalled();
+    english.tasks[0]?.();
+    expect(english.assign).toHaveBeenCalledWith(
+      '/contact?message=We+use+Xero+%26+Shopify%3A+sync+orders%3F',
+    );
+    expect(english.calls).toEqual([]);
+
+    const spanish = deps(() => json({}), '/es/precios');
+    const answer = await executorsFor(spanish.value).open_contact_form({
+      message: 'Quiero sincronizar Holded',
+    });
+    expect(answer).toEqual({
+      ok: true,
+      result: { url: '/es/contacto?message=Quiero+sincronizar+Holded' },
+    });
+    expect(spanish.calls).toEqual([]);
+  });
+
+  it('does not reload the contact page, so what the visitor typed stays', async () => {
+    for (const [path, url] of [
+      ['/contact', '/contact'],
+      ['/es/contacto', '/es/contacto'],
+    ] as const) {
+      const run = deps(() => json({}), path);
+      const envelope = await executorsFor(run.value).open_contact_form({
+        message: 'Hola',
+      });
+      expect(envelope).toEqual({ ok: true, result: { url, current: true } });
+      expect(run.tasks).toEqual([]);
+      expect(run.assign).not.toHaveBeenCalled();
+    }
+  });
+
+  it('refuses an empty, oversized or malformed message', async () => {
+    const run = deps(() => json({}));
+    const { open_contact_form } = executorsFor(run.value);
+    for (const input of [
+      {},
+      { message: '   ' },
+      { message: 'x'.repeat(1501) },
+      { message: 7 },
+      null,
+      'text',
+      [],
+    ]) {
+      expect(
+        await open_contact_form(input),
+        JSON.stringify(input),
+      ).toMatchObject({ ok: false, error: 'invalid' });
+    }
+    expect(run.tasks).toEqual([]);
+  });
+
+  it('never throws on a hostile input or a failing dependency', async () => {
+    const run = deps(() => Promise.reject(new TypeError('offline')));
+    const executors = executorsFor(run.value);
+    for (const name of [
+      'list_pages',
+      'get_page',
+      'search_site',
+      'open_contact_form',
+    ] as const) {
+      for (const input of [null, 'x', [], { message: {} }, undefined]) {
+        await expect(executors[name](input)).resolves.toHaveProperty('ok');
+      }
+    }
   });
 });
 

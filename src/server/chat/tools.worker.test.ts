@@ -30,6 +30,7 @@ let background: Promise<unknown>[];
 let secret: string;
 let navigated: NavigateEvent[];
 let proposals: Proposal[];
+let drafts: string[];
 
 function context(overrides: Partial<ChatToolContext> = {}): ChatToolContext {
   return {
@@ -47,6 +48,11 @@ function context(overrides: Partial<ChatToolContext> = {}): ChatToolContext {
     },
     onNavigate: (event) => navigated.push(event),
     onProposal: (proposal) => proposals.push(proposal),
+    onContactDraft: (message) => {
+      if (drafts.length > 0) return 'already_shown';
+      drafts.push(message);
+      return 'shown';
+    },
     ...overrides,
   };
 }
@@ -91,6 +97,7 @@ beforeEach(async () => {
   background = [];
   navigated = [];
   proposals = [];
+  drafts = [];
   secret = JSON.stringify((await signingCredentials()).credentials);
   clearTokenCache();
   clearBusyCache();
@@ -99,14 +106,17 @@ beforeEach(async () => {
 });
 
 describe('chatToolNames', () => {
-  it('offers all six tools when booking and the calculator are published', () => {
+  it('offers every tool but the page list when booking and the calculator are published', () => {
     expect(chatToolNames(LIVE).sort()).toEqual([
       'book_meeting',
       'check_availability',
       'estimate_project',
       'get_faq',
+      'get_page',
       'get_pricing',
       'navigate',
+      'open_contact_form',
+      'search_site',
     ]);
   });
 
@@ -116,16 +126,18 @@ describe('chatToolNames', () => {
       booking: { published: false },
       calculator: { published: false },
     };
-    expect(chatToolNames(dark).sort()).toEqual([
+    const readers = [
       'get_faq',
+      'get_page',
       'get_pricing',
       'navigate',
-    ]);
-    expect(Object.keys(chatTools(context({ site: dark }))).sort()).toEqual([
-      'get_faq',
-      'get_pricing',
-      'navigate',
-    ]);
+      'open_contact_form',
+      'search_site',
+    ];
+    expect(chatToolNames(dark).sort()).toEqual(readers);
+    expect(Object.keys(chatTools(context({ site: dark }))).sort()).toEqual(
+      readers,
+    );
   });
 });
 
@@ -628,5 +640,76 @@ describe('navigate', () => {
     expect(await run(tools, 'navigate', { page: 'calculator' })).toEqual({
       ok: false,
     });
+  });
+});
+
+describe('open_contact_form in chat', () => {
+  it('hands the normalised message to the card and tells the model it was shown', async () => {
+    const tools = chatTools(context());
+    expect(
+      await run(tools, 'open_contact_form', {
+        message: '  We run Xero\u200b and Shopify.\u00a0Sync orders.  ',
+      }),
+    ).toEqual({ status: 'shown' });
+    expect(drafts).toEqual(['We run Xero and Shopify. Sync orders.']);
+    expect(navigated).toEqual([]);
+  });
+
+  it('tells the model when a draft was already shown, and when it was dropped', async () => {
+    const tools = chatTools(context());
+    await run(tools, 'open_contact_form', { message: 'First.' });
+    expect(
+      await run(tools, 'open_contact_form', { message: 'Second.' }),
+    ).toEqual({
+      status: 'already_shown',
+    });
+    const dropped = chatTools(context({ onContactDraft: () => 'dropped' }));
+    expect(await run(dropped, 'open_contact_form', { message: 'X.' })).toEqual({
+      status: 'not_shown',
+    });
+  });
+
+  it('refuses an empty, oversized or malformed message and draws nothing', async () => {
+    const tools = chatTools(context());
+    for (const input of [
+      {},
+      { message: '   ' },
+      { message: 'x'.repeat(1501) },
+      { message: 42 },
+      null,
+      'text',
+    ]) {
+      expect(await run(tools, 'open_contact_form', input)).toEqual({
+        status: 'invalid_input',
+      });
+    }
+    expect(drafts).toEqual([]);
+  });
+
+  it('shows the model a schema with the message only', () => {
+    const tool = chatTools(context()).open_contact_form;
+    const schema = tool && z.toJSONSchema(tool.inputSchema, { io: 'input' });
+    expect(
+      schema && 'properties' in schema
+        ? Object.keys(schema.properties ?? {})
+        : [],
+    ).toEqual(['message']);
+  });
+
+  it('keeps navigate on its own path', async () => {
+    const tools = chatTools(context());
+    expect(await run(tools, 'navigate', { page: 'pricing' })).toEqual({
+      ok: true,
+    });
+    expect(navigated).toHaveLength(1);
+    expect(drafts).toEqual([]);
+  });
+});
+
+describe('get_page and search_site in chat', () => {
+  it('give the model no URLs', async () => {
+    const tools = chatTools(context());
+    const found = await run(tools, 'search_site', { query: 'whatsapp' });
+    expect(JSON.stringify(found)).not.toMatch(/https?:\/\//);
   });
 });

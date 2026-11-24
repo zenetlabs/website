@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { voiceCopy as en } from '@/content/en/voice';
 import { voiceCopy as es } from '@/content/es/voice';
-import { navigateTool, pendingLabel } from '@/lib/voice-tools';
+import {
+  contactDraftTool,
+  navigateTool,
+  pendingLabel,
+} from '@/lib/voice-tools';
 
 function tool(locale: 'en' | 'es' = 'en') {
   const push = vi.fn();
@@ -91,5 +95,59 @@ describe('pendingLabel', () => {
   it('returns null for malformed and truncated JSON', () => {
     expect(pendingLabel('{"ok":true,"result":{"status":"book')).toBeNull();
     expect(pendingLabel('')).toBeNull();
+  });
+});
+
+describe('contactDraftTool', () => {
+  function draft(locale: 'en' | 'es' = 'en', pathname = '/') {
+    const push = vi.fn();
+    const onOpened = vi.fn();
+    const run = contactDraftTool({
+      locale,
+      copy: locale === 'en' ? en : es,
+      push,
+      pathname: () => pathname,
+      onOpened,
+    });
+    return { run, push, onOpened };
+  }
+
+  it('opens the contact form with the message and names the page', async () => {
+    const { run, push, onOpened } = draft('es', '/es/precios');
+    expect(await run({ message: 'Quiero hablar de Holded' })).toBe('opened');
+    expect(push).toHaveBeenCalledWith(
+      '/es/contacto?message=Quiero+hablar+de+Holded',
+    );
+    expect(onOpened).toHaveBeenCalledWith(es.pages.contact);
+  });
+
+  it('opens the English form in the call locale', async () => {
+    const { run, push } = draft('en', '/pricing');
+    await run({ message: 'Sync Xero' });
+    expect(push).toHaveBeenCalledWith('/contact?message=Sync+Xero');
+  });
+
+  it('says already_open on the contact page and pushes nothing', async () => {
+    for (const [locale, path] of [
+      ['en', '/contact'],
+      ['es', '/es/contacto'],
+    ] as const) {
+      const { run, push, onOpened } = draft(locale, path);
+      expect(await run({ message: 'Hola' })).toBe('already_open');
+      expect(push).not.toHaveBeenCalled();
+      expect(onOpened).not.toHaveBeenCalled();
+    }
+  });
+
+  it.each([
+    ['nothing', undefined],
+    ['an empty message', { message: '  ' }],
+    ['a message that is too long', { message: 'x'.repeat(1501) }],
+    ['a non-string message', { message: 5 }],
+    ['null', null],
+  ])('says invalid for %s and never throws', async (_label, params) => {
+    const { run, push } = draft();
+    expect(await run(params)).toBe('invalid');
+    expect(push).not.toHaveBeenCalled();
   });
 });

@@ -50,7 +50,7 @@ const MARKS = /\p{M}/gu;
 const NON_WORD = /[^\p{L}\p{N}]+/u;
 const PREFIX = 4;
 
-function words(text: string): string[] {
+export function words(text: string): string[] {
   return text
     .normalize('NFD')
     .replace(MARKS, '')
@@ -59,14 +59,33 @@ function words(text: string): string[] {
     .filter((word) => word !== '' && !STOPWORDS.has(word));
 }
 
-function hits(query: readonly string[], text: readonly string[]): number {
+function matches(word: string, candidate: string, loose: boolean): boolean {
+  return (
+    candidate === word ||
+    (word.length >= PREFIX && candidate.startsWith(word)) ||
+    (loose && candidate.length >= PREFIX && word.startsWith(candidate))
+  );
+}
+
+// Words of the query found in the text, also when a text word is the start of
+// the query word ("hold" for "holded"): fine for a FAQ.
+export function hits(
+  query: readonly string[],
+  text: readonly string[],
+): number {
   return query.filter((word) =>
-    text.some(
-      (candidate) =>
-        candidate === word ||
-        (word.length >= PREFIX && candidate.startsWith(word)) ||
-        (candidate.length >= PREFIX && word.startsWith(candidate)),
-    ),
+    text.some((candidate) => matches(word, candidate, true)),
+  ).length;
+}
+
+// The same without that last match, for a search of the whole site, where it
+// is too generous.
+export function hitsExact(
+  query: readonly string[],
+  text: readonly string[],
+): number {
+  return query.filter((word) =>
+    text.some((candidate) => matches(word, candidate, false)),
   ).length;
 }
 

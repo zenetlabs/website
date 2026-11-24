@@ -19,7 +19,10 @@ describe('fakeVoiceSdk', () => {
       fakeVoiceSdk.start({
         token: 'real-token',
         sessionId: 's',
-        tools: { navigate: async () => 'opened' },
+        tools: {
+          navigate: async () => 'opened',
+          open_contact_form: async () => 'opened',
+        },
         events: events(),
       }),
     ).rejects.toThrow('fake token rejected');
@@ -30,7 +33,10 @@ describe('fakeVoiceSdk', () => {
     const call = await fakeVoiceSdk.start({
       token: 'fake-voice-token-4',
       sessionId: 's9',
-      tools: { navigate: async () => 'opened' },
+      tools: {
+        navigate: async () => 'opened',
+        open_contact_form: async () => 'opened',
+      },
       events: handlers,
     });
     await Promise.resolve();
@@ -44,9 +50,12 @@ describe('fakeVoiceSdk', () => {
     expect(handle?.options).toEqual({
       token: 'fake-voice-token-4',
       sessionId: 's9',
-      tools: ['navigate'],
+      tools: ['navigate', 'open_contact_form'],
     });
     expect(await handle?.callClientTool('navigate', {})).toBe('opened');
+    expect(await handle?.callClientTool('open_contact_form', {})).toBe(
+      'opened',
+    );
     expect(await handle?.callClientTool('other', {})).toBe('unknown_tool');
     handle?.emitToolResult('book_meeting', '{}');
     expect(handlers.onToolResult).toHaveBeenCalledWith('book_meeting', '{}');

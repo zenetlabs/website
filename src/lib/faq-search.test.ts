@@ -45,3 +45,12 @@ describe('searchFaq', () => {
     expect(ids('en', 'data privacy')).toEqual(ids('en', 'data privacy'));
   });
 });
+
+describe('hitsExact', () => {
+  it('does not count a text word that only starts the query word', async () => {
+    const { hits, hitsExact, words } = await import('@/lib/faq-search');
+    expect(hits(words('holded'), words('we hold meetings'))).toBe(1);
+    expect(hitsExact(words('holded'), words('we hold meetings'))).toBe(0);
+    expect(hitsExact(words('hold'), words('holded invoices'))).toBe(1);
+  });
+});

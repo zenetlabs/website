@@ -37,8 +37,16 @@ export const chatCopy = {
     check_availability: 'Buscando horas libres…',
     book_meeting: 'Preparando tu reserva…',
     navigate: 'Buscando la página…',
+    search_site: 'Buscando en el sitio…',
+    get_page: 'Leyendo la página…',
+    open_contact_form: 'Preparando tu mensaje…',
   },
   open: 'Abrir: {label}',
+  contactDraft: {
+    title: 'Tu mensaje para el formulario de contacto',
+    open: 'Revísalo y envíalo en el formulario de contacto',
+    onPage: 'Pégalo en el cuadro del mensaje de abajo y envíalo.',
+  },
   remaining: 'Te quedan {n} mensajes en esta conversación',
   newSession:
     'Esta conversación había caducado, así que he empezado una nueva.',

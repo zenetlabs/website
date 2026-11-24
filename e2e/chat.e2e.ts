@@ -256,6 +256,77 @@ test('answers once and opens the Holded page when it answers and navigates in on
   ).toBeVisible();
 });
 
+test('reads the site with search_site and get_page, then answers within the step limit', async ({
+  page,
+}) => {
+  await openChat(page, 'en');
+  await say(page, 'en', 'Please search the site for WhatsApp.');
+  await expect(page.locator('[data-ai-generated="true"]').last()).toHaveText(
+    `${en.assistant}: We connect WhatsApp to the rest of your tools. The integrations page has the details.`,
+  );
+  expect(await page.locator('[data-chat-draft]').count()).toBe(0);
+});
+
+for (const { locale, base, contact, text } of [
+  {
+    locale: 'en',
+    base: '/',
+    contact: '/contact',
+    text: 'Hi, we run Xero and Shopify and want our orders synced.',
+  },
+  {
+    locale: 'es',
+    base: '/es',
+    contact: '/es/contacto',
+    text: 'Hola, usamos Holded y queremos automatizar nuestras facturas.',
+  },
+] as const) {
+  test(`${locale}: "write to you" shows a draft card whose link fills the contact form, and sends nothing`, async ({
+    page,
+  }) => {
+    const leads: string[] = [];
+    page.on('request', (request) => {
+      if (request.url().includes('/api/lead')) leads.push(request.url());
+    });
+    await openChat(page, locale, base);
+    await say(
+      page,
+      locale,
+      locale === 'en'
+        ? 'Can I write to you about syncing orders?'
+        : '¿Puedo escribiros sobre mis facturas?',
+    );
+    const copy = COPY[locale];
+    const card = page.locator('[data-chat-draft]');
+    await expect(card).toBeVisible();
+    await expect(card).toContainText(copy.contactDraft.title);
+    await expect(card.locator('blockquote')).toHaveText(text);
+    await settleAnimations(page);
+    const results = await new AxeBuilder({ page })
+      .withTags(TAGS)
+      .exclude('iframe[src*="challenges.cloudflare.com"]')
+      .analyze();
+    expect(results.violations).toEqual([]);
+    await card.getByRole('link', { name: copy.contactDraft.open }).click();
+    await expect(page).toHaveURL(new RegExp(`${contact}\\?message=`));
+    await expect(page.locator('textarea[name="message"]')).toHaveValue(text);
+    expect(leads).toEqual([]);
+    // The conversation stays: the card is still in the reopened chat.
+    await page.getByRole('button', { name: LAUNCHER[locale] }).click();
+    await expect(page.locator('[data-chat-draft]')).toBeVisible();
+  });
+}
+
+test('on the contact page the draft card asks to paste it and links nowhere', async ({
+  page,
+}) => {
+  await openChat(page, 'en', '/contact');
+  await say(page, 'en', 'Can I write to you about syncing orders?');
+  const card = page.locator('[data-chat-draft]');
+  await expect(card).toContainText(en.contactDraft.onPage);
+  await expect(card.getByRole('link')).toHaveCount(0);
+});
+
 test('an on-topic question answered with the refusal gets "no information" and a call instead', async ({
   page,
 }) => {

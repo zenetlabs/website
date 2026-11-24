@@ -1505,6 +1505,15 @@
     @apply size-4 text-agent;
   }
 
+  .chat-draft {
+    @apply grid gap-2 rounded-inner border border-hairline bg-tint p-3;
+  }
+
+  .chat-draft-quote {
+    @apply border-l-2 border-agent pl-3 text-ui-m whitespace-pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
   .chat-slots {
     @apply grid gap-3 rounded-inner border border-hairline bg-tint p-3;
   }

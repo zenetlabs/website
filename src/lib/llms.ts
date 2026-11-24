@@ -772,6 +772,10 @@ export function llmsNotFound(): Response {
   return new Response('Not found', { status: 404, headers: TEXT_HEADERS });
 }
 
+export function llmsFullText(locale: Locale): Promise<string> {
+  return llmsBody('llms-full', locale);
+}
+
 export async function llmsResponse(
   file: LlmsFile,
   param: string | undefined,

@@ -17,7 +17,10 @@ export type VoiceEvents = {
 export type VoiceStart = {
   token: string;
   sessionId: string;
-  tools: { navigate: (params: unknown) => Promise<string> };
+  tools: {
+    navigate: (params: unknown) => Promise<string>;
+    open_contact_form: (params: unknown) => Promise<string>;
+  };
   events: VoiceEvents;
 };
 

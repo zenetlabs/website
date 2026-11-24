@@ -4,7 +4,7 @@ import type { SiteFlags } from '@/lib/page-registry';
 import { type BookingDeps, targetOf } from '@/server/booking';
 import { browserBookingSchema, type Channel } from '@/server/booking-schema';
 import { linkedChatSession } from '@/server/chat/store';
-import { isLimited, type Limiter } from '@/server/rate-limit';
+import { ipBucket, isLimitedBy, type Limiter } from '@/server/rate-limit';
 import {
   gate,
   isJsonRequest,
@@ -66,6 +66,8 @@ export async function handleToolRequest(
     if (!(await bearerMatches(authorization, await deps.bearerSecret()))) {
       return reject('auth');
     }
+    // The agents are offered only the tools made for voice.
+    if (!tool.surfaces.includes('voice')) return reject('unknown');
     return voiceCall(tool, request, deps, now);
   }
   if (tool.name === 'book_meeting') {
@@ -74,7 +76,10 @@ export async function handleToolRequest(
 
   if (!isJsonRequest(request)) return reject('unsupported');
   const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
-  if (await isLimited(deps.toolsLimiter, ip, 'tools')) return reject('rate');
+  // An IPv6 visitor holds a /64: one address, as for the other limiters.
+  if (await isLimitedBy(deps.toolsLimiter, ipBucket(ip), 'tools', tool.cost)) {
+    return reject('rate');
+  }
   const text = await readCapped(request, MAX_BODY_BYTES);
   if (text === null) return reject('too-large');
   return execute(tool, parseJson(text), deps, {

@@ -32,6 +32,11 @@ export function AssistantSection() {
         la confirmas desde el enlace del correo que te enviamos.
       </p>
       <p>
+        Si le pides que nos escriba, pone un borrador de tu mensaje en nuestro
+        formulario de contacto; no se envía nada hasta que lo revises y envíes
+        tú el formulario.
+      </p>
+      <p>
         Para limitar los abusos contamos también cuántas preguntas hace cada
         conexión al día. Para ello guardamos una huella con clave de tu
         dirección IP (o de su bloque de red, si es IPv6): está seudonimizada, no
@@ -76,6 +81,11 @@ export function VoiceSection() {
         llamada (el de nuestro registro y el de la conversación en ElevenLabs).
         No usamos tu voz para identificarte.
       </p>
+      <p>
+        Si le pides que nos escriba, pone un borrador de tu mensaje en nuestro
+        formulario de contacto; no se envía nada hasta que lo revises y envíes
+        tú el formulario.
+      </p>
     </LegalSection>
   );
 }
@@ -103,14 +113,17 @@ export function WebMcpUse() {
   return (
     <p>
       Si tu navegador tiene un agente de IA compatible con WebMCP, el sitio le
-      ofrece herramientas para consultar nuestras preguntas frecuentes, precios
-      y estimaciones y para abrir páginas y, mientras la reserva de llamadas
-      esté disponible, para buscar horas libres y proponer una llamada. Una
-      reserva solo se hace cuando tú confirmas tus datos en el cuadro de diálogo
-      de la página y después el enlace del correo que te enviamos, y la tratamos
-      como cualquier otra reserva. El agente lo eliges y lo controlas tú: lo que
-      le cuentes o lo que lea de la página se rige por las condiciones de su
-      proveedor, no por esta política.
+      ofrece herramientas para buscar y leer las páginas de este sitio,
+      consultar nuestras preguntas frecuentes
+      {__CALCULATOR__ ? ', precios y estimaciones' : ' y precios'}, abrir
+      páginas y empezar un mensaje en el formulario de contacto, que tú revisas
+      y envías, y, mientras la reserva de llamadas esté disponible, buscar horas
+      libres y proponer una llamada. Una reserva solo se hace cuando tú
+      confirmas tus datos en el cuadro de diálogo de la página y después el
+      enlace del correo que te enviamos, y la tratamos como cualquier otra
+      reserva. El agente lo eliges y lo controlas tú: lo que le cuentes o lo que
+      lea de la página se rige por las condiciones de su proveedor, no por esta
+      política.
     </p>
   );
 }
