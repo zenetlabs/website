@@ -34,8 +34,8 @@ export const fakeVoiceSdk: VoiceSdk = {
       sentinel: FAKE_VOICE_SENTINEL,
       options: { token, sessionId, tools: Object.keys(tools) },
       callClientTool: (name, params) =>
-        name === 'navigate'
-          ? tools.navigate(params)
+        name === 'navigate' || name === 'open_contact_form'
+          ? tools[name](params)
           : Promise.resolve('unknown_tool'),
       emitToolResult: events.onToolResult,
       disconnect: end,

@@ -21,4 +21,5 @@ export const navigate = defineClientTool({
   },
   input: navigateInput,
   output: z.object({ url: z.string() }),
+  opens: 'page',
 });

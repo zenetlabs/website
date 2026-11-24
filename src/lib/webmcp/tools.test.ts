@@ -33,6 +33,10 @@ const executors: Executors = {
   check_availability: () => Promise.resolve({ ok: true, result: 'slots' }),
   book_meeting: () => Promise.resolve({ ok: true, result: 'book' }),
   navigate: () => Promise.resolve({ ok: true, result: 'navigate' }),
+  list_pages: () => Promise.resolve({ ok: true, result: 'pages' }),
+  get_page: () => Promise.resolve({ ok: true, result: 'page' }),
+  search_site: () => Promise.resolve({ ok: true, result: 'search' }),
+  open_contact_form: () => Promise.resolve({ ok: true, result: 'contact' }),
 };
 
 function requiredOf(schema: Record<string, unknown>): unknown[] {
@@ -50,7 +54,7 @@ describe('toWebMcpTools', () => {
       const copy = COPY[locale];
       const tools = toWebMcpTools(source, locale, copy, executors);
 
-      it('maps exactly the six tools, in order, with valid names', () => {
+      it('maps exactly the ten tools, in order, with valid names', () => {
         expect(tools.map((tool) => tool.name)).toEqual([...WEBMCP_TOOL_NAMES]);
         for (const tool of tools) {
           expect(tool.name).toMatch(/^[A-Za-z0-9_.-]{1,128}$/);
@@ -125,6 +129,10 @@ describe('toWebMcpTools', () => {
         }
         expect(ANNOTATIONS.book_meeting.consequentialHint).toBe(true);
         expect(ANNOTATIONS.get_pricing.readOnlyHint).toBe(true);
+        for (const name of ['list_pages', 'get_page', 'search_site'] as const) {
+          expect(ANNOTATIONS[name]).toEqual({ readOnlyHint: true });
+        }
+        expect(ANNOTATIONS.open_contact_form).toEqual({ readOnlyHint: false });
       });
     });
   }

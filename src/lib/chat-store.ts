@@ -12,6 +12,7 @@ import { track } from '@/lib/track';
 type ItemBody =
   | { kind: 'user' | 'assistant' | 'notice'; text: string }
   | { kind: 'slots'; zone: string; starts: readonly number[] }
+  | { kind: 'contactDraft'; message: string }
   | {
       kind: 'navigate';
       page: PageId;
@@ -37,6 +38,9 @@ export type ChatState = {
   // The times check_availability returned this turn: chips under the reply
   // once it settles; dropped if the turn proposes a booking.
   slots: TurnSlots | null;
+  // The message the assistant drafted for the contact form: a card under the
+  // reply once it settles.
+  draft: string | null;
   nextId: number;
 };
 
@@ -54,6 +58,7 @@ export const EMPTY: ChatState = {
   failure: null,
   cut: false,
   slots: null,
+  draft: null,
   nextId: 1,
 };
 
@@ -83,14 +88,22 @@ function settle(state: ChatState): ChatState {
     text === ''
       ? state
       : { ...state, ...push(state, { kind: 'assistant', text }) };
+  const withDraft =
+    state.draft === null
+      ? withText
+      : {
+          ...withText,
+          ...push(withText, { kind: 'contactDraft', message: state.draft }),
+        };
   const withChips =
     state.slots === null
-      ? withText
-      : { ...withText, ...push(withText, { kind: 'slots', ...state.slots }) };
+      ? withDraft
+      : { ...withDraft, ...push(withDraft, { kind: 'slots', ...state.slots }) };
   return {
     ...withChips,
     streaming: '',
     slots: null,
+    draft: null,
     tool: null,
     status: 'idle',
   };
@@ -119,6 +132,8 @@ export function applyEvent(state: ChatState, event: ChatEvent): ChatState {
           href: event.href,
         }),
       };
+    case 'contact_draft':
+      return { ...state, draft: event.message };
     case 'slots':
       return {
         ...state,
@@ -148,6 +163,7 @@ export function begin(
     failure: null,
     cut: false,
     slots: null,
+    draft: null,
   };
 }
 

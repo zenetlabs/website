@@ -59,7 +59,7 @@ export function CookiesEs({
       locale="es"
       contents={contents}
       title={title}
-      updated="Última actualización: 10 de noviembre de 2026"
+      updated="Última actualización: 24 de noviembre de 2026"
     >
       <LegalSection section={SECTIONS.scope}>
         <p>

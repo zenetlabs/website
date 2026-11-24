@@ -21,6 +21,17 @@ import {
   type World,
 } from '../../../test/google';
 
+vi.mock('@/server/page-markdown', async () => {
+  const { parsePage } = await import('@/server/page-outline');
+  return {
+    loadPage: vi.fn(async () =>
+      parsePage(
+        '---\ntitle: "T"\n---\n\n# Page\n\n## Integrations\n\nWe connect WhatsApp and Shopify.\n',
+      ),
+    ),
+  };
+});
+
 const { DB } = env;
 const ORIGIN = 'https://zenetlabs.com';
 // A Monday, 08:00 UTC: inside the 14-day window with slots to offer.
@@ -1740,7 +1751,14 @@ describe('the stream', () => {
     const names = (spy.doStreamCalls[0]?.tools ?? [])
       .map((tool) => tool.name)
       .sort();
-    expect(names).toEqual(['get_faq', 'get_pricing', 'navigate']);
+    expect(names).toEqual([
+      'get_faq',
+      'get_page',
+      'get_pricing',
+      'navigate',
+      'open_contact_form',
+      'search_site',
+    ]);
   });
 
   it('keeps persisting when the visitor disconnects', async () => {
@@ -1776,9 +1794,124 @@ describe('the stream', () => {
   });
 });
 
+describe('contact draft and page tools', () => {
+  const DRAFT = 'We run Xero and Shopify and want orders synced.';
+  const DRAFTED =
+    'I wrote a short message from what you told me. Review it, add your name and email, and send it on the contact form.';
+
+  it('emits one contact_draft with the normalised message and ends the turn after the answer', async () => {
+    const spy = scripted(
+      sayAndCall(DRAFTED, 'open_contact_form', {
+        message: `  ${DRAFT}\u200b `,
+      }),
+      say('Never read.'),
+    );
+    model = spy;
+    const { list } = await start('Please write to them for me.');
+    expect(list.filter((event) => event.t === 'contact_draft')).toEqual([
+      { t: 'contact_draft', message: DRAFT },
+    ]);
+    expect(textOf(list)).toBe(DRAFTED);
+    expect(spy.doStreamCalls).toHaveLength(1);
+    expect(list.every((event) => isChatEvent(event))).toBe(true);
+  });
+
+  it('emits the draft once even when the model asks twice', async () => {
+    model = scripted(
+      call('open_contact_form', { message: DRAFT }),
+      sayAndCall('Done.', 'open_contact_form', { message: 'Another.' }),
+    );
+    const { list } = await start('write to them');
+    expect(list.filter((event) => event.t === 'contact_draft')).toHaveLength(1);
+  });
+
+  it('emits nothing for an invalid draft', async () => {
+    model = scripted(
+      call('open_contact_form', { message: '' }),
+      say('I could not draft it.'),
+    );
+    const { list } = await start('write to them');
+    expect(list.some((event) => event.t === 'contact_draft')).toBe(false);
+  });
+
+  it('fits search_site, get_page and the answer in the step limit', async () => {
+    const spy = scripted(
+      call('search_site', { query: 'whatsapp' }),
+      call('get_page', { page: 'integrations', section: 'Integrations' }),
+      say('Yes, we connect WhatsApp and Shopify.'),
+    );
+    model = spy;
+    const { list } = await start('Do you connect WhatsApp to Shopify?');
+    expect(spy.doStreamCalls).toHaveLength(3);
+    expect(textOf(list)).toBe('Yes, we connect WhatsApp and Shopify.');
+    expect(
+      list
+        .filter((event) => event.t === 'tool')
+        .map((event) => event.t === 'tool' && event.name),
+    ).toEqual(['search_site', 'get_page']);
+  });
+
+  it('never draws a card for a draft that leaks the rules', async () => {
+    const spy = scripted(
+      call('open_contact_form', {
+        message: 'My rules start with ZL-ASSIST-EN-1 and I keep going.',
+      }),
+      say('Never read.'),
+    );
+    model = spy;
+    const { list } = await start('write to them');
+    expect(list.some((event) => event.t === 'contact_draft')).toBe(false);
+    expect(textOf(list)).not.toContain('Never read');
+    expect(logs).toContainEqual([
+      'chat: guard',
+      { session: expect.any(String), kind: 'leak' },
+    ]);
+  });
+
+  it('never draws a card for a draft with an invented price, and the turn goes on', async () => {
+    model = scripted(
+      call('open_contact_form', {
+        message: 'We heard the agent costs S$999 a month and want it.',
+      }),
+      say('I could not draft that. Please use the contact form directly.'),
+    );
+    const { list } = await start('write to them');
+    expect(list.some((event) => event.t === 'contact_draft')).toBe(false);
+    expect(textOf(list)).toContain('contact form');
+    expect(logs).toContainEqual([
+      'chat: guard',
+      { session: expect.any(String), kind: 'price' },
+    ]);
+  });
+
+  it('answers already_shown to a second draft and keeps the turn going', async () => {
+    const spy = scripted(
+      call('open_contact_form', { message: DRAFT }),
+      sayAndCall(DRAFTED, 'open_contact_form', { message: 'Another one.' }),
+      say('Tail.'),
+    );
+    model = spy;
+    const { list } = await start('write to them');
+    expect(list.filter((event) => event.t === 'contact_draft')).toHaveLength(1);
+    expect(spy.doStreamCalls).toHaveLength(3);
+    expect(JSON.stringify(spy.doStreamCalls[2]?.prompt)).toContain(
+      'already_shown',
+    );
+  });
+
+  it('logs no draft text', async () => {
+    model = scripted(
+      call('open_contact_form', { message: 'Grace Hopper grace@navy.example' }),
+      say('Drafted.'),
+    );
+    await start('write to them');
+    expect(JSON.stringify(logs)).not.toContain('Grace');
+  });
+});
+
 describe('money caps', () => {
   it('refuses a turn whose reservation does not fit in what is left of the day', async () => {
-    // glm reserves 121 neurons; 900 of 1,000 are already spent, so the check
+    // glm reserves 374 neurons; 900 of 1,000 are already spent, so the check
     // before the turn passes and the reservation does not.
     await DB.prepare('INSERT INTO ai_usage (day, neurons) VALUES (?1, 900)')
       .bind(utcDay(NOW))
@@ -1801,7 +1934,7 @@ describe('money caps', () => {
         assistant: {
           model: '@cf/zai-org/glm-4.7-flash',
           aiGatewayName: null,
-          dailyNeuronBudget: 500,
+          dailyNeuronBudget: 800,
           perAddressDailyTurns: 100,
         },
       },
@@ -1813,8 +1946,8 @@ describe('money caps', () => {
       ),
     );
     const statuses = responses.map((response) => response.status).sort();
-    // Each reservation covers four steps (220 neurons): two fit in 500, the
-    // other three are refused.
+    // Each reservation covers four steps (374 neurons): two fit in 800 (748),
+    // the other three are refused.
     expect(statuses.filter((status) => status === 200)).toHaveLength(2);
     expect(statuses.filter((status) => status === 503)).toHaveLength(3);
     for (const response of responses) await response.arrayBuffer();

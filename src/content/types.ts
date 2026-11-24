@@ -834,10 +834,15 @@ export type ChatCopy = {
     | 'estimate_project'
     | 'check_availability'
     | 'book_meeting'
-    | 'navigate',
+    | 'navigate'
+    | 'search_site'
+    | 'get_page'
+    | 'open_contact_form',
     string
   >;
   open: string;
+  // The card for a message the assistant drafted for the contact form.
+  contactDraft: { title: string; open: string; onPage: string };
   remaining: string;
   newSession: string;
   errorRate: string;

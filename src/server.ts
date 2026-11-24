@@ -5,7 +5,7 @@ import { isInternalPath } from '@/lib/internal-path';
 import {
   isNegotiable,
   markdownTarget,
-  toMarkdownResponse,
+  renderMarkdown,
 } from '@/lib/markdown-response';
 import { isOwnedHost, redirectTarget } from '@/lib/redirects';
 import { withSecurityHeaders } from '@/lib/security-headers';
@@ -33,12 +33,16 @@ async function respond(
     if (denied) return withSecurityHeaders(denied);
   }
   const markdown = markdownTarget(url, request);
-  const response = await handler.fetch(markdown?.upstream ?? request, opts);
-  const html = isHtml(response);
-  const converted =
-    html && markdown
-      ? await toMarkdownResponse(response, markdown.upstream.url)
-      : withDeferredEntry(response);
+  const rendered = markdown
+    ? await renderMarkdown(
+        async (upstream) => handler.fetch(upstream, opts),
+        markdown.upstream,
+        markdown.upstream.url,
+      )
+    : null;
+  const response = rendered?.response ?? (await handler.fetch(request, opts));
+  const html = rendered?.html ?? isHtml(response);
+  const converted = rendered?.html ? response : withDeferredEntry(response);
   const page = withSecurityHeaders(
     request.method === 'HEAD' && markdown
       ? new Response(null, converted)

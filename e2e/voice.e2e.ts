@@ -155,7 +155,7 @@ test('starts a call after Turnstile: one mint, the Spanish agent, the session ha
   const options = await page.evaluate(() => window.__voiceFake?.options);
   expect(options?.token).toMatch(/^fake-voice-token-\d+$/);
   expect(options?.sessionId).toMatch(/^[0-9a-f-]{36}$/);
-  expect(options?.tools).toEqual(['navigate']);
+  expect(options?.tools).toEqual(['navigate', 'open_contact_form']);
   await expect(page.getByRole('list', { name: es.transcript })).toContainText(
     'scripted voice assistant',
   );
@@ -261,6 +261,57 @@ test('opens a page for the agent without ending the call, in the call locale', a
   await expect(page).toHaveURL(/\/es\/precios$/);
   await expect(status(page)).toContainText(`Abierto: ${es.pages.pricing}`);
   await expect(page.getByRole('button', { name: es.end })).toBeVisible();
+});
+
+test("puts the agent's message into the contact form without ending the call, and sends nothing", async ({
+  page,
+}) => {
+  const leads: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('/api/lead')) leads.push(request.url());
+  });
+  await openPanel(page, 'es');
+  await startCall(page, 'es');
+  const result = await page.evaluate(() =>
+    window.__voiceFake?.callClientTool('open_contact_form', {
+      message: 'Quiero automatizar las facturas de Holded.',
+    }),
+  );
+  expect(result).toBe('opened');
+  await expect(page).toHaveURL(/\/es\/contacto\?message=/);
+  await expect(status(page)).toContainText(`Abierto: ${es.pages.contact}`);
+  await expect(page.getByRole('button', { name: es.end })).toBeVisible();
+  await expect(page.locator('textarea[name="message"]')).toHaveValue(
+    'Quiero automatizar las facturas de Holded.',
+  );
+  expect(leads).toEqual([]);
+});
+
+test('on the contact page the draft is not pushed: the form stays as it is', async ({
+  page,
+}) => {
+  await openPanel(page, 'en');
+  await startCall(page, 'en');
+  expect(
+    await page.evaluate(() =>
+      window.__voiceFake?.callClientTool('navigate', { page: 'contact' }),
+    ),
+  ).toBe('opened');
+  await expect(page).toHaveURL(/\/contact$/);
+  expect(
+    await page.evaluate(() =>
+      window.__voiceFake?.callClientTool('open_contact_form', {
+        message: 'We need help with invoices.',
+      }),
+    ),
+  ).toBe('already_open');
+  expect(
+    await page.evaluate(() =>
+      window.__voiceFake?.callClientTool('open_contact_form', { message: '' }),
+    ),
+  ).toBe('invalid');
+  await expect(page).toHaveURL(/\/contact$/);
+  await expect(page.getByRole('button', { name: en.end })).toBeVisible();
 });
 
 test('refuses a page the call locale lacks and a URL, and stays on the page', async ({

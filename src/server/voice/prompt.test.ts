@@ -30,6 +30,9 @@ const NAMES = [
   'check_availability',
   'book_meeting',
   'navigate',
+  'search_site',
+  'get_page',
+  'open_contact_form',
   'end_call',
 ];
 
@@ -88,5 +91,30 @@ describe.each(['en', 'es'] as const)('voicePrompt (%s)', (locale) => {
     expect(prompt.length).toBeLessThanOrEqual(32_000);
     expect(prompt).not.toMatch(/TODO|\[X\]|https?:\/\//);
     expect(prompt).not.toContain(locale === 'en' ? '€' : 'S$');
+  });
+
+  it('has policy lines for search and the contact draft, and states the personal-data rule once', async () => {
+    const prompt = await voicePrompt(locale, SITE, NAMES);
+    for (const name of ['search_site', 'get_page', 'open_contact_form']) {
+      expect(prompt, name).toContain(`- ${name}: `);
+    }
+    expect(prompt).not.toContain('list_pages');
+    const rule =
+      locale === 'en'
+        ? 'in a message for the contact form'
+        : 'en un mensaje para el formulario de contacto';
+    expect(prompt.split(rule)).toHaveLength(2);
+    expect(prompt).toMatch(
+      locale === 'en' ? /only after a yes/ : /solo después de un sí/,
+    );
+  });
+
+  it('offers the draft after a yes while booking is dark', async () => {
+    const prompt = await voicePrompt(
+      locale,
+      { ...SITE, booking: { published: false } },
+      NAMES,
+    );
+    expect(prompt).toContain('open_contact_form ');
   });
 });

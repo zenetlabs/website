@@ -1,3 +1,4 @@
+import { AGENT_MESSAGE_MAX } from '@/lib/contact-draft';
 import type { GuardError } from '@/lib/guard-error';
 import type { Locale } from '@/lib/i18n';
 import { isRecord } from '@/lib/is-record';
@@ -46,6 +47,8 @@ export type ChatEvent =
       href: string;
     }
   | { t: 'confirm_booking'; proposal: Proposal }
+  // The message the assistant drafted for the contact form; the client builds the link.
+  | { t: 'contact_draft'; message: string }
   // The free slots check_availability returned this turn, as epoch ms.
   | { t: 'slots'; zone: string; starts: number[] }
   | { t: 'error'; code: 'unavailable' }
@@ -88,6 +91,12 @@ export function isChatEvent(value: unknown): value is ChatEvent {
         isRecord(value.proposal) &&
         typeof value.proposal.slot === 'string' &&
         typeof value.proposal.topic === 'string'
+      );
+    case 'contact_draft':
+      return (
+        typeof value.message === 'string' &&
+        value.message.length > 0 &&
+        value.message.length <= AGENT_MESSAGE_MAX
       );
     case 'slots':
       return (

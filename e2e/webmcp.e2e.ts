@@ -1,6 +1,7 @@
 import { gzipSync } from 'node:zlib';
 import AxeBuilder from '@axe-core/playwright';
 import { type Browser, expect, type Page } from '@playwright/test';
+import { z } from 'zod';
 import {
   confirmByLink,
   confirmLinkFor,
@@ -10,10 +11,12 @@ import {
 import { test } from './fixtures';
 import {
   BOOKING_PUBLISHED,
+  CALCULATOR_PUBLISHED,
   gotoHydrated,
   lateSlot,
   settleAnimations,
   WEBMCP_PUBLISHED,
+  waitForHydration,
 } from './helpers';
 import { installModelContext, startCall } from './webmcp-stub';
 
@@ -25,10 +28,17 @@ const TOOL_NAMES = [
   'check_availability',
   'book_meeting',
   'navigate',
+  'list_pages',
+  'get_page',
+  'search_site',
+  'open_contact_form',
 ];
 const BOOKING_TOOLS = new Set(['check_availability', 'book_meeting']);
+// A dark feature is never registered: no booking tools, no estimate.
 const EXPECTED_NAMES = TOOL_NAMES.filter(
-  (name) => BOOKING_PUBLISHED || !BOOKING_TOOLS.has(name),
+  (name) =>
+    (BOOKING_PUBLISHED || !BOOKING_TOOLS.has(name)) &&
+    (CALCULATOR_PUBLISHED || name !== 'estimate_project'),
 );
 const PAGES = [
   { locale: 'en', path: '/', title: 'Get official prices', currency: 'SGD' },
@@ -245,18 +255,20 @@ test.describe('with modelContext', () => {
         error: 'invalid',
         issues: [{ path: 'query' }],
       });
-      const estimate = startCall(page, 'estimate_project', {
-        answers: {
-          type: 'automation',
-          tools: ['erp'],
-          volume: 'low',
-          agent: false,
-          web: false,
-          urgency: 'standard',
-          maintenance: false,
-        },
-      });
-      expect(await estimate).toMatchObject({ ok: true });
+      if (CALCULATOR_PUBLISHED) {
+        const estimate = startCall(page, 'estimate_project', {
+          answers: {
+            type: 'automation',
+            tools: ['erp'],
+            volume: 'low',
+            agent: false,
+            web: false,
+            urgency: 'standard',
+            maintenance: false,
+          },
+        });
+        expect(await estimate).toMatchObject({ ok: true });
+      }
       if (BOOKING_PUBLISHED) {
         expect(
           await startCall(page, 'check_availability', {
@@ -266,6 +278,187 @@ test.describe('with modelContext', () => {
       }
     });
   }
+
+  test.describe('reading the site', () => {
+    test('list_pages lists the pages of the page language, and only those', async ({
+      page,
+    }) => {
+      await installModelContext(page);
+      await gotoHydrated(page, '/');
+      await registered(page);
+      const english = await startCall(page, 'list_pages', {});
+      expect(english).toMatchObject({ ok: true });
+      const ids = JSON.stringify(english);
+      expect(ids).toContain('"id":"pricing"');
+      expect(ids).not.toContain('"id":"verifactu"');
+      expect(ids).not.toContain('"id":"holdedPrestashop"');
+      expect(JSON.stringify(english).length).toBeLessThanOrEqual(3_000);
+
+      await gotoHydrated(page, '/es');
+      await registered(page);
+      const spanish = JSON.stringify(
+        await startCall(page, 'list_pages', { locale: 'en' }),
+      );
+      expect(spanish).toContain('"id":"verifactu"');
+      expect(spanish).toContain('"id":"holdedPrestashop"');
+      expect(spanish.length).toBeLessThanOrEqual(3_000);
+    });
+
+    test('search_site answers for the market: WhatsApp in English, Holded only in Spanish', async ({
+      page,
+    }) => {
+      await installModelContext(page);
+      await gotoHydrated(page, '/');
+      await registered(page);
+      const whatsapp = JSON.stringify(
+        await startCall(page, 'search_site', { query: 'WhatsApp' }),
+      );
+      expect(whatsapp).toContain('"page":"integrations"');
+      expect(whatsapp.length).toBeLessThanOrEqual(2_000);
+      expect(
+        await startCall(page, 'search_site', { query: 'Holded' }),
+      ).toMatchObject({
+        ok: true,
+        result: { results: [], contact: { email: 'hello@zenetlabs.com' } },
+      });
+      expect(await startCall(page, 'search_site', {})).toMatchObject({
+        ok: false,
+        error: 'invalid',
+        issues: [{ path: 'query' }],
+      });
+
+      await gotoHydrated(page, '/es');
+      await registered(page);
+      const holded = JSON.stringify(
+        await startCall(page, 'search_site', { query: 'Holded' }),
+      );
+      expect(holded).toMatch(/"page":"holded(Prestashop|Woocommerce|Hubspot)"/);
+    });
+
+    for (const { path, currency } of [
+      { path: '/', currency: 'S$' },
+      { path: '/es', currency: '€' },
+    ]) {
+      test(`get_page reads pricing from ${path}: outline, then a section in ${currency}`, async ({
+        page,
+      }) => {
+        await installModelContext(page);
+        await gotoHydrated(page, path);
+        await registered(page);
+        const outline = await startCall(page, 'get_page', { page: 'pricing' });
+        expect(outline).toMatchObject({
+          ok: true,
+          result: { status: 'page', page: 'pricing' },
+        });
+        const { result } = z
+          .object({ result: z.object({ sections: z.array(z.string()) }) })
+          .parse(outline);
+        expect(result.sections.length).toBeGreaterThan(2);
+        const priced = await startCall(page, 'get_page', {
+          page: 'pricing',
+          section: result.sections[1],
+        });
+        const text = JSON.stringify(priced);
+        expect(text).toContain('"status":"section"');
+        expect(text).toContain(currency);
+        expect(text).not.toMatch(/https?:\/\//);
+        expect(text.length).toBeLessThanOrEqual(2_000);
+        expect(
+          await startCall(page, 'get_page', {
+            page: 'pricing',
+            section: 'zzz',
+          }),
+        ).toMatchObject({ ok: true, result: { status: 'not_found' } });
+      });
+    }
+
+    test('get_page refuses book and anything that is not a page id', async ({
+      page,
+    }) => {
+      await installModelContext(page);
+      await gotoHydrated(page, '/');
+      await registered(page);
+      expect(await startCall(page, 'get_page', { page: 'book' })).toMatchObject(
+        { ok: true, result: { status: 'not_available' } },
+      );
+      expect(
+        await startCall(page, 'get_page', { page: '/pricing' }),
+      ).toMatchObject({ ok: false, error: 'invalid' });
+    });
+  });
+
+  test.describe('open_contact_form', () => {
+    for (const { path, contact, message } of [
+      {
+        path: '/',
+        contact: '/contact',
+        message: 'We run Xero and Shopify and want our orders synced.',
+      },
+      {
+        path: '/es',
+        contact: '/es/contacto',
+        message: 'Usamos Holded y queremos automatizar las facturas.',
+      },
+    ]) {
+      test(`from ${path} it opens ${contact} with the draft in the form and sends nothing`, async ({
+        page,
+      }) => {
+        await installModelContext(page);
+        const leads: string[] = [];
+        page.on('request', (request) => {
+          if (request.url().includes('/api/lead')) leads.push(request.url());
+        });
+        await gotoHydrated(page, path);
+        await registered(page);
+        const answer = await startCall(page, 'open_contact_form', { message });
+        expect(answer).toMatchObject({
+          ok: true,
+          result: { url: expect.stringContaining(`${contact}?message=`) },
+        });
+        await expect(page).toHaveURL(new RegExp(`${contact}\\?message=`));
+        await waitForHydration(page);
+        await expect(page.locator('textarea[name="message"]')).toHaveValue(
+          message,
+        );
+        expect(leads).toEqual([]);
+      });
+    }
+
+    test('on the contact page it does not reload, so what was typed stays', async ({
+      page,
+    }) => {
+      await installModelContext(page);
+      await gotoHydrated(page, '/contact');
+      await registered(page);
+      await page.getByLabel('Name').fill('Ada Lovelace');
+      await page.evaluate(() => {
+        Object.assign(window, { marker: 'same-document' });
+      });
+      expect(
+        await startCall(page, 'open_contact_form', { message: 'A draft.' }),
+      ).toEqual({ ok: true, result: { url: '/contact', current: true } });
+      expect(new URL(page.url()).pathname).toBe('/contact');
+      expect(new URL(page.url()).search).toBe('');
+      expect(await page.evaluate(() => Reflect.get(window, 'marker'))).toBe(
+        'same-document',
+      );
+      await expect(page.getByLabel('Name')).toHaveValue('Ada Lovelace');
+    });
+
+    test('an empty or too long message is invalid and goes nowhere', async ({
+      page,
+    }) => {
+      await installModelContext(page);
+      await gotoHydrated(page, '/');
+      await registered(page);
+      for (const message of ['', 'x'.repeat(1501)]) {
+        expect(
+          await startCall(page, 'open_contact_form', { message }),
+        ).toMatchObject({ ok: false, error: 'invalid' });
+      }
+      expect(new URL(page.url()).pathname).toBe('/');
+    });
+  });
 
   test.describe('navigate', () => {
     test('opens an allow-listed page after returning the result', async ({

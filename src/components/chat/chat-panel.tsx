@@ -35,6 +35,7 @@ import {
   useChatState,
 } from '@/lib/chat-store';
 import type { Locale } from '@/lib/i18n';
+import { contactWithMessage } from '@/lib/nav';
 import { pagePath } from '@/lib/page-registry';
 import { isPlainClick } from '@/lib/plain-click';
 import { openVoice, voiceAvailable } from '@/lib/voice-entry';
@@ -59,6 +60,39 @@ function Speaker({ children }: { children: ReactNode }) {
 function toolLabel(copy: ChatCopy, name: string): string {
   const found = Object.entries(copy.tools).find(([tool]) => tool === name);
   return found?.[1] ?? copy.writing;
+}
+
+function DraftCard({
+  copy,
+  message,
+  href,
+  onContact,
+  onOpen,
+}: {
+  copy: ChatCopy['contactDraft'];
+  message: string;
+  href: string;
+  onContact: boolean;
+  onOpen: (href: string, event: MouseEvent<HTMLAnchorElement>) => void;
+}) {
+  return (
+    <div className="chat-draft" data-chat-draft>
+      <p className="text-ui-s font-semibold">{copy.title}</p>
+      <blockquote className="chat-draft-quote">{message}</blockquote>
+      {onContact ? (
+        <p className="text-ui-s text-fg-soft">{copy.onPage}</p>
+      ) : (
+        <a
+          href={href}
+          onClick={(event) => onOpen(href, event)}
+          className="chat-link justify-self-start"
+        >
+          {copy.open}
+          <span aria-hidden="true" className="icon icon-arrow" />
+        </a>
+      )}
+    </div>
+  );
 }
 
 function labelFor(item: NavigateItem, copy: ChatCopy) {
@@ -187,6 +221,7 @@ function ChatLog({
   onNavigate,
   onPickSlot,
   onOpen,
+  onContact,
 }: {
   copy: ChatCopy;
   locale: Locale;
@@ -200,6 +235,7 @@ function ChatLog({
   ) => void;
   onPickSlot: (start: number) => void;
   onOpen: (href: string, event: MouseEvent<HTMLAnchorElement>) => void;
+  onContact: boolean;
 }) {
   // The turn's chips show once the reply settles (a booking proposed later in
   // the turn drops them); the list the chips carry never shows in the text.
@@ -228,6 +264,18 @@ function ChatLog({
                     {copy.open.replace('{label}', labelFor(item, copy))}
                     <span aria-hidden="true" className="icon icon-arrow" />
                   </a>
+                </li>
+              );
+            case 'contactDraft':
+              return (
+                <li key={item.id}>
+                  <DraftCard
+                    copy={copy.contactDraft}
+                    message={item.message}
+                    href={contactWithMessage(locale, item.message)}
+                    onContact={onContact}
+                    onOpen={onOpen}
+                  />
                 </li>
               );
             case 'notice':
@@ -504,6 +552,8 @@ export function ChatPanel({
   const [zone] = useState(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone,
   );
+  // On the contact page the draft is pasted into its form, not linked.
+  const onContact = location.pathname === pagePath(locale, 'contact');
   const challenge = useChallengeOnDemand('chat');
   const input = useRef<HTMLTextAreaElement>(null);
   const motion = usePanelMotion(from);
@@ -649,6 +699,7 @@ export function ChatPanel({
               ticking={challenge.interactive}
               onNavigate={navigate}
               onOpen={open}
+              onContact={onContact}
               onPickSlot={(start) => {
                 proposeSlot(start);
               }}

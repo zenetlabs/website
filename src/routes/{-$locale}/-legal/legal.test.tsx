@@ -392,14 +392,14 @@ checkPages(CONFIGURED_STATES, 'G-TEST1234');
 
 describe('consent version', () => {
   it.each([
-    ['PrivacyEn', PrivacyEn, '10 November 2026'],
-    ['PrivacyEs', PrivacyEs, '10 de noviembre de 2026'],
-    ['CookiesEn', CookiesEn, '10 November 2026'],
-    ['CookiesEs', CookiesEs, '10 de noviembre de 2026'],
+    ['PrivacyEn', PrivacyEn, '24 November 2026'],
+    ['PrivacyEs', PrivacyEs, '24 de noviembre de 2026'],
+    ['CookiesEn', CookiesEn, '24 November 2026'],
+    ['CookiesEs', CookiesEs, '24 de noviembre de 2026'],
   ])('%s is dated like CONSENT_VERSION', (_name, Page, date) => {
     const body = text(<Page title="t" entity={SINGAPORE} />);
     expect(body).toContain(date);
-    expect(CONSENT_VERSION).toBe('2026-11-10');
+    expect(CONSENT_VERSION).toBe('2026-11-24');
   });
 });
 
@@ -582,6 +582,58 @@ describe('WebMCP disclosure', () => {
   ])('%s says nothing about WebMCP while it is dark', (_name, Page) => {
     vi.stubGlobal('__WEBMCP__', false);
     expect(text(<Page title="t" entity={SPANISH} />)).not.toContain('WebMCP');
+  });
+});
+
+describe('page tools and contact drafts disclosure', () => {
+  afterAll(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('names the page tools and the unsent draft in English', () => {
+    const body = text(<PrivacyEn title="t" entity={SINGAPORE} />);
+    expect(body).toContain('search and read the pages of this site');
+    expect(body).toContain(
+      'start a message on the contact form, which you review and send yourself',
+    );
+    expect(
+      body.split(
+        'it puts a draft of your message into our contact form; nothing is sent until you check it and send the form yourself.',
+      ),
+    ).toHaveLength(3);
+  });
+
+  it('names them in Spanish', () => {
+    const body = text(<PrivacyEs title="t" entity={SPANISH} />);
+    expect(body).toContain('buscar y leer las páginas de este sitio');
+    expect(body).toContain(
+      'empezar un mensaje en el formulario de contacto, que tú revisas y envías',
+    );
+    expect(
+      body.split(
+        'pone un borrador de tu mensaje en nuestro formulario de contacto; no se envía nada hasta que lo revises y envíes tú el formulario.',
+      ),
+    ).toHaveLength(3);
+  });
+
+  it('reads exactly as planned with the calculator dark and published', () => {
+    const dark = {
+      en: text(<PrivacyEn title="t" entity={SINGAPORE} />),
+      es: text(<PrivacyEs title="t" entity={SPANISH} />),
+    };
+    expect(dark.en).toContain('look up our FAQ and prices, open pages');
+    expect(dark.en).not.toContain('estimates');
+    expect(dark.es).toContain(
+      'consultar nuestras preguntas frecuentes y precios, abrir páginas',
+    );
+    expect(dark.es).not.toContain('estimaciones');
+    vi.stubGlobal('__CALCULATOR__', true);
+    expect(text(<PrivacyEn title="t" entity={SINGAPORE} />)).toContain(
+      'look up our FAQ, prices and estimates, open pages',
+    );
+    expect(text(<PrivacyEs title="t" entity={SPANISH} />)).toContain(
+      'consultar nuestras preguntas frecuentes, precios y estimaciones, abrir páginas',
+    );
   });
 });
 

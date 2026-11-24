@@ -27,13 +27,13 @@ beforeEach(() => {
 });
 
 describe('loadVoiceSdk', () => {
-  it('starts a WebRTC session with the token, only the session variable and only the navigate tool', async () => {
+  it('starts a WebRTC session with the token, only the session variable and only the two client tools', async () => {
     const sdk = await loadVoiceSdk();
     const navigate = vi.fn(async () => 'opened');
     await sdk.start({
       token: 'conversation-token',
       sessionId: 'session-1',
-      tools: { navigate },
+      tools: { navigate, open_contact_form: async () => 'opened' },
       events: events(),
     });
     const options = startSession.mock.calls[0]?.[0];
@@ -45,7 +45,10 @@ describe('loadVoiceSdk', () => {
     expect(Object.keys(options.dynamicVariables)).toEqual([
       'secret__zl_session',
     ]);
-    expect(Object.keys(options.clientTools)).toEqual(['navigate']);
+    expect(Object.keys(options.clientTools)).toEqual([
+      'navigate',
+      'open_contact_form',
+    ]);
     expect(options).not.toHaveProperty('overrides');
     expect(options).not.toHaveProperty('agentId');
     expect(options).not.toHaveProperty('signedUrl');
@@ -57,7 +60,10 @@ describe('loadVoiceSdk', () => {
     await sdk.start({
       token: 't',
       sessionId: 's',
-      tools: { navigate: async () => 'opened' },
+      tools: {
+        navigate: async () => 'opened',
+        open_contact_form: async () => 'opened',
+      },
       events: handlers,
     });
     const options = startSession.mock.calls[0]?.[0];
@@ -85,7 +91,10 @@ describe('loadVoiceSdk', () => {
     const call = await sdk.start({
       token: 't',
       sessionId: 's',
-      tools: { navigate: async () => 'opened' },
+      tools: {
+        navigate: async () => 'opened',
+        open_contact_form: async () => 'opened',
+      },
       events: events(),
     });
     call.setMuted(true);

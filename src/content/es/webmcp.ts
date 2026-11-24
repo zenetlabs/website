@@ -10,12 +10,18 @@ export const webmcpCopy: WebMcpCopy = {
     check_availability: 'Ver disponibilidad para una llamada',
     book_meeting: 'Reservar una llamada de 30 minutos',
     navigate: 'Ir a una página',
+    list_pages: 'Ver las páginas del sitio',
+    get_page: 'Leer una página',
+    search_site: 'Buscar en el sitio',
+    open_contact_form: 'Empezar un mensaje en el formulario de contacto',
   },
   notes: {
     book_meeting:
       'Abre un diálogo de confirmación en esta página. El visitante escribe allí su nombre, email y empresa, así que pasa solo el horario (devuelto por check_availability) y el tema. Cuando confirma el diálogo, la hora queda guardada 30 minutos y recibe un correo con un enlace: la llamada solo queda reservada cuando lo abre y pulsa Confirmar. Un resultado pending significa exactamente eso; no le digas nunca al visitante que la llamada está reservada.',
     navigate:
-      'Abre una página de este sitio en la pestaña actual o baja hasta una sección de la página de inicio.',
+      'Abre una página de este sitio en la pestaña actual o baja hasta una sección de la página de inicio. Usa list_pages para ver las páginas en este idioma.',
+    open_contact_form:
+      'Abre la página de contacto en esta pestaña. Si el visitante ya está en ella, no se recarga y no pierde lo que haya escrito: dale el mensaje para que lo pegue.',
   },
   dialog: {
     title: 'Confirma tu llamada',

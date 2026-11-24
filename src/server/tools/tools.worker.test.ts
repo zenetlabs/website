@@ -17,6 +17,31 @@ import {
   type World,
 } from '../../../test/google';
 
+vi.mock('@/server/page-markdown', async () => {
+  const { parsePage } = await import('@/server/page-outline');
+  return { loadPage: vi.fn(async () => parsePage(PAGE_FIXTURE)) };
+});
+
+const PAGE_FIXTURE = [
+  '---',
+  'title: "Fixture page | Zenet Labs"',
+  'description: "A fixture."',
+  '---',
+  '',
+  '# Fixture',
+  '',
+  'Intro.',
+  '',
+  '## First',
+  '',
+  'First body with a [link](https://zenetlabs.com/pricing).',
+  '',
+  '## Second',
+  '',
+  'Second body.',
+  '',
+].join('\n');
+
 const { DB } = env;
 const NOW = Date.UTC(2027, 0, 4, 8, 0);
 
@@ -165,6 +190,147 @@ describe('get_faq', () => {
   it('rejects an empty or oversized query', async () => {
     expect((await call('get_faq', { query: '  ' })).ok).toBe(false);
     expect((await call('get_faq', { query: 'a'.repeat(201) })).ok).toBe(false);
+  });
+});
+
+describe('list_pages', () => {
+  it('lists the pages of the locale, and keeps the Spanish-only ones off the English list', async () => {
+    const en = await call('list_pages', {});
+    const es = await call('list_pages', { locale: 'es' });
+    if (!en.ok || !es.ok) throw new Error('expected result');
+    const parse = (result: unknown) =>
+      z
+        .object({
+          pages: z.array(z.object({ id: z.string(), title: z.string() })),
+        })
+        .parse(result).pages;
+    const english = parse(en.result);
+    const spanish = parse(es.result);
+    expect(english.map((page) => page.id)).not.toContain('verifactu');
+    expect(english.map((page) => page.id)).toContain('pricing');
+    expect(spanish.map((page) => page.id)).toContain('verifactu');
+    expect(english.map((page) => page.id)).not.toContain('calculator');
+    for (const pages of [english, spanish]) {
+      for (const page of pages) expect(page.title).not.toBe('');
+      expect(JSON.stringify(pages).length).toBeLessThanOrEqual(3000);
+    }
+  });
+});
+
+describe('get_page', () => {
+  it('returns the outline, then a section, from the rendered markdown', async () => {
+    const outline = await call('get_page', { page: 'pricing' });
+    expect(outline).toMatchObject({
+      ok: true,
+      result: {
+        status: 'page',
+        page: 'pricing',
+        title: 'Fixture page | Zenet Labs',
+        sections: ['# Fixture', '## First', '## Second'],
+      },
+    });
+    const section = await call('get_page', {
+      page: 'pricing',
+      section: 'first',
+    });
+    expect(section).toMatchObject({
+      ok: true,
+      result: {
+        status: 'section',
+        section: '## First',
+        text: 'First body with a link.',
+        part: 1,
+        parts: 1,
+        next: '## Second',
+      },
+    });
+  });
+
+  it('says not_found, with what does exist, for an unknown section or part', async () => {
+    expect(
+      await call('get_page', { page: 'pricing', section: 'Nope' }),
+    ).toMatchObject({
+      ok: true,
+      result: {
+        status: 'not_found',
+        sections: ['# Fixture', '## First', '## Second'],
+      },
+    });
+    expect(
+      await call('get_page', { page: 'pricing', section: 'First', part: 4 }),
+    ).toMatchObject({ ok: true, result: { status: 'not_found', parts: 1 } });
+  });
+
+  it('answers not_available, and never throws, when the page cannot be rendered', async () => {
+    const { loadPage } = await import('@/server/page-markdown');
+    vi.mocked(loadPage).mockResolvedValueOnce(null);
+    expect(await call('get_page', { page: 'about' })).toMatchObject({
+      ok: true,
+      result: { status: 'not_available', page: 'about' },
+    });
+  });
+
+  it('is not available for book, a page missing in the locale, or a dark page', async () => {
+    for (const [page, locale] of [
+      ['book', 'en'],
+      ['legalNotice', 'en'],
+      ['verifactu', 'en'],
+      ['calculator', 'en'],
+    ] as const) {
+      expect(await call('get_page', { page, locale }), page).toMatchObject({
+        ok: true,
+        result: { status: 'not_available', page },
+      });
+    }
+  });
+
+  it('accepts only registry ids, never a path or a URL', async () => {
+    for (const page of ['/pricing', 'https://example.com', '../x', 'PRICING']) {
+      expect((await call('get_page', { page })).ok, page).toBe(false);
+    }
+    expect((await call('get_page', { page: 'pricing', part: 0 })).ok).toBe(
+      false,
+    );
+    expect(
+      (await call('get_page', { page: 'pricing', section: 'a'.repeat(201) }))
+        .ok,
+    ).toBe(false);
+  });
+});
+
+describe('search_site', () => {
+  it('finds passages with their page and the contact block, in the locale', async () => {
+    const outcome = await call('search_site', { query: 'whatsapp' });
+    expect(outcome).toMatchObject({
+      ok: true,
+      result: { contact: { email: 'hello@zenetlabs.com' } },
+    });
+    if (!outcome.ok) throw new Error('expected result');
+    const { results } = z
+      .object({
+        results: z.array(z.object({ page: z.string(), excerpt: z.string() })),
+      })
+      .parse(outcome.result);
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.length).toBeLessThanOrEqual(5);
+    expect(results.map((hit) => hit.page)).toContain('integrations');
+  });
+
+  it('answers an empty list for Holded in English and results in Spanish', async () => {
+    expect(await call('search_site', { query: 'holded' })).toMatchObject({
+      ok: true,
+      result: { results: [] },
+    });
+    const es = await call('search_site', { query: 'holded', locale: 'es' });
+    if (!es.ok) throw new Error('expected result');
+    expect(JSON.stringify(es.result)).toContain('holded');
+  });
+
+  it('rejects an empty or oversized query', async () => {
+    expect((await call('search_site', { query: ' ' })).ok).toBe(false);
+    expect((await call('search_site', { query: 'a'.repeat(201) })).ok).toBe(
+      false,
+    );
   });
 });
 

@@ -9,7 +9,11 @@ import {
   type VoiceEnd,
   type VoiceSdk,
 } from '@/lib/voice-sdk';
-import { navigateTool, pendingLabel } from '@/lib/voice-tools';
+import {
+  contactDraftTool,
+  navigateTool,
+  pendingLabel,
+} from '@/lib/voice-tools';
 
 type VoicePhase = 'intro' | 'connecting' | 'live' | 'ended' | 'error';
 export type VoiceFailure = VoiceError | 'mic' | 'unsupported' | 'call';
@@ -132,6 +136,8 @@ export type StartDeps = {
   requestMic: () => Promise<MicResult>;
   token: () => Promise<string>;
   push: (href: string) => void;
+  // Where the visitor is now; the call may have navigated since it started.
+  pathname?: () => string;
   sdk?: () => Promise<VoiceSdk>;
   fetch?: typeof fetch;
 };
@@ -188,6 +194,14 @@ export async function startCall(deps: StartDeps): Promise<void> {
           locale: deps.locale,
           copy: deps.copy,
           push: deps.push,
+          onOpened: (label) =>
+            emit({ t: 'notice', notice: { kind: 'opened', label } }),
+        }),
+        open_contact_form: contactDraftTool({
+          locale: deps.locale,
+          copy: deps.copy,
+          push: deps.push,
+          pathname: deps.pathname ?? (() => location.pathname),
           onOpened: (label) =>
             emit({ t: 'notice', notice: { kind: 'opened', label } }),
         }),

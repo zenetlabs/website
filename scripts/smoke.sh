@@ -82,6 +82,13 @@ content_type_is() {
   [ "$got" = "$expected" ]
 }
 
+post_json_body_contains() {
+  local url="$1" data="$2" needle="$3" body
+  body=$(curl -s --max-time 20 -X POST -H 'Content-Type: application/json' \
+    --data "$data" "$url") || return 1
+  grep -qF "$needle" <<<"$body"
+}
+
 body_contains() {
   local body
   body=$(curl -s --max-time 20 "$1") || return 1
@@ -157,6 +164,10 @@ attempt "tools manifest lists get_pricing" body_contains "${SITE}/api/tools" '"g
 attempt "405 GET /api/tools/get_pricing" status_is 405 "${SITE}/api/tools/get_pricing"
 attempt "get_pricing answers 200" post_json_status_is 200 "${SITE}/api/tools/get_pricing" '{}'
 attempt "check_availability answers 200 (ok or unavailable)" post_json_status_is 200 "${SITE}/api/tools/check_availability" '{}'
+attempt "list_pages answers 200" post_json_status_is 200 "${SITE}/api/tools/list_pages" '{}'
+attempt "search_site answers 200" post_json_status_is 200 "${SITE}/api/tools/search_site" '{"query":"whatsapp"}'
+# A failed render is a 200 too (`not_available`), so the body must say `page`.
+attempt "get_page reads the pricing page" post_json_body_contains "${SITE}/api/tools/get_page" '{"page":"pricing"}' '"status":"page"'
 if grep -qF '"booking":true' <<<"$(curl -s --max-time 20 "${SITE}/api/health")"; then
   attempt "tools manifest lists book_meeting" body_contains "${SITE}/api/tools" '"book_meeting"'
   attempt "200 ${SITE}/book" status_is 200 "${SITE}/book"

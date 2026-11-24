@@ -1,3 +1,4 @@
+import { isHtml } from '@/lib/http';
 import { locales } from '@/lib/i18n';
 import {
   type CapturedPage,
@@ -128,4 +129,20 @@ export async function toMarkdownResponse(
     headers.set('Link', `<${page.canonical}>; rel="canonical"`);
   }
   return new Response(pageToMarkdown(page), { status: html.status, headers });
+}
+
+// Fetches a page as HTML and converts it to Markdown: what `/<page>.md`, the
+// `Accept: text/markdown` negotiation and the `get_page` tool all serve. A
+// response that is not HTML (a redirect, an error page) comes back untouched.
+export async function renderMarkdown(
+  fetchPage: (request: Request) => Promise<Response>,
+  request: Request,
+  url: string,
+): Promise<{ html: boolean; response: Response }> {
+  const response = await fetchPage(request);
+  const html = isHtml(response);
+  return {
+    html,
+    response: html ? await toMarkdownResponse(response, url) : response,
+  };
 }

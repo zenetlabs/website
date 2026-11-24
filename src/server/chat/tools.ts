@@ -11,6 +11,7 @@ import { bookingInputSchema } from '@/server/booking-schema';
 import { slotsOf, toolSlots } from '@/server/chat/slot-guard';
 import { errorName } from '@/server/responses';
 import { navigateInput } from '@/server/tools/navigate';
+import { openContactFormInput } from '@/server/tools/open-contact-form';
 import { offeredTools } from '@/server/tools/registry';
 import type {
   ClientTool,
@@ -50,10 +51,24 @@ export type ChatToolContext = {
   run: ToolContext;
   onNavigate: (event: NavigateEvent) => void;
   onProposal: (proposal: Proposal) => void;
+  // `already_shown`: one draft a turn. `dropped`: the guards or a stopped turn.
+  onContactDraft: (message: string) => 'shown' | 'already_shown' | 'dropped';
 };
 
 export function chatToolNames(site: SiteFlags): string[] {
-  return offeredTools(site).map((def) => def.name);
+  return offeredTools(site, 'chat').map((def) => def.name);
+}
+
+// The tools that only put something on the visitor's screen: a turn that has
+// written its answer and called one of them is done.
+export function openingTools(
+  site: SiteFlags,
+): ReadonlyMap<string, ClientTool['opens']> {
+  return new Map(
+    offeredTools(site, 'chat').flatMap((def) =>
+      def.clientOnly ? [[def.name, def.opens] as const] : [],
+    ),
+  );
 }
 
 // The model never chooses the language or the time zone: the page and the
@@ -436,13 +451,35 @@ function navigateTool(def: ClientTool, ctx: ChatToolContext): ChatTool {
   };
 }
 
+// The model only drafts: a card under the reply carries the message to the
+// contact form, where the visitor reviews it and sends it themselves.
+function contactDraftTool(def: ClientTool, ctx: ChatToolContext): ChatTool {
+  return {
+    description: def.description[ctx.locale],
+    inputSchema: openContactFormInput.omit({ locale: true }),
+    execute: (input) => {
+      const parsed = openContactFormInput.safeParse({
+        ...(isRecord(input) ? input : {}),
+        locale: ctx.locale,
+      });
+      if (!parsed.success) return { status: 'invalid_input' };
+      const outcome = ctx.onContactDraft(parsed.data.message);
+      return { status: outcome === 'dropped' ? 'not_shown' : outcome };
+    },
+  };
+}
+
 function toolFor(
   def: Tool,
   ctx: ChatToolContext,
   availability: ServerTool | undefined,
 ): ChatTool {
   if (def.name === 'book_meeting') return bookingTool(ctx, availability);
-  if (def.clientOnly) return navigateTool(def, ctx);
+  if (def.clientOnly) {
+    return def.opens === 'contactForm'
+      ? contactDraftTool(def, ctx)
+      : navigateTool(def, ctx);
+  }
   return {
     description: def.description[ctx.locale],
     inputSchema: modelInput(def.input),
@@ -451,7 +488,7 @@ function toolFor(
 }
 
 export function chatTools(ctx: ChatToolContext): Record<string, ChatTool> {
-  const defs = offeredTools(ctx.site);
+  const defs = offeredTools(ctx.site, 'chat');
   const availability = defs.find(
     (def): def is ServerTool =>
       def.name === 'check_availability' && !def.clientOnly,

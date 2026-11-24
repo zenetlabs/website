@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { utcDay } from '@/lib/time';
-import { estimateTokens, neuronsFor } from '@/server/chat/usage';
+import {
+  estimateTokens,
+  neuronsFor,
+  reservationFor,
+} from '@/server/chat/usage';
 
 describe('neuronsFor', () => {
   it('prices glm input and output per million tokens, rounded up', () => {
@@ -65,5 +69,16 @@ describe('estimateTokens and utcDay', () => {
   it('cuts the day at midnight UTC', () => {
     expect(utcDay(Date.UTC(2026, 10, 1, 23, 59, 59, 999))).toBe('2026-11-01');
     expect(utcDay(Date.UTC(2026, 10, 2, 0, 0, 0, 0))).toBe('2026-11-02');
+  });
+});
+
+describe('reservationFor', () => {
+  it('sets aside four 16,000-token prompts and one answer, per model', () => {
+    expect(reservationFor('@cf/zai-org/glm-4.7-flash', 4)).toBe(374);
+    expect(reservationFor('@cf/google/gemma-4-26b-a4b-it', 4)).toBe(599);
+    expect(reservationFor('@cf/meta/llama-4-scout-17b-16e-instruct', 4)).toBe(
+      1_618,
+    );
+    expect(reservationFor('fake', 4)).toBe(0);
   });
 });

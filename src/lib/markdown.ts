@@ -140,6 +140,14 @@ function escapeMarkdown(text: string): string {
   return text.replace(/[\\`*_[\]<>]/g, '\\$&');
 }
 
+const MARKDOWN_LINK = /\[((?:[^\]\\]|\\.)*)\]\([^)\s]*\)/g;
+const MARKDOWN_ESCAPE = /\\([\\`*_[\]<>])/g;
+
+// Links reduced to their text and the escapes of `escapeMarkdown` undone.
+export function plainText(markdown: string): string {
+  return markdown.replace(MARKDOWN_LINK, '$1').replace(MARKDOWN_ESCAPE, '$1');
+}
+
 function absolute(href: string, base: string): string {
   const decoded = decodeEntities(href);
   const resolved = URL.canParse(decoded, base)

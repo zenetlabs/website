@@ -10,12 +10,18 @@ export const webmcpCopy: WebMcpCopy = {
     check_availability: 'Check call availability',
     book_meeting: 'Book a 30-minute call',
     navigate: 'Go to a page',
+    list_pages: "List the site's pages",
+    get_page: 'Read a page',
+    search_site: 'Search the site',
+    open_contact_form: 'Start a message on the contact form',
   },
   notes: {
     book_meeting:
       'Opens a confirmation dialog on this page. The visitor enters their own name, email and company there, so pass only the slot (returned by check_availability) and the topic. When they confirm the dialog, the time is held for 30 minutes and they get an email with a link: the call is booked only when they open it and press Confirm. A pending result means exactly that; never tell the visitor the call is booked.',
     navigate:
-      'Opens a page of this site in the current tab, or scrolls to a section of the home page.',
+      'Opens a page of this site in the current tab, or scrolls to a section of the home page. Use list_pages for the pages in this language.',
+    open_contact_form:
+      'It opens the contact page in this tab. If the visitor is already on it, nothing reloads, so nothing they typed is lost: give them the message to paste.',
   },
   dialog: {
     title: 'Confirm your call',

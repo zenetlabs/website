@@ -167,8 +167,8 @@ beforeEach(async () => {
 });
 
 describe('routing and auth', () => {
-  it('answers 404 for an unknown tool and for the client-only navigate tool', async () => {
-    for (const name of ['nope', 'navigate', '__proto__']) {
+  it('answers 404 for an unknown tool and for the client-only tools', async () => {
+    for (const name of ['nope', 'navigate', 'open_contact_form', '__proto__']) {
       const response = await post(name, {});
       expect(response.status, name).toBe(404);
       expect(await json(response)).toMatchObject({
@@ -176,6 +176,16 @@ describe('routing and auth', () => {
         error: 'unknown',
       });
     }
+  });
+
+  it('answers 404 to a bearer call for a tool that is not offered to voice', async () => {
+    const response = await post(
+      'list_pages',
+      {},
+      { Authorization: `Bearer ${BEARER}` },
+    );
+    expect(response.status).toBe(404);
+    expect(await json(response)).toMatchObject({ error: 'unknown' });
   });
 
   it('answers 401 for a wrong, malformed or unset bearer, even on read tools', async () => {
@@ -562,6 +572,33 @@ describe('the browser booking path', () => {
     ).toBe(200);
     expect(log).toHaveBeenCalledWith('tools: limiter unavailable');
     log.mockRestore();
+  });
+
+  it('charges a tool by its cost: one unit for a read, three for get_page, refused at the first refused unit', async () => {
+    const charged = (name: string, allowed: number) => {
+      let calls = 0;
+      const limited = deps({
+        toolsLimiter: {
+          limit: async () => {
+            calls += 1;
+            return { success: calls <= allowed };
+          },
+        },
+      });
+      const request = new Request(`${ORIGIN}/api/tools/${name}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: name === 'get_page' ? '{"page":"book"}' : '{}',
+      });
+      return handleToolRequest(request, name, limited).then((response) => ({
+        status: response.status,
+        calls,
+      }));
+    };
+    expect(await charged('get_pricing', 5)).toEqual({ status: 200, calls: 1 });
+    expect(await charged('get_page', 5)).toEqual({ status: 200, calls: 3 });
+    expect(await charged('get_page', 2)).toEqual({ status: 429, calls: 3 });
+    expect(await charged('get_page', 0)).toEqual({ status: 429, calls: 1 });
   });
 
   it('answers 413 by declared length and by streamed size', async () => {
@@ -1092,6 +1129,7 @@ describe('the wrong method on a tool URL', () => {
     const { wrongMethod } = await import('@/server/tools/route');
     expect(wrongMethod('nope').status).toBe(404);
     expect(wrongMethod('navigate').status).toBe(404);
+    expect(wrongMethod('open_contact_form').status).toBe(404);
     const real = wrongMethod('get_pricing');
     expect(real.status).toBe(405);
     expect(real.headers.get('allow')).toBe('POST');
@@ -1099,7 +1137,7 @@ describe('the wrong method on a tool URL', () => {
 });
 
 describe('manifest and health', () => {
-  it('serves the six-tool manifest with a short public cache', async () => {
+  it('serves the manifest with a short public cache', async () => {
     const response = manifestResponse(TEST_SITE);
     expect(response.headers.get('cache-control')).toBe('public, max-age=300');
     const body = z
@@ -1108,7 +1146,17 @@ describe('manifest and health', () => {
         tools: z.array(z.object({ name: z.string() })),
       })
       .parse(await response.json());
-    expect(body.tools.map((tool) => tool.name)).toHaveLength(6);
+    expect(body.tools.map((tool) => tool.name)).toEqual([
+      'get_faq',
+      'get_pricing',
+      'check_availability',
+      'book_meeting',
+      'navigate',
+      'list_pages',
+      'get_page',
+      'search_site',
+      'open_contact_form',
+    ]);
   });
 
   it('reports booleans only, for both states', async () => {

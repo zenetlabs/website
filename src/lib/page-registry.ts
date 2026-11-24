@@ -221,11 +221,11 @@ export const PAGES: Record<
   },
   privacy: {
     slugs: { en: '/privacy', es: '/privacidad' },
-    lastmod: '2026-11-10',
+    lastmod: '2026-11-24',
   },
   cookies: {
     slugs: { en: '/cookies', es: '/cookies' },
-    lastmod: '2026-11-10',
+    lastmod: '2026-11-24',
   },
   legalNotice: {
     slugs: { es: '/aviso-legal' },

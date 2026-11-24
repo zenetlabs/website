@@ -58,7 +58,7 @@ export function CookiesEn({
       locale="en"
       contents={contents}
       title={title}
-      updated="Last updated: 10 November 2026"
+      updated="Last updated: 24 November 2026"
     >
       <LegalSection section={SECTIONS.scope}>
         <p>

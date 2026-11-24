@@ -17,6 +17,7 @@ import {
   type ToolEnvelope,
 } from '@/lib/webmcp/confirmation';
 import type { WebMcpToolName } from '@/lib/webmcp/names';
+import { runOpenContactForm } from '@/lib/webmcp/open-contact-form';
 import {
   type Executors,
   isToolManifest,
@@ -244,6 +245,12 @@ export function executorsFor(deps: RegisterDeps): Executors {
       proposeBooking(input, deps, signalOf(options)),
     ),
     navigate: guarded(async (input) => runNavigate(input, deps)),
+    list_pages: guarded(readTool('list_pages', deps)),
+    get_page: guarded(readTool('get_page', deps)),
+    search_site: guarded(readTool('search_site', deps)),
+    open_contact_form: guarded(async (input) =>
+      runOpenContactForm(input, deps),
+    ),
   };
 }
 

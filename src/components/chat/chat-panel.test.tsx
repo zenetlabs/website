@@ -872,6 +872,86 @@ describe('page chips', () => {
   });
 });
 
+describe('the contact draft card', () => {
+  const DRAFT = 'We run Xero and Shopify and want orders synced.';
+
+  async function drafted(locale: 'en' | 'es' = 'en') {
+    postChat.mockResolvedValue(
+      ok(
+        { t: 'text', v: 'I wrote a draft for you.' },
+        { t: 'contact_draft', message: DRAFT },
+        { t: 'done', remaining: 19 },
+      ),
+    );
+    const view = open({ locale });
+    const copy = locale === 'en' ? en : es;
+    const user = userEvent.setup();
+    const box = await screen.findByLabelText(copy.inputLabel);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: copy.send })).toBeDisabled(),
+    );
+    await user.type(box, 'write to them');
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: copy.send })).toBeEnabled(),
+    );
+    await user.keyboard('{Enter}');
+    return view;
+  }
+
+  afterEach(() => {
+    window.history.pushState({}, '', '/');
+  });
+
+  it('shows the message as a quote under the reply, with a link to the form that fills it in', async () => {
+    const { onClose } = await drafted();
+    const card = await waitFor(() => {
+      const found = document.querySelector('[data-chat-draft]');
+      if (!(found instanceof HTMLElement)) throw new Error('no card yet');
+      return found;
+    });
+    expect(within(card).getByText(en.contactDraft.title)).toBeInTheDocument();
+    expect(card.querySelector('blockquote')).toHaveTextContent(DRAFT);
+    const link = within(card).getByRole('link', {
+      name: en.contactDraft.open,
+    });
+    expect(link).toHaveAttribute(
+      'href',
+      `/contact?message=${encodeURIComponent(DRAFT).replace(/%20/g, '+')}`,
+    );
+    const reply = screen.getByText('I wrote a draft for you.');
+    expect(
+      reply.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    fireEvent.click(link);
+    expect(push).toHaveBeenCalledWith(link.getAttribute('href'));
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('links the Spanish form from a Spanish panel', async () => {
+    await drafted('es');
+    const link = await screen.findByRole('link', {
+      name: es.contactDraft.open,
+    });
+    expect(link.getAttribute('href')).toMatch(/^\/es\/contacto\?message=/);
+  });
+
+  it('on the contact page asks to paste it, with no link', async () => {
+    window.history.pushState({}, '', '/contact');
+    await drafted();
+    expect(await screen.findByText(en.contactDraft.onPage)).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: en.contactDraft.open }),
+    ).not.toBeInTheDocument();
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it('sends nothing: only the chat request was made', async () => {
+    await drafted();
+    await screen.findByText(en.contactDraft.title);
+    expect(postChat).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('Talk instead', () => {
   it('is not offered when the locale has no voice agent', () => {
     open();

@@ -32,6 +32,11 @@ export function AssistantSection() {
         in the email we send you.
       </p>
       <p>
+        If you ask it to write to us, it puts a draft of your message into our
+        contact form; nothing is sent until you check it and send the form
+        yourself.
+      </p>
+      <p>
         To limit abuse we also count how many questions each connection asks in
         a day. For that we keep a keyed fingerprint of your IP address (or of
         its network block, for IPv6): it is pseudonymised, we can't read the
@@ -76,6 +81,11 @@ export function VoiceSection() {
         and ElevenLabs' conversation id). We don't use your voice to identify
         you.
       </p>
+      <p>
+        If you ask it to write to us, it puts a draft of your message into our
+        contact form; nothing is sent until you check it and send the form
+        yourself.
+      </p>
     </LegalSection>
   );
 }
@@ -102,13 +112,15 @@ export function WebMcpUse() {
   return (
     <p>
       If your browser has an AI agent that supports WebMCP, the site offers it
-      tools to look up our FAQ, prices and estimates and to open pages and,
-      while booking is available, to find free times and propose a call. A
-      booking is only made when you confirm your details in the dialog on the
-      page and then the link in the email we send you, and we handle it like any
-      other booking. You choose and control the agent: what you tell it, or what
-      it reads from the page, is governed by its provider's terms, not by this
-      policy.
+      tools to search and read the pages of this site, look up our FAQ
+      {__CALCULATOR__ ? ', prices and estimates' : ' and prices'}, open pages
+      and start a message on the contact form, which you review and send
+      yourself, and, while booking is available, to find free times and propose
+      a call. A booking is only made when you confirm your details in the dialog
+      on the page and then the link in the email we send you, and we handle it
+      like any other booking. You choose and control the agent: what you tell
+      it, or what it reads from the page, is governed by its provider's terms,
+      not by this policy.
     </p>
   );
 }

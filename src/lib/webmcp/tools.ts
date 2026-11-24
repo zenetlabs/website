@@ -35,6 +35,10 @@ export const ANNOTATIONS: Record<WebMcpToolName, ToolAnnotations> = {
   check_availability: { readOnlyHint: true },
   book_meeting: { readOnlyHint: false, consequentialHint: true },
   navigate: { readOnlyHint: false },
+  list_pages: { readOnlyHint: true },
+  get_page: { readOnlyHint: true },
+  search_site: { readOnlyHint: true },
+  open_contact_form: { readOnlyHint: false },
 };
 
 // The visitor supplies these in the confirmation dialog, never the agent.

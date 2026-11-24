@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { test } from './fixtures';
 import {
   BOOKING_PUBLISHED,
+  CALCULATOR_PUBLISHED,
   gotoHydrated,
   lateSlot,
   WEBMCP_PUBLISHED,
@@ -10,7 +11,10 @@ import {
 
 test.skip(!WEBMCP_PUBLISHED, 'WebMCP is not published in this build');
 
-const EXPECTED = BOOKING_PUBLISHED ? 6 : 4;
+// Ten tools: the estimate is registered only while the calculator is published,
+// the two booking tools only while booking is.
+const EXPECTED =
+  10 - (BOOKING_PUBLISHED ? 0 : 2) - (CALCULATOR_PUBLISHED ? 0 : 1);
 
 // Chrome's own implementation, behind --enable-blink-features=WebMCP. This is
 // the drift alarm: it breaks loudly if the API or its result format moves.
@@ -116,6 +120,23 @@ test('Chrome lists the tools and runs them', async ({ page }) => {
     JSON.parse(await execute(page, 'get_pricing', {})),
   );
   expect(pricing).toMatchObject({ ok: true, result: { currency: 'SGD' } });
+
+  const pages = envelope.parse(
+    JSON.parse(await execute(page, 'list_pages', {})),
+  );
+  expect(pages).toMatchObject({ ok: true });
+  expect(JSON.stringify(pages)).toContain('"id":"pricing"');
+  const found = envelope.parse(
+    JSON.parse(await execute(page, 'search_site', { query: 'whatsapp' })),
+  );
+  expect(JSON.stringify(found)).toContain('"page":"integrations"');
+  const read = envelope.parse(
+    JSON.parse(await execute(page, 'get_page', { page: 'pricing' })),
+  );
+  expect(read).toMatchObject({ ok: true, result: { status: 'page' } });
+  expect(
+    list.find((tool) => tool.name === 'open_contact_form')?.annotations,
+  ).toMatchObject({ readOnlyHint: false });
 
   await execute(page, 'navigate', { page: 'home', section: 'faq' });
   await expect(page).toHaveURL(/#faq$/);

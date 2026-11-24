@@ -214,7 +214,7 @@ export async function voiceAgentsFile(
   site: AgentSite,
   { dailySessions }: { dailySessions: number },
 ): Promise<VoiceAgentsFile> {
-  const tools = offeredTools(site);
+  const tools = offeredTools(site, 'voice');
   return {
     version: 1,
     secret: { name: TOOL_SECRET_NAME },

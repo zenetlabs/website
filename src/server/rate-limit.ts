@@ -16,6 +16,20 @@ export async function isLimited(
   }
 }
 
+// A call that costs more than one: the limiter is asked once per unit, and the
+// call is limited as soon as one unit is refused.
+export async function isLimitedBy(
+  limiter: Limiter,
+  key: string,
+  label: string,
+  cost: number,
+): Promise<boolean> {
+  for (let unit = 0; unit < cost; unit += 1) {
+    if (await isLimited(limiter, key, label)) return true;
+  }
+  return false;
+}
+
 // An IPv6 visitor usually holds a whole /64, so the /64 counts as one address.
 // IPv4 (and an IPv4-mapped IPv6 address) is used as it is.
 export function ipBucket(ip: string): string {

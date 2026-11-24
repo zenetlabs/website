@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 import { z } from 'zod';
 import { agentHeaders, startVoiceSession, toolEnvelope } from './fakes';
 import { test } from './fixtures';
+import { CALCULATOR_PUBLISHED } from './helpers';
 
 const manifestSchema = z.object({
   version: z.number(),
@@ -30,14 +31,18 @@ test('GET /api/tools serves the manifest', async ({ request }) => {
   expect(manifest.tools.map((tool) => tool.name)).toEqual([
     'get_faq',
     'get_pricing',
-    'estimate_project',
+    ...(CALCULATOR_PUBLISHED ? ['estimate_project'] : []),
     'check_availability',
     'book_meeting',
     'navigate',
+    'list_pages',
+    'get_page',
+    'search_site',
+    'open_contact_form',
   ]);
   expect(
-    manifest.tools.find((tool) => tool.name === 'navigate')?.clientOnly,
-  ).toBe(true);
+    manifest.tools.filter((tool) => tool.clientOnly).map((tool) => tool.name),
+  ).toEqual(['navigate', 'open_contact_form']);
 });
 
 test('read tools answer 200 in a stable envelope', async ({ request }) => {
@@ -76,6 +81,82 @@ test('read tools answer 200 in a stable envelope', async ({ request }) => {
   });
   const body = toolEnvelope.parse(await slots.json());
   expect(body.result?.status).toBe('ok');
+});
+
+test('the site-reading tools answer 200 envelopes, and the contact form tool is client-only', async ({
+  request,
+}) => {
+  const pages = toolEnvelope.parse(
+    await (
+      await request.post('/api/tools/list_pages', { data: { locale: 'es' } })
+    ).json(),
+  );
+  expect(JSON.stringify(pages)).toContain('"id":"verifactu"');
+
+  const search = toolEnvelope.parse(
+    await (
+      await request.post('/api/tools/search_site', {
+        data: { query: 'whatsapp' },
+      })
+    ).json(),
+  );
+  expect(JSON.stringify(search)).toContain('"page":"integrations"');
+  expect(
+    toolEnvelope.parse(
+      await (
+        await request.post('/api/tools/search_site', {
+          data: { query: 'holded' },
+        })
+      ).json(),
+    ).result,
+  ).toMatchObject({ results: [] });
+
+  const page = await request.post('/api/tools/get_page', {
+    data: { page: 'pricing', section: 'Automation diagnostic' },
+  });
+  expect(page.status()).toBe(200);
+  expect(page.headers()['cache-control']).toBe('no-store');
+  const read = JSON.stringify(toolEnvelope.parse(await page.json()));
+  expect(read).toContain('"status":"section"');
+  expect(read).toContain('S$');
+
+  expect(
+    toolEnvelope.parse(
+      await (
+        await request.post('/api/tools/get_page', { data: { page: 'book' } })
+      ).json(),
+    ).result,
+  ).toMatchObject({ status: 'not_available' });
+  expect(
+    (
+      await request.post('/api/tools/get_page', { data: { page: '/pricing' } })
+    ).status(),
+  ).toBe(400);
+
+  const draft = await request.post('/api/tools/open_contact_form', {
+    data: { message: 'Hello' },
+  });
+  expect(draft.status()).toBe(404);
+  expect(toolEnvelope.parse(await draft.json()).error).toBe('unknown');
+});
+
+test('a bearer caller with a voice session reads a page', async ({
+  request,
+}) => {
+  const response = await request.post('/api/tools/get_page', {
+    headers: agentHeaders(await startVoiceSession(request)),
+    data: { page: 'about' },
+  });
+  expect(response.status()).toBe(200);
+  expect(toolEnvelope.parse(await response.json())).toMatchObject({
+    ok: true,
+    result: { status: 'page', page: 'about' },
+  });
+  const wrong = await request.post('/api/tools/get_page', {
+    headers: { Authorization: 'Bearer wrong' },
+    data: { page: 'about' },
+  });
+  expect(wrong.status()).toBe(401);
 });
 
 test('transport failures use 4xx with an error code', async ({ request }) => {
