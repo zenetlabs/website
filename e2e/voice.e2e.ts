@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { z } from 'zod';
 import { home as enHome } from '../src/content/en/home';
 import { voiceCopy as en } from '../src/content/en/voice';
@@ -18,6 +18,7 @@ import {
   toolEnvelope,
   uniqueEmail,
 } from './fakes';
+import { test } from './fixtures';
 import { gotoHydrated, settleAnimations, VOICE_PUBLISHED } from './helpers';
 import { forceInteractiveTurnstile } from './turnstile-interactive';
 

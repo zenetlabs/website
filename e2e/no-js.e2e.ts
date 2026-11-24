@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { home as enHome } from '../src/content/en/home';
 import { home as esHome } from '../src/content/es/home';
 import { verifactuDates } from '../src/content/es/verifactu';
@@ -12,6 +12,7 @@ import {
   startVoiceSession,
   uniqueEmail,
 } from './fakes';
+import { test } from './fixtures';
 import {
   BOOKING_PUBLISHED,
   CASE_PAIR,
@@ -50,6 +51,38 @@ for (const { path } of [...HOMES, ...PRICING, ...SERVICE_PAGES]) {
     await page.goto(path);
     await expect(page.locator('body[data-hydrated]')).toHaveCount(0);
     await expect(page.locator('h1')).toHaveCount(1);
+  });
+}
+
+for (const { path } of HOMES) {
+  test(`${path} shows the switchboard's final frame without JavaScript`, async ({
+    page,
+  }) => {
+    await page.goto(path);
+    const style = await page.evaluate(() => {
+      const read = (selector: string) => {
+        const element = document.querySelector(selector);
+        if (!element) return null;
+        const css = getComputedStyle(element);
+        return {
+          opacity: css.opacity,
+          visibility: css.visibility,
+          display: css.display,
+        };
+      };
+      return {
+        animations: document.getAnimations().length,
+        desk: read('[data-desk]'),
+        node: read('.sb-node[data-tile="gmail"]'),
+        caption: read('.sb-job'),
+        button: read('.sb-button'),
+      };
+    });
+    expect(style.animations).toBe(0);
+    expect(style.desk).toMatchObject({ opacity: '1', visibility: 'visible' });
+    expect(Number(style.node?.opacity)).toBeGreaterThan(0);
+    expect(style.caption?.opacity).toBe('0');
+    expect(style.button?.display).toBe('none');
   });
 }
 

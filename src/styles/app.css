@@ -305,16 +305,19 @@
     --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5zM5 19.5A1.5 1.5 0 0 0 6.5 21H19M9 7.5h6M9 11h6'/%3E%3C/svg%3E");
   }
 
-  /* The home hero: copy on 5 columns, the desk on 7, one screen tall from lg */
+  /* The home hero: the centred headline and its one action over the switchboard, the pitch below */
   .hero-grid {
     --hero-pad: 3.5rem;
     --hero-step: 2rem;
-    --hero-lead: 1.5rem;
-    @apply grid grid-cols-[minmax(0,1fr)] gap-8 pt-9 pb-10 max-sm:gap-4 max-sm:pt-5 max-sm:pb-4 md:gap-10 md:py-16 lg:min-h-[calc(100svh-var(--header-h))] lg:grid-cols-12 lg:content-center lg:items-start lg:gap-6 lg:py-(--hero-pad);
+    @apply pt-9 pb-10 max-sm:pt-5 max-sm:pb-4 md:py-16 lg:py-(--hero-pad);
   }
 
-  .hero-lead {
-    @apply mt-3 md:mt-(--hero-lead);
+  .hero-grid > h1 {
+    @apply mx-auto max-w-[16em] text-center;
+  }
+
+  .hero-pitch {
+    @apply mt-10 grid grid-cols-[minmax(0,1fr)] gap-6 md:mt-16 lg:grid-cols-12;
   }
 
   .tier-summary {
@@ -330,11 +333,11 @@
   }
 
   .hero-facts {
-    @apply mt-4 grid max-w-[34em] gap-1 text-ui-s md:gap-1.5 text-fg-soft md:mt-(--hero-step);
+    @apply grid max-w-[34em] gap-1 text-ui-s md:gap-1.5 text-fg-soft;
   }
 
   .hero-actions {
-    @apply mt-5 flex flex-wrap items-center gap-3 md:mt-(--hero-step);
+    @apply mt-5 text-center md:mt-(--hero-step);
   }
 
   .offer-links {
@@ -1183,7 +1186,8 @@
   }
 
   .desk-mark,
-  .flow-tile[data-actor="agent"]::before {
+  .flow-tile[data-actor="agent"]::before,
+  .sb-plate {
     background: var(--agent-soft) url("/logo/logo.svg") center / 55% no-repeat;
   }
 
@@ -1617,7 +1621,8 @@
 
   .flow-tile::before {
     content: "";
-    @apply size-6;
+    width: var(--tile-mark, 1.5rem);
+    height: var(--tile-mark, 1.5rem);
     background: var(--tool-icon) center / contain no-repeat;
   }
 
@@ -1641,11 +1646,8 @@
   }
 
   .flow-tile[data-actor="human"]::before {
-    @apply size-5;
-  }
-
-  .flow-tile[data-actor="app"]::before {
-    @apply size-6;
+    width: var(--tile-mark, 1.25rem);
+    height: var(--tile-mark, 1.25rem);
   }
 
   .flow-tile[data-actor="human"] {
@@ -2071,6 +2073,504 @@
   .contact-book {
     @apply grid grid-cols-[minmax(0,1fr)] gap-4 rounded-card border border-hairline bg-surface p-5 shadow-raised md:p-7;
   }
+
+  /* The home hero's switchboard: the agent core, the customer's tools and the
+     person play the three jobs, then the core grows into the desk. These are
+     its final frame (the server render, no JS, reduced motion); the timeline
+     is the `sb-*` block after the keyframes. Each tile's angle and resting
+     place, and each hop, come inline from switchboard.tsx. Offsets are from
+     the core point. */
+  .sb {
+    --sb-j1: 0.5s;
+    --sb-j2: 3.5s;
+    --sb-j3: 6.5s;
+    --sb-h: 9.6s;
+    --sb-t: calc(var(--sb-h) + 1s);
+    --core-y: 12.5rem;
+    --reserve: 4.5rem;
+    --orbit-x: min(39cqw, 8.75rem);
+    --orbit-y: 8.5rem;
+    --t: min(2.5rem, (100cqw - var(--reserve)) / 6 - 0.5rem);
+    --c: 4.5rem;
+    --row: min(100cqw - var(--reserve), 30rem);
+    --row-x: max(0px, (100cqw - var(--reserve) - var(--row)) / 2);
+    --desk-y: calc(var(--core-y) - 3rem);
+    --desk-from: 0.2 0.14;
+    @apply relative mt-6 pt-12 md:mt-(--hero-step) lg:pt-0;
+  }
+
+  @media (width >= 64rem) {
+    .sb {
+      --core-y: 9.5rem;
+      --orbit-x: 41cqw;
+      --orbit-y: 6.75rem;
+      --t: 3.5rem;
+      --c: 6.5rem;
+      --half: min(50cqw, 22rem);
+      --gap: calc(50cqw - var(--half));
+      --desk-y: var(--core-y);
+      --desk-from: 0.15 0.22;
+    }
+  }
+
+  .sb-orbit {
+    @apply pointer-events-none absolute inset-0 overflow-clip;
+    container-type: size;
+  }
+
+  .sb-wire,
+  .sb-lit,
+  .sb-pk,
+  .sb-ping,
+  .sb-node,
+  .sb-core {
+    position: absolute;
+    left: 50%;
+    top: var(--core-y);
+  }
+
+  /* The ring: each tile at its angle round the core (switchboard-table.ts
+     is the same table; switchboard-css.test.ts holds the two together) */
+  .sb-orbit {
+    --a-shopify: 116deg;
+    --a-gmail: 140deg;
+    --a-woocommerce: 180deg;
+    --a-prestashop: 220deg;
+    --a-whatsapp: 244deg;
+    --a-sheets: 64deg;
+    --a-xero: 27deg;
+    --a-hubspot: -27deg;
+    --a-human: -64deg;
+  }
+
+  .sb-orbit [data-tile] {
+    --x: calc(cos(var(--a)) * var(--orbit-x));
+    --y: calc(sin(var(--a)) * var(--orbit-y) * -1);
+  }
+
+  .sb-orbit [data-tile="shopify"] {
+    --a: var(--a-shopify);
+  }
+
+  .sb-orbit [data-tile="gmail"] {
+    --a: var(--a-gmail);
+  }
+
+  .sb-orbit [data-tile="woocommerce"] {
+    --a: var(--a-woocommerce);
+  }
+
+  .sb-orbit [data-tile="prestashop"] {
+    --a: var(--a-prestashop);
+  }
+
+  .sb-orbit [data-tile="whatsapp"] {
+    --a: var(--a-whatsapp);
+  }
+
+  .sb-orbit [data-tile="sheets"] {
+    --a: var(--a-sheets);
+  }
+
+  .sb-orbit [data-tile="xero"] {
+    --a: var(--a-xero);
+  }
+
+  .sb-orbit [data-tile="hubspot"] {
+    --a: var(--a-hubspot);
+  }
+
+  .sb-orbit [data-tile="human"] {
+    --a: var(--a-human);
+  }
+
+  /* A wire runs from (x0, y0), the core unless a0 and k0 are set, to its tile */
+  .sb-wire,
+  .sb-lit {
+    --x0: calc(cos(var(--a0, 0deg)) * var(--orbit-x) * var(--k0, 0));
+    --y0: calc(sin(var(--a0, 0deg)) * var(--orbit-y) * var(--k0, 0) * -1);
+    width: hypot(var(--x) - var(--x0), var(--y) - var(--y0));
+    margin-top: -1px;
+    border-top: 2px dashed var(--line-strong);
+    opacity: 0;
+    transform-origin: 0 50%;
+    translate: var(--x0) var(--y0);
+    rotate: atan2(var(--y) - var(--y0), var(--x) - var(--x0));
+  }
+
+  .sb-lit {
+    border-top-style: solid;
+    border-color: var(--agent);
+    opacity: 1;
+  }
+
+  .sb-wire[data-tile="human"],
+  .sb-lit[data-tile="human"] {
+    border-color: var(--human-ring);
+  }
+
+  /* Orders move tool to tool, in the customer's blue: Shopify to the sheet */
+  .sb-lit[data-tile="shopify"][data-to="sheets"] {
+    --a0: var(--a-shopify);
+    --k0: 1;
+    --a: var(--a-sheets);
+    border-color: var(--tool);
+  }
+
+  .sb-job {
+    @apply absolute inset-0 opacity-0;
+  }
+
+  .sb-cap {
+    @apply absolute inset-x-0 mx-auto max-w-[30em] px-2 text-center text-ui-s text-fg lg:text-ui-l;
+    top: calc(var(--core-y) + 10.5rem);
+  }
+
+  .sb-job[data-job="orders"] {
+    --at: var(--sb-j1);
+    --span: calc(var(--sb-j2) - var(--sb-j1) - 0.1s);
+  }
+
+  .sb-job[data-job="invoices"] {
+    --at: var(--sb-j2);
+    --span: calc(var(--sb-j3) - var(--sb-j2) - 0.1s);
+  }
+
+  .sb-job[data-job="customers"] {
+    --at: var(--sb-j3);
+    --span: calc(var(--sb-h) - var(--sb-j3) - 0.1s);
+  }
+
+  .sb-hops,
+  .sb-hop {
+    display: contents;
+  }
+
+  /* A hop: a packet from angle a0 to a1 (k = 0 is the core) leaving at `at`,
+     and the ping where it lands, in the order of switchboard-table.ts */
+  .sb-hop {
+    --a0: 0deg;
+    --a1: 0deg;
+    --k0: 1;
+    --k1: 1;
+    --d: 0.6s;
+    --p0: calc(cos(var(--a0)) * var(--orbit-x) * var(--k0))
+      calc(sin(var(--a0)) * var(--orbit-y) * var(--k0) * -1);
+    --p1: calc(cos(var(--a1)) * var(--orbit-x) * var(--k1))
+      calc(sin(var(--a1)) * var(--orbit-y) * var(--k1) * -1);
+    --pk: var(--agent);
+    --ping: var(--agent);
+    --ping-r: var(--inner-radius);
+  }
+
+  .sb-hop:nth-child(-n + 2) {
+    --a0: var(--a-shopify);
+    --a1: var(--a-sheets);
+    --d: 0.9s;
+    --pk: var(--tool);
+    --ping: var(--tool);
+  }
+
+  .sb-hop:nth-child(1) {
+    --at: calc(var(--sb-j1) + 0.3s);
+  }
+
+  .sb-hop:nth-child(2) {
+    --at: calc(var(--sb-j1) + 1.5s);
+  }
+
+  .sb-hop:nth-child(3) {
+    --a0: var(--a-gmail);
+    --k1: 0;
+    --at: calc(var(--sb-j2) + 0.3s);
+  }
+
+  .sb-hop:nth-child(4) {
+    --k0: 0;
+    --a1: var(--a-human);
+    --at: calc(var(--sb-j2) + 0.95s);
+  }
+
+  .sb-hop:nth-child(5) {
+    --a0: var(--a-human);
+    --k1: 0;
+    --at: calc(var(--sb-j2) + 1.55s);
+  }
+
+  .sb-hop:nth-child(6) {
+    --k0: 0;
+    --a1: var(--a-xero);
+    --at: calc(var(--sb-j2) + 2.1s);
+  }
+
+  .sb-hop:nth-child(7) {
+    --a0: var(--a-whatsapp);
+    --k1: 0;
+    --at: calc(var(--sb-j3) + 0.3s);
+  }
+
+  .sb-hop:nth-child(8) {
+    --k0: 0;
+    --a1: var(--a-whatsapp);
+    --at: calc(var(--sb-j3) + 0.95s);
+  }
+
+  .sb-hop:nth-child(9) {
+    --a0: var(--a-whatsapp);
+    --k1: 0;
+    --at: calc(var(--sb-j3) + 1.5s);
+  }
+
+  .sb-hop:nth-child(10) {
+    --k0: 0;
+    --a1: var(--a-human);
+    --at: calc(var(--sb-j3) + 2.1s);
+  }
+
+  .sb-hop:is(:nth-child(4), :nth-child(5), :nth-child(10)) {
+    --pk: var(--human-ring);
+  }
+
+  .sb-hop:is(:nth-child(4), :nth-child(10)) {
+    --ping: var(--human-ring);
+    --ping-r: 50%;
+  }
+
+  .sb-hop:is(:nth-child(3), :nth-child(5), :nth-child(7), :nth-child(9)) {
+    --ping-r: 28%;
+  }
+
+  .sb-pk {
+    @apply size-2.5 -m-1.25 rounded-full opacity-0;
+    background: var(--pk);
+    translate: var(--p1);
+  }
+
+  .sb-ping {
+    --size: calc(var(--t) + (var(--c) - var(--t)) * (1 - var(--k1)));
+    width: var(--size);
+    height: var(--size);
+    margin: calc(var(--size) / -2);
+    border: 2px solid var(--ping);
+    border-radius: var(--ping-r);
+    opacity: 0;
+    translate: var(--p1);
+  }
+
+  /* The tiles: lit by job (o1 to o3), then at rest beside the desk from lg
+     (side, gap share k, height v in %) or in one row above it (slot i), the
+     jobs' six only */
+  .sb-node {
+    --o1: 0.3;
+    --o2: 0.3;
+    --o3: 0.3;
+    --tile-mark: 45%;
+    width: var(--t);
+    height: var(--t);
+    margin: calc(var(--t) / -2);
+    opacity: var(--rest-o);
+    translate: var(--rest-x) var(--rest-y);
+    scale: var(--rest-s);
+  }
+
+  .sb-node > .flow-tile {
+    @apply size-full shadow-raised;
+  }
+
+  .sb-node[data-tile="shopify"] {
+    --o1: 1;
+    --i: 0;
+    --side: -1;
+    --k: 0.25;
+    --v: 12;
+  }
+
+  .sb-node[data-tile="gmail"] {
+    --o2: 1;
+    --i: 1;
+    --side: -1;
+    --k: 0.43;
+    --v: 31;
+  }
+
+  .sb-node[data-tile="woocommerce"] {
+    --side: -1;
+    --k: 0.5;
+    --v: 50;
+  }
+
+  .sb-node[data-tile="prestashop"] {
+    --side: -1;
+    --k: 0.43;
+    --v: 69;
+  }
+
+  .sb-node[data-tile="whatsapp"] {
+    --o3: 1;
+    --i: 4;
+    --side: -1;
+    --k: 0.25;
+    --v: 88;
+  }
+
+  .sb-node[data-tile="sheets"] {
+    --o1: 1;
+    --i: 2;
+    --side: 1;
+    --k: 0.25;
+    --v: 16;
+  }
+
+  .sb-node[data-tile="xero"] {
+    --o2: 1;
+    --i: 3;
+    --side: 1;
+    --k: 0.43;
+    --v: 39;
+  }
+
+  .sb-node[data-tile="hubspot"] {
+    --side: 1;
+    --k: 0.43;
+    --v: 61;
+  }
+
+  .sb-node[data-tile="human"] {
+    --o2: 1;
+    --o3: 1;
+    --i: 5;
+    --side: 1;
+    --k: 0.25;
+    --v: 84;
+  }
+
+  @media (width < 64rem) {
+    .sb-node {
+      --rest-o: 0.6;
+      --rest-s: 1;
+      --rest-x: calc(var(--row-x) + (var(--i) + 0.5) * var(--row) / 6 - 50cqw);
+      --rest-y: calc(1.5rem - var(--core-y));
+    }
+
+    .sb-node:is(
+        [data-tile="woocommerce"],
+        [data-tile="prestashop"],
+        [data-tile="hubspot"]
+      ) {
+      --rest-o: 0;
+      --rest-s: 0.5;
+      --rest-x: var(--x);
+      --rest-y: var(--y);
+    }
+  }
+
+  @media (width >= 64rem) {
+    .sb-node {
+      --rest-o: 0.4;
+      --rest-s: 0.786;
+      --rest-x: calc(var(--side) * (var(--half) + var(--k) * var(--gap)));
+      --rest-y: calc(var(--v) * 1cqh - var(--core-y));
+    }
+  }
+
+  .sb-label {
+    @apply absolute top-[calc(100%+0.5rem)] left-1/2 -translate-x-1/2 text-ui-s whitespace-nowrap;
+  }
+
+  .sb-node .sb-label {
+    @apply text-muted-fg opacity-0 max-lg:hidden;
+  }
+
+  .sb-core {
+    width: var(--c);
+    height: var(--c);
+    margin: calc(var(--c) / -2);
+    opacity: 0;
+  }
+
+  .sb-agent {
+    @apply grid size-full place-items-center rounded-[28%] bg-agent;
+    box-shadow:
+      0 0 0 0.625rem color-mix(in oklab, var(--agent) 8%, transparent),
+      var(--raised-shadow);
+  }
+
+  .sb-plate {
+    @apply size-[58%] rounded-[24%];
+    background-color: var(--surface);
+    background-size: 64%;
+  }
+
+  .sb-core .sb-label {
+    @apply font-semibold text-agent;
+  }
+
+  [data-switchboard] > .desk {
+    @apply relative z-1 mx-auto w-[min(100%,44rem)];
+    view-timeline-name: --hero-desk;
+  }
+
+  /* The core's green, fading off the desk as it grows */
+  [data-switchboard] > .desk::after {
+    content: "";
+    @apply pointer-events-none absolute inset-0 bg-agent opacity-0;
+  }
+
+  [data-switchboard] .desk-head {
+    --rise: 0.12s;
+  }
+
+  [data-switchboard] .desk-bubble {
+    --rise: 0.16s;
+  }
+
+  [data-switchboard] .desk-chips {
+    --rise: 0.2s;
+  }
+
+  [data-switchboard] .desk-composer {
+    --rise: 0.24s;
+  }
+
+  [data-switchboard] .desk-rail {
+    --rise: 0.28s;
+  }
+
+  /* Skip while the scene plays, Replay after it: the labels share one cell */
+  .sb-button {
+    @apply absolute top-0.5 right-0 z-2 hidden min-h-11 items-center justify-items-end rounded-button px-1 text-ui-m font-semibold text-agent underline decoration-1 underline-offset-4 select-none lg:top-0;
+  }
+
+  .sb-skip,
+  .sb-replay {
+    grid-area: 1 / 1;
+  }
+
+  .sb-skip {
+    --swap: visible;
+    visibility: hidden;
+  }
+
+  .sb-replay {
+    --swap: hidden;
+  }
+
+  @media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+    .sb-button {
+      display: inline-grid;
+      transition: scale var(--duration-press) var(--ease-out);
+    }
+
+    .sb-button:active {
+      scale: 0.97;
+    }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .sb-button:hover {
+      text-decoration-thickness: 2px;
+    }
+  }
 }
 
 @keyframes menu-in {
@@ -2090,6 +2590,202 @@
   40% {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+/* The switchboard's timeline (`.sb` holds the beats). The tiles' stops are
+   the jobs' beats over J1 to H + 0.6s (motion.test derives them); the core
+   dims while orders run, its label stays legible. Fades are short:
+   half-faded text fails contrast. */
+@keyframes sb-out {
+  from {
+    opacity: 1;
+  }
+}
+
+@keyframes sb-dim {
+  from {
+    opacity: 1;
+  }
+
+  3.1%,
+  29.4% {
+    opacity: var(--o1);
+  }
+
+  32.5%,
+  60.3% {
+    opacity: var(--o2);
+  }
+
+  63.4%,
+  93.8% {
+    opacity: var(--o3);
+  }
+}
+
+@keyframes sb-settle {
+  from {
+    opacity: 1;
+    translate: var(--x) var(--y);
+    scale: 1;
+  }
+}
+
+@keyframes sb-agent {
+  9.5%,
+  90.5% {
+    opacity: 0.45;
+  }
+}
+
+@keyframes sb-core {
+  from {
+    opacity: 1;
+    scale: 1;
+  }
+
+  to {
+    opacity: 0;
+    scale: 1.3;
+  }
+}
+
+@keyframes sb-window {
+  from,
+  to {
+    opacity: 0;
+  }
+
+  6%,
+  94% {
+    opacity: 1;
+  }
+}
+
+@keyframes sb-packet {
+  from {
+    opacity: 0;
+    translate: var(--p0);
+  }
+
+  8% {
+    opacity: 1;
+    translate: var(--p0);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+
+  84% {
+    opacity: 1;
+    translate: var(--p1);
+  }
+
+  to {
+    opacity: 0;
+    translate: var(--p1);
+  }
+}
+
+@keyframes sb-ping {
+  from {
+    opacity: 0.7;
+    scale: 1;
+  }
+
+  to {
+    opacity: 0;
+    scale: 1.5;
+  }
+}
+
+@keyframes sb-desk {
+  from {
+    visibility: hidden;
+    opacity: 0;
+    scale: var(--desk-from);
+  }
+
+  8% {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  to {
+    scale: 1;
+  }
+}
+
+@keyframes sb-rise {
+  from {
+    opacity: 0;
+    translate: 0 0.5rem;
+  }
+}
+
+/* The button's labels for the length of the scene: Skip shows, Replay hides */
+@keyframes sb-swap {
+  from,
+  to {
+    visibility: var(--swap);
+  }
+}
+
+/* The scene plays only with scripting and motion allowed, until it is done.
+   Fill `backwards` only: when it ends, the natural styles are the last frame. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  [data-switchboard]:not([data-intro="done"]) {
+    .sb-wire,
+    .sb-node .sb-label {
+      animation: sb-out 0.3s var(--ease-out) var(--sb-h) backwards;
+    }
+
+    .sb-node {
+      animation: sb-settle 0.6s var(--ease-out) var(--sb-h) backwards;
+    }
+
+    .sb-node > .flow-tile {
+      animation: sb-dim calc(var(--sb-h) + 0.6s - var(--sb-j1)) linear
+        var(--sb-j1) backwards;
+    }
+
+    .sb-agent {
+      animation: sb-agent calc(var(--sb-j2) - var(--sb-j1) + 0.15s) linear
+        var(--sb-j1) backwards;
+    }
+
+    .sb-core {
+      animation: sb-core 0.22s var(--ease-out) var(--sb-h) backwards;
+    }
+
+    .sb-job {
+      animation: sb-window var(--span) linear var(--at) backwards;
+    }
+
+    .sb-pk {
+      animation: sb-packet var(--d) linear var(--at) backwards;
+    }
+
+    .sb-ping {
+      animation: sb-ping 0.7s var(--ease-out) calc(var(--at) + var(--d) - 0.1s);
+    }
+
+    > .desk {
+      transform-origin: 50% var(--desk-y);
+      animation: sb-desk 0.6s var(--ease-out) var(--sb-h) backwards;
+    }
+
+    > .desk::after {
+      animation: sb-out 0.3s var(--ease-out) calc(var(--sb-h) + 0.04s) backwards;
+    }
+
+    :is(.desk-head, .desk-bubble, .desk-chips, .desk-composer, .desk-rail) {
+      animation: sb-rise 0.3s var(--ease-out) calc(var(--sb-h) + var(--rise))
+        backwards;
+    }
+
+    :is(.sb-skip, .sb-replay) {
+      animation: sb-swap var(--sb-t) linear;
+    }
   }
 }
 
@@ -2136,6 +2832,26 @@
   ::after {
     animation: none;
     scroll-behavior: auto;
+  }
+}
+
+/* While the hero desk is in view below lg, the chat launcher gives way to it
+   (a scroll-linked visibility, not motion, so reduced motion keeps it). */
+@keyframes launcher-away {
+  from,
+  to {
+    visibility: hidden;
+  }
+}
+
+body {
+  timeline-scope: --hero-desk;
+}
+
+@media (width < 64rem) {
+  html [data-chat-launcher] {
+    animation: launcher-away linear none;
+    animation-timeline: --hero-desk;
   }
 }
 
@@ -2239,7 +2955,6 @@ html[lang="es"] h1.text-display-1 {
 @media (width >= 64rem) and (max-height: 760px) {
   .hero-grid {
     --hero-pad: 1.5rem;
-    --hero-lead: 1rem;
   }
 }
 

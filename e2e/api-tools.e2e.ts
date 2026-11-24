@@ -1,6 +1,7 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { z } from 'zod';
 import { agentHeaders, startVoiceSession, toolEnvelope } from './fakes';
+import { test } from './fixtures';
 
 const manifestSchema = z.object({
   version: z.number(),

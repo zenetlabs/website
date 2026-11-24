@@ -244,9 +244,11 @@ export async function settleAnimations(page: Page) {
     Promise.all(
       document
         .getAnimations()
-        // The chat's typing dots loop, so they never settle.
+        // The chat's typing dots loop, so they never settle, and the
+        // launcher's scroll-linked hiding follows the page, not the clock.
         .filter(
           (animation) =>
+            animation.timeline instanceof DocumentTimeline &&
             !(
               animation.effect?.getComputedTiming().endTime === Infinity &&
               animation.effect instanceof KeyframeEffect &&

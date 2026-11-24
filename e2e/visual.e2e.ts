@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test } from '@playwright/test';
+import { test } from './fixtures';
 import { gotoHydrated, PAGE_TYPE_URLS, settleAnimations } from './helpers';
 
 const LABEL = process.env.VISUAL_LABEL ?? 'after';

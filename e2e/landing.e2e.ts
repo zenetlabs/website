@@ -1,9 +1,10 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { viatsyCase } from '../src/content/en/case-pages/viatsy';
 import { verifactuDates } from '../src/content/es/verifactu';
 import { formatPriceSummary } from '../src/lib/money';
 import { jsonLdBlocks } from '../test/json-ld';
 import { SERVICES } from '../test/page-content';
+import { test } from './fixtures';
 import {
   CASE_PAIR,
   CTA,

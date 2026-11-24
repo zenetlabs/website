@@ -16,9 +16,39 @@ export const home = {
     lead: 'Conectamos las herramientas que ya usa tu empresa y ponemos agentes de IA a hacer el trabajo repetitivo, para que tu equipo deje de pasar datos a mano.',
     fact: 'Diagnóstico a precio cerrado por {price}, que se descuenta del proyecto si sigues adelante en 60 días.',
     primary: 'Reservar una llamada',
-    secondary: 'Ver precios',
     audience: 'Para pymes de 10 a 100 personas',
     handoff: 'Trabajas con quien lo construye.',
+    stage: {
+      agent: 'Agente de IA',
+      tools: {
+        shopify: 'Shopify',
+        woocommerce: 'WooCommerce',
+        prestashop: 'PrestaShop',
+        gmail: 'Gmail',
+        whatsapp: 'WhatsApp',
+        sheets: 'Google Sheets',
+        xero: 'Xero',
+        hubspot: 'HubSpot',
+        human: 'Tu equipo',
+      },
+      jobs: {
+        orders: {
+          name: 'Pedidos',
+          text: 'de Shopify a tu hoja de cálculo, una sola vez.',
+        },
+        invoices: {
+          name: 'Facturas',
+          text: 'de Gmail a Xero. Una persona aprueba las excepciones.',
+        },
+        customers: {
+          name: 'Preguntas',
+          text: 'respondidas en WhatsApp. El resto pasa a tu equipo.',
+        },
+      },
+      skip: 'Saltar',
+      replay: 'Repetir',
+      control: 'la animación',
+    },
   },
   desk: {
     label: 'Pregunta al asistente',

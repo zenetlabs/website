@@ -3,11 +3,11 @@ import {
   expect,
   type Locator,
   type Page,
-  test,
 } from '@playwright/test';
 import { chatCopy as en } from '../src/content/en/chat';
 import { home } from '../src/content/en/home';
 import { voiceCopy as voiceEn } from '../src/content/en/voice';
+import { test } from './fixtures';
 import {
   ASSISTANT_PUBLISHED,
   gotoHydrated,
@@ -91,6 +91,8 @@ async function sheetTop(page: Page, selector: string): Promise<number> {
 
 async function openChat(page: Page) {
   await gotoHydrated(page, '/');
+  // The launcher gives way while the hero desk is in view on a phone
+  await page.locator('#problems').scrollIntoViewIfNeeded();
   await page.getByRole('button', { name: LAUNCHER }).click();
   const sheet = page.locator(CHAT);
   await expect(sheet).toBeVisible();
@@ -222,13 +224,23 @@ test.describe('the chat sheet', () => {
   }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     const sheet = await openChat(page);
+    // The launcher's scroll-linked hiding is not motion; only the clock's count
+    const timed = () =>
+      page.evaluate(
+        () =>
+          document
+            .getAnimations()
+            .filter(
+              (animation) => animation.timeline instanceof DocumentTimeline,
+            ).length,
+      );
     const top = await sheetTop(page, CHAT);
     await swipe(page, await grabber(sheet), (await sheetHeight(sheet)) * 0.1);
-    expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+    expect(await timed()).toBe(0);
     expect(await sheetTop(page, CHAT)).toBeCloseTo(top, 0);
     await swipe(page, await grabber(sheet), (await sheetHeight(sheet)) * 0.4);
     await expect(sheet).toHaveCount(0);
-    expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+    expect(await timed()).toBe(0);
   });
 
   test('nothing drags on a desktop', async ({ page }) => {

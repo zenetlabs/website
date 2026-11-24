@@ -1,12 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
-import {
-  type APIRequestContext,
-  expect,
-  type Page,
-  test,
-} from '@playwright/test';
+import { type APIRequestContext, expect, type Page } from '@playwright/test';
 import { BOOKING_RULES } from '../src/content/booking-rules';
 import { formatSlotDay, formatSlotTime } from '../src/lib/slot-format';
 import { groupByDay, type Slot, zonedToInstant } from '../src/lib/slots';
@@ -26,6 +21,7 @@ import {
   TEST_CALENDAR,
   uniqueEmail,
 } from './fakes';
+import { test } from './fixtures';
 import {
   ASSISTANT_PUBLISHED,
   BOOKING_PUBLISHED,

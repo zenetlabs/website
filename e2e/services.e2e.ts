@@ -1,7 +1,8 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { formatPriceSummary } from '../src/lib/money';
 import { jsonLdBlocks } from '../test/json-ld';
 import { SERVICES } from '../test/page-content';
+import { test } from './fixtures';
 import {
   CTA,
   gotoHydrated,

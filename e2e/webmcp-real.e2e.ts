@@ -1,5 +1,6 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { z } from 'zod';
+import { test } from './fixtures';
 import {
   BOOKING_PUBLISHED,
   gotoHydrated,

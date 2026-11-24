@@ -13,7 +13,6 @@ export type CtaId =
   | 'header'
   | 'header_menu'
   | 'hero'
-  | 'hero_pricing'
   | 'page_hero'
   | 'page_cta'
   | 'pricing'
