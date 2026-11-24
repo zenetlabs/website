@@ -1,0 +1,55 @@
+name: Voice agents apply
+
+# The deploy syncs the ElevenLabs agents with `apply --update-only`, which never
+# creates anything. A release that adds a voice tool runs this once, by hand,
+# after deploying the current main: the full apply creates the new tools with
+# the production key, so no key leaves GitHub. The closing --update-only pass
+# checks the agent ids against site.config.ts. Nothing prints the key.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    name: Apply ElevenLabs agents
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: production
+    steps:
+      - name: Require main
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          if [ "$REF" != "refs/heads/main" ]; then
+            echo "::error::Voice agents are applied from main only (ref: $REF)"
+            exit 1
+          fi
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Plan
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+        run: node scripts/voice-agent.mjs plan
+      - name: Apply
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+        run: node scripts/voice-agent.mjs apply
+      - name: Check the agent ids against site.config.ts
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+        run: node scripts/voice-agent.mjs apply --update-only

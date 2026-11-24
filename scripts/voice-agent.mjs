@@ -262,7 +262,7 @@ export async function runVoiceAgents({
     ];
     if (missing.length > 0) {
       throw new Error(
-        `--update-only found no ${missing.join(', ')}; nothing was changed. Run pnpm voice:apply once without it to create them`,
+        `--update-only found no ${missing.join(', ')}; nothing was changed. Run the Voice agents apply workflow (or pnpm voice:apply) once to create them`,
       );
     }
     // The site calls the ids in site.config.ts; a sync must patch those agents.
