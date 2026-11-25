@@ -12,6 +12,7 @@ import { CONTENT, legalEntity } from '@/lib/content';
 import type { Locale } from '@/lib/i18n';
 import { formatPriceSummary } from '@/lib/money';
 import { NAVIGATE_SECTIONS } from '@/lib/navigate';
+import { pageLead } from '@/lib/page-lead';
 import {
   HOLDED_PAGE_IDS,
   isServicePage,
@@ -119,14 +120,22 @@ async function landingLeads(
   const services = SERVICE_PAGE_IDS.filter((id) => published.has(id)).map(
     async (id) => {
       const { copy, hub } = await loadServicePageContent(locale, id);
-      return { id, name: hub.cards[id].name, lead: copy.hero.lead };
+      return { id, name: hub.cards[id].name, lead: pageLead(copy.hero) };
     },
   );
   if (locale !== 'es') return Promise.all(services);
   const holded = HOLDED_PAGE_IDS.filter((id) => published.has(id)).map(
     async (id) => {
       const { copy, hub } = await loadHoldedPairContent(id);
-      return { id, name: hub.landing[id] ?? id, lead: copy.hero.lead };
+      const stock = copy.sync.rows.find((row) => row.id === 'stock');
+      const stockLine = stock
+        ? ` Stock (${stock.data}): ${stock.direction}. ${stock.when}.`
+        : '';
+      return {
+        id,
+        name: hub.landing[id] ?? id,
+        lead: `${pageLead(copy.hero)}${stockLine}`,
+      };
     },
   );
   const sector = published.has('travelAgencies')
@@ -134,7 +143,7 @@ async function landingLeads(
         loadSectorContent().then(({ copy, hub }) => ({
           id: 'travelAgencies' as const,
           name: hub.landing.travelAgencies ?? 'travelAgencies',
-          lead: copy.hero.lead,
+          lead: pageLead(copy.hero),
         })),
       ]
     : [];
@@ -150,7 +159,7 @@ async function verifactuLines(locale: Locale, site: SiteFlags) {
   const { copy, hub } = await loadVerifactuContent();
   const { deadlines } = copy;
   return [
-    `- ${hub.landing.verifactu ?? 'Verifactu'}: ${copy.hero.lead}`,
+    `- ${hub.landing.verifactu ?? 'Verifactu'}: ${pageLead(copy.hero)}`,
     ...deadlines.rows.map((row) => `- ${row.who}: ${row.date}`),
     `- ${VERIFACTU_PENDING}`,
     `- ${deadlines.producers}`,

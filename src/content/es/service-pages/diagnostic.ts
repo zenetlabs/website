@@ -17,7 +17,8 @@ export const diagnostic = {
       emphasis: 'plan con precio',
       after: ' en una o dos semanas',
     },
-    lead: `El diagnóstico de automatización es donde empieza todo proyecto de Zenet Labs. En una o dos semanas analizamos tus herramientas y el trabajo que tu equipo sigue haciendo a mano, y te damos un plan priorizado con precio y plazo para cada fase. Cuesta ${formatPrice('es', price)}, IVA no incluido, y se descuenta del proyecto si sigues adelante en 60 días.`,
+    lead: 'El diagnóstico de automatización es donde empieza todo proyecto de Zenet Labs.',
+    intro: `En una o dos semanas analizamos tus herramientas y el trabajo que tu equipo sigue haciendo a mano, y te damos un plan priorizado con precio y plazo para cada fase. Cuesta ${formatPrice('es', price)}, IVA no incluido, y se descuenta del proyecto si sigues adelante en 60 días.`,
   },
   facts: {
     who: 'Pymes que trabajan con varias herramientas y pierden horas pasando datos de una a otra',

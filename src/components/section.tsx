@@ -39,12 +39,15 @@ export function EmphasisTitle({ parts }: { parts: TitleParts }) {
 export function Section({
   id,
   title,
+  intro,
   lead,
   variant = 'default',
   children,
 }: {
   id: string;
   title: TitleParts;
+  // The rest of a page's old hero lead; the section's own `lead` then follows it
+  intro?: string;
   lead?: string;
   variant?: SectionVariant;
   children: ReactNode;
@@ -61,8 +64,13 @@ export function Section({
         <h2 id={`${id}-title`} className="max-w-[12em]">
           <EmphasisTitle parts={title} />
         </h2>
-        {lead ? <p className={`mt-5 md:mt-6 ${LEAD}`}>{lead}</p> : null}
-        <div className="mt-5 md:mt-14">{children}</div>
+        {intro || lead ? (
+          <p className={`mt-5 md:mt-6 ${LEAD}`}>{intro ?? lead}</p>
+        ) : null}
+        <div className="mt-5 md:mt-14">
+          {intro && lead ? <p className={`mb-8 ${LEAD}`}>{lead}</p> : null}
+          {children}
+        </div>
       </Container>
     </section>
   );

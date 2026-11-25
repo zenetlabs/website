@@ -1,4 +1,4 @@
-import { diagnosticPlan } from '@/content/en/diagnostic-plan';
+import { serviceIncludes } from '@/content/en/service-includes';
 import type { PricingPageContent } from '@/content/types';
 
 export const pricingPage = {
@@ -20,56 +20,29 @@ export const pricingPage = {
     startHere: 'Start here',
     book: 'Book the diagnostic',
   },
-  // TODO(albert): confirm every list
+  // TODO(albert): confirm every list (in service-includes.ts)
   details: {
     diagnostic: {
-      includes: diagnosticPlan,
+      includes: serviceIncludes.diagnostic,
       timeline: '1–2 weeks',
     },
     integration: {
-      includes: [
-        'Scope taken from the diagnostic',
-        'Built on your accounts, so you own it',
-        'Alerts and retries when something fails',
-        'Documentation and handover to your team',
-      ],
+      includes: serviceIncludes.integration,
     },
     agent: {
-      includes: [
-        'A test set built from your real cases',
-        'Approval steps wherever an action has consequences',
-        'Usage and cost limits',
-        'Monitoring and a log of every action',
-      ],
+      includes: serviceIncludes.agent,
     },
     web: {
-      includes: [
-        'Design and build around your processes',
-        'Fast, accessible and search-friendly',
-        'Connected to your tools from day one',
-        'Hosting set up on your accounts',
-      ],
+      includes: serviceIncludes.web,
     },
     training: {
-      includes: [
-        'Workshops built on your own processes, not generic examples',
-        'Mentoring: regular reviews of what the team builds',
-        'A usage policy your team can follow',
-      ],
+      includes: serviceIncludes.training,
     },
     maintenance: {
-      includes: [
-        'Monitoring and error alerts',
-        'Fixes, and updates when your tools change',
-        'A monthly review of what to improve',
-      ],
+      includes: serviceIncludes.maintenance,
     },
     growth: {
-      includes: [
-        'Technical SEO and a content plan',
-        'Pages and articles that answer real customer questions',
-        'Conversion fixes based on what visitors do',
-      ],
+      includes: serviceIncludes.growth,
     },
   },
   how: {

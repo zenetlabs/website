@@ -1,8 +1,7 @@
-import { assistantIntro } from '@/content/en/assistant-intro';
 import { cases } from '@/content/en/cases';
 import { companies } from '@/content/en/companies';
+import { deskClose } from '@/content/en/desk';
 import { diagnosticPlan } from '@/content/en/diagnostic-plan';
-import { slotsCopy } from '@/content/en/slots';
 import type { HomeContent } from '@/content/types';
 
 export const home = {
@@ -47,22 +46,7 @@ export const home = {
       control: 'the animation',
     },
   },
-  desk: {
-    label: 'Ask the assistant',
-    intro: assistantIntro,
-    human: {
-      title: 'Ask us',
-      welcome:
-        'Ask us anything about your tools and processes. We reply by email, usually within a working day.',
-      label: 'Your question for us',
-      placeholder: 'Type your question',
-    },
-    call: {
-      button: 'Call',
-      label: 'Call the AI agent',
-    },
-    slots: slotsCopy,
-  },
+  desk: deskClose.desk,
   companies: {
     title: 'We run our own companies with agents',
     items: companies,
@@ -170,21 +154,12 @@ export const home = {
     },
     lead: 'Tell us which tools you use and what your team still does by hand. We reply and agree the next step with you.',
     mail: 'Prefer email? Write to',
-    human: 'A person on our team replies.',
+    human: deskClose.human,
     book: 'Prefer a call? Pick a time',
     voice: {
       text: 'Prefer to talk? Our voice assistant is an AI, not a person: it can answer questions and book a call.',
       button: 'Talk to the assistant',
     },
   },
-  doors: {
-    call: {
-      title: 'Call the agent',
-      text: 'Our voice assistant is an AI, not a person.',
-    },
-    write: {
-      title: 'Write to us',
-      text: 'Use the contact form.',
-    },
-  },
+  doors: deskClose.doors,
 } satisfies HomeContent;

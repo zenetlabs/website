@@ -17,7 +17,8 @@ export const diagnostic = {
       emphasis: 'costed plan',
       after: ' in one to two weeks',
     },
-    lead: `The automation diagnostic is where every Zenet Labs project starts. In one to two weeks we map your tools and the work your team still does by hand, and hand you a prioritised plan with a price and a timeline for each phase. It costs ${formatPrice('en', price)}, excluding GST, and is credited to the project if you continue within 60 days.`,
+    lead: 'The automation diagnostic is where every Zenet Labs project starts.',
+    intro: `In one to two weeks we map your tools and the work your team still does by hand, and hand you a prioritised plan with a price and a timeline for each phase. It costs ${formatPrice('en', price)}, excluding GST, and is credited to the project if you continue within 60 days.`,
   },
   facts: {
     who: 'Companies that run on several tools and lose hours moving data between them',

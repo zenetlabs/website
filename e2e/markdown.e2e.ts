@@ -294,7 +294,9 @@ test('the service page markdown keeps the answer, the FAQ and the contact', asyn
   ).text();
   for (const expected of [
     '# AI automation for the work your team *still does by hand*',
-    'from S$8,000 (excl. GST)',
+    'from S$8,000',
+    'excl. GST',
+    'We build AI automation for Singapore companies, on the tools they already use.',
     'Which processes are worth automating first?',
     '[hello@zenetlabs.com](mailto:hello@zenetlabs.com)',
   ]) {
@@ -423,4 +425,28 @@ test('the cases hub and the new service pages keep their content in markdown', a
     await request.get('/es/servicios/mantenimiento.md')
   ).text();
   expect(maintenance).toContain('Esencial');
+});
+
+test('the agents markdown holds the ticket price and the first include', async ({
+  request,
+}) => {
+  const body = await (
+    await request.get('/services/ai-agents', {
+      headers: { accept: 'text/markdown' },
+    })
+  ).text();
+  expect(body).toContain(
+    formatPrice('en', SERVICES.en.agent.prices[0]).replace(/\s/g, ' '),
+  );
+  expect(body).toContain('A test set built from your real cases');
+});
+
+test('the Holded markdown holds no board row twice', async ({ request }) => {
+  const body = await (
+    await request.get('/es/servicios/integraciones/holded-woocommerce', {
+      headers: { accept: 'text/markdown' },
+    })
+  ).text();
+  const row = 'Pedidos, como factura, ticket o pedido de venta';
+  expect(body.split(row).length - 1).toBeLessThanOrEqual(1);
 });

@@ -34,14 +34,12 @@ import {
 Object.assign(globalThis, { __SITE__: siteConfig(undefined) });
 const { FAQ } = await import('../test/faq');
 
-const R1_ENTRY_JS_GZIP = 128_361;
-const BUDGET = R1_ENTRY_JS_GZIP + 10_240;
-// The plan's section 10 raise, for the two pages that measured a need: /book
-// (the request, pending and confirm views of the emailed-link flow) and home
-// (the Agent Desk, server-rendered and hydrated; PR7 measured 138,986 B against
-// 138,601). Conditional on lhci mobile performance >= 0.95 and TBT <= 150 ms.
-// Every other page keeps BUDGET.
-const RAISED_BUDGET = R1_ENTRY_JS_GZIP + 12_288;
+// Every chunk needed before hydration (the full import closure), gzip. Reset
+// by the owner on 2026-11-25 when the count became honest: it used to see only
+// a route's direct imports. Lhci mobile performance stays the real guard.
+const BUDGET = 143_500;
+// Home (the Switchboard and the Agent Desk) and /book (the emailed-link views).
+const RAISED_BUDGET = 145_000;
 const RAISED_PATHS = new Set(['/', '/es', '/book', '/es/reservar']);
 
 const URLS = [
@@ -71,10 +69,15 @@ type Kind =
   | 'contact'
   | 'diagnostic'
   | 'maintenance'
-  | 'calculator';
+  | 'calculator'
+  | 'includes';
 type Locale = 'en' | 'es';
 
 const NEEDLES: Record<Kind, Partial<Record<Locale, string>>> = {
+  includes: {
+    en: 'A test set built from your real cases',
+    es: 'Batería de pruebas con tus casos reales',
+  },
   home: {
     en: enHome.problems.items[0]?.title ?? '',
     es: esHome.problems.items[0]?.title ?? '',
@@ -149,8 +152,8 @@ const CALCULATOR_CASES: readonly PageCase[] = CALCULATOR_PUBLISHED
 const PAGES: readonly PageCase[] = [
   { path: '/', locale: 'en', kinds: ['home', 'faq'] },
   { path: '/es', locale: 'es', kinds: ['home', 'faq'] },
-  { path: '/pricing', locale: 'en', kinds: ['pricing'] },
-  { path: '/es/precios', locale: 'es', kinds: ['pricing'] },
+  { path: '/pricing', locale: 'en', kinds: ['pricing', 'includes'] },
+  { path: '/es/precios', locale: 'es', kinds: ['pricing', 'includes'] },
   { path: '/about', locale: 'en', kinds: ['about'] },
   { path: '/es/sobre-nosotros', locale: 'es', kinds: ['about'] },
   { path: '/services', locale: 'en', kinds: ['hub'] },
@@ -167,8 +170,16 @@ const PAGES: readonly PageCase[] = [
     locale: 'es',
     kinds: ['integrations'],
   },
-  { path: '/services/ai-agents', locale: 'en', kinds: ['agents'] },
-  { path: '/es/servicios/agentes-de-ia', locale: 'es', kinds: ['agents'] },
+  {
+    path: '/services/ai-agents',
+    locale: 'en',
+    kinds: ['agents', 'includes'],
+  },
+  {
+    path: '/es/servicios/agentes-de-ia',
+    locale: 'es',
+    kinds: ['agents', 'includes'],
+  },
   { path: '/services/custom-software', locale: 'en', kinds: ['software'] },
   {
     path: '/es/servicios/desarrollo-de-software-a-medida',
@@ -221,24 +232,41 @@ const KINDS: readonly Kind[] = [
   'diagnostic',
   'maintenance',
   'calculator',
+  'includes',
 ];
 const LOCALES: readonly Locale[] = ['en', 'es'];
 
+const STATIC_IMPORT = /(?:from|import)\s*"\.\/([^"]+\.js)"/g;
+
+// What the page loads before hydration: its entry and preloads, and every
+// chunk those import statically (a chunk is fetched once its importer runs,
+// preloaded or not). `unlisted` is the part the HTML does not preload.
 async function upFrontScripts(request: APIRequestContext, html: string) {
   const deferred = deferredScripts(html);
   const preloaded = tagsOf(html).flatMap((tag) =>
     tag.rel === 'modulepreload' && tag.href ? [tag.href] : [],
   );
-  const sources = new Set([
+  const listed = new Set([
     ...(deferred ? [deferred.entry, ...deferred.preloads] : []),
     ...preloaded,
   ]);
-  return Promise.all(
-    [...sources].map(async (source) => {
-      const body = await (await request.get(source)).body();
-      return { source, gzip: gzipSync(body).length, text: body.toString() };
-    }),
-  );
+  const loaded = new Map<string, { gzip: number; text: string }>();
+  const queue = [...listed];
+  for (const source of queue) {
+    if (loaded.has(source)) continue;
+    const body = (await (await request.get(source)).body()).toString();
+    loaded.set(source, { gzip: gzipSync(body).length, text: body });
+    const base = source.slice(0, source.lastIndexOf('/') + 1);
+    for (const match of body.matchAll(STATIC_IMPORT)) {
+      queue.push(`${base}${match[1]}`);
+    }
+  }
+  return [...loaded].map(([source, chunk]) => ({
+    source,
+    gzip: chunk.gzip,
+    text: chunk.text,
+    listed: listed.has(source),
+  }));
 }
 
 for (const path of URLS) {
@@ -252,6 +280,32 @@ for (const path of URLS) {
     console.log(`js-budget ${path} ${total} / ${budget}`);
     expect(scripts.length).toBeGreaterThan(0);
     expect(total).toBeLessThanOrEqual(budget);
+  });
+}
+
+const WATERFALL_PATHS = [
+  '/',
+  '/es',
+  '/pricing',
+  '/about',
+  '/contact',
+  '/book',
+  SERVICE_PAIRS.agents.en,
+  SERVICE_PAIRS.maintenance.es,
+  HOLDED_PAGES[1],
+  VERIFACTU_PAGE,
+  SECTOR_PAGE,
+];
+
+for (const path of WATERFALL_PATHS) {
+  test(`${path} preloads every chunk its first scripts import`, async ({
+    request,
+  }) => {
+    const html = await (await request.get(path)).text();
+    const scripts = await upFrontScripts(request, html);
+    expect(
+      scripts.filter((script) => !script.listed).map((s) => s.source),
+    ).toEqual([]);
   });
 }
 

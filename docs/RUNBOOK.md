@@ -43,7 +43,7 @@ bash scripts/smoke.sh
 
 1. `check-ci`: the ref must be `main` and the commit must have a successful **push** run of `ci-cd.yml` ("CI passed" is the branch-protection check).
 2. `security`: `pnpm audit --prod --audit-level=high` and gitleaks over the commit history.
-3. `deploy`, in the `production` environment (which has no secrets or protection rules today):
+3. `deploy`, in the `production` environment (it holds the deploy token and is locked to `main`; RB 4):
    1. `CLOUDFLARE_ENV=production pnpm build`.
    2. Bundle guards: no `FAKE_ASSISTANT_SENTINEL` in `dist/server`, no `FAKE_VOICE_SENTINEL` in `dist/client` or `dist/server`, and `dist/server/wrangler.json` carries the `AI` binding, `CHAT_LIMITER`, the `ELEVENLABS_API_KEY` secret and `VOICE_LIMITER`.
    3. `wrangler d1 migrations apply DB --remote --env production` (expand-only migrations).
@@ -124,9 +124,9 @@ What a rollback does **not** undo:
 
 ## 4. The deploy token
 
-"Github Action Zenet Website" is a Cloudflare **user** token stored as the repo-level GitHub secret `CLOUDFLARE_API_TOKEN`. Needed permissions (as set 2026-10-31, confirm in the dashboard):
+"zenetlabs-website deploy (GitHub production env)" is an **account-owned** Cloudflare token (2026-11-25), stored only as the secret `CLOUDFLARE_API_TOKEN` of the GitHub `production` environment. That environment is locked to `main` by a deployment-branch rule, and there are no repo-level secrets. The old user token "Github Action Zenet Website" is revoked. Needed permissions (confirm in the dashboard):
 
-- Account: Workers Scripts Edit, Secrets Store Edit, Account Settings Read, D1 Edit (or Write).
+- Account: Workers Scripts Edit, Secrets Store Edit, Account Settings Read, D1 Edit.
 - Zone, on the four zones: Workers Routes Edit, Zone Read.
 - Account, Workers AI Read only if a deploy asks for it (the first deploy with the `AI` binding did not).
 
@@ -136,7 +136,7 @@ What a rollback does **not** undo:
 | "No access to the specified service" | Secrets Store |
 | code 10182 | not a permission: a referenced secret does not exist |
 
-Rotation: roll the value in the Cloudflare dashboard (My Profile, API Tokens), run `gh secret set CLOUDFLARE_API_TOKEN`, then run `deploy-prod.yml` and check that it passes. The GitHub environment secret `ELEVENLABS_API_KEY` (optional, voice) rotates the same way. The Cloudflare MCP OAuth cannot edit user tokens. Moving to an account-owned token is on the owner checklist.
+Rotation: roll the value in the Cloudflare dashboard (Manage Account, Account API Tokens), run `gh secret set CLOUDFLARE_API_TOKEN --env production`, then run `deploy-prod.yml` and check that it passes. The `production` environment secret `ELEVENLABS_API_KEY` (optional, voice) rotates the same way.
 
 ## 5. D1
 

@@ -19,8 +19,9 @@ export const integrations = {
       emphasis: 'se hablen',
       after: '',
     },
+    lead: 'Montamos integraciones para pymes cuyas herramientas no se hablan entre sí.',
     // TODO(albert): confirm the timeline
-    lead: `Una integración conecta dos o más de tus herramientas para que los datos pasen solos de una a otra: un pedido de PrestaShop se convierte en factura en Holded, una oportunidad ganada en HubSpot crea el cliente y la factura, un cobro actualiza el CRM. Las montamos para pymes cuyas herramientas no se hablan entre sí. Un proyecto cuesta ${price}, IVA no incluido, y una integración típica está funcionando entre tres y seis semanas después del diagnóstico.`,
+    intro: `Una integración conecta dos o más de tus herramientas para que los datos pasen solos de una a otra: un pedido de PrestaShop se convierte en factura en Holded, una oportunidad ganada en HubSpot crea el cliente y la factura, un cobro actualiza el CRM. Un proyecto cuesta ${price}, IVA no incluido, y una integración típica está funcionando entre tres y seis semanas después del diagnóstico.`,
   },
   facts: {
     who: 'Empresas que trabajan a la vez con Holded, PrestaShop, WooCommerce, Shopify, HubSpot o WhatsApp Business, con alguien pasando datos de una a otra',
@@ -47,23 +48,27 @@ export const integrations = {
         page: 'holdedPrestashop',
         title: 'Holded y PrestaShop',
         text: 'Cada pedido de PrestaShop entra en Holded como factura, con el cliente y el stock al día, sin volver a teclearlo.',
+        tiles: ['prestashop', 'holded'],
       },
       {
         id: 'pair-2',
         page: 'holdedWoocommerce',
         title: 'Holded y WooCommerce',
         text: 'Pedidos, devoluciones y cobros de WooCommerce llegan a Holded, para que la contabilidad cuadre con la tienda sin conciliar a mano a fin de mes.',
+        tiles: ['woocommerce', 'holded'],
       },
       {
         id: 'pair-3',
         page: 'holdedHubspot',
         title: 'Holded y HubSpot',
         text: 'Una oportunidad ganada en HubSpot crea el contacto y la factura en Holded, y el estado del cobro vuelve a HubSpot para que ventas sepa quién ha pagado.',
+        tiles: ['hubspot', 'holded'],
       },
       {
         id: 'whatsapp',
         title: 'WhatsApp Business y tus sistemas',
         text: 'Los avisos de pedido o de reserva salen por WhatsApp con tus propios datos, y las respuestas llegan a la ficha del cliente correcto.',
+        tiles: ['app', 'whatsapp'],
       },
     ],
   },

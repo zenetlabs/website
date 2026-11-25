@@ -20,8 +20,9 @@ export const automation = {
       emphasis: 'still does by hand',
       after: '',
     },
+    lead: 'We build AI automation for Singapore companies, on the tools they already use.',
     // TODO(albert): confirm the timeline
-    lead: `AI automation is software that runs the repetitive steps of a business process for you: it reads incoming documents, moves data between your tools and sends the routine messages, and it asks a person when something looks wrong. We build it for Singapore companies, on the tools they already use. Rule-based automations cost ${price}, excluding GST; steps where AI reads documents or messages are built as an AI agent (${agent}). The first automation usually goes live four to eight weeks after the diagnostic.`,
+    intro: `AI automation is software that runs the repetitive steps of a business process for you: it reads incoming documents, moves data between your tools and sends the routine messages, and it asks a person when something looks wrong. Rule-based automations cost ${price}, excluding GST; steps where AI reads documents or messages are built as an AI agent (${agent}). The first automation usually goes live four to eight weeks after the diagnostic.`,
   },
   facts: {
     who: 'Companies that copy data by hand between an accounting system, a shop, a CRM, email and spreadsheets',
@@ -46,21 +47,25 @@ export const automation = {
         id: 'documents',
         title: 'Documents to data',
         text: 'Supplier invoices, purchase orders and forms are read by AI, checked against what you expected and filed. Only the exceptions reach a person.',
+        tiles: ['gmail', 'agent', 'xero'],
       },
       {
         id: 'approvals',
         title: 'Approvals',
         text: 'Purchase requests, discounts and refunds follow one route: the right person approves from email or chat, and the decision is recorded where it belongs.',
+        tiles: ['gmail', 'human'],
       },
       {
         id: 'follow-ups',
         title: 'Follow-ups and reminders',
         text: 'Quotes, payment reminders and renewal notices go out on schedule, by email or WhatsApp, and stop as soon as the customer replies or pays.',
+        tiles: ['xero', 'whatsapp'],
       },
       {
         id: 'reports',
         title: 'Reports',
         text: "The weekly sales, cash or operations report is assembled from your systems and lands in your inbox, instead of taking up someone's Monday morning.",
+        tiles: ['shopify', 'xero', 'gmail'],
       },
     ],
   },

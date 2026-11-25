@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { VerifactuPage } from '@/components/verifactu-page';
 import { verifactuDates } from '@/content/es/verifactu';
 import { formatMoney } from '@/lib/money';
+import { DESK_CLOSE, INCLUDES } from '../../test/inner-content';
 import { HUB_ES, SPANISH } from '../../test/landing';
 import { SERVICES } from '../../test/page-content';
 
@@ -24,6 +25,8 @@ function view() {
       copy={copy}
       hub={HUB_ES}
       services={SERVICES.es}
+      includes={INCLUDES.es.integration}
+      close={DESK_CLOSE.es}
     />,
   );
 }
@@ -36,6 +39,19 @@ describe('VerifactuPage', () => {
         name: HUB_ES.labels.breadcrumb,
       }),
     ).toBeNull();
+  });
+
+  it('opens the dates with the intro, which holds the dates in force, and sets the ticket and includes', () => {
+    const { container } = view();
+    const intro = container.querySelector('#deadlines');
+    expect(intro?.textContent).toContain(copy.hero.intro);
+    expect(copy.hero.intro).toContain(verifactuDates.companies);
+    expect(copy.hero.intro).toContain(verifactuDates.others);
+    expect(container.querySelector('.price-ticket')).not.toBeNull();
+    expect(container.querySelector('.inner-hero-aside')).toHaveTextContent(
+      INCLUDES.es.integration[0] ?? '',
+    );
+    expect(container.querySelector('[data-flow-board]')).toBeNull();
   });
 
   it('sets the dates on a timeline in the order they fall, the postponement pending', () => {

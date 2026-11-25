@@ -1,4 +1,4 @@
-import { diagnosticPlan } from '@/content/es/diagnostic-plan';
+import { serviceIncludes } from '@/content/es/service-includes';
 import type { PricingPageContent } from '@/content/types';
 
 export const pricingPage = {
@@ -20,56 +20,29 @@ export const pricingPage = {
     startHere: 'Empieza aquí',
     book: 'Reservar el diagnóstico',
   },
-  // TODO(albert): confirm every list
+  // TODO(albert): confirm every list (in service-includes.ts)
   details: {
     diagnostic: {
-      includes: diagnosticPlan,
+      includes: serviceIncludes.diagnostic,
       timeline: '1–2 semanas',
     },
     integration: {
-      includes: [
-        'Alcance definido en el diagnóstico',
-        'Montado en tus cuentas, para que sea tuyo',
-        'Avisos y reintentos cuando algo falla',
-        'Documentación y traspaso a tu equipo',
-      ],
+      includes: serviceIncludes.integration,
     },
     agent: {
-      includes: [
-        'Batería de pruebas con tus casos reales',
-        'Aprobación humana en cada acción con consecuencias',
-        'Límites de uso y de coste',
-        'Monitorización y registro de cada acción',
-      ],
+      includes: serviceIncludes.agent,
     },
     web: {
-      includes: [
-        'Diseño y desarrollo según tus procesos',
-        'Rápida, accesible y preparada para buscadores',
-        'Conectada a tus herramientas desde el primer día',
-        'Alojamiento configurado en tus cuentas',
-      ],
+      includes: serviceIncludes.web,
     },
     training: {
-      includes: [
-        'Talleres sobre tus propios procesos, no sobre ejemplos genéricos',
-        'Mentoría: revisiones periódicas de lo que construye el equipo',
-        'Una política de uso que el equipo pueda cumplir',
-      ],
+      includes: serviceIncludes.training,
     },
     maintenance: {
-      includes: [
-        'Monitorización y avisos de errores',
-        'Correcciones y actualizaciones cuando cambian tus herramientas',
-        'Revisión mensual de qué mejorar',
-      ],
+      includes: serviceIncludes.maintenance,
     },
     growth: {
-      includes: [
-        'SEO técnico y plan de contenidos',
-        'Páginas y artículos que responden a preguntas reales de clientes',
-        'Mejoras de conversión basadas en lo que hacen las visitas',
-      ],
+      includes: serviceIncludes.growth,
     },
   },
   how: {

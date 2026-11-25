@@ -1,4 +1,5 @@
 // TODO(albert): review every claim
+import { viatsy } from '@/content/es/cases';
 import { services } from '@/content/es/services';
 import type { SectorPageContent } from '@/content/types';
 import { formatPrice, formatPriceSummary } from '@/lib/money';
@@ -20,7 +21,8 @@ export const travelAgencies = {
       emphasis: 'copiando reservas',
       after: '',
     },
-    lead: `Una agencia de viajes dedica buena parte del día a trabajo repetitivo: contestar consultas por WhatsApp y correo, montar propuestas, pedir y copiar confirmaciones de proveedores, cobrar señales y recordar pagos, facturar y preparar la documentación del viaje. Automatizamos esos pasos sobre las herramientas que ya usas, con agentes de IA que preparan el trabajo y una persona que lo aprueba. Lo sabemos porque lo hacemos en Viatsy, nuestra propia agencia. Un proyecto cuesta ${price} y un agente de IA en producción, ${agent}, IVA no incluido.`,
+    lead: 'Automatizamos el trabajo repetitivo sobre las herramientas que ya usas, con agentes de IA que lo preparan y una persona que lo aprueba.',
+    intro: `Una agencia de viajes dedica buena parte del día a trabajo repetitivo: contestar consultas por WhatsApp y correo, montar propuestas, pedir y copiar confirmaciones de proveedores, cobrar señales y recordar pagos, facturar y preparar la documentación del viaje. Lo sabemos porque lo hacemos en Viatsy, nuestra propia agencia. Un proyecto cuesta ${price} y un agente de IA en producción, ${agent}, IVA no incluido.`,
   },
   facts: {
     // TODO(albert): confirm the agency size we serve
@@ -96,6 +98,7 @@ export const travelAgencies = {
       },
     ],
   },
+  flow: viatsy.flow,
   platform: {
     title: '¿Prefieres una plataforma ya hecha?',
     text: 'Con lo que aprendimos en Viatsy creamos Taplany, un software para agencias de viajes que reúne web, consultas, propuestas, reservas, pagos y WhatsApp en un solo sitio. Si encaja contigo, te lo diremos; si necesitas conectar lo que ya usas, lo hacemos a medida.',

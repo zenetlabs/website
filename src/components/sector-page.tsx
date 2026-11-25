@@ -1,19 +1,24 @@
 import { BeforeAfter } from '@/components/before-after';
 import { CompanyMark } from '@/components/companies-strip';
 import { Faq } from '@/components/faq';
-import { FactsHero, GetStarted, RelatedLinks } from '@/components/page-blocks';
+import { FlowBoard } from '@/components/flow-board';
+import { InnerClose } from '@/components/inner-close';
+import { RelatedLinks } from '@/components/page-blocks';
+import { PageHero } from '@/components/page-hero';
+import { Includes, PriceTicket } from '@/components/price-ticket';
 import { Container, Section } from '@/components/section';
 import { sectionFrame } from '@/components/section-frame';
 import { StickyZone } from '@/components/sticky-cta';
 import { LEAD, TEXT_LINK } from '@/components/ui';
 import type {
+  DeskCloseCopy,
   SectorPageContent,
   Services,
   ServicesHubContent,
 } from '@/content/types';
 import { crumbName, hubNames } from '@/lib/crumb-names';
 import type { Locale } from '@/lib/i18n';
-import { pagePath } from '@/lib/page-registry';
+import { pagePath, serviceOf } from '@/lib/page-registry';
 import { portfolioOf } from '@/lib/portfolio';
 
 const TAPLANY = portfolioOf('taplany');
@@ -23,11 +28,15 @@ export function SectorPage({
   copy,
   hub,
   services,
+  includes,
+  close,
 }: {
   locale: Locale;
   copy: SectorPageContent;
   hub: ServicesHubContent;
   services: Services;
+  includes: readonly string[];
+  close: DeskCloseCopy;
 }) {
   const names = hubNames(hub);
   const { work, platform } = copy;
@@ -35,17 +44,30 @@ export function SectorPage({
 
   return (
     <>
-      <FactsHero
-        page="travelAgencies"
+      <PageHero
         locale={locale}
-        services={services}
-        labels={hub.labels}
-        hero={copy.hero}
-        facts={copy.facts}
+        title={copy.hero.title}
+        lead={copy.hero.lead}
         button={copy.cta.button}
+        pricing={hub.labels.pricing}
+        board={<FlowBoard flow={copy.flow} actors={hub.labels.actors} />}
+        ticket={
+          <PriceTicket
+            service={services[serviceOf('travelAgencies')]}
+            facts={copy.facts}
+            labels={hub.labels}
+            locale={locale}
+          />
+        }
+        includes={<Includes label={hub.labels.included} items={includes} />}
       />
       <StickyZone locale={locale}>
-        <Section id="work" title={work.title} lead={work.lead}>
+        <Section
+          id="work"
+          title={work.title}
+          intro={copy.hero.intro}
+          lead={work.lead}
+        >
           <BeforeAfter
             rows={work.items.map((item) => ({
               id: item.id,
@@ -103,7 +125,13 @@ export function SectorPage({
           labels={hub.labels}
         />
       </StickyZone>
-      <GetStarted locale={locale} cta={copy.cta} mail={hub.labels.mail} />
+      <InnerClose
+        cta={copy.cta}
+        faq={copy.faq}
+        hub={hub}
+        close={close}
+        locale={locale}
+      />
     </>
   );
 }

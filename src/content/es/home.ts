@@ -1,8 +1,7 @@
-import { assistantIntro } from '@/content/es/assistant-intro';
 import { cases } from '@/content/es/cases';
 import { companies } from '@/content/es/companies';
+import { deskClose } from '@/content/es/desk';
 import { diagnosticPlan } from '@/content/es/diagnostic-plan';
-import { slotsCopy } from '@/content/es/slots';
 import { verifactuDates } from '@/content/es/verifactu';
 import type { HomeContent } from '@/content/types';
 
@@ -48,22 +47,7 @@ export const home = {
       control: 'la animación',
     },
   },
-  desk: {
-    label: 'Pregunta al asistente',
-    intro: assistantIntro,
-    human: {
-      title: 'Pregúntanos',
-      welcome:
-        'Pregúntanos lo que quieras sobre tus herramientas y tus procesos. Te respondemos por correo, normalmente en un día laborable.',
-      label: 'Tu pregunta para nosotros',
-      placeholder: 'Escribe tu pregunta',
-    },
-    call: {
-      button: 'Llamar',
-      label: 'Llamar al agente de IA',
-    },
-    slots: slotsCopy,
-  },
+  desk: deskClose.desk,
   companies: {
     title: 'Nuestras propias empresas ya funcionan con agentes',
     items: companies,
@@ -187,21 +171,12 @@ export const home = {
     },
     lead: 'Cuéntanos qué herramientas usa tu empresa y qué sigue haciendo tu equipo a mano. Te respondemos y acordamos contigo el siguiente paso.',
     mail: '¿Prefieres el correo? Escribe a',
-    human: 'Lo lee y lo contesta una persona de nuestro equipo.',
+    human: deskClose.human,
     book: '¿Prefieres una llamada? Elige una hora',
     voice: {
       text: '¿Prefieres hablar? Nuestro asistente de voz es una IA, no una persona: responde tus dudas y te reserva una llamada.',
       button: 'Hablar con el asistente',
     },
   },
-  doors: {
-    call: {
-      title: 'Llama al agente',
-      text: 'Nuestro asistente de voz es una IA, no una persona.',
-    },
-    write: {
-      title: 'Escríbenos',
-      text: 'Usa el formulario de contacto.',
-    },
-  },
+  doors: deskClose.doors,
 } satisfies HomeContent;

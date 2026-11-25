@@ -1,7 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { SectorPage } from '@/components/sector-page';
+import { viatsy } from '@/content/es/cases';
 import { pagePath } from '@/lib/page-registry';
+import { DESK_CLOSE, INCLUDES } from '../../test/inner-content';
 import { HUB_ES, SPANISH } from '../../test/landing';
 import { SERVICES } from '../../test/page-content';
 
@@ -18,9 +20,41 @@ const copy = SPANISH.travelAgencies;
 
 function view() {
   return render(
-    <SectorPage locale="es" copy={copy} hub={HUB_ES} services={SERVICES.es} />,
+    <SectorPage
+      locale="es"
+      copy={copy}
+      hub={HUB_ES}
+      services={SERVICES.es}
+      includes={INCLUDES.es.integration}
+      close={DESK_CLOSE.es}
+    />,
   );
 }
+
+describe('SectorPage hero', () => {
+  it("runs Viatsy's enquiry flow on its board, with no approval card", () => {
+    const { container } = view();
+    const board = container.querySelector('[data-flow-board="lane"]');
+    expect(board?.querySelector('figcaption')).toHaveTextContent(
+      viatsy.flow.caption,
+    );
+    expect(
+      [...(board?.querySelectorAll('.fb-step') ?? [])].map(
+        (step) => step.textContent,
+      ),
+    ).toEqual(viatsy.flow.steps.map((step) => step.label));
+    expect(board?.querySelector('.fb-after')).toBeNull();
+  });
+
+  it('opens the work section with the rest of the old lead, above its own lead', () => {
+    const { container } = view();
+    const work = container.querySelector('#work')?.textContent ?? '';
+    expect(work).toContain(copy.hero.intro);
+    expect(work.indexOf(copy.hero.intro)).toBeLessThan(
+      work.indexOf(copy.work.lead ?? ''),
+    );
+  });
+});
 
 describe('SectorPage', () => {
   it('shows six tasks, each with both labels', () => {

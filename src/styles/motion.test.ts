@@ -3,6 +3,10 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { JOBS } from '@/components/switchboard-table';
 import { PRIMARY_BUTTON } from '@/components/ui';
+import { viatsy } from '@/content/es/cases';
+import { locales } from '@/lib/i18n';
+import { SERVICE_PAGE_IDS } from '@/lib/page-registry';
+import { SERVICE_BODIES } from '../../test/service-bodies';
 
 const CSS = readFileSync(
   join(process.cwd(), 'src', 'styles', 'app.css'),
@@ -23,9 +27,11 @@ const INTRO = [
   'sb-swap',
 ];
 
-const INTRO_GATE =
+// The one gate every scene plays in: the home Switchboard and the inner boards
+const SCENE_GATE =
   '@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {\n  [data-switchboard]';
 const INTRO_SCOPE = '[data-switchboard]:not([data-intro="done"]) {';
+const BOARD_SCOPE = '[data-flow-board] {';
 
 function properties(block: string): string[] {
   return [
@@ -62,18 +68,76 @@ function introBeats(): Record<string, number> {
   return beats;
 }
 
-function blockAfter(marker: string): string {
-  const start = CSS.indexOf(marker);
+function flat(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+// A CSS time expression (calc, min, max, + - * /, seconds, var(--x[, fallback]))
+// evaluated for the variables in `env`, in seconds
+function arithmetic(expression: string, env: Record<string, number>): number {
+  const source = expression
+    .replace(/var\((--[\w-]+)(?:,\s*[^)]*)?\)/g, (_, name: string) =>
+      String(env[name]),
+    )
+    .replace(/(\d(?:\.\d+)?)ms\b/g, (_, n: string) => String(Number(n) / 1000))
+    .replace(/(\d(?:\.\d+)?)s\b/g, '$1');
+  const tokens = source.match(/min|max|[\d.]+|[-+*/(),]/g) ?? [];
+  let at = 0;
+  const peek = () => tokens[at];
+  const take = () => tokens[at++];
+  function primary(): number {
+    const token = take();
+    if (token === '(') {
+      const value = sum();
+      take();
+      return value;
+    }
+    if (token === 'min' || token === 'max') {
+      take();
+      const values = [sum()];
+      while (peek() === ',') {
+        take();
+        values.push(sum());
+      }
+      take();
+      return token === 'min' ? Math.min(...values) : Math.max(...values);
+    }
+    if (token === '-') return -primary();
+    return Number(token);
+  }
+  function product(): number {
+    let value = primary();
+    while (peek() === '*' || peek() === '/') {
+      const op = take();
+      const next = primary();
+      value = op === '*' ? value * next : value / next;
+    }
+    return value;
+  }
+  function sum(): number {
+    let value = product();
+    while (peek() === '+' || peek() === '-') {
+      const op = take();
+      const next = product();
+      value = op === '+' ? value + next : value - next;
+    }
+    return value;
+  }
+  return sum();
+}
+
+function blockAfter(marker: string, source = CSS): string {
+  const start = source.indexOf(marker);
   if (start < 0) throw new Error(`${marker} is missing from app.css`);
-  const open = CSS.indexOf('{', start);
+  const open = source.indexOf('{', start);
   let depth = 1;
   let end = open + 1;
-  while (depth > 0 && end < CSS.length) {
-    if (CSS[end] === '{') depth += 1;
-    if (CSS[end] === '}') depth -= 1;
+  while (depth > 0 && end < source.length) {
+    if (source[end] === '{') depth += 1;
+    if (source[end] === '}') depth -= 1;
     end += 1;
   }
-  return CSS.slice(open + 1, end - 1);
+  return source.slice(open + 1, end - 1);
 }
 
 describe('motion policy', () => {
@@ -105,21 +169,37 @@ describe('motion policy', () => {
     expect(properties(away)).toEqual(['visibility']);
   });
 
-  it('plays the switchboard intro only with scripting and motion allowed, until it is done', () => {
-    const block = blockAfter(INTRO_GATE);
-    expect(CSS.split(INTRO_GATE)).toHaveLength(2);
-    expect(block.trim().startsWith(INTRO_SCOPE)).toBe(true);
-    expect(block.trim().length).toBe(
-      blockAfter(INTRO_SCOPE).length + INTRO_SCOPE.length + 1,
-    );
-    const outside = CSS.replace(block, '');
+  it('plays every scene in one gate: scripting and motion allowed, the Switchboard until it is done', () => {
+    const gate = blockAfter(SCENE_GATE);
+    expect(CSS.split(SCENE_GATE)).toHaveLength(2);
+    expect(gate).toContain(INTRO_SCOPE);
+    expect(gate).toContain(BOARD_SCOPE);
+    const intro = blockAfter(INTRO_SCOPE);
+    const outside = CSS.replace(gate, '');
     for (const name of INTRO) {
-      expect(block).toMatch(new RegExp(`animation:\\s*${name}\\s`));
+      expect(intro).toMatch(new RegExp(`animation:\\s*${name}\\s`));
       expect(outside).not.toMatch(
         new RegExp(`animation(-name)?:\\s*${name}\\b`),
       );
     }
-    expect(block).not.toMatch(/infinite/);
+    expect(gate).not.toMatch(/infinite/);
+    expect(gate).not.toMatch(/forwards|both/);
+  });
+
+  it('keeps every scene animation inside that gate, and the boards on three of the Switchboard keyframes', () => {
+    const gate = blockAfter(SCENE_GATE);
+    const outside = CSS.replace(gate, '');
+    const scenes = [...CSS.matchAll(/animation(?:-name)?:\s*(sb-[\w-]+)/g)];
+    expect(scenes.length).toBeGreaterThan(0);
+    expect(outside).not.toMatch(/animation(-name)?:\s*sb-/);
+    const board = blockAfter(BOARD_SCOPE);
+    const names = [...board.matchAll(/animation:\s*([\w-]+)/g)].map(
+      (m) => m[1],
+    );
+    expect(new Set(names)).toEqual(
+      new Set(['sb-packet', 'sb-ping', 'sb-rise']),
+    );
+    expect(outside).not.toMatch(/\.fb-[\w-]+[^{}]*\{[^}]*animation/);
   });
 
   it('moves the intro only by opacity and transforms, with visibility to hide the desk and swap the button label', () => {
@@ -181,7 +261,7 @@ describe('motion policy', () => {
       ),
     );
     const rest = [
-      ...blockAfter(INTRO_GATE).matchAll(/animation:\s*sb-[\w-]+([^;]*);/g),
+      ...blockAfter(INTRO_SCOPE).matchAll(/animation:\s*sb-[\w-]+([^;]*);/g),
     ]
       .map(([, timing = '']) => timing)
       .filter((timing) => !/--(at|span|d)\b/.test(timing))
@@ -190,6 +270,88 @@ describe('motion policy', () => {
     expect(hops).toHaveLength(10);
     expect(rest.length).toBeGreaterThan(8);
     expect(Math.max(...jobs, ...hops, ...rest)).toBeLessThanOrEqual(11);
+  });
+
+  it('ends every board within 5 seconds, for each step count, from the CSS declarations', () => {
+    const board = flat(blockAfter('.flow-board {'));
+    const sceneRaw = blockAfter(BOARD_SCOPE);
+    const scene = flat(sceneRaw);
+    const beats = (steps: number) => {
+      const values: Record<string, number> = {};
+      const env: Record<string, number> = { '--n': steps };
+      for (const [, name = '', value = ''] of board.matchAll(
+        /(--fb-[\w-]+):\s*([^;]+);/g,
+      )) {
+        env[name] = arithmetic(value, env);
+        values[name] = env[name] ?? 0;
+      }
+      return env;
+    };
+    const timing = (selector: string) => {
+      const rule = flat(blockAfter(`${selector} {`, sceneRaw));
+      const match =
+        /animation:\s*(sb-[\w-]+)\s+(\S+)\s+(?:linear|var\(--ease-out\))\s+(.+?)(?:\s+backwards)?;/.exec(
+          rule,
+        );
+      if (!match) throw new Error(`no animation on ${selector}`);
+      return { duration: match[2] ?? '', delay: match[3] ?? '' };
+    };
+    const first = /animation-delay:\s*([^;]+);/.exec(
+      flat(blockAfter('.fb-lane li:first-child .fb-ping {', sceneRaw)),
+    );
+    expect(scene).toContain('.fb-lane li:first-child .fb-ping');
+    const [packet, ping, after, pairPacket, pairPing] = [
+      timing('.fb-lane .fb-pk'),
+      timing('.fb-lane .fb-ping'),
+      timing('.fb-after'),
+      timing('.fb-pair .fb-pk'),
+      timing('.fb-pair .fb-ping'),
+    ];
+    const end = (
+      t: { duration: string; delay: string },
+      env: Record<string, number>,
+    ) => arithmetic(t.delay, env) + arithmetic(t.duration, env);
+    const laneEnd = (steps: number) => {
+      const env = beats(steps);
+      const ends = [end(after, env)];
+      for (let i = 0; i < steps; i += 1) {
+        const at = { ...env, '--i': i };
+        const delay =
+          i === 0
+            ? arithmetic(first?.[1] ?? '', at)
+            : arithmetic(ping.delay, at);
+        ends.push(delay + arithmetic(ping.duration, at));
+        if (i < steps - 1) ends.push(end(packet, at));
+        if (i === 0) {
+          expect(delay, `${steps} steps: the first ping`).toBeLessThanOrEqual(
+            arithmetic(packet.delay, at),
+          );
+        }
+      }
+      return Math.max(...ends);
+    };
+    const flows = [
+      ...locales.flatMap((locale) =>
+        SERVICE_PAGE_IDS.map((page) => SERVICE_BODIES[locale].pages[page].flow),
+      ),
+      viatsy.flow,
+    ];
+    const longest = Math.max(...flows.map((flow) => flow?.steps.length ?? 0));
+    expect(longest).toBeGreaterThanOrEqual(3);
+    expect(laneEnd(longest)).toBeLessThanOrEqual(5);
+    expect(laneEnd(3)).toBeGreaterThan(3);
+    for (let steps = 2; steps <= 24; steps += 1) {
+      expect(laneEnd(steps), `${steps} steps`).toBeLessThanOrEqual(5);
+    }
+    const env = beats(3);
+    const pairEnd = Math.max(
+      ...[0, 1, 2, 3].flatMap((k) => [
+        end(pairPacket, { ...env, '--k': k }),
+        end(pairPing, { ...env, '--k': k }),
+      ]),
+    );
+    expect(pairEnd).toBeLessThanOrEqual(5);
+    expect(pairEnd).toBeGreaterThan(3);
   });
 
   it('removes keyframes but adds no blanket transition under reduced motion', () => {

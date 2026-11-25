@@ -21,8 +21,9 @@ export const holdedHubspot = {
       emphasis: 'de la venta cerrada a la factura',
       after: '',
     },
+    lead: 'Ventas ve quién ha pagado sin preguntar a administración, y administración no vuelve a teclear lo que ya está en el CRM.',
     // TODO(albert): confirm the timeline
-    lead: `Conectamos HubSpot con Holded para que, cuando ganas una oportunidad, el cliente se cree en Holded con sus datos fiscales y salga la factura o el presupuesto con sus líneas, y para que el estado del cobro vuelva a HubSpot. Así ventas ve quién ha pagado sin preguntar a administración, y administración no vuelve a teclear lo que ya está en el CRM. Un proyecto cuesta ${price}, IVA no incluido, y suele estar funcionando entre tres y cinco semanas después del diagnóstico.`,
+    intro: `Conectamos HubSpot con Holded para que, cuando ganas una oportunidad, el cliente se cree en Holded con sus datos fiscales y salga la factura o el presupuesto con sus líneas, y para que el estado del cobro vuelva a HubSpot. Un proyecto cuesta ${price}, IVA no incluido, y suele estar funcionando entre tres y cinco semanas después del diagnóstico.`,
   },
   facts: {
     who: 'Empresas que venden con HubSpot y facturan con Holded, con alguien pasando clientes, importes o cobros de uno a otro',

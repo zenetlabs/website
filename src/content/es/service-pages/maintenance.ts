@@ -17,7 +17,8 @@ export const maintenance = {
       emphasis: 'automatizaciones sigan funcionando',
       after: '',
     },
-    lead: `Las herramientas cambian, y una automatización que funcionaba el mes pasado puede dejar de hacerlo sin avisar. Nuestro mantenimiento vigila lo que construimos, lo corrige y lo actualiza cuando cambian tus herramientas, y cada mes revisa qué mejorar. Hay tres planes: ${formatPrice('es', essential)}, ${formatPrice('es', standard)} y ${formatPrice('es', extended)}, IVA no incluido.`,
+    lead: 'Las herramientas cambian, y una automatización que funcionaba el mes pasado puede dejar de hacerlo sin avisar.',
+    intro: `Nuestro mantenimiento vigila lo que construimos, lo corrige y lo actualiza cuando cambian tus herramientas, y cada mes revisa qué mejorar. Hay tres planes: ${formatPrice('es', essential)}, ${formatPrice('es', standard)} y ${formatPrice('es', extended)}, IVA no incluido.`,
   },
   facts: {
     who: 'Empresas con una integración, una automatización o un agente de IA nuestro en producción',

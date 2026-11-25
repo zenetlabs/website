@@ -20,8 +20,9 @@ export const agents = {
       emphasis: 'trabajan de verdad',
       after: ', con una persona al mando',
     },
+    lead: 'Implementamos agentes para pymes en tareas como clasificar consultas, redactar respuestas o procesar documentos, y una persona aprueba todo lo que tiene consecuencias.',
     // TODO(albert): confirm the timeline
-    lead: `Un agente de IA es un programa que lleva una tarea de principio a fin: lee una consulta o un documento, busca en tus sistemas lo que necesita, decide el siguiente paso y lo lleva a cabo, dentro de los límites que tú fijas. Implementamos agentes para pymes en tareas como clasificar consultas, redactar respuestas o procesar documentos, y una persona aprueba todo lo que tiene consecuencias. Un agente en producción cuesta ${price}, IVA no incluido, y el piloto suele estar trabajando con casos reales entre seis y diez semanas después del diagnóstico.`,
+    intro: `Un agente de IA es un programa que lleva una tarea de principio a fin: lee una consulta o un documento, busca en tus sistemas lo que necesita, decide el siguiente paso y lo lleva a cabo, dentro de los límites que tú fijas. Un agente en producción cuesta ${price}, IVA no incluido, y el piloto suele estar trabajando con casos reales entre seis y diez semanas después del diagnóstico.`,
   },
   facts: {
     who: 'Empresas con un flujo constante de consultas, documentos o peticiones que siguen patrones pero aún necesitan criterio',
@@ -46,21 +47,25 @@ export const agents = {
         id: 'triage',
         title: 'Clasificar consultas',
         text: 'Lee cada correo, formulario y mensaje de WhatsApp, entiende qué se pide y lo pasa con un resumen a la persona adecuada, o lo responde si la respuesta es rutinaria.',
+        tiles: ['whatsapp', 'agent', 'human'],
       },
       {
         id: 'drafting',
         title: 'Respuestas y propuestas',
         text: 'Redacta respuestas y presupuestos con tu tono a partir de tu catálogo, tus precios y respuestas anteriores, para que alguien del equipo los revise y los envíe.',
+        tiles: ['gmail', 'agent', 'human'],
       },
       {
         id: 'documents',
         title: 'Procesar documentos',
         text: 'Lee facturas, contratos, albaranes o solicitudes, extrae lo importante y lo contrasta con tus registros.',
+        tiles: ['gmail', 'agent', 'sheets'],
       },
       {
         id: 'knowledge',
         title: 'Preguntas internas',
         text: 'Responde a las dudas del equipo sobre procedimientos, productos o casos anteriores a partir de los documentos de tu empresa, con enlace a la fuente.',
+        tiles: ['human', 'agent'],
       },
     ],
   },

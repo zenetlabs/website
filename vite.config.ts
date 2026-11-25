@@ -3,6 +3,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import { expandPreloads } from './scripts/expand-preloads.ts';
 import { serverConfig, siteConfig } from './site.config.ts';
 
 const server = serverConfig(process.env.CLOUDFLARE_ENV, {
@@ -38,5 +39,6 @@ export default defineConfig({
     cloudflare({ viteEnvironment: { name: 'ssr' } }),
     tanstackStart({ router: { routeFileIgnorePattern: '\\.test\\.' } }),
     react(),
+    expandPreloads(),
   ],
 });

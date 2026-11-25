@@ -1,21 +1,22 @@
 import { Faq } from '@/components/faq';
+import { InnerClose } from '@/components/inner-close';
+import { Ledger } from '@/components/ledger';
 import { BulletList } from '@/components/lists';
-import {
-  FactsHero,
-  GetStarted,
-  RelatedLinks,
-  UseCaseList,
-} from '@/components/page-blocks';
+import { RelatedLinks } from '@/components/page-blocks';
+import { PageHero } from '@/components/page-hero';
+import { Includes, PriceTicket } from '@/components/price-ticket';
 import { Container, Section } from '@/components/section';
 import { StickyZone } from '@/components/sticky-cta';
 import { EYEBROW, H3, PROSE } from '@/components/ui';
 import type {
+  DeskCloseCopy,
   Services,
   ServicesHubContent,
   VerifactuPageContent,
 } from '@/content/types';
 import { hubNames } from '@/lib/crumb-names';
 import type { Locale } from '@/lib/i18n';
+import { serviceOf } from '@/lib/page-registry';
 
 type Mark = { id: string; date: string; text: string; pending?: boolean };
 
@@ -64,27 +65,38 @@ export function VerifactuPage({
   copy,
   hub,
   services,
+  includes,
+  close,
 }: {
   locale: Locale;
   copy: VerifactuPageContent;
   hub: ServicesHubContent;
   services: Services;
+  includes: readonly string[];
+  close: DeskCloseCopy;
 }) {
   const { deadlines, requirements, work } = copy;
 
   return (
     <>
-      <FactsHero
-        page="verifactu"
+      <PageHero
         locale={locale}
-        services={services}
-        labels={hub.labels}
-        hero={copy.hero}
-        facts={copy.facts}
+        title={copy.hero.title}
+        lead={copy.hero.lead}
         button={copy.cta.button}
+        pricing={hub.labels.pricing}
+        ticket={
+          <PriceTicket
+            service={services[serviceOf('verifactu')]}
+            facts={copy.facts}
+            labels={hub.labels}
+            locale={locale}
+          />
+        }
+        includes={<Includes label={hub.labels.included} items={includes} />}
       />
       <StickyZone locale={locale}>
-        <Section id="deadlines" title={deadlines.title}>
+        <Section id="deadlines" title={deadlines.title} lead={copy.hero.intro}>
           <p className={EYEBROW}>{deadlines.label}</p>
           <DateLine deadlines={deadlines} dates={copy.dates} />
           <div className="date-line-after">
@@ -106,10 +118,10 @@ export function VerifactuPage({
           lead={requirements.lead}
           variant="tint"
         >
-          <UseCaseList items={requirements.items} locale={locale} />
+          <Ledger items={requirements.items} locale={locale} />
         </Section>
         <Section id="what-we-do" title={work.title}>
-          <UseCaseList items={work.items} locale={locale} />
+          <Ledger items={work.items} locale={locale} />
           <p className={`mt-8 ${PROSE}`}>{work.limits}</p>
         </Section>
         <Faq copy={copy.faq} items={copy.faq.items} />
@@ -125,7 +137,13 @@ export function VerifactuPage({
           labels={hub.labels}
         />
       </StickyZone>
-      <GetStarted locale={locale} cta={copy.cta} mail={hub.labels.mail} />
+      <InnerClose
+        cta={copy.cta}
+        faq={copy.faq}
+        hub={hub}
+        close={close}
+        locale={locale}
+      />
     </>
   );
 }

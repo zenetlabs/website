@@ -20,8 +20,9 @@ export const agents = {
       emphasis: 'real work',
       after: ', with a person in charge',
     },
+    lead: 'For Singapore companies, we build agents that triage enquiries, draft replies and process documents, and a person approves anything with consequences.',
     // TODO(albert): confirm the timeline
-    lead: `An AI agent is software that takes a task from start to finish: it reads an enquiry or a document, looks up what it needs in your systems, decides the next step and does it, within limits you set. We build agents for Singapore companies, for work such as triaging enquiries, drafting replies and processing documents, and a person approves anything with consequences. An agent in production costs ${price}, excluding GST, and a pilot is usually working on real cases six to ten weeks after the diagnostic.`,
+    intro: `An AI agent is software that takes a task from start to finish: it reads an enquiry or a document, looks up what it needs in your systems, decides the next step and does it, within limits you set. An agent in production costs ${price}, excluding GST, and a pilot is usually working on real cases six to ten weeks after the diagnostic.`,
   },
   facts: {
     who: 'Companies with a steady flow of enquiries, documents or requests that follow patterns but still need judgement',
@@ -46,21 +47,25 @@ export const agents = {
         id: 'triage',
         title: 'Enquiry triage',
         text: 'Reads every email, form and WhatsApp message, works out what is being asked, and routes it with a summary to the right person, or answers it if the answer is routine.',
+        tiles: ['whatsapp', 'agent', 'human'],
       },
       {
         id: 'drafting',
         title: 'Replies and proposals',
         text: 'Drafts replies and quotes in your tone from your catalogue, prices and past answers, for someone on your team to check and send.',
+        tiles: ['gmail', 'agent', 'human'],
       },
       {
         id: 'documents',
         title: 'Document processing',
         text: 'Reads invoices, contracts, delivery notes or application forms, extracts what matters and checks it against your records.',
+        tiles: ['gmail', 'agent', 'sheets'],
       },
       {
         id: 'knowledge',
         title: 'Internal questions',
         text: "Answers your team's questions about policies, products or past cases from your own documents, with a link to the source.",
+        tiles: ['human', 'agent'],
       },
     ],
   },

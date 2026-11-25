@@ -3,7 +3,8 @@ import { lazy, Suspense, useSyncExternalStore } from 'react';
 import { BookingConfirm } from '@/components/booking-confirm';
 import { BookingForm } from '@/components/booking-form';
 import { BookingPerson } from '@/components/booking-person';
-import { Breadcrumb, FactList, HeroHeading } from '@/components/page-blocks';
+import { Breadcrumb } from '@/components/page-blocks';
+import { FactList, HeroHeading } from '@/components/plain-hero';
 import { Container } from '@/components/section';
 import { sectionFrame } from '@/components/section-frame';
 import { BAND_CARD, H3, LEAD, TEXT_LINK } from '@/components/ui';
@@ -139,7 +140,7 @@ function Book() {
 
   return (
     <>
-      <section aria-labelledby="service-title">
+      <section aria-labelledby="page-title">
         <Container className="py-16 md:py-24">
           <Breadcrumb
             page="book"

@@ -19,8 +19,9 @@ export const integrations = {
       emphasis: 'keep your data in step',
       after: '',
     },
+    lead: "We build integrations for Singapore companies whose tools don't talk to each other.",
     // TODO(albert): confirm the timeline
-    lead: `An integration connects two or more of your tools so data moves between them on its own: a Shopify order becomes a Xero invoice, a won deal in HubSpot creates the customer and the invoice, a payment updates the CRM. We build them for Singapore companies whose tools don't talk to each other. Projects cost ${price}, excluding GST, and a typical integration goes live three to six weeks after the diagnostic.`,
+    intro: `An integration connects two or more of your tools so data moves between them on its own: a Shopify order becomes a Xero invoice, a won deal in HubSpot creates the customer and the invoice, a payment updates the CRM. Projects cost ${price}, excluding GST, and a typical integration goes live three to six weeks after the diagnostic.`,
   },
   facts: {
     who: 'Companies running Xero, Shopify, HubSpot, WooCommerce or WhatsApp Business side by side, with someone copying data between them',
@@ -45,21 +46,25 @@ export const integrations = {
         id: 'pair-1',
         title: 'Shopify and Xero',
         text: 'Orders, refunds, fees and payouts reach Xero as invoices and payments, so the books match the shop without month-end reconciliation by hand.',
+        tiles: ['shopify', 'xero'],
       },
       {
         id: 'pair-2',
         title: 'HubSpot and Xero',
         text: 'A won deal creates the contact and the invoice in Xero, and payment status flows back to HubSpot so sales can see who has paid.',
+        tiles: ['hubspot', 'xero'],
       },
       {
         id: 'pair-3',
         title: 'Shopify and HubSpot',
         text: 'Customers and orders sync to HubSpot, so follow-ups and campaigns use what people actually bought.',
+        tiles: ['shopify', 'hubspot'],
       },
       {
         id: 'whatsapp',
         title: 'WhatsApp Business and your systems',
         text: 'Order and booking updates go out on WhatsApp from your own data, and replies land in the right customer record.',
+        tiles: ['app', 'whatsapp'],
       },
     ],
   },

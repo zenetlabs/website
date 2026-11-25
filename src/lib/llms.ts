@@ -66,6 +66,7 @@ import {
 } from '@/lib/i18n';
 import { isMeasured } from '@/lib/metrics';
 import { formatNumber, formatPrice, formatPriceSummary } from '@/lib/money';
+import { pageLead } from '@/lib/page-lead';
 import {
   HOLDED_PAGE_IDS,
   hasLocale,
@@ -486,7 +487,7 @@ function servicePagesSection(
         const body = pages[page];
         return [
           `### [${hub.cards[page].name}](${pageUrl(locale, page)})`,
-          body.hero.lead,
+          pageLead(body.hero),
           factsBlock(locale, serviceOf(page), body.facts, hub.labels),
           bullets(body.useCases.title, body.useCases.items),
           ...(body.flow ? [flowBlock(body.flow)] : []),
@@ -526,7 +527,7 @@ function holdedSection(
         const body = spanish[page];
         return [
           `### [${crumbName(hubNames(hub), page)}](${pageUrl(locale, page)})`,
-          body.hero.lead,
+          pageLead(body.hero),
           factsBlock(locale, 'integration', body.facts, hub.labels),
           [
             `${titleText(body.sync.title)}:`,
@@ -553,7 +554,7 @@ function verifactuBlocks(
   const { deadlines, requirements, work } = body;
   return [
     `### [${crumbName(hubNames(hub), 'verifactu')}](${pageUrl(locale, 'verifactu')})`,
-    body.hero.lead,
+    pageLead(body.hero),
     deadlines.rows.map((row) => `- ${row.who}: ${row.date}`).join('\n'),
     `${deadlines.announced} ${deadlines.producers}`,
     [
@@ -578,7 +579,7 @@ function sectorSection(
     section(
       `[${crumbName(hubNames(hub), 'travelAgencies')}](${pageUrl(locale, 'travelAgencies')})`,
       [
-        body.hero.lead,
+        pageLead(body.hero),
         body.work.items
           .map((item) => `- ${item.title}: ${item.today} → ${item.automated}`)
           .join('\n'),

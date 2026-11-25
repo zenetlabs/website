@@ -8,6 +8,7 @@ import type {
   ChatCopy,
   CompanyCopy,
   ContactPageContent,
+  DeskCloseCopy,
   FaqItem,
   HoldedPairContent,
   HomeContent,
@@ -19,7 +20,12 @@ import type {
   VoiceCopy,
 } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
-import type { HoldedPageId, ServicePageId } from '@/lib/page-registry';
+import {
+  type HoldedPageId,
+  type LandingPageId,
+  type ServicePageId,
+  serviceOf,
+} from '@/lib/page-registry';
 
 const HOME = {
   en: () =>
@@ -176,6 +182,16 @@ const VERIFACTU = () =>
 const TRAVEL_AGENCIES = () =>
   import('@/content/es/travel-agencies').then((m) => m.travelAgencies);
 
+const INCLUDES = {
+  en: () => import('@/content/en/service-includes'),
+  es: () => import('@/content/es/service-includes'),
+};
+
+const DESK_CLOSE = {
+  en: () => import('@/content/en/desk'),
+  es: () => import('@/content/es/desk'),
+};
+
 const VIATSY_CASE = {
   en: () =>
     Promise.all([
@@ -204,11 +220,30 @@ const SERVICES_HUB = {
 
 // While voice is dark the call-to-action copy must not reach the page, not even
 // in the data a route hands to the client.
+function withoutCall<T extends Pick<DeskCloseCopy, 'desk' | 'doors'>>(
+  close: T,
+): T {
+  const { call: _deskCall, ...desk } = close.desk;
+  const { call: _doorCall, ...doors } = close.doors;
+  return { ...close, desk, doors };
+}
+
 function withoutVoice(home: HomeContent): HomeContent {
   const { voice: _voice, ...contact } = home.contact;
-  const { call: _deskCall, ...desk } = home.desk;
-  const { call: _doorCall, ...doors } = home.doors;
-  return { ...home, contact, desk, doors };
+  return { ...withoutCall(home), contact };
+}
+
+export async function loadDeskClose(locale: Locale): Promise<DeskCloseCopy> {
+  const { deskClose } = await DESK_CLOSE[locale]();
+  return __VOICE__ ? deskClose : withoutCall(deskClose);
+}
+
+async function loadIncludes(
+  locale: Locale,
+  page: ServicePageId | LandingPageId,
+): Promise<readonly string[]> {
+  const { serviceIncludes } = await INCLUDES[locale]();
+  return serviceIncludes[serviceOf(page)];
 }
 
 export async function loadHomeContent(locale: Locale): Promise<{
@@ -291,12 +326,17 @@ export async function loadServicePageContent(
   copy: ServicePageContent;
   hub: ServicesHubContent;
   services: Services;
+  includes: readonly string[];
+  close: DeskCloseCopy;
 }> {
-  const [copy, [{ servicesHub }, { services }]] = await Promise.all([
-    SERVICE_PAGES[page][locale](),
-    SERVICES_HUB[locale](),
-  ]);
-  return { copy, hub: servicesHub, services };
+  const [copy, [{ servicesHub }, { services }], includes, close] =
+    await Promise.all([
+      SERVICE_PAGES[page][locale](),
+      SERVICES_HUB[locale](),
+      loadIncludes(locale, page),
+      loadDeskClose(locale),
+    ]);
+  return { copy, hub: servicesHub, services, includes, close };
 }
 
 export async function loadServicesHubContent(locale: Locale): Promise<{
@@ -307,28 +347,36 @@ export async function loadServicesHubContent(locale: Locale): Promise<{
   return { hub: servicesHub, services };
 }
 
-async function loadSpanishLanding<T>(copy: () => Promise<T>): Promise<{
+async function loadSpanishLanding<T>(
+  page: LandingPageId,
+  copy: () => Promise<T>,
+): Promise<{
   copy: T;
   hub: ServicesHubContent;
   services: Services;
+  includes: readonly string[];
+  close: DeskCloseCopy;
 }> {
-  const [loaded, [{ servicesHub }, { services }]] = await Promise.all([
-    copy(),
-    SERVICES_HUB.es(),
-  ]);
-  return { copy: loaded, hub: servicesHub, services };
+  const [loaded, [{ servicesHub }, { services }], includes, close] =
+    await Promise.all([
+      copy(),
+      SERVICES_HUB.es(),
+      loadIncludes('es', page),
+      loadDeskClose('es'),
+    ]);
+  return { copy: loaded, hub: servicesHub, services, includes, close };
 }
 
 export function loadHoldedPairContent(page: HoldedPageId) {
-  return loadSpanishLanding(HOLDED_PAIRS[page]);
+  return loadSpanishLanding(page, HOLDED_PAIRS[page]);
 }
 
 export function loadVerifactuContent() {
-  return loadSpanishLanding(VERIFACTU);
+  return loadSpanishLanding('verifactu', VERIFACTU);
 }
 
 export function loadSectorContent() {
-  return loadSpanishLanding(TRAVEL_AGENCIES);
+  return loadSpanishLanding('travelAgencies', TRAVEL_AGENCIES);
 }
 
 export async function loadCaseContent(locale: Locale): Promise<{

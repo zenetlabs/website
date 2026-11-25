@@ -7,6 +7,7 @@ import { SERVICES } from '../test/page-content';
 import { test } from './fixtures';
 import {
   CASE_PAIR,
+  CONTACT_PAIR,
   CTA,
   gotoHydrated,
   HOLDED_PAGES,
@@ -37,10 +38,9 @@ for (const path of ES_PAGES) {
       await expect(page.locator('h1')).toHaveCount(1);
       await expect(page.locator('h1')).toBeVisible();
       await expect(page.locator('main img')).toHaveCount(0);
-      const facts = page.locator('main dl').first();
-      await expect(facts.locator('dt')).toHaveCount(4);
-      await expect(facts.locator('dd').nth(1)).toContainText(INTEGRATION_PRICE);
-      await expect(facts.locator('dd').nth(1)).toContainText('IVA no incluido');
+      const ticket = page.locator('main [data-service]').first();
+      await expect(ticket).toContainText(INTEGRATION_PRICE);
+      await expect(ticket).toContainText('IVA no incluido');
     });
 
     test('sends the call to action to the contact form and the price to pricing', async ({
@@ -56,10 +56,9 @@ for (const path of ES_PAGES) {
         'href',
         '/es/precios',
       );
-      await expect(page.locator('#cta-title ~ div a').first()).toHaveAttribute(
-        'href',
-        CTA.es,
-      );
+      await expect(
+        page.locator('#contact a[data-cta="close_contact"]'),
+      ).toHaveAttribute('href', CONTACT_PAIR.es);
     });
 
     test('opens a question by keyboard and from its deep link', async ({

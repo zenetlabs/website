@@ -8,7 +8,7 @@ Everything below needs the owner (a login, a decision or a value only you hold).
 
 ## Already done (no action)
 
-- The deploy token has D1 permission (2026-10-31).
+- The deploy token has D1 permission (2026-10-31). It is account-owned and lives only in the GitHub `production` environment, locked to `main` (2026-11-25; RB 4).
 - The Secrets Store entries exist with placeholders, so deploys are not blocked (2026-11-01): the Google calendar bundle (`unconfigured`), the ElevenLabs tool secret (a random value nobody knows) and the ElevenLabs API key (`UNSET`). Both ElevenLabs values were set for real on 2026-11-10.
 - The sitemap was resubmitted after the URL change in phase 1.
 - Preview aliases were re-uploaded from a dark production build (2026-11-01).
@@ -50,7 +50,7 @@ Each one: do the prerequisites, then the flip PR in RB 9 (one flag per PR, one a
 ## P3: platform and housekeeping
 
 - **Workers plan: done 2026-11-05.** The account is on Workers Paid, so the CPU, cron and log limits are the Paid ones; for the assistant, raise `dailyNeuronBudget` to what you want to spend.
-- **Deploy token:** move it from a user token to an account-owned token and rotate it (the GitHub secret dates from 2024).
+- **Deploy token:** done 2026-11-25: an account-owned token in the GitHub `production` environment only; the old user token is revoked. Rotate it on the schedule you choose (RB 4).
 - **Preview aliases.** The public preview aliases serve production secrets and D1, and cannot be deleted (names in the owner's vault notes; RB 2). Choose: Access on previews, `preview_urls: false`, or keep re-uploading dark after every probe.
 - **Security headers.** Decide on HSTS `includeSubDomains` and `preload` (a one-way commitment for the zone and its subdomains) and on a Content-Security-Policy (the deferred-entry inline loader and the consent snippet need a nonce or a hash; the voice SDK needs `connect-src` entries, see ai-assistant.md).
 - **Bot Fight Mode:** off on the alias zones (CI smoke runs against them) and on `zenetlabs.com` (voice webhooks).

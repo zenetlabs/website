@@ -1,11 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { CompaniesStrip } from '@/components/companies-strip';
+import { DeskClose } from '@/components/desk-close';
 import { Faq } from '@/components/faq';
 import { Hero } from '@/components/hero';
-import { HomeClose } from '@/components/home-close';
 import { OfferSystem } from '@/components/offer-system';
 import { Problems } from '@/components/problems';
 import { Process } from '@/components/process';
+import { EmphasisTitle } from '@/components/section';
 import { StickyZone } from '@/components/sticky-cta';
 import { VerifactuStrip } from '@/components/verifactu-strip';
 import { loadHomeContent } from '@/content/load';
@@ -48,8 +49,11 @@ function Home() {
         ) : null}
         <Faq copy={home.faq} items={faq} />
       </StickyZone>
-      <HomeClose
-        copy={home.contact}
+      <DeskClose
+        title={<EmphasisTitle parts={home.contact.title} />}
+        lead={home.contact.lead}
+        mail={home.contact.mail}
+        human={home.contact.human}
         doors={home.doors}
         desk={home.desk}
         locale={locale}

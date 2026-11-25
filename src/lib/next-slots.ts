@@ -69,16 +69,18 @@ function waiting(): NextSlots {
   return WAITING;
 }
 
-export function useNextSlots(locale: Locale): NextSlots {
+// `enabled` false listens for times another rail fetched but starts no fetch
+// of its own (the closing desk, until it is near).
+export function useNextSlots(locale: Locale, enabled = true): NextSlots {
   const subscribe = useCallback(
     (listener: () => void) => {
       listeners.add(listener);
-      start(locale);
+      if (enabled) start(locale);
       return () => {
         listeners.delete(listener);
       };
     },
-    [locale],
+    [locale, enabled],
   );
   const snapshot = useCallback(() => states.get(locale) ?? WAITING, [locale]);
   return useSyncExternalStore(subscribe, snapshot, waiting);

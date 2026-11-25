@@ -4,13 +4,17 @@ import { jsonLdBlocks } from '../test/json-ld';
 import { SERVICES } from '../test/page-content';
 import { test } from './fixtures';
 import {
+  CONTACT_PAIR,
   CTA,
   gotoHydrated,
+  HOLDED_PAGES,
   LOCALES,
   navLinks,
+  SECTOR_PAGE,
   SERVICE_PAIRS,
   SERVICES_HUB,
   typesOf,
+  VERIFACTU_PAGE,
 } from './helpers';
 
 const HOME = { en: '/', es: '/es' } as const;
@@ -30,13 +34,16 @@ for (const pair of Object.values(SERVICE_PAIRS)) {
         await expect(page.locator('h1')).toHaveCount(1);
         await expect(page.locator('h1')).toBeVisible();
         await expect(page.locator('main img')).toHaveCount(0);
-        const facts = page.locator('main dl').first();
-        await expect(facts.locator('dt')).toHaveCount(4);
+        const ticket = page
+          .locator('main section')
+          .first()
+          .locator('[data-service]');
         const price = formatPriceSummary(
           locale,
           SERVICES[locale][service].prices,
         );
-        await expect(facts.locator('dd').nth(1)).toContainText(price);
+        await expect(ticket).toContainText(price);
+        await expect(ticket.locator('.ticket-stub')).not.toBeEmpty();
       });
 
       test('links the breadcrumb, the CTA and the pricing page', async ({
@@ -62,6 +69,30 @@ for (const pair of Object.values(SERVICE_PAIRS)) {
         await expect(hero.getByRole('link').last()).toHaveAttribute(
           'href',
           PRICING[locale],
+        );
+      });
+
+      test('closes with the desk: the write door and the first two questions as chips', async ({
+        page,
+      }) => {
+        await gotoHydrated(page, path);
+        const close = page.locator('#contact');
+        await expect(
+          close.locator('a[data-cta="close_contact"]'),
+        ).toHaveAttribute('href', CONTACT_PAIR[locale]);
+        const questions = await page
+          .locator('#faq summary')
+          .evaluateAll((items) =>
+            items.slice(0, 2).map((item) => item.textContent?.trim() ?? ''),
+          );
+        const hrefs = await close
+          .locator('.desk-chip')
+          .evaluateAll((links) => links.map((a) => a.getAttribute('href')));
+        expect(hrefs).toEqual(
+          questions.map(
+            (question) =>
+              `${CONTACT_PAIR[locale]}?${new URLSearchParams({ message: question })}`,
+          ),
         );
       });
 
@@ -194,4 +225,41 @@ test('the language switch goes between the twins of one service page', async ({
     .click();
   await expect(page).toHaveURL(agents.es);
   await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+});
+
+const BANNER = '[data-consent-banner]';
+const FIRST_VISIT = { cookies: [], origins: [] };
+const ALL_PAGES: readonly string[] = [
+  ...Object.values(SERVICE_PAIRS).flatMap((pair) => [pair.en, pair.es]),
+  ...HOLDED_PAGES,
+  VERIFACTU_PAGE,
+  SECTOR_PAGE,
+];
+
+test.describe('the hero button clears the consent banner', () => {
+  test.use({ storageState: FIRST_VISIT });
+
+  for (const path of ALL_PAGES) {
+    for (const viewport of [
+      { width: 1280, height: 800 },
+      { width: 1024, height: 768 },
+    ]) {
+      test(`${path} at ${viewport.width}x${viewport.height}`, async ({
+        page,
+      }) => {
+        await page.setViewportSize(viewport);
+        await gotoHydrated(page, path);
+        await expect(page.locator(BANNER)).toBeVisible();
+        const edges = await page.evaluate(() => {
+          const cta = document.querySelector('[data-cta="page_hero"]');
+          const banner = document.querySelector('[data-consent-banner]');
+          return {
+            cta: cta?.getBoundingClientRect().bottom ?? Number.NaN,
+            banner: banner?.getBoundingClientRect().top ?? Number.NaN,
+          };
+        });
+        expect(edges.cta).toBeLessThanOrEqual(edges.banner - 8);
+      });
+    }
+  }
 });

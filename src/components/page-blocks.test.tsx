@@ -1,26 +1,18 @@
 import { render, screen, within } from '@testing-library/react';
-import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
+import { Breadcrumb, RelatedLinks } from '@/components/page-blocks';
 import {
-  Breadcrumb,
-  CaseCallout,
   FactList,
-  FactsHero,
   GetStarted,
   HeroHeading,
-  RelatedLinks,
   UseCaseList,
-} from '@/components/page-blocks';
+} from '@/components/plain-hero';
 import { hubNames } from '@/lib/crumb-names';
-import type { Locale } from '@/lib/i18n';
-import { formatPriceSummary } from '@/lib/money';
 import { CTA_TARGET, navHref } from '@/lib/nav';
 import { pagePath } from '@/lib/page-registry';
 import { PUBLIC_EMAIL } from '@/lib/site';
 import { titleText } from '@/lib/title-text';
 import { HUB, HUB_ES, SPANISH } from '../../test/landing';
-import { SERVICES } from '../../test/page-content';
-import { SERVICE_BODIES } from '../../test/service-bodies';
 
 const labels = HUB_ES.labels;
 const pair = SPANISH.holdedHubspot;
@@ -62,75 +54,6 @@ describe('Breadcrumb', () => {
       />,
     );
     expect(screen.getAllByRole('link')).toHaveLength(2);
-  });
-});
-
-describe('FactsHero', () => {
-  function view(locale: Locale, breadcrumb = false) {
-    const body = SERVICE_BODIES[locale].pages.agents;
-    return {
-      body,
-      ...render(
-        <FactsHero
-          page="agents"
-          locale={locale}
-          services={SERVICES[locale]}
-          labels={SERVICE_BODIES[locale].hub.labels}
-          hero={body.hero}
-          facts={body.facts}
-          button={body.cta.button}
-          breadcrumb={
-            breadcrumb ? (
-              <Breadcrumb
-                page="agents"
-                locale={locale}
-                names={hubNames(SERVICE_BODIES[locale].hub)}
-                label={SERVICE_BODIES[locale].hub.labels.breadcrumb}
-              />
-            ) : undefined
-          }
-        />,
-      ),
-    };
-  }
-
-  it.each(['en', 'es'] as const)(
-    'renders the %s title and four facts',
-    (locale) => {
-      const { body, container } = view(locale);
-      expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
-        titleText(body.hero.title),
-      );
-      const l = SERVICE_BODIES[locale].hub.labels;
-      expect(
-        [...container.querySelectorAll('dt')].map((dt) => dt.textContent),
-      ).toEqual([l.who, l.price, l.timeline, l.start]);
-      expect(container.querySelectorAll('dd')[1]?.textContent).toBe(
-        `${formatPriceSummary(locale, SERVICES[locale].agent.prices)} (${l.taxNote})`,
-      );
-    },
-  );
-
-  it('sends the button to the booking CTA and the link to the pricing page', () => {
-    const { body } = view('es');
-    expect(screen.getByRole('link', { name: body.cta.button })).toHaveAttribute(
-      'href',
-      navHref('es', CTA_TARGET),
-    );
-    expect(screen.getByRole('link', { name: labels.pricing })).toHaveAttribute(
-      'href',
-      '/es/precios',
-    );
-  });
-
-  it('spaces the heading only under a breadcrumb', () => {
-    const { container, unmount } = view('es');
-    expect(container.querySelector('h1')?.className).not.toContain('mt-10');
-    unmount();
-    const withTrail = view('es', true);
-    expect(withTrail.container.querySelector('h1')?.className).toContain(
-      'mt-10',
-    );
   });
 });
 
@@ -206,93 +129,5 @@ describe('UseCaseList', () => {
       '/es/verifactu-integracion',
     );
     expect(titles[1]?.querySelector('a')).toBeNull();
-  });
-});
-
-describe('FactsHero layout', () => {
-  function hero(figure?: ReactNode) {
-    const body = SERVICE_BODIES.en.pages.agents;
-    return render(
-      <FactsHero
-        page="agents"
-        locale="en"
-        services={SERVICES.en}
-        labels={SERVICE_BODIES.en.hub.labels}
-        hero={body.hero}
-        facts={body.facts}
-        button={body.cta.button}
-        figure={figure}
-      />,
-    );
-  }
-
-  it('sets the facts as the hero card without a figure', () => {
-    const { container } = hero();
-    expect(container.querySelector('dl')?.className).toBe('facts-card');
-  });
-
-  it('puts the figure beside the copy and runs the facts below it', () => {
-    const { container } = hero(<figure data-testid="figure" />);
-    const figure = screen.getByTestId('figure');
-    const facts = container.querySelector('dl');
-    if (!(facts instanceof HTMLElement)) throw new Error('no facts');
-    expect(facts.className).toBe('facts');
-    expect(figure.compareDocumentPosition(facts)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING,
-    );
-  });
-
-  it('places the actions between the heading and the lead', () => {
-    const { container } = hero();
-    const h1 = container.querySelector('h1');
-    const button = screen.getByRole('link', {
-      name: SERVICE_BODIES.en.pages.agents.cta.button,
-    });
-    const lead = screen.getByText(SERVICE_BODIES.en.pages.agents.hero.lead);
-    expect(h1?.compareDocumentPosition(button)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING,
-    );
-    expect(button.compareDocumentPosition(lead)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING,
-    );
-  });
-});
-
-describe('CaseCallout', () => {
-  it('names the company by its logo when the case has a page', () => {
-    const copy = SERVICE_BODIES.en.pages.automation.case;
-    const { container } = render(
-      <CaseCallout
-        copy={copy}
-        locale="en"
-        names={hubNames(SERVICE_BODIES.en.hub)}
-      />,
-    );
-    expect(container.querySelector('#case .logo')).not.toBeNull();
-    expect(container.querySelector('#case')).toHaveTextContent('Viatsy');
-    expect(container.querySelectorAll('#case .tick-item')).toHaveLength(
-      copy.points.length,
-    );
-  });
-
-  it('shows no logo without a company or case page, and still links the hub', () => {
-    const {
-      page: _page,
-      company: _company,
-      ...copy
-    } = SERVICE_BODIES.en.pages.automation.case;
-    const { container } = render(
-      <CaseCallout
-        copy={copy}
-        locale="en"
-        names={hubNames(SERVICE_BODIES.en.hub)}
-      />,
-    );
-    expect(container.querySelector('#case .logo')).toBeNull();
-    expect(
-      [...container.querySelectorAll('#case a')].map((a) =>
-        a.getAttribute('href'),
-      ),
-    ).toEqual([pagePath('en', 'cases')]);
   });
 });

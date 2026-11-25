@@ -1,13 +1,13 @@
 import { CompanyMark } from '@/components/companies-strip';
 import { FlowDiagram } from '@/components/flow-diagram';
 import { BulletList, MetricList } from '@/components/lists';
+import { RelatedLinks } from '@/components/page-blocks';
 import {
   FactList,
   GetStarted,
   HeroHeading,
-  RelatedLinks,
   UseCaseList,
-} from '@/components/page-blocks';
+} from '@/components/plain-hero';
 import { Process } from '@/components/process';
 import { Container, Section } from '@/components/section';
 import { sectionFrame } from '@/components/section-frame';

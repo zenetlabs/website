@@ -1,4 +1,4 @@
-import { FlowRow } from '@/components/offer-system';
+import { FlowRow } from '@/components/flow-tiles';
 import { Section } from '@/components/section';
 import { H3 } from '@/components/ui';
 import type { FlowTile, HomeContent } from '@/content/types';
