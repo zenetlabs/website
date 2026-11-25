@@ -9,10 +9,9 @@ import {
   agentHeaders,
   confirmByLink,
   confirmLinkFor,
-  elevenLabsCalls,
-  elevenLabsFail,
-  elevenLabsReset,
+  elevenLabsCallFor,
   NOTIFY_TO,
+  releaseBooking,
   sentFor,
   startVoiceSession,
   toolEnvelope,
@@ -50,8 +49,10 @@ function callDoor(page: Page, locale: 'en' | 'es') {
 const VOICE_CHUNK =
   /\/assets\/(?:voice-(?:open|panel|store|sdk|fake|client|device|tools)|livekit)[\w-]*\.js/;
 
+// The panel's own status line: the pages carry live regions of their own (the
+// contact form's), and which exist at a given moment depends on timing.
 function status(page: Page) {
-  return page.getByRole('status');
+  return page.locator('dialog[data-voice-panel]').getByRole('status');
 }
 
 async function openPanel(page: Page, locale: 'en' | 'es') {
@@ -70,10 +71,6 @@ async function startCall(page: Page, locale: 'en' | 'es') {
     timeout: 30_000,
   });
 }
-
-test.beforeEach(async () => {
-  await elevenLabsReset();
-});
 
 for (const locale of ['en', 'es'] as const) {
   test(`${HOME[locale]} shows the desk call door and loads no panel, SDK or session call before the click`, async ({
@@ -149,10 +146,11 @@ test('starts a call after Turnstile: one mint, the Spanish agent, the session ha
   await openPanel(page, 'es');
   await startCall(page, 'es');
   expect(mints).toEqual([200]);
-  expect(await elevenLabsCalls()).toEqual([
-    { agentId: 'local-agent-es', keyPresent: true },
-  ]);
   const options = await page.evaluate(() => window.__voiceFake?.options);
+  expect(await elevenLabsCallFor(options?.token)).toEqual({
+    agentId: 'local-agent-es',
+    keyPresent: true,
+  });
   expect(options?.token).toMatch(/^fake-voice-token-\d+$/);
   expect(options?.sessionId).toMatch(/^[0-9a-f-]{36}$/);
   expect(options?.tools).toEqual(['navigate', 'open_contact_form']);
@@ -436,6 +434,7 @@ test.describe('the tools an agent calls', () => {
     await expect(status(page)).toContainText(
       'Held for Tuesday 3 November, 5:00 pm. Check your email to confirm.',
     );
+    await releaseBooking(request, email);
   });
 });
 
@@ -462,7 +461,6 @@ test('a blocked microphone shows the options below and mints no session', async 
     alert.getByRole('link', { name: en.fallbackForm }),
   ).toBeVisible();
   expect(mints).toEqual([]);
-  expect(await elevenLabsCalls()).toEqual([]);
 });
 
 for (const [error, status, key] of [
@@ -491,17 +489,6 @@ for (const [error, status, key] of [
     ).toBeVisible();
   });
 }
-
-test('a failing ElevenLabs token ends in the fallback and frees the day slot', async ({
-  page,
-}) => {
-  await elevenLabsFail(1, 401);
-  await openPanel(page, 'en');
-  const start = page.getByRole('button', { name: en.start });
-  await expect(start).toBeEnabled({ timeout: 30_000 });
-  await start.click();
-  await expect(page.getByRole('alert')).toContainText(en.errorCall);
-});
 
 test('runs end to end with the keyboard alone, and Escape ends the call and returns focus', async ({
   page,

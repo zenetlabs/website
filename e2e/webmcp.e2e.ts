@@ -6,6 +6,7 @@ import {
   confirmByLink,
   confirmLinkFor,
   googleEvents,
+  releaseBooking,
   uniqueEmail,
 } from './fakes';
 import { test } from './fixtures';
@@ -643,6 +644,7 @@ test.describe('book_meeting confirmation', () => {
         await confirmByLink(page.request, await confirmLinkFor(email)),
       ).toBe(303);
       await expect.poll(async () => (await ownerEvents(email)).length).toBe(1);
+      await releaseBooking(page.request, email);
     });
   }
 
