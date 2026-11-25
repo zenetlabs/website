@@ -69,6 +69,7 @@ export const servicesHub = {
     timeline: 'Plazo',
     start: 'Primer paso',
     taxNote: 'IVA no incluido',
+    included: 'Incluye',
     pricing: 'Ver precios',
     mail: '¿Prefieres el correo? Escribe a',
     related: 'Servicios relacionados',

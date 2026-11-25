@@ -19,8 +19,9 @@ export const software = {
       emphasis: 'built around how you work',
       after: '',
     },
+    lead: 'We build custom software for Singapore companies when off-the-shelf tools no longer fit, connected to the systems you already run.',
     // TODO(albert): confirm the timeline
-    lead: `Custom software is a web app, customer portal or internal tool designed around your processes, instead of bending your processes to fit someone else's product. We build it for Singapore companies when off-the-shelf tools no longer fit, and we connect it to the systems you already run. Projects cost ${price}, excluding GST, and the first usable version is usually in your team's hands eight to twelve weeks after the diagnostic.`,
+    intro: `Custom software is a web app, customer portal or internal tool designed around your processes, instead of bending your processes to fit someone else's product. Projects cost ${price}, excluding GST, and the first usable version is usually in your team's hands eight to twelve weeks after the diagnostic.`,
   },
   facts: {
     who: 'Companies whose work no longer fits a spreadsheet or an off-the-shelf tool, or whose customers need a portal of their own',
@@ -45,21 +46,25 @@ export const software = {
         id: 'portal',
         title: 'Customer portals',
         text: 'A place where customers place orders, track bookings, download documents and pay, without emailing your team.',
+        tiles: ['app', 'hubspot'],
       },
       {
         id: 'internal',
         title: 'Internal tools',
         text: 'The system that replaces the spreadsheet everyone edits: quoting, scheduling, stock or job tracking, with the right permissions for each role.',
+        tiles: ['sheets', 'app'],
       },
       {
         id: 'websites',
         title: 'Websites that do work',
         text: 'Fast, accessible sites that are easy to find in search and connected to your CRM and booking tools, so enquiries arrive complete.',
+        tiles: ['app', 'hubspot'],
       },
       {
         id: 'ai-features',
         title: 'AI inside the tool',
         text: 'Search across your own documents, drafted replies or automatic data entry, built into the tool your team already opens every day.',
+        tiles: ['app', 'agent'],
       },
     ],
   },

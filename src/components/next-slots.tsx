@@ -5,14 +5,23 @@ import type { Locale } from '@/lib/i18n';
 import { navHref } from '@/lib/nav';
 import { useNextSlots } from '@/lib/next-slots';
 import { pagePath } from '@/lib/page-registry';
+import { useNear } from '@/lib/use-near';
 
 type SlotCopy = DeskCopy['slots'];
 
 // Booking is published: the next real times arrive after load and idle, in a
 // row that keeps its height in every state. Until then, or when the fetch
 // fails or finds nothing, one link opens all times on /book.
-function LiveSlots({ copy, locale }: { copy: SlotCopy; locale: Locale }) {
-  const state = useNextSlots(locale);
+function LiveSlots({
+  copy,
+  locale,
+  enabled,
+}: {
+  copy: SlotCopy;
+  locale: Locale;
+  enabled: boolean;
+}) {
+  const state = useNextSlots(locale, enabled);
   const book = pagePath(locale, 'book');
   const ready = state.status === 'ready' ? state : null;
   return (
@@ -61,17 +70,26 @@ export function SlotRail({
   copy,
   locale,
   booking,
+  whenNear = false,
   className = 'desk-rail',
 }: {
   copy: SlotCopy;
   locale: Locale;
   booking: boolean;
+  // Fetch the times only once the rail is near the viewport (the closing
+  // desk, far down a page); the hero desk fetches at once.
+  whenNear?: boolean;
   className?: string;
 }) {
+  const { ref, near } = useNear(whenNear);
   return (
-    <div className={className} data-slot-rail={booking ? 'live' : 'off'}>
+    <div
+      ref={ref}
+      className={className}
+      data-slot-rail={booking ? 'live' : 'off'}
+    >
       {booking ? (
-        <LiveSlots copy={copy} locale={locale} />
+        <LiveSlots copy={copy} locale={locale} enabled={near} />
       ) : (
         <>
           <h3 className="text-ui-l font-semibold">{copy.title}</h3>

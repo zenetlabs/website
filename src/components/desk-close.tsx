@@ -1,12 +1,16 @@
 import { type ReactNode, useRef } from 'react';
-import { DeskAsk, DeskHead } from '@/components/agent-desk';
 import { BandSection } from '@/components/band-section';
 import { CtaLink } from '@/components/cta-link';
+import { DeskAsk, DeskHead } from '@/components/desk-ask';
 import { SlotRail } from '@/components/next-slots';
-import { EmphasisTitle } from '@/components/section';
 import { BAND_CARD, LEAD, TEXT_LINK } from '@/components/ui';
 import { CallLink } from '@/components/voice-button';
-import type { DeskCopy, DoorCopy, HomeContent } from '@/content/types';
+import type {
+  AssistantIntro,
+  DeskCopy,
+  DoorCopy,
+  HomeContent,
+} from '@/content/types';
 import { deskWords } from '@/lib/desk-words';
 import type { Locale } from '@/lib/i18n';
 import { navHref } from '@/lib/nav';
@@ -28,23 +32,34 @@ function DoorText({ copy }: { copy: DoorCopy }) {
 
 // The close, the desk again on the band: the live doors (call, write), and a
 // card with the desk's chips and composer and, while booking is published, the
-// next free times.
-export function HomeClose({
-  copy,
+// next free times. An inner page passes its own title and chips.
+export function DeskClose({
+  title,
+  lead,
+  mail,
+  human,
   doors,
   desk,
+  chips,
   locale,
   site = SITE,
 }: {
-  copy: HomeContent['contact'];
+  title: ReactNode;
+  lead?: string;
+  mail: string;
+  human: string;
   doors: HomeContent['doors'];
   desk: DeskCopy;
+  chips?: AssistantIntro['suggestions'];
   locale: Locale;
   site?: SiteFlags;
 }) {
   const booking = isPublished('book', site);
   const card = useRef<HTMLDivElement>(null);
   const words = deskWords(desk, booking);
+  const asked = chips
+    ? { ...desk, intro: { ...desk.intro, suggestions: chips } }
+    : desk;
   const list: ReactNode[] = [];
   if (doors.call && voiceAvailable(locale)) {
     list.push(
@@ -73,29 +88,28 @@ export function HomeClose({
       containerClassName="grid gap-10 lg:grid-cols-12 lg:items-start lg:gap-16"
     >
       <div className="lg:col-span-6">
-        <h2 id="contact-title">
-          <EmphasisTitle parts={copy.title} />
-        </h2>
-        {copy.lead ? <p className={`mt-5 ${LEAD}`}>{copy.lead}</p> : null}
+        <h2 id="contact-title">{title}</h2>
+        {lead ? <p className={`mt-5 ${LEAD}`}>{lead}</p> : null}
         <ul data-doors className="mt-8 grid gap-3">
           {list}
         </ul>
         <p className="mt-8">
-          {copy.mail}{' '}
+          {mail}{' '}
           <a href={`mailto:${PUBLIC_EMAIL}`} className={TEXT_LINK}>
             {PUBLIC_EMAIL}
           </a>
         </p>
-        <p className="mt-2 text-ui-s text-muted-fg">{copy.human}</p>
+        <p className="mt-2 text-ui-s text-muted-fg">{human}</p>
       </div>
       <div
         ref={card}
         data-close-desk
+        data-page-chips={chips ? '' : undefined}
         className={`lg:col-span-6 ${BAND_CARD} close-desk`}
       >
         <DeskHead as="h3" title={words.title} badge={desk.intro.badge} />
         <DeskAsk
-          copy={desk}
+          copy={asked}
           booking={booking}
           locale={locale}
           entry="close"
@@ -107,6 +121,7 @@ export function HomeClose({
             copy={desk.slots}
             locale={locale}
             booking
+            whenNear
             className="slot-card close-desk-rail"
           />
         ) : null}

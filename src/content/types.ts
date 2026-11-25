@@ -250,6 +250,13 @@ export type HomeContent = {
 
 export type DoorCopy = { title: string; text: string };
 
+// What the closing desk of home and of the service and landing pages says
+export type DeskCloseCopy = {
+  desk: DeskCopy;
+  doors: HomeContent['doors'];
+  human: string;
+};
+
 export type AssistantIntro = {
   title: string;
   badge: string;
@@ -377,10 +384,17 @@ export type CasesHubContent = {
 export type ProcessStep = { id: string; label: string; text: string };
 export type ProcessCopy = SectionCopy & { steps: readonly ProcessStep[] };
 
-export type PageHero = { title: TitleParts; lead: string };
+// `lead` is the page's one sentence; `intro` is the rest of its old lead, which
+// opens the first section under the hero.
+export type PageHero = { title: TitleParts; lead: string; intro: string };
 export type PageFacts = { who: string; timeline: string; start: string };
 export type PageCta = { title: string; text: string; button: string };
 export type Card = { id: string; title: string; text: string };
+// A task row of a ledger: the tools it touches are drawn beside it
+export type LedgerItem = Card & {
+  page?: PageId;
+  tiles?: readonly FlowTile[];
+};
 
 export type ServicePageContent = {
   meta: Pick<PageMeta, 'metaTitle' | 'description'>;
@@ -388,7 +402,7 @@ export type ServicePageContent = {
   facts: PageFacts;
   cta: PageCta;
   useCases: SectionCopy & {
-    items: readonly (Card & { page?: PageId })[];
+    items: readonly LedgerItem[];
   };
   flow?: FlowSectionCopy;
   approval?: ApprovalCopy & { caption: string };
@@ -432,7 +446,7 @@ export type HoldedPairContent = {
     rows: readonly SyncRow[];
     note: string;
   };
-  edgeCases: SectionCopy & { items: readonly Card[] };
+  edgeCases: SectionCopy & { items: readonly LedgerItem[] };
   faq: SectionCopy & { items: readonly FaqItem[] };
   related: readonly PageId[];
 };
@@ -454,8 +468,8 @@ export type VerifactuPageContent = {
     exclusions: readonly string[];
     checked: string;
   };
-  requirements: SectionCopy & { items: readonly Card[] };
-  work: SectionCopy & { items: readonly Card[]; limits: string };
+  requirements: SectionCopy & { items: readonly LedgerItem[] };
+  work: SectionCopy & { items: readonly LedgerItem[]; limits: string };
   disclaimer: string;
   faq: SectionCopy & { items: readonly FaqItem[] };
   related: readonly PageId[];
@@ -476,6 +490,8 @@ export type SectorPageContent = {
       automated: string;
     }[];
   };
+  // The enquiry flow of the agency we run, drawn as the page's board
+  flow: CaseFlow;
   platform: { title: string; text: string; link: string };
   case: SectionCopy & { text: string };
   faq: SectionCopy & { items: readonly FaqItem[] };
@@ -518,6 +534,7 @@ export type ServicePageLabels = {
   timeline: string;
   start: string;
   taxNote: string;
+  included: string;
   pricing: string;
   mail: string;
   related: string;

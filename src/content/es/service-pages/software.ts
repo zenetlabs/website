@@ -19,8 +19,9 @@ export const software = {
       emphasis: 'hecho según cómo trabajas',
       after: '',
     },
+    lead: 'Desarrollamos software a medida para pymes cuando las herramientas estándar se quedan cortas, y lo conectamos con los sistemas que ya usas.',
     // TODO(albert): confirm the timeline
-    lead: `El software a medida es una aplicación web, un portal de clientes o una herramienta interna diseñada según tus procesos, en lugar de obligarte a adaptarlos al producto de otro. Lo desarrollamos para pymes cuando las herramientas estándar se quedan cortas, y lo conectamos con los sistemas que ya usas. Un proyecto cuesta ${price}, IVA no incluido, y la primera versión útil suele estar en manos de tu equipo entre ocho y doce semanas después del diagnóstico.`,
+    intro: `El software a medida es una aplicación web, un portal de clientes o una herramienta interna diseñada según tus procesos, en lugar de obligarte a adaptarlos al producto de otro. Un proyecto cuesta ${price}, IVA no incluido, y la primera versión útil suele estar en manos de tu equipo entre ocho y doce semanas después del diagnóstico.`,
   },
   facts: {
     who: 'Empresas cuyo trabajo ya no cabe en un Excel ni en una herramienta estándar, o cuyos clientes necesitan un portal propio',
@@ -45,21 +46,25 @@ export const software = {
         id: 'portal',
         title: 'Portales de clientes',
         text: 'Un espacio donde tus clientes hacen pedidos, siguen sus reservas, descargan documentos y pagan, sin escribir a tu equipo.',
+        tiles: ['app', 'hubspot'],
       },
       {
         id: 'internal',
         title: 'Herramientas internas',
         text: 'El sistema que sustituye al Excel que todos editan: presupuestos, planificación, stock o seguimiento de trabajos, con los permisos adecuados para cada puesto.',
+        tiles: ['sheets', 'app'],
       },
       {
         id: 'websites',
         title: 'Webs que trabajan',
         text: 'Webs rápidas, accesibles y fáciles de encontrar en buscadores, conectadas a tu CRM y a tus reservas para que las consultas lleguen completas.',
+        tiles: ['app', 'hubspot'],
       },
       {
         id: 'ai-features',
         title: 'IA dentro de la herramienta',
         text: 'Búsqueda en tus propios documentos, respuestas redactadas o introducción automática de datos, integradas en la herramienta que tu equipo ya abre cada día.',
+        tiles: ['app', 'agent'],
       },
     ],
   },

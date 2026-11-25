@@ -21,8 +21,9 @@ export const holdedPrestashop = {
       emphasis: 'cada pedido, su factura',
       after: '',
     },
+    lead: 'Cada pedido de PrestaShop llega a Holded como factura o ticket, con su cliente, sus impuestos y su forma de pago.',
     // TODO(albert): confirm the timeline
-    lead: `Conectamos tu tienda PrestaShop con Holded para que cada pedido llegue como factura o ticket, con su cliente, sus impuestos y su forma de pago, y para que el stock cuadre en los dos lados. Los pedidos llegan a Holded en cuanto cambian de estado, las devoluciones se convierten en facturas rectificativas y las facturas se emiten en Holded, no en la tienda. Un proyecto cuesta ${price}, IVA no incluido, y suele estar funcionando entre tres y cinco semanas después del diagnóstico.`,
+    intro: `Los pedidos llegan a Holded en cuanto cambian de estado, las devoluciones se convierten en facturas rectificativas y las facturas se emiten en Holded, no en la tienda. Un proyecto cuesta ${price}, IVA no incluido, y suele estar funcionando entre tres y cinco semanas después del diagnóstico.`,
   },
   facts: {
     who: 'Tiendas PrestaShop que facturan con Holded y todavía pasan pedidos, devoluciones o stock a mano, o a las que el plugin oficial se les queda corto',

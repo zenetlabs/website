@@ -86,9 +86,9 @@ describe.each(locales)('service page prices (%s)', (locale) => {
     (page) => {
       const { hero } = SERVICE_PAGE_CONTENT[locale][page];
       for (const price of services[serviceOf(page)].prices) {
-        expect(hero.lead).toContain(formatPrice(locale, price));
+        expect(hero.intro).toContain(formatPrice(locale, price));
       }
-      expect(hero.lead).toContain(TAX[locale]);
+      expect(hero.intro).toContain(TAX[locale]);
     },
   );
 
@@ -102,7 +102,7 @@ describe.each(locales)('service page prices (%s)', (locale) => {
   );
 
   it('prices AI reading on the automation page at the agent row', () => {
-    expect(SERVICE_PAGE_CONTENT[locale].automation.hero.lead).toContain(
+    expect(SERVICE_PAGE_CONTENT[locale].automation.hero.intro).toContain(
       formatPriceSummary(locale, services.agent.prices),
     );
   });
@@ -206,6 +206,42 @@ describe.each(locales)('primary keywords (%s)', (locale) => {
       metaOf(locale, 'services', SERVICE_BODIES[locale]).title.toLowerCase(),
     ).toContain(keyword);
   });
+});
+
+describe('service page heroes and ledgers', () => {
+  it.each(locales.flatMap((l) => SERVICE_PAGE_IDS.map((p) => [l, p] as const)))(
+    'says %s %s in one short sentence with no price, and keeps the rest as the intro',
+    (locale, page) => {
+      const { hero } = SERVICE_PAGE_CONTENT[locale][page];
+      expect(hero.lead.split(/\s+/).length).toBeLessThanOrEqual(24);
+      expect(hero.lead).not.toMatch(/[0-9$€]/);
+      expect(hero.lead.match(/[.!?](\s|$)/g)).toHaveLength(1);
+      expect(hero.intro).not.toBe('');
+      expect(hero.intro).not.toContain(hero.lead);
+    },
+  );
+
+  it.each(SERVICE_PAGE_IDS)('shares the tiles of %s across locales', (page) => {
+    const en = SERVICE_PAGE_CONTENT.en[page].useCases.items;
+    const es = SERVICE_PAGE_CONTENT.es[page].useCases.items;
+    for (const [index, item] of en.entries()) {
+      const tiles = es[index]?.tiles;
+      if (page === 'integrations' && item.id.startsWith('pair-')) {
+        expect(tiles).toBeDefined();
+        continue;
+      }
+      expect(tiles).toEqual(item.tiles);
+    }
+  });
+
+  it.each(locales.flatMap((l) => SERVICE_PAGE_IDS.map((p) => [l, p] as const)))(
+    'gives %s %s at least two questions for the closing chips',
+    (locale, page) => {
+      expect(
+        SERVICE_PAGE_CONTENT[locale][page].faq.items.length,
+      ).toBeGreaterThanOrEqual(2);
+    },
+  );
 });
 
 describe('service page strings', () => {

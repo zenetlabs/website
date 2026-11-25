@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HomeClose } from '@/components/home-close';
+import { DeskClose } from '@/components/desk-close';
+import { EmphasisTitle } from '@/components/section';
 import { home as enHome } from '@/content/en/home';
 import { home as esHome } from '@/content/es/home';
 import { contactWithMessage } from '@/lib/nav';
@@ -48,13 +50,20 @@ afterEach(() => {
 describe.each([
   ['en', enHome, '/contact', '/book'],
   ['es', esHome, '/es/contacto', '/es/reservar'],
-] as const)('HomeClose (%s)', (locale, home, contact, book) => {
-  function view(site: SiteFlags) {
+] as const)('DeskClose (%s)', (locale, home, contact, book) => {
+  function view(
+    site: SiteFlags,
+    extra: { title?: ReactNode; chips?: readonly [string, string] } = {},
+  ) {
     return render(
-      <HomeClose
-        copy={home.contact}
+      <DeskClose
+        title={extra.title ?? <EmphasisTitle parts={home.contact.title} />}
+        lead={home.contact.lead}
+        mail={home.contact.mail}
+        human={home.contact.human}
         doors={home.doors}
         desk={home.desk}
+        chips={extra.chips}
         locale={locale}
         site={site}
       />,
@@ -89,6 +98,32 @@ describe.each([
     expect(
       screen.getByRole('link', { name: 'hello@zenetlabs.com' }),
     ).toHaveAttribute('href', 'mailto:hello@zenetlabs.com');
+  });
+
+  it('takes a plain string title and its own chips for the links and the chat', () => {
+    vi.stubGlobal('__ASSISTANT__', true);
+    const chips = ['First question?', 'Second question?'] as const;
+    view(NO_BOOKING, { title: 'A plain title', chips });
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'A plain title' }),
+    ).toBeInTheDocument();
+    expect(document.querySelector('#contact-title em')).toBeNull();
+    expect(card()).toHaveAttribute('data-page-chips');
+    expect(
+      [...card().querySelectorAll('.desk-chip')].map((chip) =>
+        chip.getAttribute('href'),
+      ),
+    ).toEqual(chips.map((chip) => contactWithMessage(locale, chip)));
+    fireEvent.click(within(card()).getByRole('link', { name: chips[1] }), {
+      detail: 1,
+    });
+    expect(requestChat).toHaveBeenCalledWith(chips[1], card());
+  });
+
+  it('keeps home without the page-chips marker', () => {
+    vi.stubGlobal('__ASSISTANT__', false);
+    view(NO_BOOKING);
+    expect(card()).not.toHaveAttribute('data-page-chips');
   });
 
   it('heads the card with the shared desk head', () => {

@@ -51,10 +51,10 @@ test.describe('mobile', () => {
     await page.locator('#faq').scrollIntoViewIfNeeded();
     await expect(page.locator(BAR)).toBeInViewport({ ratio: 1 });
     await page.evaluate(() =>
-      document.querySelector('#cta-title')?.scrollIntoView({ block: 'start' }),
+      document.querySelector('#contact')?.scrollIntoView({ block: 'start' }),
     );
     const end = await box(page, BAR);
-    const band = await box(page, '#cta-title');
+    const band = await box(page, '#contact');
     expect(end.y + end.height).toBeLessThanOrEqual(band.y + 1);
   });
 

@@ -21,8 +21,9 @@ export const holdedWoocommerce = {
       emphasis: 'la tienda y la contabilidad, al día',
       after: '',
     },
+    lead: 'Cada pedido llega a Holded como factura o ticket con su cliente, los reembolsos como rectificativas, y el stock se refleja en la tienda.',
     // TODO(albert): confirm the timeline
-    lead: `Conectamos WooCommerce con Holded para que cada pedido llegue como factura o ticket con su cliente, los reembolsos como facturas rectificativas y el stock de Holded se refleje en la tienda. WooCommerce avisa de cada pedido al momento, así que nadie tiene que exportar ni importar nada. Un proyecto cuesta ${price}, IVA no incluido, y suele estar funcionando entre tres y cinco semanas después del diagnóstico.`,
+    intro: `WooCommerce avisa de cada pedido al momento, así que nadie tiene que exportar ni importar nada. Un proyecto cuesta ${price}, IVA no incluido, y suele estar funcionando entre tres y cinco semanas después del diagnóstico.`,
   },
   facts: {
     who: 'Tiendas WooCommerce que facturan con Holded y todavía pasan pedidos, reembolsos o stock a mano, o a las que el plugin oficial se les queda corto',

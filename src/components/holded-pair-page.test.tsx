@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { HoldedPairPage } from '@/components/holded-pair-page';
 import { HOLDED_PAGE_IDS } from '@/lib/page-registry';
+import { DESK_CLOSE, INCLUDES } from '../../test/inner-content';
 import { HUB_ES, SPANISH } from '../../test/landing';
 import { SERVICES } from '../../test/page-content';
 
@@ -25,6 +26,8 @@ describe.each(HOLDED_PAGE_IDS)('HoldedPairPage (%s)', (page) => {
         copy={copy}
         hub={HUB_ES}
         services={SERVICES.es}
+        includes={INCLUDES.es.integration}
+        close={DESK_CLOSE.es}
       />,
     );
   }
@@ -58,6 +61,33 @@ describe.each(HOLDED_PAGE_IDS)('HoldedPairPage (%s)', (page) => {
     expect(screen.getByText(copy.sync.note)).toBeInTheDocument();
   });
 
+  it('plays the first four rows of the mapping on a hidden pair board', () => {
+    const { container } = view();
+    const board = container.querySelector('[data-flow-board="pair"]');
+    expect(board).toHaveAttribute('aria-hidden', 'true');
+    expect(board?.querySelectorAll('.fb-pk')).toHaveLength(4);
+    expect(board?.querySelectorAll('.fb-rows > li')).toHaveLength(4);
+    expect(board).toHaveTextContent(copy.shop.name);
+    expect(
+      [...(board?.querySelectorAll('.fb-pk') ?? [])].map((pk) =>
+        pk.getAttribute('data-to'),
+      ),
+    ).toEqual(copy.sync.rows.slice(0, 4).map((row) => row.to));
+  });
+
+  it('opens the mapping with the rest of the old lead, then sets the ticket and what it includes', () => {
+    const { container } = view();
+    expect(container.querySelector('#sync')?.textContent).toContain(
+      copy.hero.intro,
+    );
+    expect(container.querySelector('.price-ticket')).toHaveTextContent(
+      SERVICES.es.integration.name,
+    );
+    expect(container.querySelector('.inner-hero-aside')).toHaveTextContent(
+      INCLUDES.es.integration[0] ?? '',
+    );
+  });
+
   it('renders six edge cases and four collapsed questions', () => {
     const { container } = view();
     expect(container.querySelectorAll('#edge-cases h3')).toHaveLength(6);
@@ -79,6 +109,8 @@ describe('HoldedPairPage table', () => {
         copy={SPANISH.holdedWoocommerce}
         hub={HUB_ES}
         services={SERVICES.es}
+        includes={INCLUDES.es.integration}
+        close={DESK_CLOSE.es}
       />,
     );
     const first = container.querySelector('tbody tr');

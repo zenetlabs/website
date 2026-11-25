@@ -16,7 +16,7 @@ GA4 events (`src/lib/track.ts`, typed, no free-text params):
 
 | Event | Params | Fired from |
 |---|---|---|
-| `cta_click` | `cta_id`: `header`, `header_menu`, `hero`, `page_hero`, `page_cta`, `pricing`, `about`, `cases`, `services`, `contact_book`, `start_here`, `sticky`; on home also `desk_slot` (a slot chip), `desk_times` (all times), `desk_contact` (send a message), `desk_call` (the desk's call door), `close_call`, `close_contact` (the closing band's doors) | `CtaLink`, and the call doors |
+| `cta_click` | `cta_id`: `header`, `header_menu`, `hero`, `page_hero`, `page_cta`, `pricing`, `about`, `cases`, `services`, `contact_book`, `start_here`, `sticky`; on home and the service and landing pages also `desk_slot` (a slot chip), `desk_times` (all times), `desk_contact` (send a message), `close_call`, `close_contact` (the closing band's doors), and on home `desk_call` (the hero desk's call door); `page_cta` stays on the pages that still close with `CtaSection` | `CtaLink`, and the call doors |
 | `language_switch` | none | the non-current link of the language switch |
 | `pricing_view` | none | once per pricing page load, when GA starts |
 | `generate_lead` | `method`: `form`, `chat`, `voice`, `calculator`, `booking`, `webmcp` | the contact form after a successful submit (`form`; `calculator` when it was sent from the price calculator page), and the page behind the emailed booking link once it shows the booked call after the Confirm post (once per booking: the `outcome=booked` hint is dropped from the address), with the channel the request came from (`booking` for `/book`, `chat`, `webmcp`, `voice`) |

@@ -9,6 +9,7 @@ import {
   PAGES,
   PAIRS,
   SECTOR_PAGE,
+  SERVICE_PAIRS,
   settleAnimations,
   VERIFACTU_PAGE,
 } from './helpers';
@@ -92,13 +93,17 @@ test.describe('mobile menu', () => {
 test.describe('reduced motion', () => {
   test.use({ reducedMotion: 'reduce' });
 
-  for (const url of ['/', '/es']) {
+  for (const url of ['/', '/es', '/services/ai-agents', HOLDED_PAGES[1]]) {
     test(`${url} runs no animations`, async ({ page }) => {
       await gotoHydrated(page, url);
       expect(await page.evaluate(() => document.getAnimations().length)).toBe(
         0,
       );
-      await expect(page.locator('[data-desk]')).toBeVisible();
+      if (url === '/' || url === '/es') {
+        await expect(page.locator('[data-desk]')).toBeVisible();
+      } else {
+        await expect(page.locator('[data-flow-board]')).toBeVisible();
+      }
     });
   }
 });
@@ -203,6 +208,22 @@ async function sideways(page: Page): Promise<number> {
   return page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth,
   );
+}
+
+const PR1_URLS = [
+  ...Object.values(SERVICE_PAIRS).flatMap((pair) => [pair.en, pair.es]),
+  ...HOLDED_PAGES,
+  VERIFACTU_PAGE,
+  SECTOR_PAGE,
+];
+
+for (const url of PR1_URLS) {
+  test(`${url} has no horizontal scroll at 360`, async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 780 });
+    await gotoHydrated(page, url);
+    const named = await overflowing(page);
+    expect(await sideways(page), named.join('\n')).toBeLessThanOrEqual(0);
+  });
 }
 
 for (const url of OVERFLOW_URLS) {

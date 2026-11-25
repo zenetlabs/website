@@ -17,8 +17,9 @@ export const training = {
       emphasis: 'your own work',
       after: '',
     },
+    lead: 'We train Singapore teams to use AI safely and productively, not just to have heard of it.',
     // TODO(albert): confirm the lead time
-    lead: `Our AI training is a hands-on workshop where your team learns to use AI on its own processes, followed, if you want, by monthly mentoring while the habits take hold. It is for Singapore companies that want their staff using AI safely and productively, not just having heard of it. A half-day workshop costs ${formatPrice('en', workshop)}, longer workshops ${formatPrice('en', day)} and mentoring ${formatPrice('en', mentoring)}, excluding GST, and a workshop can usually be scheduled two to four weeks after we agree the content.`,
+    intro: `Our AI training is a hands-on workshop where your team learns to use AI on its own processes, followed, if you want, by monthly mentoring while the habits take hold. A half-day workshop costs ${formatPrice('en', workshop)}, longer workshops ${formatPrice('en', day)} and mentoring ${formatPrice('en', mentoring)}, excluding GST, and a workshop can usually be scheduled two to four weeks after we agree the content.`,
   },
   facts: {
     who: 'Companies that want their staff using AI well, from leadership to the front line',

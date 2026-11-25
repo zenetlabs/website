@@ -1,24 +1,26 @@
 import { Faq } from '@/components/faq';
-import { FlowDiagram } from '@/components/flow-diagram';
+import { FlowBoard } from '@/components/flow-board';
+import { InnerClose } from '@/components/inner-close';
+import { Ledger } from '@/components/ledger';
 import {
   Breadcrumb,
   CaseCallout,
-  FactsHero,
-  GetStarted,
   RelatedLinks,
-  UseCaseList,
 } from '@/components/page-blocks';
+import { PageHero } from '@/components/page-hero';
+import { Includes, PriceTicket } from '@/components/price-ticket';
 import { Process } from '@/components/process';
 import { Section } from '@/components/section';
 import { StickyZone } from '@/components/sticky-cta';
 import type {
+  DeskCloseCopy,
   ServicePageContent,
   Services,
   ServicesHubContent,
 } from '@/content/types';
 import { hubNames } from '@/lib/crumb-names';
 import type { Locale } from '@/lib/i18n';
-import type { ServicePageId } from '@/lib/page-registry';
+import { type ServicePageId, serviceOf } from '@/lib/page-registry';
 
 export function ServicePage({
   page,
@@ -26,25 +28,27 @@ export function ServicePage({
   copy,
   hub,
   services,
+  includes,
+  close,
 }: {
   page: ServicePageId;
   locale: Locale;
   copy: ServicePageContent;
   hub: ServicesHubContent;
   services: Services;
+  includes: readonly string[];
+  close: DeskCloseCopy;
 }) {
   const names = hubNames(hub);
 
   return (
     <>
-      <FactsHero
-        page={page}
+      <PageHero
         locale={locale}
-        services={services}
-        labels={hub.labels}
-        hero={copy.hero}
-        facts={copy.facts}
+        title={copy.hero.title}
+        lead={copy.hero.lead}
         button={copy.cta.button}
+        pricing={hub.labels.pricing}
         breadcrumb={
           <Breadcrumb
             page={page}
@@ -53,26 +57,35 @@ export function ServicePage({
             label={hub.labels.breadcrumb}
           />
         }
-        figure={
+        board={
           copy.flow ? (
-            <FlowDiagram
-              steps={copy.flow.steps}
+            <FlowBoard
+              flow={copy.flow}
               actors={hub.labels.actors}
-              caption={copy.flow.caption}
               approval={copy.approval}
             />
           ) : undefined
         }
+        ticket={
+          <PriceTicket
+            service={services[serviceOf(page)]}
+            facts={copy.facts}
+            labels={hub.labels}
+            locale={locale}
+          />
+        }
+        includes={<Includes label={hub.labels.included} items={includes} />}
       />
       <StickyZone locale={locale}>
         <Section
           id="use-cases"
           title={copy.useCases.title}
+          intro={copy.hero.intro}
           lead={copy.useCases.lead}
         >
-          <UseCaseList items={copy.useCases.items} locale={locale} />
+          <Ledger items={copy.useCases.items} locale={locale} />
         </Section>
-        <Process id="how" copy={copy.how} />
+        <Process id="how" copy={copy.how} rail variant="tint" />
         <CaseCallout copy={copy.case} locale={locale} names={names} />
         <Faq copy={copy.faq} items={copy.faq.items} />
         <RelatedLinks
@@ -82,7 +95,13 @@ export function ServicePage({
           labels={hub.labels}
         />
       </StickyZone>
-      <GetStarted locale={locale} cta={copy.cta} mail={hub.labels.mail} />
+      <InnerClose
+        cta={copy.cta}
+        faq={copy.faq}
+        hub={hub}
+        close={close}
+        locale={locale}
+      />
     </>
   );
 }

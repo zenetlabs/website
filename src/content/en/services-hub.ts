@@ -64,6 +64,7 @@ export const servicesHub = {
     timeline: 'Timeline',
     start: 'First step',
     taxNote: 'excl. GST',
+    included: 'Included',
     pricing: 'See pricing',
     mail: 'Prefer email? Write to',
     related: 'Related services',

@@ -2,7 +2,8 @@ import { createFileRoute } from '@tanstack/react-router';
 import { lazy, Suspense, useRef } from 'react';
 import { CalculatorForm, EstimatePanel } from '@/components/calculator';
 import { ContactFallback } from '@/components/contact-intro';
-import { Breadcrumb, HeroHeading } from '@/components/page-blocks';
+import { Breadcrumb } from '@/components/page-blocks';
+import { HeroHeading } from '@/components/plain-hero';
 import { Container } from '@/components/section';
 import { sectionFrame } from '@/components/section-frame';
 import { H3, PROSE, TEXT_LINK } from '@/components/ui';
@@ -69,7 +70,7 @@ function Calculator() {
 
   return (
     <>
-      <section aria-labelledby="service-title">
+      <section aria-labelledby="page-title">
         <Container className="py-16 md:py-24">
           <Breadcrumb
             page="calculator"

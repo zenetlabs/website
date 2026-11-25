@@ -278,6 +278,7 @@ describe.each(locales)('LLMS_FULL %s', (locale) => {
       const copyOf = SERVICE_BODIES[locale].pages[page];
       const prices = SERVICES[locale][serviceOf(page)].prices;
       expect(text).toContain(copyOf.hero.lead);
+      expect(text).toContain(copyOf.hero.intro);
       expect(text).toContain(
         `- ${labels.price}: ${formatPriceSummary(locale, prices)} (${labels.taxNote})`,
       );
@@ -413,6 +414,7 @@ describe('LLMS_FULL Spanish landing pages', () => {
       expect(pair).toBeDefined();
       if (!pair) continue;
       expect(text).toContain(pair.hero.lead);
+      expect(text).toContain(pair.hero.intro);
       expect(text).toContain(
         `- ${labels.price}: ${formatPriceSummary('es', SERVICES.es.integration.prices)} (${labels.taxNote})`,
       );
@@ -464,6 +466,7 @@ describe('LLMS_FULL Spanish landing pages', () => {
       h2(text).indexOf(`## ${esLlms.headings.cases}`) + 1,
     );
     expect(text).toContain(sector.hero.lead);
+    expect(text).toContain(sector.hero.intro);
     for (const item of sector.work.items) {
       expect(text).toContain(
         `- ${item.title}: ${item.today} → ${item.automated}`,

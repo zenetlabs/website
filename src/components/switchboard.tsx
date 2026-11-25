@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { FlowTileMark } from '@/components/offer-system';
+import { FlowTileMark } from '@/components/flow-tiles';
 import type { StageCopy, StageJob, StageTile } from '@/content/types';
 
 const TILES = [
@@ -123,7 +123,13 @@ export function Switchboard({
 }) {
   const playing = intro === 'play';
   return (
-    <div ref={stageRef} data-switchboard data-intro={intro} className="sb">
+    <div
+      ref={stageRef}
+      data-scene
+      data-switchboard
+      data-intro={intro}
+      className="sb"
+    >
       <div aria-hidden="true" className="sb-orbit">
         {TILES.map((tile) => (
           <i key={tile} data-tile={tile} className="sb-wire" />

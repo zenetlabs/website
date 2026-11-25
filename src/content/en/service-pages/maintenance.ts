@@ -17,7 +17,8 @@ export const maintenance = {
       emphasis: 'automations working',
       after: '',
     },
-    lead: `Tools change, and an automation that worked last month can stop without warning. Our maintenance monitors what we built, fixes it and updates it when your tools change, and reviews every month what to improve. There are three plans: ${formatPrice('en', essential)}, ${formatPrice('en', standard)} and ${formatPrice('en', extended)}, excluding GST.`,
+    lead: 'Tools change, and an automation that worked last month can stop without warning.',
+    intro: `Our maintenance monitors what we built, fixes it and updates it when your tools change, and reviews every month what to improve. There are three plans: ${formatPrice('en', essential)}, ${formatPrice('en', standard)} and ${formatPrice('en', extended)}, excluding GST.`,
   },
   facts: {
     who: 'Companies with an integration, an automation or an AI agent from us in production',

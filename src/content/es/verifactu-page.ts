@@ -30,7 +30,8 @@ export const verifactuPage = {
       after: '',
     },
     // TODO(albert): confirm Holded shows its declaración responsable for the current version
-    lead: `Verifactu es el reglamento (RD 1007/2023) que fija qué debe cumplir el programa con el que emites tus facturas: que cada factura deje un registro que no se pueda alterar y que lleve un código QR. Según la norma en vigor, las sociedades deben tenerlo adaptado antes del ${companies} y los autónomos y el resto, antes del ${others}; Hacienda ha anunciado que lo aplazará a ${announcedTo}, pero aún no está en el BOE. Te ayudamos a que tu tienda, tu CRM o tu ERP facturen a través de un programa adaptado, como Holded. El diagnóstico cuesta ${diagnostic} y un proyecto de integración, ${price}, IVA no incluido.`,
+    lead: 'Te ayudamos a que tu tienda, tu CRM o tu ERP facturen a través de un programa adaptado, como Holded.',
+    intro: `Verifactu es el reglamento (RD 1007/2023) que fija qué debe cumplir el programa con el que emites tus facturas: que cada factura deje un registro que no se pueda alterar y que lleve un código QR. Según la norma en vigor, las sociedades deben tenerlo adaptado antes del ${companies} y los autónomos y el resto, antes del ${others}; Hacienda ha anunciado que lo aplazará a ${announcedTo}, pero aún no está en el BOE. El diagnóstico cuesta ${diagnostic} y un proyecto de integración, ${price}, IVA no incluido.`,
   },
   facts: {
     who: 'Sociedades, autónomos y demás negocios que facturan con un programa, sobre todo si las facturas salen de varios sitios: tienda, TPV, CRM o un programa propio',

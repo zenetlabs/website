@@ -198,13 +198,61 @@ for (const { path, locale } of HOMES) {
   });
 }
 
+const BOARD_PAGES = [SERVICE_PAIRS.agents.en, HOLDED_PAGES[1]] as const;
+
+for (const path of BOARD_PAGES) {
+  const locale = path.startsWith('/es') ? 'es' : 'en';
+  test(`${path} shows the board's final frame without JavaScript`, async ({
+    page,
+  }) => {
+    await page.goto(path);
+    expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+    const frame = await page.evaluate(() => ({
+      packets: [...document.querySelectorAll('.fb-pk')].map(
+        (el) => getComputedStyle(el).opacity,
+      ),
+      after: [...document.querySelectorAll('.fb-after')].map(
+        (el) => getComputedStyle(el).opacity,
+      ),
+    }));
+    expect(frame.packets.length).toBeGreaterThan(0);
+    expect(new Set(frame.packets)).toEqual(new Set(['0']));
+    for (const opacity of frame.after) expect(opacity).toBe('1');
+  });
+
+  test(`${path} close chip and composer reach the contact form without JavaScript`, async ({
+    page,
+  }) => {
+    const { desk } = HOME_COPY[locale];
+    await page.goto(path);
+    const close = page.locator('#contact [data-close-desk]');
+    for (const hidden of await page.locator('[data-needs-js]').all()) {
+      await expect(hidden).toBeHidden();
+    }
+    const question = QUESTION[locale];
+    await close.getByLabel(desk.label).fill(question);
+    await close.getByRole('button', { name: desk.intro.send }).click();
+    await expect(page).toHaveURL(
+      `${CONTACT_PAIR[locale]}?${new URLSearchParams({ message: question })}`,
+    );
+    await page.goto(path);
+    const chip = page.locator('#contact .desk-chip').first();
+    const href = await chip.getAttribute('href');
+    await chip.click();
+    await expect(page).toHaveURL(href ?? '');
+    await expect(page.locator('textarea[name="message"]')).not.toHaveValue('');
+  });
+}
+
 for (const { path, locale, service } of SERVICE_PAGES) {
   test(`${path} shows its price, opens a question and lists the email without JavaScript`, async ({
     page,
   }) => {
     await page.goto(path);
     const prices = SERVICES[locale][service].prices;
-    const facts = normalise(await page.locator('dl').first().innerText());
+    const facts = normalise(
+      (await page.locator('.price-ticket').first().textContent()) ?? '',
+    );
     expect(facts).toContain(normalise(formatPriceSummary(locale, prices)));
 
     const item = page.locator('#faq details').first();

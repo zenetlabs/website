@@ -740,9 +740,14 @@
     }
   }
 
-  /* Inner page heroes: copy and actions on 7 columns, the page's figure on 5 */
+  /* Inner page heroes: one column, a longer one beside its figure from lg */
+  .page-hero,
+  .inner-hero {
+    @apply grid grid-cols-[minmax(0,1fr)] gap-6 pt-4 pb-8 md:gap-10 md:pt-10 md:pb-16;
+  }
+
   .page-hero {
-    @apply grid grid-cols-[minmax(0,1fr)] gap-6 pt-4 pb-8 md:gap-10 md:pt-10 md:pb-16 lg:grid-cols-12 lg:items-start lg:gap-x-6 lg:gap-y-12 lg:py-16;
+    @apply lg:grid-cols-12 lg:items-start lg:gap-x-6 lg:gap-y-12 lg:py-16;
   }
 
   /* The hero copy has 7 columns beside its figure: long titles stop at 60px */
@@ -760,25 +765,6 @@
 
   .fact-value {
     @apply mt-1 text-ui-s text-fg-soft md:text-ui-m;
-  }
-
-  [data-highlight] > .fact-value {
-    @apply font-semibold text-fg;
-  }
-
-  /* Below lg the facts run as the strip does; from lg they are the hero's card */
-  .facts-card {
-    @apply grid grid-cols-2 gap-x-6 gap-y-5 border-t border-line-strong pt-6 lg:grid-cols-1 lg:gap-4 lg:rounded-card lg:border lg:border-hairline lg:bg-surface lg:p-7 lg:shadow-raised;
-  }
-
-  @media (min-width: 1024px) {
-    .facts-card > div + div {
-      @apply border-t border-hairline pt-4;
-    }
-
-    .facts-card [data-highlight] > .fact-value {
-      @apply text-h3 text-agent;
-    }
   }
 
   /* A process figure: one row per actor, tiles joined by a vertical wire */
@@ -858,7 +844,7 @@
   }
 
   .case-callout {
-    @apply grid gap-5 rounded-card border border-hairline bg-surface p-4 md:gap-6 md:p-10 lg:grid-cols-12 lg:gap-x-12;
+    @apply grid gap-5 border-t border-line-strong pt-6 md:gap-6 md:pt-10 lg:grid-cols-12 lg:gap-x-12;
   }
 
   /* Five services: three in the first row, two wider ones under them */
@@ -2568,6 +2554,393 @@
       text-decoration-thickness: 2px;
     }
   }
+
+  /* The hero of the service and landing pages: copy, then the stage (the board
+     and the price ticket) and the aside (what is included). From lg the stage
+     takes the right half, 7 columns from xl, and the aside sits under the
+     copy, beside the ticket. The base grid is shared with .page-hero. */
+  @media (max-width: 767px) {
+    .inner-hero {
+      padding-bottom: 2.5rem;
+    }
+  }
+
+  .inner-hero > * {
+    min-width: 0;
+  }
+
+  .inner-hero h1 {
+    font-size: clamp(2.25rem, 1.2rem + 2.2vw, 3.25rem);
+  }
+
+  .inner-hero-stage {
+    @apply grid content-start gap-8 md:gap-10;
+  }
+
+  @media (min-width: 1024px) {
+    .inner-hero {
+      grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
+      grid-template-rows: auto 1fr;
+      grid-template-areas: "copy stage" "aside stage";
+      column-gap: 3rem;
+      row-gap: 2.5rem;
+    }
+
+    .inner-hero-copy {
+      grid-area: copy;
+    }
+
+    .inner-hero-stage {
+      grid-area: stage;
+    }
+
+    .inner-hero-aside {
+      grid-area: aside;
+      align-self: end;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .inner-hero {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      column-gap: 4rem;
+    }
+  }
+
+  /* Home's ticket frame in a smaller box: stacked, and side by side (with the
+     vertical perforation) once its own box is wide, not the viewport */
+  .price-ticket-wrap {
+    container-type: inline-size;
+  }
+
+  .price-ticket {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .price-ticket .ticket-stub {
+    border-width: 2px 0 0;
+  }
+
+  @container (min-width: 36rem) {
+    .price-ticket {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    }
+
+    .price-ticket .ticket-stub {
+      border-width: 0 0 0 2px;
+    }
+  }
+
+  .price-ticket-price {
+    @apply mt-2 text-agent;
+    font-weight: 650;
+    letter-spacing: -0.045em;
+    line-height: 0.95;
+    white-space: nowrap;
+  }
+
+  .price-ticket .price-amount {
+    font-size: clamp(2.125rem, 13cqi, 3.5rem);
+  }
+
+  .price-ticket .price-amount[data-range] {
+    font-size: clamp(1.75rem, 9cqi, 2.75rem);
+  }
+
+  .price-ticket .price-from {
+    @apply block;
+    letter-spacing: normal;
+  }
+
+  .price-ticket .price-unit {
+    letter-spacing: normal;
+  }
+
+  /* Ruled task rows: the task, what it does, and the tools it touches */
+  .ledger {
+    @apply grid border-t border-line-strong;
+  }
+
+  .ledger > li {
+    @apply grid gap-2 border-b border-hairline py-5;
+  }
+
+  .ledger-tiles {
+    @apply hidden md:flex;
+  }
+
+  .ledger-tiles .flow-tile {
+    @apply size-10;
+    --tile-mark: 1.25rem;
+  }
+
+  @media (min-width: 1024px) {
+    .ledger > li {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+      column-gap: 2.5rem;
+      align-items: center;
+      padding-block: 1.75rem;
+    }
+
+    .ledger > li[data-tiles] {
+      grid-template-columns: minmax(0, 3fr) minmax(0, 5fr) minmax(0, 4fr);
+    }
+
+    .ledger-tiles {
+      justify-content: flex-end;
+    }
+  }
+
+  /* The hero board: the page's flow as tiles on wires, ending in its final
+     frame (the packets and pings rest at opacity 0). The motion is in the
+     [data-flow-board] block of the scene gate at the end of this file. The
+     wires are horizontal; the lane turns them vertical below lg. The beat
+     between steps shrinks with their number, so a long flow still ends under
+     5 s. */
+  .flow-board {
+    --fb-start: 0.3s;
+    --fb-hop: min(1.1s, calc(2.2s / (var(--n, 3) - 1)));
+    --fb-ride: 0.9s;
+    --fb-pair: 0.7s;
+    --fb-pair-ride: 0.8s;
+    --ping: var(--tool);
+    --node: 3rem;
+    @apply grid content-start gap-5;
+  }
+
+  .flow-board-cap {
+    @apply text-ui-s font-semibold text-muted-fg;
+  }
+
+  .fb-node {
+    @apply relative justify-self-center rounded-inner;
+    width: var(--node);
+    height: var(--node);
+  }
+
+  .fb-node > .flow-tile {
+    @apply size-full shadow-raised;
+  }
+
+  [data-actor="human"] > .fb-node {
+    @apply rounded-full;
+  }
+
+  .fb-ping {
+    @apply pointer-events-none absolute -inset-1.5 opacity-0;
+    border: 2px solid var(--ping);
+    border-radius: inherit;
+  }
+
+  .fb-hop {
+    --p0: -100% 0;
+    --p1: 0 0;
+    --pk: var(--agent);
+    @apply h-0 border-t-2 border-dashed;
+    border-color: var(--hop, var(--line-strong));
+  }
+
+  .fb-hop[data-to="tool"] {
+    --pk: var(--tool);
+  }
+
+  .fb-hop[data-to="human"] {
+    --pk: var(--human-ring);
+    --hop: var(--human-ring);
+  }
+
+  .fb-pk {
+    @apply absolute opacity-0;
+    left: 0;
+    top: -2px;
+    width: 100%;
+    height: 2px;
+    translate: var(--p1);
+  }
+
+  .fb-pk::before {
+    content: "";
+    @apply absolute size-2.5 rounded-full;
+    right: -5px;
+    top: -4px;
+    background: var(--pk);
+  }
+
+  .fb-pk[data-to="shop"] {
+    --p0: 100% 0;
+  }
+
+  .fb-pk[data-to="shop"]::before {
+    left: -5px;
+    right: auto;
+  }
+
+  .fb-lane {
+    @apply grid gap-[1.375rem];
+  }
+
+  .fb-lane > li {
+    @apply relative grid grid-cols-[3.25rem_minmax(0,1fr)] items-start gap-x-3.5;
+    --ping: var(--tool);
+  }
+
+  .fb-lane > li[data-actor="agent"] {
+    --ping: var(--agent);
+  }
+
+  .fb-lane > li[data-actor="human"] {
+    --ping: var(--human-ring);
+  }
+
+  .fb-lane .fb-node {
+    @apply mt-0.5;
+  }
+
+  .fb-text {
+    @apply grid gap-0.5 pt-1;
+  }
+
+  .fb-actor {
+    @apply text-ui-s text-muted-fg;
+  }
+
+  .fb-step {
+    @apply text-ui-m leading-snug font-semibold;
+    text-wrap: pretty;
+  }
+
+  .fb-lane .fb-hop {
+    @apply absolute;
+    left: calc(50% + 50px);
+    top: 42px;
+    width: calc(100% - 100px);
+  }
+
+  @media (max-width: 1023px) {
+    .fb-lane .fb-hop {
+      --p0: 0 -100%;
+      left: 25px;
+      top: 3.625rem;
+      width: 0;
+      height: calc(100% - 2.625rem);
+      border-width: 0 0 0 2px;
+    }
+
+    .fb-lane .fb-pk {
+      left: -2px;
+      top: 0;
+      width: 2px;
+      height: 100%;
+    }
+
+    .fb-lane .fb-pk::before {
+      left: -4px;
+      right: auto;
+      top: auto;
+      bottom: -5px;
+    }
+  }
+
+  .fb-after {
+    @apply pl-[4.125rem];
+  }
+
+  .fb-card {
+    @apply max-w-88;
+  }
+
+  @media (min-width: 1024px) {
+    .flow-board {
+      --node: 4rem;
+    }
+
+    .fb-lane {
+      @apply auto-cols-fr grid-flow-col gap-0;
+    }
+
+    .fb-lane > li {
+      @apply grid-cols-[minmax(0,1fr)] justify-items-center gap-y-3.5 px-2.5 text-center;
+    }
+
+    .fb-lane .flow-tile {
+      --tile-mark: 2rem;
+    }
+
+    .fb-lane [data-actor="human"] .flow-tile {
+      --tile-mark: 1.75rem;
+    }
+
+    .fb-lane .fb-node {
+      @apply my-2.5;
+    }
+
+    .fb-lane > li[data-actor="agent"] > .fb-node {
+      @apply my-0 size-21 rounded-[1.25rem];
+    }
+
+    .fb-lane > li[data-actor="agent"] .flow-tile {
+      @apply rounded-[1.25rem];
+    }
+
+    .fb-text {
+      @apply justify-items-center pt-0;
+    }
+
+    .fb-step {
+      @apply max-w-[15em] text-ui-l;
+    }
+
+    .fb-after {
+      @apply grid grid-cols-3 pl-0;
+    }
+
+    .fb-after > * {
+      @apply col-[2/4] pl-2.5;
+    }
+  }
+
+  .fb-pair {
+    @apply flex items-start gap-3;
+  }
+
+  .fb-pair .fb-hop {
+    @apply relative flex-1;
+    --hop: var(--tool);
+    margin-top: calc(var(--node) / 2 - 1px);
+  }
+
+  .fb-end {
+    @apply grid w-24 shrink-0 justify-items-center gap-2;
+  }
+
+  .fb-name {
+    @apply text-center text-ui-s font-semibold;
+  }
+
+  .fb-rows {
+    @apply grid border-t border-hairline text-ui-s;
+  }
+
+  .fb-rows > li {
+    @apply grid gap-x-3 gap-y-0.5 border-b border-hairline py-2.5 sm:grid-cols-[minmax(0,1fr)_auto];
+  }
+
+  /* The closing desk of an inner page: its two chips are whole questions */
+  @media (max-width: 639px) {
+    [data-page-chips] .desk-chips {
+      @apply mx-0 flex-col overflow-visible px-0;
+      mask-image: none;
+    }
+  }
+
+  [data-page-chips] .desk-chips > li {
+    @apply min-w-0 shrink;
+  }
+
+  [data-page-chips] .desk-chip {
+    @apply max-w-full rounded-[1.5rem] py-2 text-left;
+    text-wrap: pretty;
+  }
 }
 
 @keyframes menu-in {
@@ -2727,8 +3100,10 @@
   }
 }
 
-/* The scene plays only with scripting and motion allowed, until it is done.
-   Fill `backwards` only: when it ends, the natural styles are the last frame. */
+/* Every scene (the home Switchboard, each inner page's board) plays only in
+   this one block: with scripting and motion allowed. Fill `backwards` only:
+   when a scene ends, its natural styles are the last frame. The Switchboard
+   plays until it is done; a board ends within 5 s. */
 @media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
   [data-switchboard]:not([data-intro="done"]) {
     .sb-wire,
@@ -2782,6 +3157,50 @@
 
     :is(.sb-skip, .sb-replay) {
       animation: sb-swap var(--sb-t) linear;
+    }
+  }
+
+  [data-flow-board] {
+    .fb-lane .fb-pk {
+      animation: sb-packet var(--fb-ride) linear
+        calc(var(--fb-start) + 0.2s + var(--i) * var(--fb-hop)) backwards;
+    }
+
+    .fb-lane .fb-ping {
+      animation: sb-ping 0.7s var(--ease-out)
+        calc(
+          var(--fb-start) +
+          var(--fb-ride) +
+          0.1s +
+          (var(--i) - 1) *
+          var(--fb-hop)
+        );
+    }
+
+    .fb-after {
+      animation: sb-rise 0.4s var(--ease-out)
+        calc(
+          var(--fb-start) +
+          var(--fb-ride) +
+          0.4s +
+          (var(--n) - 2) *
+          var(--fb-hop)
+        )
+        backwards;
+    }
+
+    .fb-pair .fb-pk {
+      animation: sb-packet var(--fb-pair-ride) linear
+        calc(0.5s + var(--k) * var(--fb-pair)) backwards;
+    }
+
+    .fb-pair .fb-ping {
+      animation: sb-ping 0.7s var(--ease-out)
+        calc(0.5s + var(--k) * var(--fb-pair) + var(--fb-pair-ride) - 0.1s);
+    }
+
+    .fb-lane li:first-child .fb-ping {
+      animation-delay: var(--fb-start);
     }
   }
 }

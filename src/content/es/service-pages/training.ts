@@ -17,8 +17,9 @@ export const training = {
       emphasis: 'trabajo real',
       after: ' de tu empresa',
     },
+    lead: 'Formamos a tu equipo para que use la IA con seguridad y le saque partido, no solo para que haya oído hablar de ella.',
     // TODO(albert): confirm the lead time
-    lead: `Nuestra formación en IA es un taller práctico en el que tu equipo aprende a usar la IA en sus propios procesos, seguido, si quieres, de una mentoría mensual mientras se asientan los hábitos. Es para pymes que quieren que su equipo use la IA con seguridad y le saque partido, no solo que haya oído hablar de ella. Un taller de medio día cuesta ${formatPrice('es', workshop)}; uno más largo, ${formatPrice('es', day)}, y la mentoría, ${formatPrice('es', mentoring)}, IVA no incluido. El taller suele poder hacerse entre dos y cuatro semanas después de acordar el contenido.`,
+    intro: `Nuestra formación en IA es un taller práctico en el que tu equipo aprende a usar la IA en sus propios procesos, seguido, si quieres, de una mentoría mensual mientras se asientan los hábitos. Un taller de medio día cuesta ${formatPrice('es', workshop)}; uno más largo, ${formatPrice('es', day)}, y la mentoría, ${formatPrice('es', mentoring)}, IVA no incluido. El taller suele poder hacerse entre dos y cuatro semanas después de acordar el contenido.`,
   },
   facts: {
     who: 'Pymes que quieren que su equipo use bien la IA, de la dirección a la primera línea',

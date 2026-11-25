@@ -63,19 +63,38 @@ describe('landing page registry and names', () => {
   });
 });
 
+describe('landing page heroes', () => {
+  it.each(LANDING_PAGE_IDS)(
+    '%s says its hero in one short sentence with no price or date, and keeps the rest as the intro',
+    (page) => {
+      const { hero } = landing(page);
+      expect(hero.lead.split(/\s+/).length).toBeLessThanOrEqual(24);
+      expect(hero.lead).not.toMatch(/[0-9$€]/);
+      expect(hero.lead.match(/[.!?](\s|$)/g)).toHaveLength(1);
+      expect(hero.intro).not.toBe('');
+    },
+  );
+
+  it('gives every landing page at least two questions for the closing chips', () => {
+    for (const page of LANDING_PAGE_IDS) {
+      expect(landing(page).faq.items.length).toBeGreaterThanOrEqual(2);
+    }
+  });
+});
+
 describe('landing page prices', () => {
   it.each(LANDING_PAGE_IDS)(
     '%s quotes the integration price and the tax phrase',
     (page) => {
       const { hero } = landing(page);
-      expect(hero.lead).toContain(integration);
-      expect(hero.lead).toContain('IVA no incluido');
+      expect(hero.intro).toContain(integration);
+      expect(hero.intro).toContain('IVA no incluido');
     },
   );
 
   it('quotes the agent price on the sector page and the diagnostic on Verifactu', () => {
-    expect(SPANISH.travelAgencies.hero.lead).toContain(agent);
-    expect(SPANISH.verifactu.hero.lead).toContain(diagnostic);
+    expect(SPANISH.travelAgencies.hero.intro).toContain(agent);
+    expect(SPANISH.verifactu.hero.intro).toContain(diagnostic);
   });
 
   it.each(LANDING_PAGE_IDS)(
@@ -103,9 +122,9 @@ describe('Verifactu dates', () => {
     verifactuDates;
 
   it('takes every date from the shared module', () => {
-    expect(hero.lead).toContain(companies);
-    expect(hero.lead).toContain(others);
-    expect(hero.lead).toContain(announcedTo);
+    expect(hero.intro).toContain(companies);
+    expect(hero.intro).toContain(others);
+    expect(hero.intro).toContain(announcedTo);
     expect(deadlines.rows.map((row) => row.date)).toEqual([
       `antes del ${companies}`,
       `antes del ${others}`,
@@ -130,7 +149,7 @@ describe('Verifactu dates', () => {
   });
 
   it('says the postponement is not in the official gazette yet', () => {
-    expect(hero.lead).toContain('aún no está en el BOE');
+    expect(hero.intro).toContain('aún no está en el BOE');
     expect(deadlines.announced).toContain(
       'Hasta que esa modificación se publique en el BOE',
     );

@@ -119,3 +119,15 @@ describe('buildKnowledge differences', () => {
     expect(await buildKnowledge('en', LIVE)).toContain('30-minute call');
   });
 });
+
+describe('buildKnowledge Holded stock', () => {
+  it('says which way the stock goes for the pairs that sync it', async () => {
+    const text = await buildKnowledge('es', LIVE);
+    expect(text).toContain(
+      'Stock (Stock por referencia (SKU)): De Holded a PrestaShop, o en los dos sentidos.',
+    );
+    expect(text).toContain(
+      'Stock (Stock por SKU): De Holded a WooCommerce, o en los dos sentidos.',
+    );
+  });
+});

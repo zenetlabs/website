@@ -1,17 +1,12 @@
-import { Fragment, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { CtaLink } from '@/components/cta-link';
+import { FlowRow } from '@/components/flow-tiles';
 import { Container, EmphasisTitle } from '@/components/section';
+import { Amount, TicketShell } from '@/components/ticket-shell';
 import { H3, LEAD, PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
-import type {
-  FlowTile,
-  FlowTool,
-  HomeContent,
-  Price,
-  Service,
-  Services,
-} from '@/content/types';
+import type { FlowTile, HomeContent, Service, Services } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
-import { formatPrice, formatPriceSummary, priceParts } from '@/lib/money';
+import { formatPrice, formatPriceSummary } from '@/lib/money';
 import { ctaTarget, navHref } from '@/lib/nav';
 import { BUILDS } from '@/lib/offer-flows';
 import {
@@ -22,107 +17,8 @@ import {
 } from '@/lib/page-registry';
 import { SITE } from '@/lib/site';
 
-// The tools with a mark of their own in `public/icons/tools/`
-const MARKED = [
-  'shopify',
-  'xero',
-  'sheets',
-  'hubspot',
-  'gmail',
-  'whatsapp',
-  'woocommerce',
-  'prestashop',
-] as const satisfies readonly FlowTool[];
-
-type Marked = (typeof MARKED)[number];
-
-// `app` is a custom app; Holded has no mark we can ship, so it is drawn as a
-// ledger. Both in the blue of the customer's tools.
-function isMarked(tile: FlowTile): tile is Marked {
-  return MARKED.some((tool) => tool === tile);
-}
-
-// The person, a custom app and Holded are drawn by an icon mask (`--icon`)
-const ICONS: Partial<Record<FlowTile, string>> = {
-  human: 'icon-human',
-  app: 'icon-app',
-  holded: 'icon-ledger',
-};
-
-export function FlowTileMark({
-  tile,
-  className = '',
-}: {
-  tile: FlowTile;
-  className?: string;
-}) {
-  const marked = isMarked(tile);
-  return (
-    <span
-      aria-hidden="true"
-      data-actor={marked ? undefined : tile === 'holded' ? 'app' : tile}
-      className={`flow-tile ${ICONS[tile] ?? ''} ${className}`}
-      style={
-        marked ? { '--tool-icon': `url(/icons/tools/${tile}.svg)` } : undefined
-      }
-    />
-  );
-}
-
-// The customer's tools (in their own colours), our agent, and the person who
-// approves, joined by wires. Decorative: the text beside it says the same.
-export function FlowRow({
-  tiles,
-  className = '',
-}: {
-  tiles: readonly FlowTile[];
-  className?: string;
-}) {
-  return (
-    <div aria-hidden="true" className={`flow-row ${className}`}>
-      {tiles.map((tile, index) => (
-        <Fragment key={tile}>
-          {index > 0 ? (
-            <span
-              className="flow-wire"
-              data-to={tile === 'human' ? 'human' : undefined}
-            />
-          ) : null}
-          <FlowTileMark tile={tile} />
-        </Fragment>
-      ))}
-    </div>
-  );
-}
-
 type Copy = HomeContent['services'];
 type Heading = 'h2' | 'h3';
-
-// A price set in parts (the amount large); read, and copied into the page's
-// markdown, as the one string it is.
-function Amount({ locale, price }: { locale: Locale; price: Price }) {
-  const { from, amount, unit } = priceParts(locale, price);
-  return (
-    <>
-      <span aria-hidden="true">
-        {from ? <span className="price-from">{from}</span> : null}
-        <span
-          className="price-amount"
-          data-range={price.max === undefined ? undefined : ''}
-        >
-          {amount}
-        </span>
-        {unit ? (
-          <>
-            <wbr />
-            <span className="price-unit">{unit}</span>
-          </>
-        ) : null}
-      </span>
-      <span className="sr-only">{formatPrice(locale, price)}</span>
-    </>
-  );
-}
 
 // Linked to the service's page by default (the pricing page for a line without
 // one); `null` sets it as plain text, as on the pricing page itself.
@@ -177,43 +73,51 @@ export function Ticket({
   children?: ReactNode;
 }) {
   return (
-    <div className="ticket" data-service={service.id}>
-      <div className="ticket-offer p-4 md:p-10">
-        <ServiceName
-          service={service}
-          locale={locale}
-          heading={heading}
-          href={href}
-        />
-        <p className="ticket-price">{formatPrice(locale, service.prices[0])}</p>
-        <p className="mt-4 flex flex-wrap gap-2">
-          {pills.map((pill) => (
-            <span key={pill} className="meta-pill">
-              {pill}
-            </span>
-          ))}
-        </p>
-        <p className="mt-5 max-w-[34em] text-fg-soft">{service.summary}</p>
-        <CtaLink
-          cta="start_here"
-          href={navHref(locale, ctaTarget(site))}
-          className={`mt-7 ${PRIMARY_BUTTON} max-sm:w-full`}
-        >
-          {book}
-        </CtaLink>
-        {children}
-      </div>
-      <div className="ticket-stub">
-        <p className="font-semibold">{plan.title}</p>
-        <ul className="plan-list">
-          {plan.items.map((item) => (
-            <li key={item} className="tick-item">
-              {item}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
+    <TicketShell
+      service={service}
+      offerClassName="p-4 md:p-10"
+      offer={
+        <>
+          <ServiceName
+            service={service}
+            locale={locale}
+            heading={heading}
+            href={href}
+          />
+          <p className="ticket-price">
+            {formatPrice(locale, service.prices[0])}
+          </p>
+          <p className="mt-4 flex flex-wrap gap-2">
+            {pills.map((pill) => (
+              <span key={pill} className="meta-pill">
+                {pill}
+              </span>
+            ))}
+          </p>
+          <p className="mt-5 max-w-[34em] text-fg-soft">{service.summary}</p>
+          <CtaLink
+            cta="start_here"
+            href={navHref(locale, ctaTarget(site))}
+            className={`mt-7 ${PRIMARY_BUTTON} max-sm:w-full`}
+          >
+            {book}
+          </CtaLink>
+          {children}
+        </>
+      }
+      stub={
+        <>
+          <p className="font-semibold">{plan.title}</p>
+          <ul className="plan-list">
+            {plan.items.map((item) => (
+              <li key={item} className="tick-item">
+                {item}
+              </li>
+            ))}
+          </ul>
+        </>
+      }
+    />
   );
 }
 

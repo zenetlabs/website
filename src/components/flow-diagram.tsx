@@ -1,16 +1,7 @@
 import { ApprovalCard } from '@/components/approval-card';
-import { FlowTileMark } from '@/components/offer-system';
-import type {
-  ApprovalCopy,
-  FlowActor,
-  FlowStep,
-  FlowTile,
-} from '@/content/types';
-
-function tileOf(step: FlowStep): FlowTile {
-  if (step.actor === 'tool') return step.tool ?? 'app';
-  return step.actor;
-}
+import { FlowTileMark } from '@/components/flow-tiles';
+import type { ApprovalCopy, FlowActor, FlowStep } from '@/content/types';
+import { tileOf } from '@/lib/flow-tile';
 
 // A process drawn as it runs: the customer's tool, our agent, then the person
 // who decides, one row each and joined by a wire. The text carries it all; the

@@ -2,9 +2,10 @@ import { cleanup, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ServicePage } from '@/components/service-page';
 import es from '@/i18n/es.json';
+import { faqChips } from '@/lib/faq-chips';
 import { type Locale, locales } from '@/lib/i18n';
-import { formatPriceSummary } from '@/lib/money';
-import { CTA_TARGET, navHref } from '@/lib/nav';
+import { formatPrice, formatPriceSummary } from '@/lib/money';
+import { CTA_TARGET, contactWithMessage, navHref } from '@/lib/nav';
 import {
   pagePath,
   SERVICE_PAGE_IDS,
@@ -13,6 +14,7 @@ import {
 } from '@/lib/page-registry';
 import { PUBLIC_EMAIL } from '@/lib/site';
 import { titleText } from '@/lib/title-text';
+import { DESK_CLOSE, INCLUDES } from '../../test/inner-content';
 import { SERVICES } from '../../test/page-content';
 import { SERVICE_BODIES } from '../../test/service-bodies';
 
@@ -44,6 +46,8 @@ function view(locale: Locale, page: ServicePageId) {
       copy={copy}
       hub={hub}
       services={services}
+      includes={INCLUDES[locale][serviceOf(page)]}
+      close={DESK_CLOSE[locale]}
     />,
   );
   return { container, copy, labels, services, hub };
@@ -69,29 +73,49 @@ describe.each(CASES)('ServicePage (%s %s)', (locale, page) => {
     expect(current?.textContent).toBe(hub.cards[page].name);
   });
 
-  it('lists who, price, timeline and first step with the computed price', () => {
+  it('sets the offer as a ticket with the computed price, the timeline, who and the first step', () => {
     const { container, copy, labels, services } = view(locale, page);
-    const list = container.querySelector('dl');
+    const ticket = container.querySelector<HTMLElement>('.price-ticket');
+    const service = services[serviceOf(page)];
+    expect(ticket?.dataset.service).toBe(service.id);
+    expect(ticket?.textContent).toContain(service.name);
+    expect(ticket?.textContent).toContain(labels.taxNote);
+    expect(ticket?.querySelector('.sr-only')?.textContent).toBe(
+      formatPrice(locale, service.prices[0]),
+    );
+    if (service.prices.length > 1) {
+      expect(ticket?.textContent).toContain(
+        formatPriceSummary(locale, service.prices),
+      );
+    }
     expect(
-      [...(list?.querySelectorAll('dt') ?? [])].map((dt) => dt.textContent),
-    ).toEqual([labels.who, labels.price, labels.timeline, labels.start]);
-    expect(
-      [...(list?.querySelectorAll('dd') ?? [])].map((dd) => dd.textContent),
-    ).toEqual([
-      copy.facts.who,
-      `${formatPriceSummary(locale, services[serviceOf(page)].prices)} (${labels.taxNote})`,
+      [...(ticket?.querySelectorAll('dt') ?? [])].map((dt) => dt.textContent),
+    ).toEqual([labels.timeline, labels.who]);
+    expect(ticket?.querySelector('.ticket-offer')?.textContent).toContain(
       copy.facts.timeline,
-      copy.facts.start,
-    ]);
+    );
+    expect(ticket?.querySelector('.ticket-offer')?.textContent).toContain(
+      copy.facts.who,
+    );
+    const stub = ticket?.querySelector('.ticket-stub');
+    expect(stub?.textContent).toContain(labels.start);
+    expect(stub?.textContent).toContain(copy.facts.start);
+  });
+
+  it('lists what the ladder row includes beside the ticket', () => {
+    const { container, labels } = view(locale, page);
+    const aside = container.querySelector('.inner-hero-aside');
+    expect(aside?.textContent).toContain(labels.included);
+    expect(
+      [...(aside?.querySelectorAll('li') ?? [])].map((li) => li.textContent),
+    ).toEqual([...INCLUDES[locale][serviceOf(page)]]);
   });
 
   it('points the call to action and the pricing link at their targets', () => {
     const { copy, labels } = view(locale, page);
-    const buttons = screen.getAllByRole('link', { name: copy.cta.button });
-    expect(buttons.length).toBeGreaterThanOrEqual(2);
-    for (const button of buttons) {
-      expect(button).toHaveAttribute('href', navHref(locale, CTA_TARGET));
-    }
+    const [button] = screen.getAllByRole('link', { name: copy.cta.button });
+    expect(button).toHaveAttribute('href', navHref(locale, CTA_TARGET));
+    expect(button).toHaveAttribute('data-cta', 'page_hero');
     expect(screen.getByRole('link', { name: labels.pricing })).toHaveAttribute(
       'href',
       pagePath(locale, 'pricing'),
@@ -126,9 +150,12 @@ describe.each(CASES)('ServicePage (%s %s)', (locale, page) => {
   });
 
   it('shows no image and keeps the process to four steps', () => {
-    const { container } = view(locale, page);
+    const { container, copy } = view(locale, page);
     expect(container.querySelectorAll('img')).toHaveLength(0);
-    expect(container.querySelectorAll('.timeline > li')).toHaveLength(4);
+    expect(container.querySelectorAll('.rail > li')).toHaveLength(4);
+    expect(
+      container.querySelector('.rail > li:first-child')?.textContent,
+    ).toContain(copy.how.steps[0].label);
   });
 });
 
@@ -212,15 +239,15 @@ describe('ServicePage flow and approval', () => {
     locales.flatMap((locale) =>
       SERVICE_PAGE_IDS.map((page) => [locale, page] as const),
     ),
-  )('draws the three-step flow in the hero on %s %s', (locale, page) => {
+  )('draws the three-step board in the hero on %s %s', (locale, page) => {
     const { container, copy, hub } = view(locale, page);
     const hero = container.querySelector(
-      'section[aria-labelledby="service-title"]',
+      'section[aria-labelledby="page-title"]',
     );
-    const steps = [...(hero?.querySelectorAll('ol.flow-steps > li') ?? [])];
+    const steps = [...(hero?.querySelectorAll('ol.fb-lane > li') ?? [])];
     expect(steps).toHaveLength(3);
     expect(
-      steps.map((step) => step.querySelector('.flow-step-label')?.textContent),
+      steps.map((step) => step.querySelector('.fb-step')?.textContent),
     ).toEqual(copy.flow?.steps.map((step) => step.label));
     for (const [index, step] of steps.entries()) {
       const actor = copy.flow?.steps[index]?.actor;
@@ -230,13 +257,14 @@ describe('ServicePage flow and approval', () => {
     expect(hero?.querySelector('figcaption')?.textContent).toBe(
       copy.flow?.caption,
     );
+    expect(hero?.querySelectorAll('.fb-hop')).toHaveLength(2);
   });
 
-  it('shows the approval card under the person on agents only', () => {
+  it('shows the approval card under the board on agents only', () => {
     const agents = view('en', 'agents');
-    expect(
-      agents.container.querySelector('.flow-steps > [data-actor="human"]'),
-    ).toHaveTextContent('Needs your approval');
+    expect(agents.container.querySelector('.fb-after')).toHaveTextContent(
+      'Needs your approval',
+    );
     cleanup();
     for (const page of ['automation', 'integrations'] as const) {
       const { container } = view('en', page);
@@ -247,26 +275,59 @@ describe('ServicePage flow and approval', () => {
 });
 
 describe('ServicePage layout', () => {
-  it('highlights the price fact', () => {
-    const { container, labels } = view('en', 'agents');
-    const highlighted = container.querySelectorAll('.facts [data-highlight]');
-    expect(highlighted).toHaveLength(1);
-    expect(highlighted[0]?.querySelector('dt')?.textContent).toBe(labels.price);
+  it('opens the first section with the rest of the old lead', () => {
+    const { container, copy } = view('en', 'agents');
+    expect(container.querySelector('#use-cases')?.textContent).toContain(
+      copy.hero.intro,
+    );
+    expect(container.querySelector('.inner-hero-copy')?.textContent).toContain(
+      copy.hero.lead,
+    );
+    expect(
+      container.querySelector('.inner-hero-copy')?.textContent,
+    ).not.toContain(copy.hero.intro);
   });
 
-  it('puts the sticky bar after the related links and before the closing band', () => {
+  it('puts the sticky bar after the related links and before the closing desk', () => {
     const { container } = view('en', 'automation');
     const bar = container.querySelector('[data-sticky-cta]');
     const related = container.querySelector('#related-title');
-    const band = container.querySelector('section.band');
+    const close = container.querySelector('section.band#contact');
     expect(bar).not.toBeNull();
     expect(related?.compareDocumentPosition(bar as Node)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
-    expect(bar?.compareDocumentPosition(band as Node)).toBe(
+    expect(bar?.compareDocumentPosition(close as Node)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
   });
+});
+
+describe('ServicePage close', () => {
+  it.each(locales)(
+    'closes with the desk: the write door and the first two questions (%s)',
+    (locale) => {
+      const { container, copy } = view(locale, 'agents');
+      const close = container.querySelector('#contact');
+      const door = close?.querySelector('a[data-cta="close_contact"]');
+      expect(door).toHaveAttribute(
+        'href',
+        navHref(locale, { page: 'contact' }),
+      );
+      const [first, second] = copy.faq.items;
+      const chips = [...(close?.querySelectorAll('.desk-chip') ?? [])];
+      expect(chips.map((chip) => chip.getAttribute('href'))).toEqual([
+        contactWithMessage(locale, first?.question ?? ''),
+        contactWithMessage(locale, second?.question ?? ''),
+      ]);
+      expect(faqChips(copy.faq.items)).toEqual([
+        first?.question,
+        second?.question,
+      ]);
+      expect(close?.querySelector('[data-page-chips]')).not.toBeNull();
+      expect(container.querySelector('[data-cta="page_cta"]')).toBeNull();
+    },
+  );
 });
 
 describe('service-page sticky bar', () => {
