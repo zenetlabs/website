@@ -30,6 +30,7 @@ import { markdownUrl, pageUrl } from '@/lib/seo';
 import { titleText } from '@/lib/title-text';
 import { FLIPPED } from '../../test/entities';
 import { FAQ } from '../../test/faq';
+import { INCLUDES } from '../../test/inner-content';
 import { SERVICES } from '../../test/page-content';
 import { PLACEHOLDER } from '../../test/placeholders';
 import { SERVICE_BODIES } from '../../test/service-bodies';
@@ -250,10 +251,14 @@ describe.each(locales)('LLMS_FULL %s', (locale) => {
         expect(text).toContain(formatPrice(locale, price));
       }
     }
-    const { details } = PRICING[locale];
-    for (const { includes, timeline } of Object.values(details)) {
-      for (const item of includes) expect(text).toContain(`- ${item}`);
-      if (timeline) expect(text).toContain(timeline);
+    for (const items of Object.values(INCLUDES[locale])) {
+      for (const item of items) expect(text).toContain(`- ${item}`);
+    }
+    for (const timeline of Object.values(PRICING[locale].timelines)) {
+      expect(text).toContain(timeline);
+    }
+    for (const { text: row } of PRICING[locale].how.items) {
+      expect(text).toContain(`- ${row}`);
     }
   });
 
@@ -267,7 +272,7 @@ describe.each(locales)('LLMS_FULL %s', (locale) => {
     const body = section(text, headings.servicePages);
     const { hub } = SERVICE_BODIES[locale];
     const labels = SERVICE_BODIES[locale].hub.labels;
-    expect(text).toContain(`${titleText(hub.title)}. ${hub.lead}`);
+    expect(text).toContain(`${titleText(hub.title)}. ${hub.lead} ${hub.intro}`);
     expect(body.filter((line) => line.startsWith('### ['))).toEqual(
       SERVICE_PAGE_IDS.map(
         (page) => `### [${hub.cards[page].name}](${pageUrl(locale, page)})`,

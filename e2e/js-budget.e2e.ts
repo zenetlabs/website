@@ -123,8 +123,8 @@ const NEEDLES: Record<Kind, Partial<Record<Locale, string>>> = {
     es: 'En todos los casos, los agentes preparan',
   },
   contact: {
-    en: 'Mention the tools you use, too. A person',
-    es: 'Dinos también qué herramientas usas. Una persona',
+    en: 'A person on our team reads every message',
+    es: 'Una persona de nuestro equipo lee cada mensaje',
   },
   diagnostic: {
     en: 'Do we need to know what to automate',
@@ -152,8 +152,8 @@ const CALCULATOR_CASES: readonly PageCase[] = CALCULATOR_PUBLISHED
 const PAGES: readonly PageCase[] = [
   { path: '/', locale: 'en', kinds: ['home', 'faq'] },
   { path: '/es', locale: 'es', kinds: ['home', 'faq'] },
-  { path: '/pricing', locale: 'en', kinds: ['pricing', 'includes'] },
-  { path: '/es/precios', locale: 'es', kinds: ['pricing', 'includes'] },
+  { path: '/pricing', locale: 'en', kinds: ['pricing'] },
+  { path: '/es/precios', locale: 'es', kinds: ['pricing'] },
   { path: '/about', locale: 'en', kinds: ['about'] },
   { path: '/es/sobre-nosotros', locale: 'es', kinds: ['about'] },
   { path: '/services', locale: 'en', kinds: ['hub'] },

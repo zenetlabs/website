@@ -9,7 +9,7 @@ describe('CtaSection', () => {
   it('is a band with the primary button and an optional link', () => {
     const { container } = render(
       <CtaSection
-        cta="pricing"
+        cta="cases"
         copy={COPY}
         locale="en"
         secondary={{ label: 'Read the FAQ', href: '/#faq' }}

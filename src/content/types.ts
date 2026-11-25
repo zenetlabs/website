@@ -336,14 +336,10 @@ export type PricingPageContent = {
     includes: string;
     timeline: string;
     more: string;
-    startHere: string;
-    book: string;
   };
-  details: Record<
-    ServiceId,
-    { includes: readonly string[]; timeline?: string }
-  >;
-  how: { title: string; items: readonly string[] };
+  timelines: Partial<Record<ServiceId, string>>;
+  plan: readonly string[];
+  how: { title: string; items: readonly Card[] };
   calculator: { title: string; text: string; link: string };
   faq: { title: TitleParts };
   cta: { title: string; text: string; button: string };
@@ -356,7 +352,7 @@ export type AboutPageContent = {
   story: readonly { id: string; parts: Rich }[];
   principles: {
     title: string;
-    items: readonly { id: string; title: string; text: string }[];
+    items: readonly LedgerItem[];
   };
   companies: { title: string; lead: string; cases: string };
   vision: { title: string; text: string };
@@ -551,6 +547,8 @@ export type ServicesHubContent = {
   meta: PageMeta;
   title: TitleParts;
   lead: string;
+  intro: string;
+  ladder: { build: string; run: string; credit: string; oneOff: string };
   cards: Record<HubCardPage, { name: string; summary: string }> &
     Record<'diagnostic' | 'maintenance', { name: string }>;
   landing: Partial<
@@ -558,8 +556,6 @@ export type ServicesHubContent = {
   >;
   startHere: string;
   book: string;
-  plan: { title: string; items: readonly string[] };
-  also: { title: string; lead: string };
   start: { title: string; text: string; button: string };
   pricing: string;
 };

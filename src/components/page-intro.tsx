@@ -1,4 +1,5 @@
-import { EmphasisTitle } from '@/components/section';
+import { Container, EmphasisTitle } from '@/components/section';
+import { sectionFrame } from '@/components/section-frame';
 import { LEAD } from '@/components/ui';
 import type { TitleParts } from '@/content/types';
 
@@ -23,5 +24,18 @@ export function PageIntro({
         {note ? <p className="mt-3 text-ui-s text-muted-fg">{note}</p> : null}
       </div>
     </div>
+  );
+}
+
+const TINT = sectionFrame('tint');
+
+// `PageIntro` as the tint hero of pricing and the services hub.
+export function PageIntroSection(props: Parameters<typeof PageIntro>[0]) {
+  return (
+    <section data-ground={TINT.ground} className={TINT.bg}>
+      <Container className="pt-5 pb-8 md:pt-14 md:pb-14">
+        <PageIntro {...props} />
+      </Container>
+    </section>
   );
 }

@@ -1,19 +1,17 @@
 import { createFileRoute, useHydrated } from '@tanstack/react-router';
 import { lazy, Suspense } from 'react';
+import { AgentDesk } from '@/components/agent-desk';
 import { ContactSection } from '@/components/contact-section';
 import { CtaLink } from '@/components/cta-link';
+import { PageHero } from '@/components/page-hero';
 import { Process } from '@/components/process';
-import { Container, EmphasisTitle } from '@/components/section';
-import { sectionFrame } from '@/components/section-frame';
-import { LEAD, PRIMARY_BUTTON } from '@/components/ui';
+import { PRIMARY_BUTTON } from '@/components/ui';
 import { VoiceCallout } from '@/components/voice-button';
-import { loadContactContent } from '@/content/load';
+import { loadContactContent, loadDeskClose } from '@/content/load';
 import { messageParam } from '@/lib/contact-message';
 import { CTA_TARGET, navHref } from '@/lib/nav';
 import { contactStructuredData } from '@/lib/page-structured-data';
 import { contentHead } from '@/lib/pages';
-
-const TINT = sectionFrame('tint');
 
 // The live times load only after hydration, load and idle, in a chunk of their
 // own: the server render and the fallback are the link to all times.
@@ -26,31 +24,42 @@ const LazyContactSlots = lazy(() =>
 export const Route = createFileRoute('/{-$locale}/contact')({
   staticData: { page: 'contact' },
   validateSearch: (raw: Record<string, unknown>) => raw,
-  loader: ({ context }) => loadContactContent(context.locale),
+  loader: async ({ context }) => {
+    const [page, close] = await Promise.all([
+      loadContactContent(context.locale),
+      loadDeskClose(context.locale),
+    ]);
+    return { page, desk: close.desk };
+  },
   head: ({ match, loaderData }) =>
     loaderData
-      ? contentHead(match.context.locale, 'contact', loaderData.meta)
+      ? contentHead(match.context.locale, 'contact', loaderData.page.meta)
       : {},
   scripts: ({ match, loaderData }) =>
-    loaderData ? contactStructuredData(match.context.locale, loaderData) : [],
+    loaderData
+      ? contactStructuredData(match.context.locale, loaderData.page)
+      : [],
   component: Contact,
 });
 
-// The desk as a page: booking first (while it is published), then the form on
-// the band and what happens next.
+// The desk as a page: the desk and, while booking is published, its times in
+// the hero; the form on the band; what happens next. A prefilled arrival has
+// no desk: the form holding the text is the one place to write.
 function Contact() {
   const { locale } = Route.useRouteContext();
-  const page = Route.useLoaderData();
+  const { page, desk } = Route.useLoaderData();
   const hydrated = useHydrated();
   const message = messageParam(Route.useSearch());
-  // The booking card above replaces the band's "pick a time" link
-  const { voice, book: _book, ...form } = page.form;
+  const { voice, book, ...rest } = page.form;
+  // The desk's booking card replaces the band's "pick a time" link; without
+  // the desk (a prefilled arrival) the link stays
+  const form = message === null ? rest : { ...rest, book };
   // The site's booking CTA: /book while booking is published, else this page
   const booking = CTA_TARGET.page === 'book';
   const waiting = (
     <>
       <div className="desk-rail-head">
-        <h2 className="text-ui-l font-semibold">{page.slots.title}</h2>
+        <h3 className="text-ui-l font-semibold">{page.slots.title}</h3>
         <p className="desk-rail-meta" data-slot-meta>
           {page.slots.meta}
         </p>
@@ -72,33 +81,33 @@ function Contact() {
     </>
   );
 
+  const rail = booking ? (
+    <div className="contact-book" data-slot-rail="live">
+      {hydrated ? (
+        <Suspense fallback={waiting}>
+          <LazyContactSlots
+            copy={page.slots}
+            locale={locale}
+            fallback={waiting}
+          />
+        </Suspense>
+      ) : (
+        waiting
+      )}
+    </div>
+  ) : null;
+
   return (
     <>
-      <section data-ground={TINT.ground} className={TINT.bg}>
-        <Container className="page-hero lg:items-center">
-          <div className={booking ? 'lg:col-span-6' : 'lg:col-span-8'}>
-            <h1 className="max-w-4xl">
-              <EmphasisTitle parts={page.title} />
-            </h1>
-            <p className={`mt-6 ${LEAD}`}>{page.lead}</p>
-          </div>
-          {booking ? (
-            <div className="contact-book lg:col-span-6" data-slot-rail="live">
-              {hydrated ? (
-                <Suspense fallback={waiting}>
-                  <LazyContactSlots
-                    copy={page.slots}
-                    locale={locale}
-                    fallback={waiting}
-                  />
-                </Suspense>
-              ) : (
-                waiting
-              )}
-            </div>
-          ) : null}
-        </Container>
-      </section>
+      <PageHero
+        title={page.title}
+        lead={page.lead}
+        stage={
+          message === null ? (
+            <AgentDesk copy={desk} locale={locale} footer={rail} contact />
+          ) : undefined
+        }
+      />
       <ContactSection
         copy={form}
         prefill={message === null ? undefined : { message, method: 'form' }}
@@ -108,7 +117,12 @@ function Contact() {
           ) : null
         }
       />
-      <Process id="next" copy={page.next} />
+      <Process
+        id="next"
+        copy={page.next}
+        rail
+        stub={page.next.steps.findIndex((step) => step.id === 'diagnostic')}
+      />
     </>
   );
 }

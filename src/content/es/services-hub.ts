@@ -1,5 +1,4 @@
 import { casesName, contactName, viatsyCaseName } from '@/content/es/case-name';
-import { diagnosticPlan } from '@/content/es/diagnostic-plan';
 import { services } from '@/content/es/services';
 import type { ServicesHubContent } from '@/content/types';
 import { formatPriceSummary } from '@/lib/money';
@@ -18,7 +17,15 @@ export const servicesHub = {
     emphasis: 'sistemas funcionando',
     after: '',
   },
-  lead: 'Zenet Labs es una consultoría de IA para pymes en crecimiento. No nos quedamos en el consejo: conectamos tus herramientas, automatizamos el trabajo manual, ponemos agentes de IA en producción y formamos a tu equipo, con precios publicados y un diagnóstico a precio cerrado para empezar.',
+  lead: 'Zenet Labs es una consultoría de IA para pymes en crecimiento.',
+  intro:
+    'No nos quedamos en el consejo: conectamos tus herramientas, automatizamos el trabajo manual, ponemos agentes de IA en producción y formamos a tu equipo, con precios publicados y un diagnóstico a precio cerrado para empezar.',
+  ladder: {
+    build: 'Después, construir',
+    run: 'Después, mantener, cada mes',
+    credit: 'Se descuenta si sigues en 60 días',
+    oneOff: 'Pago único',
+  },
   cards: {
     diagnostic: {
       name: 'Diagnóstico de automatización',
@@ -78,11 +85,6 @@ export const servicesHub = {
   },
   startHere: 'Empieza aquí',
   book: 'Reservar el diagnóstico',
-  plan: { title: 'Lo que te entrega el diagnóstico', items: diagnosticPlan },
-  also: {
-    title: 'Mantenimiento y crecimiento',
-    lead: 'Cuando tu proyecto ya funciona, el mantenimiento hace que siga funcionando y el trabajo de crecimiento ayuda a que te encuentren los clientes adecuados.',
-  },
   start: {
     title: '¿No sabes qué servicio necesitas?',
     text: `Empieza por el diagnóstico de automatización. En una o dos semanas analizamos tus herramientas y el trabajo manual, y te damos un plan con precio. Cuesta ${diagnostic}, IVA no incluido, y se descuenta del proyecto si sigues adelante en 60 días.`,

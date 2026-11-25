@@ -1,4 +1,4 @@
-import { serviceIncludes } from '@/content/en/service-includes';
+import { diagnosticPlan } from '@/content/en/diagnostic-plan';
 import type { PricingPageContent } from '@/content/types';
 
 export const pricingPage = {
@@ -17,43 +17,34 @@ export const pricingPage = {
     includes: 'Includes',
     timeline: 'Timeline',
     more: 'More about',
-    startHere: 'Start here',
-    book: 'Book the diagnostic',
   },
-  // TODO(albert): confirm every list (in service-includes.ts)
-  details: {
-    diagnostic: {
-      includes: serviceIncludes.diagnostic,
-      timeline: '1–2 weeks',
-    },
-    integration: {
-      includes: serviceIncludes.integration,
-    },
-    agent: {
-      includes: serviceIncludes.agent,
-    },
-    web: {
-      includes: serviceIncludes.web,
-    },
-    training: {
-      includes: serviceIncludes.training,
-    },
-    maintenance: {
-      includes: serviceIncludes.maintenance,
-    },
-    growth: {
-      includes: serviceIncludes.growth,
-    },
-  },
+  timelines: { diagnostic: '1–2 weeks' },
+  plan: diagnosticPlan,
   how: {
     title: 'How pricing works',
     items: [
-      'The diagnostic has a fixed price. If you go ahead within 60 days, its fee is credited to the project.',
-      'Starting prices and ranges depend on how many tools, how much volume and how much AI is involved. After the diagnostic you get a fixed quote for each phase.',
-      // TODO(albert): confirm
-      'Maintenance is monthly and optional; you choose a plan once the project is live.',
-      // TODO(albert): confirm
-      'The code, accounts and data we set up for you are yours.',
+      {
+        id: 'fixed',
+        title: 'Fixed price, credited if you go ahead',
+        text: 'The diagnostic has a fixed price. If you go ahead within 60 days, its fee is credited to the project.',
+      },
+      {
+        id: 'quote',
+        title: 'A fixed quote before you commit',
+        text: 'Starting prices and ranges depend on how many tools, how much volume and how much AI is involved. After the diagnostic you get a fixed quote for each phase.',
+      },
+      {
+        id: 'care',
+        title: 'Care only if you want it',
+        // TODO(albert): confirm
+        text: 'Maintenance is monthly and optional; you choose a plan once the project is live.',
+      },
+      {
+        id: 'owner',
+        title: 'Your code, accounts and data',
+        // TODO(albert): confirm
+        text: 'The code, accounts and data we set up for you are yours.',
+      },
     ],
   },
   calculator: {

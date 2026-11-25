@@ -300,6 +300,65 @@ for (const { path, locale } of PRICING) {
   });
 }
 
+for (const { path, locale } of PRICING) {
+  test(`${path} close chip and composer reach the prefilled contact form without JavaScript`, async ({
+    page,
+  }) => {
+    const { desk } = HOME_COPY[locale];
+    await page.goto(path);
+    const close = page.locator('#contact [data-close-desk]');
+    const chip = close.locator('.desk-chip').first();
+    const href = await chip.getAttribute('href');
+    await chip.click();
+    await expect(page).toHaveURL(href ?? '');
+    await expect(page.locator('textarea[name="message"]')).not.toHaveValue('');
+    await page.goto(path);
+    const question = QUESTION[locale];
+    await close.getByLabel(desk.label).fill(question);
+    await close.getByRole('button', { name: desk.intro.send }).click();
+    await expect(page.locator('textarea[name="message"]')).toHaveValue(
+      question,
+    );
+  });
+}
+
+for (const locale of LOCALES) {
+  const path = CONTACT_PAIR[locale];
+  test(`${path} desk chip and composer reach the prefilled form without JavaScript`, async ({
+    page,
+  }) => {
+    const { desk } = HOME_COPY[locale];
+    await page.goto(path);
+    await expect(page.locator('[data-contact-desk]')).toHaveCount(1);
+    for (const hidden of await page.locator('[data-needs-js]').all()) {
+      await expect(hidden).toBeHidden();
+    }
+    const box = page.locator('[data-contact-desk]');
+    const chip = box.getByRole('link', { name: desk.intro.suggestions[0] });
+    await chip.click();
+    await expect(page.locator('[data-contact-desk]')).toHaveCount(0);
+    await expect(page.locator('textarea[name="message"]')).toHaveValue(
+      desk.intro.suggestions[0],
+    );
+    await page.goto(path);
+    const question = QUESTION[locale];
+    await page
+      .locator('[data-contact-desk]')
+      .getByLabel(desk.label)
+      .fill(question);
+    await page
+      .locator('[data-contact-desk]')
+      .getByRole('button', { name: desk.intro.send })
+      .click();
+    await expect(page).toHaveURL(
+      `${CONTACT_PAIR[locale]}?${new URLSearchParams({ message: question })}`,
+    );
+    await expect(page.locator('textarea[name="message"]')).toHaveValue(
+      question,
+    );
+  });
+}
+
 test('the Verifactu page shows both dates, the check date and the price without JavaScript', async ({
   page,
 }) => {

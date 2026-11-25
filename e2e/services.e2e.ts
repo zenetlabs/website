@@ -169,27 +169,32 @@ for (const locale of LOCALES) {
   const path = SERVICES_HUB[locale];
 
   test.describe(path, () => {
-    test('lists the diagnostic, the five services in order and the other two', async ({
+    test('shows the ladder, then the five services in order, then the desk', async ({
       page,
     }) => {
       await page.setViewportSize({ width: 1280, height: 900 });
       await gotoHydrated(page, path);
       await expect(page.locator('h1')).toHaveCount(1);
       await expect(page.locator('main img')).toHaveCount(0);
-      const rows = await page
-        .locator('main [data-service] a')
+      const start = await page
+        .locator('main [data-service="diagnostic"] a')
         .evaluateAll((links) => links.map((a) => a.getAttribute('href')));
-      const { diagnostic, maintenance, ...listed } = SERVICE_PAIRS;
-      expect(rows).toEqual([
-        diagnostic[locale],
-        CTA[locale],
-        ...Object.values(listed).map((pair) => pair[locale]),
-        maintenance[locale],
-        PRICING[locale],
-      ]);
+      const { diagnostic, maintenance: _care, ...listed } = SERVICE_PAIRS;
+      expect(start).toEqual([diagnostic[locale], CTA[locale]]);
+      const rows = await page
+        .locator('#hub-services h3 a')
+        .evaluateAll((links) => links.map((a) => a.getAttribute('href')));
+      expect(rows).toEqual(Object.values(listed).map((pair) => pair[locale]));
       await expect(
-        page.locator('main section').last().getByRole('link').first(),
-      ).toHaveAttribute('href', CTA[locale]);
+        page.locator(`main a[href="${PRICING[locale]}"]`),
+      ).not.toHaveCount(0);
+      const hrefs = await page
+        .locator('#contact .desk-chip')
+        .evaluateAll((links) => links.map((a) => a.getAttribute('href')));
+      expect(hrefs).toHaveLength(2);
+      await expect(
+        page.locator('#contact a[data-cta="close_contact"]'),
+      ).toHaveAttribute('href', CONTACT_PAIR[locale]);
     });
 
     test('marks the hub as current in the header', async ({ page }) => {
@@ -234,6 +239,8 @@ const ALL_PAGES: readonly string[] = [
   ...HOLDED_PAGES,
   VERIFACTU_PAGE,
   SECTOR_PAGE,
+  '/about',
+  '/es/sobre-nosotros',
 ];
 
 test.describe('the hero button clears the consent banner', () => {

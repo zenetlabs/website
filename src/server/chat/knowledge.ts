@@ -4,6 +4,7 @@ import {
   loadHomeContent,
   loadPricingContent,
   loadSectorContent,
+  loadServiceIncludes,
   loadServicePageContent,
   loadVerifactuContent,
 } from '@/content/load';
@@ -172,9 +173,10 @@ export async function buildKnowledge(
   site: SiteFlags,
 ): Promise<string> {
   const labels = LABELS[locale];
-  const [{ home, faq }, { page, services, hub }] = await Promise.all([
+  const [{ home, faq }, { page, services, hub }, includes] = await Promise.all([
     loadHomeContent(locale),
     loadPricingContent(locale),
+    loadServiceIncludes(locale),
   ]);
   const entity = legalEntity(locale);
   const { founder, countryNames } = CONTENT[locale];
@@ -194,12 +196,12 @@ export async function buildKnowledge(
   const offer = section(labels.services, [
     ...LADDER.map((id) => {
       const { name, summary, prices } = services[id];
-      const details = page.details[id];
+      const timeline = page.timelines[id];
       const parts = [
         `- ${name} [${id}]: ${summary}`,
         `${labels.price}: ${formatPriceSummary(locale, prices)}.`,
-        details.timeline ? `${labels.timeline}: ${details.timeline}.` : '',
-        `${labels.includes}: ${details.includes.join('; ')}.`,
+        timeline ? `${labels.timeline}: ${timeline}.` : '',
+        `${labels.includes}: ${includes[id].join('; ')}.`,
       ];
       return parts.filter(Boolean).join(' ');
     }),

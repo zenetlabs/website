@@ -327,6 +327,29 @@ test('on the contact page the draft card asks to paste it and links nowhere', as
   await expect(card.getByRole('link')).toHaveCount(0);
 });
 
+test('a contact desk chip opens one chat panel with the question sent, and the launcher reopens it', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await gotoHydrated(page, '/contact');
+  const chip = page.locator('[data-contact-desk] .desk-chip').first();
+  const question = (await chip.textContent())?.trim() ?? '';
+  await chip.click();
+  const panels = page.locator('dialog[data-chat-panel]');
+  await expect(panels).toHaveCount(1);
+  await expect(panels).toBeVisible();
+  await expect(page).toHaveURL('/contact');
+  await expect(panels.getByRole('log')).toContainText(question);
+  await expect(panels).toHaveAttribute('data-chat-state', 'idle', {
+    timeout: 30_000,
+  });
+  await page.keyboard.press('Escape');
+  await expect(panels).toBeHidden();
+  await page.getByRole('button', { name: LAUNCHER.en }).click();
+  await expect(panels).toHaveCount(1);
+  await expect(panels.getByRole('log')).toContainText(question);
+});
+
 test('an on-topic question answered with the refusal gets "no information" and a call instead', async ({
   page,
 }) => {

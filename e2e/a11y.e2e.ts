@@ -4,6 +4,7 @@ import { test } from './fixtures';
 import {
   CALCULATOR_RESULTS,
   CASE_PAIR,
+  CONTACT_PAIR,
   gotoHydrated,
   HOLDED_PAGES,
   PAGES,
@@ -112,6 +113,8 @@ const OVERFLOW_URLS = [
   ...PAIRS.slice(0, 3).flatMap(({ en, es }) => [en, es]),
   '/services',
   '/es/servicios',
+  CONTACT_PAIR.en,
+  CONTACT_PAIR.es,
   '/services/ai-automation',
   '/es/servicios/desarrollo-de-software-a-medida',
   ...HOLDED_PAGES,
@@ -210,14 +213,22 @@ async function sideways(page: Page): Promise<number> {
   );
 }
 
-const PR1_URLS = [
+const INNER_URLS = [
+  '/pricing',
+  '/es/precios',
+  '/about',
+  '/es/sobre-nosotros',
+  CONTACT_PAIR.en,
+  CONTACT_PAIR.es,
+  '/services',
+  '/es/servicios',
   ...Object.values(SERVICE_PAIRS).flatMap((pair) => [pair.en, pair.es]),
   ...HOLDED_PAGES,
   VERIFACTU_PAGE,
   SECTOR_PAGE,
 ];
 
-for (const url of PR1_URLS) {
+for (const url of INNER_URLS) {
   test(`${url} has no horizontal scroll at 360`, async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 780 });
     await gotoHydrated(page, url);

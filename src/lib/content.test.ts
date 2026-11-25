@@ -484,8 +484,12 @@ describe('page bodies across locales', () => {
       ids(esAbout.principles.items),
     );
     expect(ids(enAbout.story)).toEqual(ids(esAbout.story));
-    expect(Object.keys(enPricing.details)).toEqual(
-      Object.keys(esPricing.details),
+    expect(Object.keys(enPricing.timelines)).toEqual(
+      Object.keys(esPricing.timelines),
+    );
+    expect(ids(enPricing.how.items)).toEqual(ids(esPricing.how.items));
+    expect(enAbout.principles.items.map((item) => item.tiles)).toEqual(
+      esAbout.principles.items.map((item) => item.tiles),
     );
     expect(Object.keys(enCompanies)).toEqual(PORTFOLIO.map(({ key }) => key));
     expect(Object.keys(esCompanies)).toEqual(PORTFOLIO.map(({ key }) => key));

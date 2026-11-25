@@ -1,11 +1,14 @@
 import { AgentDesk } from '@/components/agent-desk';
 import { CtaLink } from '@/components/cta-link';
+import { SlotRail } from '@/components/next-slots';
 import { Container, EmphasisTitle } from '@/components/section';
 import { Switchboard, useSwitchboard } from '@/components/switchboard';
 import { LEAD, PRIMARY_BUTTON_FULL } from '@/components/ui';
 import type { HomeContent } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { CTA_TARGET, navHref } from '@/lib/nav';
+import { isPublished } from '@/lib/page-registry';
+import { SITE } from '@/lib/site';
 
 export function Hero({
   copy,
@@ -50,7 +53,17 @@ export function Hero({
           stageRef={stageRef}
           toggle={toggle}
         >
-          <AgentDesk copy={desk} locale={locale} />
+          <AgentDesk
+            copy={desk}
+            locale={locale}
+            footer={
+              <SlotRail
+                copy={desk.slots}
+                locale={locale}
+                booking={isPublished('book', SITE)}
+              />
+            }
+          />
         </Switchboard>
         <div className="hero-pitch">
           <p className={`${LEAD} lg:col-span-7`}>{copy.lead}</p>

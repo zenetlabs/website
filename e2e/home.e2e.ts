@@ -401,6 +401,18 @@ test.describe('the launcher on a phone', () => {
     await expect(page.locator('[data-desk]')).not.toBeInViewport();
     await expect(launcher).toBeVisible();
   });
+
+  test('gives way on contact while its desk is in view and returns past it', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/contact');
+    const launcher = page.locator('[data-chat-launcher]');
+    await expect(page.locator('[data-contact-desk]')).toBeInViewport();
+    await expect(launcher).toBeHidden();
+    await page.locator('#next').scrollIntoViewIfNeeded();
+    await expect(page.locator('[data-contact-desk]')).not.toBeInViewport();
+    await expect(launcher).toBeVisible();
+  });
 });
 
 test.describe('the home height at 390', () => {

@@ -847,21 +847,6 @@
     @apply grid gap-5 border-t border-line-strong pt-6 md:gap-6 md:pt-10 lg:grid-cols-12 lg:gap-x-12;
   }
 
-  /* Five services: three in the first row, two wider ones under them */
-  @media (min-width: 1024px) {
-    .offer-row.offer-row-hub {
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-    }
-
-    .offer-row-hub > li {
-      grid-column: span 2;
-    }
-
-    .offer-row-hub > li:nth-last-child(-n + 2):nth-child(n + 4) {
-      grid-column: span 3;
-    }
-  }
-
   .data-table {
     @apply w-full text-left text-ui-m md:text-base;
   }
@@ -906,21 +891,35 @@
     @apply max-md:col-start-2;
   }
 
-  .rail > li:first-child {
-    @apply rounded-t-ticket border-t-0 border-b-2 bg-agent-soft p-4 md:rounded-l-ticket md:rounded-tr-none md:border-r-2 md:border-b-0 md:p-8;
+  /* The stub step is torn from the ticket along a dashed perforation (stroke as `.ticket-stub`): the first on its right (below, on a phone), one in the middle on both sides */
+  .rail > [data-stub] {
+    @apply border-dashed border-highlight bg-agent-soft p-4 md:p-8;
   }
 
-  .rail > li:first-child::before {
+  .rail > [data-stub]::before {
     @apply text-agent;
   }
 
-  .rail > li:nth-child(2) {
+  .rail > [data-stub]:first-child {
+    @apply rounded-t-ticket border-t-0 border-b-2 md:rounded-l-ticket md:rounded-tr-none md:border-r-2 md:border-b-0;
+  }
+
+  .rail > [data-stub]:not(:first-child) {
+    @apply border-y-2 md:border-x-2 md:border-y-0;
+  }
+
+  /* The step under a stub shares its border, on a phone */
+  .rail > li:where([data-stub] + *) {
     @apply max-md:border-t-0;
   }
 
   @media (min-width: 768px) {
+    .rail > [data-stub]:not(:first-child) {
+      border-top: 1px solid var(--line-strong);
+    }
+
     .rail {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(var(--rail-cols, 4), minmax(0, 1fr));
     }
   }
 
@@ -1069,7 +1068,11 @@
       @apply bg-fg text-bg;
     }
 
-    .desk-send:hover,
+    .desk-send:hover {
+      background-color: var(--send-hover-bg, var(--cta-hover));
+      color: var(--send-hover-fg, var(--cta-fg));
+    }
+
     .contact-book .slot-more:hover {
       @apply bg-cta-hover;
     }
@@ -1245,9 +1248,15 @@
     @apply min-h-11 min-w-0 flex-1 bg-transparent text-ui-l outline-hidden;
   }
 
+  /* The send button's colours are tokens a desk can set (contact outlines it) */
   .desk-send {
-    @apply grid size-11 shrink-0 place-items-center rounded-input bg-cta text-cta-fg select-none;
-    transition: background-color var(--duration-press) ease-out;
+    @apply grid size-11 shrink-0 place-items-center rounded-input select-none;
+    border: 1px solid var(--send-border, transparent);
+    background-color: var(--send-bg, var(--cta));
+    color: var(--send-fg, var(--cta-fg));
+    transition:
+      background-color var(--duration-press) ease-out,
+      color var(--duration-press) ease-out;
   }
 
   .desk-rail {
@@ -1364,6 +1373,7 @@
     .contact-book .slot-more {
       transition:
         background-color var(--duration-press) ease-out,
+        color var(--duration-press) ease-out,
         scale var(--duration-press) var(--ease-out);
     }
   }
@@ -1658,9 +1668,9 @@
     @apply border-t-2 px-4 py-4 md:p-10 lg:border-t-0 lg:border-l-2;
   }
 
-  /* The ticket's perforation: its stub, and the home rail's first step torn from it */
+  /* The ticket's perforation: its stub, and the pricing ladder's segments (the rail's stub has its own rules with the rail) */
   .ticket-stub,
-  .rail > li:first-child {
+  .ladder-seg + :where(.ladder-seg) {
     @apply border-dashed border-highlight;
   }
 
@@ -1690,42 +1700,6 @@
 
   .offer-row > li {
     @apply w-[min(20rem,82%)] shrink-0 snap-start lg:w-auto;
-  }
-
-  /* The full catalogue (pricing): every card in view, no swipe */
-  .offer-row-full {
-    @apply mx-0 grid snap-none overflow-visible px-0 pb-0 md:grid-cols-2 lg:grid-cols-3;
-  }
-
-  .offer-row-full > li {
-    @apply w-auto;
-  }
-
-  .offer-alongside-full {
-    @apply lg:grid-cols-3;
-  }
-
-  .offer-includes {
-    @apply text-ui-s md:gap-2.5;
-  }
-
-  .tiers-detailed {
-    @apply grid content-start gap-3;
-  }
-
-  .tiers-detailed .tier-list {
-    @apply mt-1 grid-flow-row grid-cols-1;
-  }
-
-  .tiers-detailed .tier-list > div {
-    @apply border-t border-hairline py-3;
-  }
-
-  @media (max-width: 639px) {
-    .tiers-detailed .tier-summary,
-    .tiers-detailed .tier-note {
-      display: block;
-    }
   }
 
   /* Positioned, so the price read aloud (sr-only) stays inside the swipe row */
@@ -1760,10 +1734,6 @@
     transition: text-decoration-color var(--duration-hover) ease;
   }
 
-  .job-card {
-    @apply flex flex-col gap-3 rounded-card border border-hairline bg-surface p-5 md:gap-4 md:p-7;
-  }
-
   .sticky-cta {
     position: sticky;
     bottom: 0;
@@ -1791,8 +1761,8 @@
   /* Inner pages (relaunch PR9) */
   /* A long Spanish word breaks inside its box rather than widening the page */
   .offer-card,
-  .tiers-detailed,
   .ticket,
+  .ladder,
   .flow-figure,
   .case-callout,
   .sync-table th,
@@ -1803,10 +1773,6 @@
 
   .flow-steps .flow-tile {
     @apply max-md:size-10;
-  }
-
-  .offer-alongside-care {
-    @apply mt-6 border-t-0 pt-0 md:mt-12 lg:grid-cols-2;
   }
 
   .case-item {
@@ -2037,24 +2003,25 @@
 
   /* About */
   .founder-block {
-    @apply grid gap-6 py-section md:grid-cols-[auto_minmax(0,1fr)] md:gap-14;
+    @apply grid gap-6 py-section md:grid-cols-[auto_minmax(0,1fr)] md:gap-x-14 md:gap-y-6 lg:grid-cols-[12rem_minmax(0,7fr)_minmax(0,5fr)] lg:gap-x-12;
+  }
+
+  .founder-block > :nth-child(3) {
+    @apply md:col-start-2 lg:col-start-3;
   }
 
   .founder-portrait {
     @apply size-28 border-4 text-4xl md:size-48 md:text-6xl;
   }
 
-  .principles {
-    @apply grid gap-4 md:grid-cols-2 md:gap-6;
-  }
-
+  /* The vision as a statement */
   .vision-text {
-    @apply mt-5 max-w-[34em] text-h3 leading-[1.4] font-medium text-pretty md:mt-8;
+    @apply mt-5 max-w-[26em] text-h3 leading-[1.35] font-semibold text-balance md:mt-8 lg:text-[2.125rem];
   }
 
-  /* Contact: the next times as a card on the hero */
+  /* Contact: the next times as the hero desk's footer, laid out like home's rail */
   .contact-book {
-    @apply grid grid-cols-[minmax(0,1fr)] gap-4 rounded-card border border-hairline bg-surface p-5 shadow-raised md:p-7;
+    @apply grid grid-cols-[minmax(0,1fr)] gap-3 px-(--desk-pad) pt-2 pb-5 max-sm:pb-4;
   }
 
   /* The home hero's switchboard: the agent core, the customer's tools and the
@@ -2488,9 +2455,23 @@
     @apply font-semibold text-agent;
   }
 
+  /* The launcher gives way while a hero desk is in view (home's and contact's) */
+  [data-switchboard] > .desk,
+  .contact-desk {
+    view-timeline-name: --hero-desk;
+  }
+
+  /* One ink primary in view on contact: the desk's send is outlined */
+  .contact-desk {
+    --send-border: var(--fg);
+    --send-bg: transparent;
+    --send-fg: var(--fg);
+    --send-hover-bg: var(--fg);
+    --send-hover-fg: var(--bg);
+  }
+
   [data-switchboard] > .desk {
     @apply relative z-1 mx-auto w-[min(100%,44rem)];
-    view-timeline-name: --hero-desk;
   }
 
   /* The core's green, fading off the desk as it grows */
@@ -2689,6 +2670,166 @@
     .ledger-tiles {
       justify-content: flex-end;
     }
+  }
+
+  /* The pricing ladder: one perforated ticket, read left to right from lg */
+  .ladder {
+    @apply grid grid-cols-[minmax(0,1fr)] overflow-hidden rounded-ticket border border-hairline bg-surface shadow-raised;
+  }
+
+  .ladder-seg {
+    @apply relative grid content-start gap-4 p-5 md:p-8;
+  }
+
+  .ladder-seg + .ladder-seg {
+    @apply border-t-2;
+  }
+
+  .ladder-start {
+    @apply bg-agent-soft;
+    container-type: inline-size;
+  }
+
+  .ladder-label {
+    @apply text-ui-s font-semibold text-muted-fg;
+  }
+
+  .ladder-start .ladder-label {
+    @apply text-agent;
+  }
+
+  .ladder-start-price {
+    @apply text-agent;
+    font-weight: 650;
+    letter-spacing: -0.045em;
+    line-height: 0.95;
+    white-space: nowrap;
+  }
+
+  .ladder-start-price .price-amount {
+    font-size: clamp(2.75rem, 27cqi, 5.5rem);
+  }
+
+  /* Side by side the price keeps clear of the perforation */
+  @media (min-width: 64rem) {
+    .ladder-start-price .price-amount {
+      font-size: clamp(2.75rem, 27cqi, 4.75rem);
+    }
+  }
+
+  .ladder-start-price .price-from,
+  .ladder-start-price .price-unit {
+    letter-spacing: normal;
+  }
+
+  /* The credit sits on the first perforation: flat on top of Build, turned from lg */
+  .ladder-credit {
+    @apply absolute top-0 left-1/2 z-1 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-highlight bg-surface px-3 py-1 text-center text-label font-semibold whitespace-nowrap text-agent max-sm:max-w-[calc(100%-2.5rem)] max-sm:whitespace-normal;
+  }
+
+  .ladder-credit + .ladder-label {
+    @apply max-lg:mt-3;
+  }
+
+  .ladder-rows {
+    @apply grid gap-5;
+  }
+
+  .ladder-row {
+    @apply grid content-start gap-2.5;
+  }
+
+  .ladder-rows > .ladder-row + .ladder-row {
+    @apply border-t border-hairline pt-5;
+  }
+
+  .ladder-rows > .ladder-row[data-service="growth"] {
+    @apply border-line-strong;
+  }
+
+  .ladder-row-top {
+    @apply flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1;
+  }
+
+  .ladder-amount {
+    @apply text-fg;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+
+  .ladder-amount .price-amount {
+    @apply text-xl;
+  }
+
+  .ladder-tier {
+    @apply grid gap-0.5 border-t border-hairline pt-3;
+  }
+
+  .ladder-tiles .flow-tile {
+    @apply size-9;
+    --tile-mark: 1.125rem;
+  }
+
+  .ladder-side {
+    @apply mt-8 grid gap-3 border-t border-line-strong pt-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:items-baseline lg:gap-x-10;
+  }
+
+  .ladder-items {
+    @apply flex flex-wrap items-baseline gap-x-8 gap-y-2;
+  }
+
+  @media (min-width: 64rem) {
+    .ladder {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 5fr) minmax(0, 3fr);
+    }
+
+    .ladder-seg + .ladder-seg {
+      @apply border-t-0 border-l-2;
+    }
+
+    .ladder-credit {
+      @apply top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 -rotate-90;
+    }
+  }
+
+  /* The companies we run: one white sheet, a row each */
+  .company-sheet {
+    @apply overflow-hidden rounded-card border border-hairline bg-surface shadow-raised;
+  }
+
+  .company-row {
+    @apply grid min-h-16 grid-cols-[7.5rem_minmax(0,1fr)] items-center gap-x-5 px-5 py-4 md:px-6 lg:grid-cols-[8.5rem_minmax(0,2fr)_minmax(0,3fr)];
+    --logo-h: 1.5rem;
+  }
+
+  .company-row .logo {
+    @apply w-fit;
+  }
+
+  .company-row-category {
+    @apply text-ui-s text-muted-fg;
+  }
+
+  .company-row-category > span + span {
+    @apply ml-2;
+  }
+
+  .company-row-text {
+    @apply hidden text-ui-s text-fg-soft lg:block;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .company-row:hover {
+      @apply bg-tint;
+    }
+  }
+
+  /* Without a stage the copy takes the whole row */
+  [data-stage="none"] > .inner-hero {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "copy" "aside";
+    grid-template-rows: auto;
   }
 
   /* The hero board: the page's flow as tiles on wires, ending in its final

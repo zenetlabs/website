@@ -28,8 +28,6 @@ export const PROSE = 'max-w-[65ch] text-fg-soft';
 
 export const H3 = 'text-h3';
 
-export const CARD = 'rounded-card border border-hairline bg-surface';
-
 export const BAND_CARD =
   'scope-page rounded-ticket bg-surface p-6 shadow-band md:p-9';
 

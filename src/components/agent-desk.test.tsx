@@ -1,9 +1,11 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AgentDesk } from '@/components/agent-desk';
+import { SlotRail } from '@/components/next-slots';
 import { home as enHome } from '@/content/en/home';
 import { home as esHome } from '@/content/es/home';
-import { pagePath } from '@/lib/page-registry';
+import { isPublished, pagePath } from '@/lib/page-registry';
+import { SITE } from '@/lib/site';
 
 function exactly(text: string): RegExp {
   return new RegExp(`^${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
@@ -68,7 +70,19 @@ describe.each([
   const contact = pagePath(locale, 'contact');
 
   function view() {
-    return render(<AgentDesk copy={desk} locale={locale} />);
+    return render(
+      <AgentDesk
+        copy={desk}
+        locale={locale}
+        footer={
+          <SlotRail
+            copy={desk.slots}
+            locale={locale}
+            booking={isPublished('book', SITE)}
+          />
+        }
+      />,
+    );
   }
 
   it('names the AI assistant and its badge while the assistant is live', () => {
@@ -233,5 +247,26 @@ describe.each([
       'data-slot-rail',
       'live',
     );
+  });
+});
+
+describe('AgentDesk as the contact desk', () => {
+  const { desk } = enHome;
+
+  it('is marked as the contact desk and ends with the footer it is given', () => {
+    vi.stubGlobal('__ASSISTANT__', true);
+    const { container } = render(
+      <AgentDesk
+        copy={desk}
+        locale="en"
+        footer={<div data-testid="rail">The times</div>}
+        contact
+      />,
+    );
+    const section = container.querySelector('[data-contact-desk]');
+    expect(section).not.toBeNull();
+    expect(container.querySelector('[data-desk]')).toBeNull();
+    expect(section).toHaveClass('contact-desk');
+    expect(section?.lastChild).toBe(screen.getByTestId('rail'));
   });
 });
