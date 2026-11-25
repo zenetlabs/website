@@ -9,6 +9,7 @@ import {
   agentHeaders,
   confirmLinkFor,
   googleEvents,
+  releaseBooking,
   startVoiceSession,
   uniqueEmail,
 } from './fakes';
@@ -329,5 +330,6 @@ test.describe('the emailed confirm link', () => {
         (event) => Date.parse(event.start.dateTime) === Date.parse(slot),
       ),
     ).toHaveLength(1);
+    await releaseBooking(request, email);
   });
 });

@@ -368,7 +368,6 @@ const ELEVENLABS = '/__elevenlabs';
 const LOCAL_ELEVENLABS_KEY = 'local-elevenlabs-key';
 const LOCAL_AGENTS = new Set(['local-agent-en', 'local-agent-es']);
 const elevenLabsCalls = [];
-const elevenLabsFailures = [];
 let elevenLabsTokens = 0;
 
 async function handleElevenLabs(request, response, url) {
@@ -376,15 +375,12 @@ async function handleElevenLabs(request, response, url) {
   const route = `${request.method} ${pathname.slice(ELEVENLABS.length)}`;
   if (route === 'GET /v1/convai/conversation/token') {
     const agentId = url.searchParams.get('agent_id') ?? '';
-    elevenLabsCalls.push({
+    const call = {
       agentId,
       keyPresent: Boolean(request.headers['xi-api-key']),
-    });
-    const failure = elevenLabsFailures.find((rule) => rule.remaining > 0);
-    if (failure) {
-      failure.remaining -= 1;
-      return send(response, failure.status, { detail: 'fake failure' });
-    }
+      token: null,
+    };
+    elevenLabsCalls.push(call);
     if (request.headers['xi-api-key'] !== LOCAL_ELEVENLABS_KEY) {
       return send(response, 401, { detail: 'invalid key' });
     }
@@ -392,25 +388,13 @@ async function handleElevenLabs(request, response, url) {
       return send(response, 404, { detail: 'unknown agent' });
     }
     elevenLabsTokens += 1;
+    call.token = elevenLabsTokens;
     return send(response, 200, {
       token: `fake-voice-token-${elevenLabsTokens}`,
       conversation_id: `conv-local-${elevenLabsTokens}`,
     });
   }
   if (route === 'GET /__calls') return send(response, 200, elevenLabsCalls);
-  if (route === 'POST /__fail') {
-    const options = parse(await readBody(request)) ?? {};
-    elevenLabsFailures.push({
-      status: Number(options.status) || 500,
-      remaining: Number(options.count) || 0,
-    });
-    return send(response, 200, { rules: elevenLabsFailures.length });
-  }
-  if (route === 'DELETE /__state') {
-    elevenLabsCalls.length = 0;
-    elevenLabsFailures.length = 0;
-    return send(response, 200, { ok: true });
-  }
   return send(response, 404, { error: 'not found' });
 }
 

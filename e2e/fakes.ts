@@ -1,4 +1,4 @@
-import type { APIRequestContext } from '@playwright/test';
+import { type APIRequestContext, expect } from '@playwright/test';
 import { z } from 'zod';
 
 export const FAKES = 'http://127.0.0.1:4175';
@@ -194,27 +194,24 @@ export function agentHeaders(sessionId: string): Record<string, string> {
   };
 }
 
-export async function elevenLabsCalls(): Promise<
-  Array<{ agentId: string; keyPresent: boolean }>
-> {
+// Every test mints tokens from the one fake, so a test reads only the call that
+// issued its own token (`fake-voice-token-<n>`), never the whole log.
+export async function elevenLabsCallFor(
+  token: string | undefined,
+): Promise<{ agentId: string; keyPresent: boolean } | undefined> {
+  const id = Number(/^fake-voice-token-(\d+)$/.exec(token ?? '')?.[1]);
   const response = await fetch(`${FAKES}/__elevenlabs/__calls`);
-  return z
-    .array(z.object({ agentId: z.string(), keyPresent: z.boolean() }))
+  const calls = z
+    .array(
+      z.object({
+        agentId: z.string(),
+        keyPresent: z.boolean(),
+        token: z.number().nullable(),
+      }),
+    )
     .parse(await response.json());
-}
-
-export async function elevenLabsReset(): Promise<void> {
-  await fetch(`${FAKES}/__elevenlabs/__state`, { method: 'DELETE' });
-}
-
-export async function elevenLabsFail(
-  count: number,
-  status = 500,
-): Promise<void> {
-  await fetch(`${FAKES}/__elevenlabs/__fail`, {
-    method: 'POST',
-    body: JSON.stringify({ count, status }),
-  });
+  const call = calls.find((entry) => entry.token === id);
+  return call && { agentId: call.agentId, keyPresent: call.keyPresent };
 }
 
 export const TEST_CALENDAR = 'local-test';
@@ -234,4 +231,27 @@ export async function confirmByLink(
     maxRedirects: 0,
   });
   return response.status();
+}
+
+// Frees the day's cap: confirms the held request if it is still held, then the
+// owner cancels it from the link in their email.
+export async function releaseBooking(
+  request: APIRequestContext,
+  email: string,
+): Promise<void> {
+  await confirmByLink(request, await confirmLinkFor(email));
+  let link: string | undefined;
+  await expect
+    .poll(async () => {
+      const owner = (await sentFor(email)).find((mail) => mail.to !== email);
+      link = /Cancel this booking: (\S+)/.exec(owner?.text ?? '')?.[1];
+      return link;
+    })
+    .toBeTruthy();
+  const url = new URL(link ?? '');
+  const response = await request.post('/api/book/cancel', {
+    headers: { Origin: ORIGIN },
+    form: { t: url.searchParams.get('t') ?? '' },
+  });
+  expect(response.status()).toBe(200);
 }
