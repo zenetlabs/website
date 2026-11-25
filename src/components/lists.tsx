@@ -1,8 +1,7 @@
 import { BULLET_ITEM, TICK_ITEM } from '@/components/ui';
 import type { Metric } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
-import { isMeasured } from '@/lib/metrics';
-import { formatNumber } from '@/lib/money';
+import { isMeasured, metricFigure } from '@/lib/metrics';
 
 export function BulletList({
   items,
@@ -43,8 +42,13 @@ export function MetricList({
         <div key={metric.id}>
           <dt className="text-sm text-muted-fg">{metric.label}</dt>
           <dd className="text-3xl font-semibold tracking-tight">
-            {formatNumber(locale, metric.value)}
-            {metric.unit}
+            {metricFigure(locale, metric)}
+            {metric.estimate ? (
+              <span className="block text-sm font-normal tracking-normal text-muted-fg">
+                {' '}
+                {metric.estimate}
+              </span>
+            ) : null}
           </dd>
         </div>
       ))}

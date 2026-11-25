@@ -1,37 +1,38 @@
 import { CompanyMark } from '@/components/companies-strip';
-import { FlowDiagram } from '@/components/flow-diagram';
+import { FlowBoard } from '@/components/flow-board';
 import { BulletList, MetricList } from '@/components/lists';
-import { MobileFold } from '@/components/mobile-fold';
 import { Section } from '@/components/section';
-import { TEXT_LINK } from '@/components/ui';
-import type { HomeContent } from '@/content/types';
+import { EYEBROW, TEXT_LINK } from '@/components/ui';
+import type { CasesHubContent } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { pagePath } from '@/lib/page-registry';
 import { portfolioOf } from '@/lib/portfolio';
 
-// Viatsy as the feature, with the flow it runs; Taplany as its summary. Each
-// is named by its own logo.
+// The two companies we run, ruled apart: each named by its own logo, with what
+// the system handles and, for Viatsy, the flow it runs on the board. Taplany
+// has no flow, so its list takes the right column.
 export function Cases({
   copy,
+  intro,
   locale,
 }: {
-  copy: HomeContent['cases'];
+  copy: CasesHubContent['cases'];
+  intro: string;
   locale: Locale;
 }) {
   return (
-    <Section id="cases" title={copy.title} lead={copy.lead}>
-      <ul className="grid gap-6">
+    <Section id="cases" title={copy.title} intro={intro} lead={copy.lead}>
+      <ul>
         {copy.items.map((item) => {
           const { logo } = portfolioOf(item.id);
           const outcome = (
             <>
-              <MobileFold label={copy.automatedLabel}>
-                <BulletList
-                  items={item.automated}
-                  marker="tick"
-                  className="mt-3 text-ui-m md:mt-0"
-                />
-              </MobileFold>
+              <p className={EYEBROW}>{copy.automatedLabel}</p>
+              <BulletList
+                items={item.automated}
+                marker="tick"
+                className="mt-3 text-ui-m"
+              />
               <MetricList
                 metrics={item.metrics}
                 locale={locale}
@@ -40,22 +41,20 @@ export function Cases({
             </>
           );
           return (
-            <li
-              key={item.id}
-              className="case-item"
-              data-featured={item.flow ? '' : undefined}
-            >
-              <div className={item.flow ? 'lg:col-span-7' : 'lg:col-span-5'}>
+            <li key={item.id} className="case-item">
+              <div>
                 <h3 className="case-name">
                   <CompanyMark name={item.name} logo={logo} />
                 </h3>
-                <p className="mt-2 text-ui-s text-muted-fg md:mt-3">
-                  {item.tag}
+                <p className="case-tag">
+                  {item.tag.map((part) => (
+                    <span key={part}>{part}</span>
+                  ))}
                 </p>
-                <p className="mt-2 mb-4 max-w-[34em] text-ui-m text-fg-soft md:mt-3 md:mb-5 md:text-base">
+                <p className="mt-3 max-w-[34em] text-ui-m text-fg-soft md:text-base">
                   {item.context}
                 </p>
-                {item.flow ? outcome : null}
+                {item.flow ? <div className="mt-6">{outcome}</div> : null}
                 {item.link ? (
                   <a
                     href={pagePath(locale, item.link.page)}
@@ -65,14 +64,9 @@ export function Cases({
                   </a>
                 ) : null}
               </div>
-              <div className={item.flow ? 'lg:col-span-5' : 'lg:col-span-7'}>
+              <div>
                 {item.flow ? (
-                  <FlowDiagram
-                    steps={item.flow.steps}
-                    actors={copy.actors}
-                    caption={item.flow.caption}
-                    className="flow-figure-flat"
-                  />
+                  <FlowBoard flow={item.flow} actors={copy.actors} />
                 ) : (
                   outcome
                 )}
@@ -81,16 +75,6 @@ export function Cases({
           );
         })}
       </ul>
-      {copy.more ? (
-        <p className="mt-10">
-          <a
-            href={pagePath(locale, 'cases')}
-            className={`font-medium ${TEXT_LINK}`}
-          >
-            {copy.more}
-          </a>
-        </p>
-      ) : null}
     </Section>
   );
 }

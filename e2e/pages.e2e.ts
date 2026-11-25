@@ -301,6 +301,47 @@ test.describe('the cases hub', () => {
       await expect(page.locator('h1')).toHaveCount(1);
       await expect(page.locator('#cases li.case-item')).toHaveCount(2);
       await expect(page.locator(`#cases a[href="${viatsy}"]`)).toHaveCount(1);
+      await expect(page.locator('#cases [data-flow-board]')).toHaveCount(1);
+      await expect(
+        page
+          .locator('#cases li.case-item')
+          .first()
+          .locator('[data-flow-board]'),
+      ).toHaveCount(1);
+      const hrefs = await page
+        .locator('#companies-title ~ ul a')
+        .evaluateAll((links) => links.map((a) => a.getAttribute('href')));
+      expect(hrefs).toEqual(PORTFOLIO.map(({ href }) => href));
+    });
+
+    test(`${path} shows the two approved figures and no other`, async ({
+      page,
+    }) => {
+      await gotoHydrated(page, path);
+      const [viatsyFigure, taplanyFigure] = [
+        page.locator('#cases li.case-item').nth(0).locator('dd'),
+        page.locator('#cases li.case-item').nth(1).locator('dd'),
+      ];
+      await expect(viatsyFigure).toHaveCount(1);
+      await expect(taplanyFigure).toHaveCount(1);
+      await expect(taplanyFigure).toHaveText(
+        path === CASES_HUB.en ? 'about 40' : 'unos 40',
+      );
+      await expect(viatsyFigure).toHaveText(
+        path === CASES_HUB.en ? '8 h estimated' : '8 h estimación',
+      );
+    });
+
+    test(`${path} closes with the desk and its write door`, async ({
+      page,
+    }) => {
+      await gotoHydrated(page, path);
+      await expect(
+        page.locator('#contact a[data-cta="close_contact"]'),
+      ).toHaveAttribute(
+        'href',
+        path === CASES_HUB.en ? '/contact' : '/es/contacto',
+      );
     });
 
     test(`${path} describes a collection and a breadcrumb`, async ({

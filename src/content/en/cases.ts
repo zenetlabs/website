@@ -4,7 +4,7 @@ import type { CaseStudy } from '@/content/types';
 export const viatsy = {
   id: 'viatsy',
   name: 'Viatsy',
-  tag: 'Travel · Small-group tours to Asia',
+  tag: ['Travel', 'Small-group tours to Asia'],
   context:
     'Viatsy runs small-group trips to Japan, China, Korea, Taiwan and Hong Kong. Every trip means enquiries on several channels, a tailored proposal and many supplier bookings.',
   // TODO(albert): confirm
@@ -15,12 +15,12 @@ export const viatsy = {
     'Payment requests and reminders on a set schedule',
   ],
   metrics: [
-    // TODO(albert): [X]
     {
       id: 'admin-hours',
       label: 'Hours of admin saved per week',
-      value: null,
+      value: 8,
       unit: ' h',
+      estimate: 'estimated',
     },
     // TODO(albert): [X]
     {
@@ -49,7 +49,7 @@ export const viatsy = {
 export const taplany = {
   id: 'taplany',
   name: 'Taplany',
-  tag: 'SaaS · Software for travel agencies',
+  tag: ['SaaS', 'Software for travel agencies'],
   context:
     "Taplany is the platform we built from Viatsy's automations so other travel agencies can use them: website, enquiries, proposals, bookings, payments and WhatsApp in one place.",
   // TODO(albert): confirm
@@ -67,12 +67,12 @@ export const taplany = {
       value: null,
       unit: '',
     },
-    // TODO(albert): [X]
     {
       id: 'proposals',
       label: 'Proposals created per month',
-      value: null,
+      value: 40,
       unit: '',
+      approx: 'about',
     },
   ],
 } satisfies CaseStudy;

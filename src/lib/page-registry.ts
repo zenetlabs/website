@@ -190,11 +190,11 @@ export const PAGES: Record<
   viatsyCase: {
     slugs: { en: '/case-studies/viatsy', es: '/casos/viatsy' },
     parent: 'cases',
-    lastmod: '2026-11-12',
+    lastmod: '2026-11-25',
   },
   cases: {
     slugs: { en: '/case-studies', es: '/casos' },
-    lastmod: '2026-11-24',
+    lastmod: '2026-11-25',
   },
   contact: {
     slugs: { en: '/contact', es: '/contacto' },

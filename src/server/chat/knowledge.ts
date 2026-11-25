@@ -11,6 +11,7 @@ import {
 import type { Rich, ServicesHubContent } from '@/content/types';
 import { CONTENT, legalEntity } from '@/lib/content';
 import type { Locale } from '@/lib/i18n';
+import { isMeasured, metricText } from '@/lib/metrics';
 import { formatPriceSummary } from '@/lib/money';
 import { NAVIGATE_SECTIONS } from '@/lib/navigate';
 import { pageLead } from '@/lib/page-lead';
@@ -225,10 +226,10 @@ export async function buildKnowledge(
     labels.cases,
     home.cases.items.map((item) => {
       const metrics = item.metrics
-        .filter((metric) => metric.value !== null)
-        .map((metric) => `${metric.label}: ${metric.value}${metric.unit}`);
+        .filter(isMeasured)
+        .map((metric) => `${metric.label}: ${metricText(locale, metric)}`);
       return [
-        `- ${item.name} (${item.tag}): ${item.context}`,
+        `- ${item.name} (${item.tag.join(', ')}): ${item.context}`,
         `${home.cases.automatedLabel}: ${item.automated.join('; ')}.`,
         ...metrics,
       ].join(' ');

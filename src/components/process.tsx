@@ -3,29 +3,24 @@ import type { SectionVariant } from '@/components/section-frame';
 import { H3 } from '@/components/ui';
 import type { ProcessCopy } from '@/content/types';
 
-// With `rail`, one step is the ticket's stub, torn along a perforation: the
-// first by default, or the one at `stub`.
+// The steps as a rail. One step is the ticket's stub, torn along a perforation:
+// the first by default, the one at `stub`, or none with `null`.
 export function Process({
   copy,
   id = 'process',
-  rail = false,
   stub = 0,
   variant,
 }: {
   copy: ProcessCopy;
   id?: string;
-  rail?: boolean;
-  stub?: number;
+  stub?: number | null;
   variant?: SectionVariant;
 }) {
   return (
     <Section id={id} title={copy.title} variant={variant}>
-      <ol
-        className={rail ? 'rail' : 'timeline'}
-        style={rail ? { '--rail-cols': copy.steps.length } : undefined}
-      >
+      <ol className="rail" style={{ '--rail-cols': copy.steps.length }}>
         {copy.steps.map((step, index) => (
-          <li key={step.id} data-stub={rail && index === stub ? '' : undefined}>
+          <li key={step.id} data-stub={index === stub ? '' : undefined}>
             <h3 className={H3}>{step.label}</h3>
             <p className="step-text">{step.text}</p>
           </li>

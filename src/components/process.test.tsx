@@ -9,7 +9,7 @@ describe('Process', () => {
   }
 
   it('marks the first step as the stub of a rail by default', () => {
-    const { container } = render(<Process copy={contactPage.next} rail />);
+    const { container } = render(<Process copy={contactPage.next} />);
     expect(items(container).map((li) => li.hasAttribute('data-stub'))).toEqual([
       true,
       false,
@@ -18,9 +18,7 @@ describe('Process', () => {
   });
 
   it('marks the given step', () => {
-    const { container } = render(
-      <Process copy={contactPage.next} rail stub={1} />,
-    );
+    const { container } = render(<Process copy={contactPage.next} stub={1} />);
     expect(items(container).map((li) => li.hasAttribute('data-stub'))).toEqual([
       false,
       true,
@@ -28,21 +26,20 @@ describe('Process', () => {
     ]);
   });
 
-  it('sets the rail columns from the step count, and only on a rail', () => {
-    const rail = render(<Process copy={contactPage.next} rail />);
-    expect(
-      rail.container.querySelector('ol')?.style.getPropertyValue('--rail-cols'),
-    ).toBe('3');
-    rail.unmount();
+  it('sets the rail columns from the step count', () => {
     const { container } = render(<Process copy={contactPage.next} />);
-    expect(container.querySelector('ol')?.getAttribute('style')).toBeNull();
+    expect(
+      container.querySelector('ol')?.style.getPropertyValue('--rail-cols'),
+    ).toBe('3');
   });
 
-  it('has no stub without a rail', () => {
-    const { container } = render(<Process copy={contactPage.next} />);
+  it('has no stub with null, and still numbers every step', () => {
+    const { container } = render(
+      <Process copy={contactPage.next} stub={null} />,
+    );
     expect(container.querySelector('[data-stub]')).toBeNull();
-    expect(container.querySelector('ol')).toHaveClass('timeline');
-    expect(container.querySelector('ol')?.getAttribute('style')).toBeNull();
+    expect(container.querySelector('ol')).toHaveClass('rail');
+    expect(items(container)).toHaveLength(3);
   });
 
   it('finds the diagnostic step on the contact page', () => {

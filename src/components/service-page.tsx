@@ -89,7 +89,7 @@ export function ServicePage({
         >
           <Ledger items={copy.useCases.items} locale={locale} />
         </Section>
-        <Process id="how" copy={copy.how} rail variant="tint" />
+        <Process id="how" copy={copy.how} variant="tint" />
         <CaseCallout copy={copy.case} locale={locale} names={names} />
         <Faq copy={copy.faq} items={copy.faq.items} />
         <RelatedLinks

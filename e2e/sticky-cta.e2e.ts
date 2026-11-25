@@ -95,7 +95,14 @@ test.describe('mobile', () => {
   });
 });
 
-const ZONE_PAGES = ['/pricing', '/services', '/about', '/es/precios'] as const;
+const ZONE_PAGES = [
+  '/pricing',
+  '/services',
+  '/about',
+  '/es/precios',
+  '/case-studies',
+  '/es/casos/viatsy',
+] as const;
 
 test.describe('mobile page zones', () => {
   test.use({ viewport: { width: 390, height: 844 } });

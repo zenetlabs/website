@@ -365,6 +365,15 @@ describe.each(locales)('LLMS_FULL %s', (locale) => {
     }
   });
 
+  it('states the two approved figures with their qualifiers', () => {
+    const [hours, proposals] =
+      locale === 'en'
+        ? ['8 h (estimated)', 'about 40']
+        : ['8 h (estimación)', 'unos 40'];
+    expect(text).toContain(hours);
+    expect(text).toContain(proposals);
+  });
+
   it('leaves out the label of every metric without a value', () => {
     const unmeasured = HOME[locale].cases.items
       .flatMap((item) => item.metrics)

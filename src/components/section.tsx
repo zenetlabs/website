@@ -42,6 +42,7 @@ export function Section({
   intro,
   lead,
   variant = 'default',
+  layout,
   children,
 }: {
   id: string;
@@ -50,9 +51,36 @@ export function Section({
   intro?: string;
   lead?: string;
   variant?: SectionVariant;
+  // `split`: the title on the left, the text on the right from `lg`
+  layout?: 'split';
   children: ReactNode;
 }) {
   const { ground, bg, pad } = sectionFrame(variant);
+  const heading = (
+    <h2 id={`${id}-title`} className="max-w-[12em]">
+      <EmphasisTitle parts={title} />
+    </h2>
+  );
+  const text = intro ?? lead;
+  if (layout === 'split') {
+    return (
+      <section
+        id={id}
+        aria-labelledby={`${id}-title`}
+        data-ground={ground}
+        className={bg}
+      >
+        <Container className={`case-split ${pad}`}>
+          {heading}
+          <div>
+            {text ? <p className={LEAD}>{text}</p> : null}
+            {intro && lead ? <p className={`mt-6 ${LEAD}`}>{lead}</p> : null}
+            <div className={text ? 'mt-6' : undefined}>{children}</div>
+          </div>
+        </Container>
+      </section>
+    );
+  }
   return (
     <section
       id={id}
@@ -61,12 +89,8 @@ export function Section({
       className={bg}
     >
       <Container className={pad}>
-        <h2 id={`${id}-title`} className="max-w-[12em]">
-          <EmphasisTitle parts={title} />
-        </h2>
-        {intro || lead ? (
-          <p className={`mt-5 md:mt-6 ${LEAD}`}>{intro ?? lead}</p>
-        ) : null}
+        {heading}
+        {text ? <p className={`mt-5 md:mt-6 ${LEAD}`}>{text}</p> : null}
         <div className="mt-5 md:mt-14">
           {intro && lead ? <p className={`mb-8 ${LEAD}`}>{lead}</p> : null}
           {children}

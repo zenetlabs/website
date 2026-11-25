@@ -297,14 +297,18 @@ describe('Viatsy case', () => {
     expect(en.published <= PAGES.viatsyCase.lastmod).toBe(true);
   });
 
-  it('is linked from both home cases and never states a figure', () => {
+  it('is linked from both home cases and states only the approved figures', () => {
     expect(enViatsy.link).toEqual({
       page: 'viatsyCase',
       label: expect.any(String),
     });
     expect(esViatsy.link?.page).toBe('viatsyCase');
-    for (const metric of [...enViatsy.metrics, ...esViatsy.metrics]) {
-      expect(metric.value).toBeNull();
+    for (const metrics of [enViatsy.metrics, esViatsy.metrics]) {
+      expect(metrics.map((metric) => [metric.id, metric.value])).toEqual([
+        ['admin-hours', 8],
+        ['first-reply', null],
+      ]);
+      expect(metrics[0]?.estimate).toBeTruthy();
     }
     for (const copy of [en, spanish]) {
       expect(stringsOf(copy).filter((text) => /\d{2,}\s?%/.test(text))).toEqual(
@@ -314,8 +318,19 @@ describe('Viatsy case', () => {
   });
 
   it('says in both languages that the company is our own', () => {
-    expect(en.lead).toContain('we own and run');
+    expect(en.lead).toContain('our own');
+    expect(en.intro).toContain('we own and run');
     expect(spanish.lead).toContain('nuestra');
+    expect(spanish.intro).toContain('nuestra propia');
+  });
+
+  it('draws the same tools on every built row in both languages', () => {
+    for (const item of en.built.items) {
+      expect(item.tiles?.length).toBeGreaterThan(0);
+      expect(
+        spanish.built.items.find((other) => other.id === item.id)?.tiles,
+      ).toEqual(item.tiles);
+    }
   });
 });
 

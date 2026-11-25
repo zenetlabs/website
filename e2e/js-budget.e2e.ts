@@ -295,6 +295,8 @@ const WATERFALL_PATHS = [
   HOLDED_PAGES[1],
   VERIFACTU_PAGE,
   SECTOR_PAGE,
+  CASE_PAIR.en,
+  CASES_HUB.en,
 ];
 
 for (const path of WATERFALL_PATHS) {

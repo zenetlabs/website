@@ -12,7 +12,9 @@ export const viatsyCase = {
     emphasis: 'funciona con agentes de IA',
     after: '',
   },
-  lead: 'Viatsy es nuestra propia agencia de viajes. Organiza viajes en grupo reducido a Japón, China, Corea, Taiwán y Hong Kong, y cada viaje supone consultas por varios canales, una propuesta a medida y muchas reservas con proveedores. Construimos los sistemas que permiten a un equipo pequeño llevar todo ese trabajo: los agentes de IA preparan respuestas, propuestas, reservas y recordatorios de pago, y una persona aprueba cada respuesta y propuesta.',
+  lead: 'En Viatsy, nuestra agencia, los agentes de IA preparan respuestas y propuestas que una persona aprueba, y el sistema envía los recordatorios de pago.',
+  intro:
+    'Viatsy es nuestra propia agencia de viajes. Organiza viajes en grupo reducido a Japón, China, Corea, Taiwán y Hong Kong, y cada viaje supone consultas por varios canales, una propuesta a medida y muchas reservas con proveedores. Construimos los sistemas que permiten a un equipo pequeño llevar todo ese trabajo.',
   published: '2026-10-31',
   labels: { published: 'Publicado', updated: 'Actualizado' },
   facts: [
@@ -59,31 +61,37 @@ export const viatsyCase = {
     items: [
       {
         id: 'inbox',
+        tiles: ['whatsapp', 'gmail', 'app'],
         title: 'Una bandeja para todos los canales',
         text: 'Las consultas de WhatsApp, correo y la web llegan al mismo sitio, vinculadas al cliente y al viaje por el que pregunta.',
       },
       {
         id: 'replies',
+        tiles: ['agent', 'human'],
         title: 'Respuestas redactadas',
         text: 'Un agente redacta borradores con los datos del viaje y las normas de la casa que ha escrito el equipo, y una persona los corrige y los envía. Lo que el equipo cambia queda registrado, y así los borradores mejoran.',
       },
       {
         id: 'proposals',
+        tiles: ['agent', 'human'],
         title: 'Propuestas a partir de lo que pide el cliente',
         text: 'Las propuestas se redactan desde la petición del cliente y el catálogo de viajes, y el precio sale de reglas fijas, no del modelo.',
       },
       {
         id: 'confirmations',
+        tiles: ['gmail', 'agent', 'app'],
         title: 'Confirmaciones de proveedores, incorporadas',
         text: 'Las confirmaciones pegadas como texto o reenviadas por correo se convierten en reservas estructuradas, y se marcan los huecos y lo que no cuadra.',
       },
       {
         id: 'payments',
+        tiles: ['app'],
         title: 'Cobros a su tiempo',
         text: 'Las solicitudes de la señal y del pago final, y sus recordatorios, siguen el plan de pagos de cada reserva.',
       },
       {
         id: 'pack',
+        tiles: ['app', 'human'],
         title: 'Documentación del viaje',
         text: 'La documentación se monta desde la propia reserva, con una comprobación que lista lo que aún falta antes de enviarla.',
       },
@@ -148,7 +156,6 @@ export const viatsyCase = {
   cta: {
     title: '¿Quieres lo mismo en tu empresa?',
     text: 'Cuéntanos qué trabajo se sigue comiendo las horas de tu equipo. El diagnóstico lo analiza, le pone precio y te dice con franqueza qué compensa automatizar.',
-    button: 'Reservar una llamada',
   },
   related: ['agents', 'automation', 'travelAgencies'],
 } satisfies CasePageContent;

@@ -27,7 +27,7 @@ Everything below needs the owner (a login, a decision or a value only you hold).
 
 All items are `TODO(albert)` markers listed in the appendix. Groups:
 
-- **Case figures and claims** (`cases.ts`, `case-pages/viatsy.ts`, en and es): the `[X]` figures in both locales and every claim. `[X]` renders nowhere: a missing figure is `null`.
+- **Case figures and claims** (`cases.ts`, `case-pages/viatsy.ts`, en and es): every claim, and the two figures still `null` (travel agencies using Taplany, Viatsy's time to first reply). Two are set (Taplany "about 40" proposals a month, Viatsy's "8 h" of admin saved a week, labelled estimated), measured 2026-11-25. A missing figure is `null` and renders nowhere.
 - **Founder** (`founder.ts`, en and es): the photo (WebP up to 40 KB, twice the rendered size, under `public/`, with width and height) and the LinkedIn and GitHub URLs (they enable `sameAs`).
 - **Service pages** (five per locale, `service-pages/*.ts`): timelines, cases, FAQ answers, the Zapier/Make/n8n comparison, the stack and hosts, data-access promises, the training lead times and formats, where workshops can be held, and the legal wording of safe use.
 - **Pricing and services:** the `pricing.ts` lists, the `services.ts` maintenance tier names and scope, the about copy and the FAQ answers.

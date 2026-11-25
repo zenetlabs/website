@@ -395,69 +395,6 @@
     border-top: 1px solid var(--hairline);
   }
 
-  .timeline {
-    display: grid;
-    gap: 1rem;
-    counter-reset: step;
-  }
-
-  .timeline > li {
-    position: relative;
-    padding-left: 3rem;
-    counter-increment: step;
-  }
-
-  .timeline > li::before {
-    content: "";
-    position: absolute;
-    left: 0.8125rem;
-    top: 2.1rem;
-    bottom: -1.1rem;
-    width: 1px;
-    background: var(--line-strong);
-  }
-
-  .timeline > li:last-child::before {
-    display: none;
-  }
-
-  .timeline > li::after {
-    content: counter(step) / "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    display: grid;
-    place-items: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    border: 2px solid var(--agent);
-    border-radius: 9999px;
-    background: var(--bg);
-    color: var(--agent);
-    font: 650 0.8125rem / 1 var(--font-sans);
-  }
-
-  @media (min-width: 768px) {
-    .timeline {
-      grid-template-columns: repeat(4, 1fr);
-      gap: 2rem;
-    }
-
-    .timeline > li {
-      padding-left: 0;
-      padding-top: 2.75rem;
-    }
-
-    .timeline > li::before {
-      left: 2rem;
-      right: -2rem;
-      top: 0.8125rem;
-      bottom: auto;
-      width: auto;
-      height: 1px;
-    }
-  }
-
   .fold-summary {
     display: flex;
     min-height: 2.75rem;
@@ -496,10 +433,6 @@
 
   .faq-answer {
     @apply pb-5 text-ui-m md:pb-6 md:text-base;
-  }
-
-  .mobile-fold-summary {
-    @apply min-h-10 border-y border-hairline;
   }
 
   .ledger-row {
@@ -741,18 +674,8 @@
   }
 
   /* Inner page heroes: one column, a longer one beside its figure from lg */
-  .page-hero,
   .inner-hero {
     @apply grid grid-cols-[minmax(0,1fr)] gap-6 pt-4 pb-8 md:gap-10 md:pt-10 md:pb-16;
-  }
-
-  .page-hero {
-    @apply lg:grid-cols-12 lg:items-start lg:gap-x-6 lg:gap-y-12 lg:py-16;
-  }
-
-  /* The hero copy has 7 columns beside its figure: long titles stop at 60px */
-  .page-hero h1 {
-    font-size: clamp(2.5rem, 1.7rem + 3.2vw, 3.75rem);
   }
 
   .page-hero-actions {
@@ -765,67 +688,6 @@
 
   .fact-value {
     @apply mt-1 text-ui-s text-fg-soft md:text-ui-m;
-  }
-
-  /* A process figure: one row per actor, tiles joined by a vertical wire */
-  /* A card from md; on a phone the steps sit straight on the hero ground */
-  .flow-figure {
-    @apply md:rounded-card md:border md:border-hairline md:bg-surface md:p-7 md:shadow-raised;
-  }
-
-  .flow-figure-flat {
-    @apply md:shadow-none;
-  }
-
-  /* A phone reads the steps straight away; the caption stays for assistive technology */
-  .flow-figure-head {
-    @apply text-ui-s font-semibold text-muted-fg max-md:sr-only;
-  }
-
-  .flow-steps {
-    @apply grid gap-3 md:mt-5 md:gap-6;
-  }
-
-  .flow-steps > li {
-    @apply relative grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 md:gap-4;
-  }
-
-  .flow-steps > li:not(:last-child)::after {
-    content: "";
-    position: absolute;
-    top: 2.75rem;
-    bottom: -0.625rem;
-    left: calc(1.25rem - 1px);
-    border-left: 2px dashed var(--line-strong);
-  }
-
-  @media (min-width: 768px) {
-    .flow-steps > li:not(:last-child)::after {
-      top: 3.25rem;
-      bottom: -1rem;
-      left: calc(1.5rem - 1px);
-    }
-  }
-
-  .flow-steps > li:has(+ [data-actor="human"])::after {
-    border-color: var(--human-ring);
-  }
-
-  /* On a phone the tile names the actor; the word stays for assistive technology */
-  .flow-step-actor {
-    @apply text-ui-s text-muted-fg max-md:sr-only md:pt-0.5;
-  }
-
-  .flow-step-label {
-    @apply text-ui-m font-medium max-md:pt-2 md:text-ui-l;
-  }
-
-  .usecase-list {
-    @apply grid border-t border-hairline md:grid-cols-2 md:gap-x-14;
-  }
-
-  .usecase-list > li {
-    @apply border-b border-hairline py-3.5 md:py-7;
   }
 
   /* Wrapped links on a phone, ruled rows with an arrow from sm */
@@ -939,18 +801,6 @@
     mask-position: left center;
     mask-repeat: no-repeat;
     mask-size: contain;
-  }
-
-  @supports selector(::details-content) {
-    @media (min-width: 768px) {
-      .mobile-fold::details-content {
-        content-visibility: visible;
-      }
-
-      .mobile-fold > summary {
-        display: none;
-      }
-    }
   }
 
   /* Chrome. Kept here rather than as utility strings so the markup ships no extra JavaScript. */
@@ -1763,7 +1613,6 @@
   .offer-card,
   .ticket,
   .ladder,
-  .flow-figure,
   .case-callout,
   .sync-table th,
   .sync-table td,
@@ -1771,16 +1620,16 @@
     overflow-wrap: anywhere;
   }
 
-  .flow-steps .flow-tile {
-    @apply max-md:size-10;
-  }
-
   .case-item {
-    @apply grid gap-4 border-t border-hairline pt-6 md:gap-6 md:rounded-card md:border md:bg-surface md:p-8 lg:grid-cols-12 lg:gap-x-12;
+    @apply grid gap-6 border-t border-line-strong pt-7 lg:grid-cols-2 lg:gap-x-16 lg:pt-10;
   }
 
-  .case-item[data-featured] {
-    @apply lg:p-10;
+  .case-item + .case-item {
+    @apply mt-12;
+  }
+
+  .case-tag {
+    @apply mt-3 flex flex-wrap gap-x-3 text-ui-s text-muted-fg;
   }
 
   .case-name,
@@ -1794,7 +1643,26 @@
   }
 
   .case-mark {
-    @apply mb-6 block md:mb-8;
+    @apply mt-5 block md:mt-6;
+  }
+
+  .case-dates {
+    @apply mt-5 text-ui-s text-muted-fg;
+  }
+
+  .case-dates > span + span {
+    @apply ml-4;
+  }
+
+  .case-split {
+    @apply grid gap-5 md:gap-8;
+  }
+
+  @media (min-width: 1024px) {
+    .case-split {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      column-gap: 4rem;
+    }
   }
 
   .platform-mark {
@@ -2539,7 +2407,7 @@
   /* The hero of the service and landing pages: copy, then the stage (the board
      and the price ticket) and the aside (what is included). From lg the stage
      takes the right half, 7 columns from xl, and the aside sits under the
-     copy, beside the ticket. The base grid is shared with .page-hero. */
+     copy, beside the ticket. */
   @media (max-width: 767px) {
     .inner-hero {
       padding-bottom: 2.5rem;
@@ -2830,6 +2698,14 @@
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "copy" "aside";
     grid-template-rows: auto;
+  }
+
+  /* The aside under both the copy and the stage, from lg */
+  @media (min-width: 1024px) {
+    [data-aside="full"] > .inner-hero {
+      grid-template-rows: auto auto;
+      grid-template-areas: "copy stage" "aside aside";
+    }
   }
 
   /* The hero board: the page's flow as tiles on wires, ending in its final
@@ -3492,6 +3368,15 @@ html:has([data-consent-banner]) [data-sticky-cta],
 html:has(header details[open]) [data-sticky-cta],
 html:has([data-voice-panel][open]) [data-sticky-cta] {
   visibility: hidden;
+}
+
+/* The case page ends its zone with the related links: below md the bar tucks
+   2.25rem into their bottom padding, so they get a little more. Unlayered, so
+   it beats the utility. */
+@media (max-width: 767px) {
+  #operations ~ [aria-labelledby="related-title"] > div {
+    padding-bottom: 2.5rem;
+  }
 }
 
 /* The Spanish headline runs longer: one step smaller at desktop sizes.

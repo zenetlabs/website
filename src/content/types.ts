@@ -103,11 +103,15 @@ export type FaqGroupId = 'scope' | 'terms' | 'trust';
 export type HomeFaqItem = FaqItem & { group: FaqGroupId };
 export type FaqGroup = { id: FaqGroupId; label: string };
 
+// `approx` is the word before a rounded figure ("about"), `estimate` the word
+// that marks a figure we estimated rather than counted.
 export type Metric = {
   id: string;
   label: string;
   value: number | null;
   unit: string;
+  approx?: string;
+  estimate?: string;
 };
 export type PageLink = { page: PageId; label: string };
 
@@ -138,7 +142,7 @@ export type ApprovalCopy = {
 export type CaseStudy = {
   id: 'viatsy' | 'taplany';
   name: string;
-  tag: string;
+  tag: readonly string[];
   context: string;
   automated: readonly string[];
   metrics: readonly Metric[];
@@ -372,9 +376,10 @@ export type CasesHubContent = {
   meta: PageMeta;
   title: TitleParts;
   lead: string;
+  intro: string;
   cases: HomeContent['cases'];
   companies: { title: string; items: CompanyCopy };
-  cta: { title: string; text: string; button: string };
+  cta: Pick<PageCta, 'title' | 'text'>;
 };
 
 export type ProcessStep = { id: string; label: string; text: string };
@@ -509,17 +514,18 @@ export type CasePageContent = {
   meta: LandingMeta;
   title: TitleParts;
   lead: string;
+  intro: string;
   published: string;
   labels: { published: string; updated: string };
   facts: readonly CaseFact[];
   problem: SectionCopy & { paragraphs: readonly string[] };
-  built: SectionCopy & { items: readonly Card[] };
+  built: SectionCopy & { items: readonly LedgerItem[] };
   flow: FlowSectionCopy;
   operations: SectionCopy & {
     steps: readonly [CaseStep, CaseStep, CaseStep, CaseStep];
   };
   results: SectionCopy & { points: readonly string[] };
-  cta: PageCta;
+  cta: Pick<PageCta, 'title' | 'text'>;
   related: readonly PageId[];
 };
 

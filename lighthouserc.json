@@ -14,6 +14,7 @@
         "http://localhost:4174/es/servicios",
         "http://localhost:4174/about",
         "http://localhost:4174/contact",
+        "http://localhost:4174/case-studies",
         "http://localhost:4174/es/casos/viatsy",
         "http://localhost:4174/es/servicios/integraciones/holded-woocommerce",
         "http://localhost:4174/es/sectores/agencias-de-viaje",

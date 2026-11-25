@@ -1,5 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 import {
+  CASE_PAIR,
+  CASES_HUB,
   gotoHydrated,
   HOLDED_PAGES,
   OBSERVER,
@@ -76,6 +78,85 @@ for (const viewport of [
     expect(await page.evaluate(() => window.__boardLcp?.at(-1))).toBe('H1');
   });
 }
+
+for (const viewport of [
+  { width: 1280, height: 800 },
+  { width: 390, height: 844 },
+]) {
+  test(`the case board plays from load, ends within 5 s and leaves the H1 as the LCP at ${viewport.width}`, async ({
+    page,
+  }) => {
+    await page.addInitScript(OBSERVER);
+    await page.addInitScript(LCP);
+    await page.setViewportSize(viewport);
+    await page.goto(CASE_PAIR.en);
+    const timings = await ends(page);
+    expect(timings.length).toBeGreaterThan(0);
+    for (const end of timings) expect(end).toBeLessThanOrEqual(5000);
+    const riding = await page.locator(BOARD).evaluate((board) => {
+      const packets = [...board.querySelectorAll('.fb-pk')];
+      for (const animation of board.getAnimations({ subtree: true })) {
+        animation.pause();
+        animation.currentTime = 1000;
+      }
+      return Math.max(
+        ...packets.map((el) => Number(getComputedStyle(el).opacity)),
+      );
+    });
+    expect(riding).toBeGreaterThan(0);
+    await page.locator(BOARD).evaluate((board) => {
+      for (const animation of board.getAnimations({ subtree: true })) {
+        animation.finish();
+      }
+    });
+    const packets = await page
+      .locator('.fb-pk')
+      .evaluateAll((all) => all.map((el) => getComputedStyle(el).opacity));
+    expect(new Set(packets)).toEqual(new Set(['0']));
+    expect(await page.evaluate(() => window.__layoutShift)).toBe(0);
+    // The hero's one sentence can outweigh the H1, and both are plain text
+    expect(['H1', 'P']).toContain(
+      await page.evaluate(() => window.__boardLcp?.at(-1)),
+    );
+  });
+}
+
+test('the case facts run the full width under the copy and the board from lg', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await gotoHydrated(page, CASE_PAIR.en);
+  const widths = await page.evaluate(() => {
+    const facts = document.querySelector('.inner-hero-aside .facts');
+    const hero = document.querySelector('.inner-hero');
+    const board = document.querySelector('.inner-hero-stage');
+    const style = hero ? getComputedStyle(hero) : null;
+    const gutters =
+      Number.parseFloat(style?.paddingLeft ?? '0') +
+      Number.parseFloat(style?.paddingRight ?? '0');
+    return {
+      facts: facts?.getBoundingClientRect().width ?? 0,
+      hero: (hero?.getBoundingClientRect().width ?? 1) - gutters,
+      factsTop: facts?.getBoundingClientRect().top ?? 0,
+      boardBottom: board?.getBoundingClientRect().bottom ?? 0,
+    };
+  });
+  expect(widths.facts / widths.hero).toBeGreaterThanOrEqual(0.9);
+  expect(widths.factsTop).toBeGreaterThanOrEqual(widths.boardBottom);
+});
+
+test('the hub board ends within 5 s and the H1 is the LCP', async ({
+  page,
+}) => {
+  await page.addInitScript(OBSERVER);
+  await page.addInitScript(LCP);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(CASES_HUB.es);
+  const timings = await ends(page);
+  expect(timings.length).toBeGreaterThan(0);
+  for (const end of timings) expect(end).toBeLessThanOrEqual(5000);
+  expect(await page.evaluate(() => window.__boardLcp?.at(-1))).toBe('H1');
+});
 
 test('a Holded pair board sends four packets, the last one back to the shop, within 5 s', async ({
   page,

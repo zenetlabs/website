@@ -4,7 +4,7 @@ import type { CaseStudy } from '@/content/types';
 export const viatsy = {
   id: 'viatsy',
   name: 'Viatsy',
-  tag: 'Viajes · Grupos reducidos a Asia',
+  tag: ['Viajes', 'Grupos reducidos a Asia'],
   context:
     'Viatsy organiza viajes en grupo reducido a Japón, China, Corea, Taiwán y Hong Kong. Cada viaje supone consultas por varios canales, una propuesta a medida y muchas reservas con proveedores.',
   // TODO(albert): confirm
@@ -15,12 +15,12 @@ export const viatsy = {
     'Solicitudes de pago y recordatorios con fecha programada',
   ],
   metrics: [
-    // TODO(albert): [X]
     {
       id: 'admin-hours',
       label: 'Horas de gestión ahorradas por semana',
-      value: null,
+      value: 8,
       unit: ' h',
+      estimate: 'estimación',
     },
     // TODO(albert): [X]
     {
@@ -52,7 +52,7 @@ export const viatsy = {
 export const taplany = {
   id: 'taplany',
   name: 'Taplany',
-  tag: 'SaaS · Software para agencias de viajes',
+  tag: ['SaaS', 'Software para agencias de viajes'],
   context:
     'Taplany es la plataforma que creamos a partir de las automatizaciones de Viatsy para que otras agencias de viajes puedan usarlas: web, consultas, propuestas, reservas, pagos y WhatsApp en un mismo sitio.',
   // TODO(albert): confirm
@@ -70,12 +70,12 @@ export const taplany = {
       value: null,
       unit: '',
     },
-    // TODO(albert): [X]
     {
       id: 'proposals',
       label: 'Propuestas creadas al mes',
-      value: null,
+      value: 40,
       unit: '',
+      approx: 'unos',
     },
   ],
 } satisfies CaseStudy;

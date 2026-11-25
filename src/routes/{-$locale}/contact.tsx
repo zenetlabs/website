@@ -120,7 +120,6 @@ function Contact() {
       <Process
         id="next"
         copy={page.next}
-        rail
         stub={page.next.steps.findIndex((step) => step.id === 'diagnostic')}
       />
     </>
