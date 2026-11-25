@@ -1,10 +1,13 @@
 import type { Page } from '@playwright/test';
+import { z } from 'zod';
 import { siteConfig } from '../site.config';
+import { BOOKING_RULES } from '../src/content/booking-rules';
 import type { ServiceId } from '../src/content/types';
 import { answersQuery } from '../src/lib/calculator-answers';
-import { isRecord } from '../src/lib/is-record';
 import { decodeEntities, tidy } from '../src/lib/markdown';
 import type { ServicePageId } from '../src/lib/page-registry';
+import type { Slot } from '../src/lib/slots';
+import { availableSlots } from '../src/server/booking-slots';
 import { G5 } from '../test/calculator-fixtures';
 
 export const OBSERVER = `
@@ -283,24 +286,66 @@ export function typesOf(blocks: unknown[]): unknown[] {
   );
 }
 
-// The last offered slot of the first late day with any, so a booking test never
-// shares a slot with booking.e2e.ts. `call` runs a tool and returns its envelope.
+// Booking days split once for every e2e file, so none shares a slot or the
+// three-a-day cap with another. `reserved` are the first four whole owner-zone
+// days (all twelve times past the notice): booking.e2e.ts takes them in order.
+// `spare` is every other day with a time left, latest first, except the first
+// day of the horizon when it is only partly open (the 12 h notice edge). The
+// horizon is 14 days and calls run Monday to Thursday, so how many days there
+// are depends on the clock and the holidays: no fixed offsets are used.
+const FULL_DAY = 12;
+const RESERVED_DAYS = 4;
+
+export function bookingDays(): { reserved: Slot[][]; spare: string[] } {
+  const days = new Map<string, Slot[]>();
+  for (const slot of availableSlots({
+    rules: BOOKING_RULES,
+    now: Date.now(),
+    busy: [],
+    booked: [],
+  })) {
+    days.set(slot.day, [...(days.get(slot.day) ?? []), slot]);
+  }
+  const reserved = [...days.values()]
+    .filter((day) => day.length === FULL_DAY)
+    .slice(0, RESERVED_DAYS);
+  const taken = new Set(reserved.map((day) => day[0]?.day));
+  const [first] = days.values();
+  const edge = first?.length === FULL_DAY ? undefined : first?.[0]?.day;
+  const spare = [...days.keys()]
+    .filter((day) => !taken.has(day) && day !== edge)
+    .reverse();
+  return { reserved, spare };
+}
+
+const availabilityAnswer = z.object({
+  result: z.object({ slots: z.array(z.object({ start: z.string() })) }),
+});
+
+// The last offered slot of the latest spare day with any. `call` runs a tool
+// and returns its envelope. Tests that book release their hold with
+// `releaseBooking`, so the day cap never builds up across tests.
 export async function lateSlot(
   call: (name: string, input: unknown) => Promise<unknown>,
 ): Promise<string> {
-  for (const offset of [12, 13, 14, 11, 10, 9]) {
-    const day = new Date(Date.now() + offset * 86_400_000)
-      .toISOString()
-      .slice(0, 10);
-    const answer = await call('check_availability', {
-      from: day,
-      to: day,
-      timeZone: 'Europe/Madrid',
-    });
-    const slots =
-      isRecord(answer) && isRecord(answer.result) ? answer.result.slots : null;
-    const last = Array.isArray(slots) ? slots.at(-1) : undefined;
-    if (isRecord(last) && typeof last.start === 'string') return last.start;
+  const { spare } = bookingDays();
+  if (spare.length === 0) {
+    throw new Error(
+      'too few spare booking days in the horizon (holiday week?)',
+    );
   }
-  throw new Error('no offered slot in the late window');
+  for (const day of spare) {
+    const answer = availabilityAnswer.parse(
+      await call('check_availability', {
+        from: day,
+        to: day,
+        timeZone: BOOKING_RULES.zone,
+      }),
+    );
+    const last = answer.result.slots.at(-1);
+    if (last) return last.start;
+  }
+  throw new Error(
+    `no offered slot on the spare booking days ${spare.join(', ')}`,
+  );
 }

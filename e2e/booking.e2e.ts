@@ -25,6 +25,7 @@ import { test } from './fixtures';
 import {
   ASSISTANT_PUBLISHED,
   BOOKING_PUBLISHED,
+  bookingDays,
   gotoHydrated,
   settleAnimations,
 } from './helpers';
@@ -34,31 +35,8 @@ test.describe.configure({ mode: 'serial' });
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
-// Whole owner-zone working days (Monday to Thursday, no holiday, all twelve
-// times past the notice), earlier than the late window (12+ days out) that
-// api-tools, voice and webmcp book in. The tests share four of them, never
-// one slot, and at most three requests a day. Twelve days hold at least four
-// such days unless a holiday falls in a short week.
-const LATE_WINDOW_DAYS = 12;
-const FULL_DAY = 12;
-
 function ownerDays(): Slot[][] {
-  const now = Date.now();
-  const lateFrom = new Date(now + LATE_WINDOW_DAYS * 86_400_000)
-    .toISOString()
-    .slice(0, 10);
-  const slots = availableSlots({
-    rules: BOOKING_RULES,
-    now,
-    busy: [],
-    booked: [],
-  });
-  const days = new Map<string, Slot[]>();
-  for (const slot of slots) {
-    if (slot.day >= lateFrom) continue;
-    days.set(slot.day, [...(days.get(slot.day) ?? []), slot]);
-  }
-  return [...days.values()].filter((day) => day.length === FULL_DAY);
+  return bookingDays().reserved;
 }
 
 function atOwnerTime(day: Slot, at: string): number {
