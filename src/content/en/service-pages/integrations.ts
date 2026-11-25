@@ -20,7 +20,7 @@ export const integrations = {
       after: '',
     },
     // TODO(albert): confirm the timeline
-    lead: `An integration connects two or more of your tools so data moves between them on its own: a Shopify order becomes a Xero invoice, a won deal in HubSpot creates the customer and the invoice, a payment updates the CRM. We build them for Singapore companies of 10 to 100 people whose tools don't talk to each other. Projects cost ${price}, excluding GST, and a typical integration goes live three to six weeks after the diagnostic.`,
+    lead: `An integration connects two or more of your tools so data moves between them on its own: a Shopify order becomes a Xero invoice, a won deal in HubSpot creates the customer and the invoice, a payment updates the CRM. We build them for Singapore companies whose tools don't talk to each other. Projects cost ${price}, excluding GST, and a typical integration goes live three to six weeks after the diagnostic.`,
   },
   facts: {
     who: 'Companies running Xero, Shopify, HubSpot, WooCommerce or WhatsApp Business side by side, with someone copying data between them',

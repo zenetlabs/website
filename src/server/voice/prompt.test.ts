@@ -4,6 +4,7 @@ import { NAVIGATE_SECTIONS } from '@/lib/navigate';
 import { sharedRules } from '@/server/chat/prompt';
 import { voicePrompt } from '@/server/voice/prompt';
 import { siteConfig } from '../../../site.config';
+import { SERVICES } from '../../../test/page-content';
 
 const production = siteConfig('production');
 const SITE = {
@@ -48,6 +49,17 @@ describe.each(['en', 'es'] as const)('voicePrompt (%s)', (locale) => {
       expect(namedMissingSections(prompt)).toEqual([]);
     },
   );
+
+  it('speaks example amounts that are ladder prices', async () => {
+    expect(SERVICES.en.agent.prices[0].min).toBe(15000);
+    expect(SERVICES.es.integration.prices[0].min).toBe(4000);
+    const prompt = await voicePrompt(locale, SITE, NAMES);
+    expect(prompt).toContain(
+      locale === 'en'
+        ? 'fifteen thousand Singapore dollars'
+        : '«cuatro mil euros',
+    );
+  });
 
   it('carries the shared rules word for word', async () => {
     const prompt = await voicePrompt(locale, SITE, NAMES);

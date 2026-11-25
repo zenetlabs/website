@@ -51,12 +51,12 @@ const GOLDENS: ReadonlyArray<{
   {
     name: 'G2 automation plus an agent',
     answers: G2,
-    EUR: { min: 17500, max: 25500, weeks: [6, 11], tier: 'extended' },
+    EUR: { min: 16500, max: 25000, weeks: [6, 11], tier: 'extended' },
     SGD: { min: 33500, max: 49000, weeks: [6, 11], tier: 'extended' },
     lines: {
       EUR: [
         ['integration', 7500, 11500],
-        ['agent', 10000, 14000],
+        ['agent', 9000, 13500],
       ],
       SGD: [
         ['integration', 15000, 22500],
@@ -67,28 +67,28 @@ const GOLDENS: ReadonlyArray<{
   {
     name: 'G3 urgent agent',
     answers: G3,
-    EUR: { min: 11500, max: 16500, weeks: [4, 7], tier: 'extended' },
+    EUR: { min: 11000, max: 16000, weeks: [4, 7], tier: 'extended' },
     SGD: { min: 22000, max: 32000, weeks: [4, 7], tier: 'extended' },
   },
   {
     name: 'G4 no rush clamps at the floor',
     answers: G4,
-    EUR: { min: 6000, max: 9000, weeks: [6, 10], tier: 'essential' },
-    SGD: { min: 12000, max: 17500, weeks: [6, 10], tier: 'essential' },
+    EUR: { min: 7500, max: 10000, weeks: [6, 10], tier: 'essential' },
+    SGD: { min: 15000, max: 20000, weeks: [6, 10], tier: 'essential' },
   },
   {
     name: 'G5 everything, capped',
     answers: G5,
     EUR: { min: 30000, max: 35500, weeks: [9, 16], tier: 'extended' },
-    SGD: { min: 55000, max: 65500, weeks: [9, 16], tier: 'extended' },
+    SGD: { min: 60000, max: 70500, weeks: [9, 16], tier: 'extended' },
     lines: {
       EUR: [
-        ['agent', 20000, 20000],
-        ['web', 10000, 15500],
+        ['agent', 17500, 17500],
+        ['web', 12500, 18000],
       ],
       SGD: [
         ['agent', 35000, 35000],
-        ['web', 20000, 30500],
+        ['web', 25000, 35500],
       ],
     },
     capped: true,
@@ -493,7 +493,12 @@ describe('adversarial rules', () => {
             cap: 4500,
           },
           agent: { spread: 0, perTool: [0, 0], perCustom: [0, 0] },
-          web: { spread: 0, perTool: [0, 0], perCustom: [0, 0], cap: 6500 },
+          web: {
+            spread: 0,
+            perTool: [0, 0],
+            perCustom: [0, 0],
+            cap: SERVICES.es.web.prices[0].min + 500,
+          },
         },
       },
     },
@@ -513,7 +518,7 @@ describe('adversarial rules', () => {
     const [integration, web] = result.lines;
     expect(integration?.min).toBeGreaterThanOrEqual(4000);
     expect(integration?.max).toBeLessThanOrEqual(4500);
-    expect(web?.min).toBeGreaterThanOrEqual(6000);
-    expect(web?.max).toBeLessThanOrEqual(6500);
+    expect(web?.min).toBeGreaterThanOrEqual(SERVICES.es.web.prices[0].min);
+    expect(web?.max).toBeLessThanOrEqual(SERVICES.es.web.prices[0].min + 500);
   });
 });

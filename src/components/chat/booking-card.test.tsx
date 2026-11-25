@@ -115,9 +115,7 @@ describe('BookingCard', () => {
 
   it('shows who the visitor will meet, and the time in the summary', () => {
     card();
-    expect(
-      screen.getByText("You'll talk to Albert Sabaté, the founder."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("You'll talk to our team.")).toBeInTheDocument();
     expect(screen.getByText(en.booking.format)).toBeInTheDocument();
   });
 

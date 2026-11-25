@@ -1,25 +1,21 @@
 import { AgentDesk } from '@/components/agent-desk';
-import { FounderPortrait } from '@/components/companies-strip';
 import { CtaLink } from '@/components/cta-link';
 import { Container, EmphasisTitle } from '@/components/section';
 import { Switchboard, useSwitchboard } from '@/components/switchboard';
 import { LEAD, PRIMARY_BUTTON_FULL } from '@/components/ui';
-import type { Founder, HomeContent } from '@/content/types';
+import type { HomeContent } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { CTA_TARGET, navHref } from '@/lib/nav';
-import { pagePath } from '@/lib/page-registry';
 
 export function Hero({
   copy,
   desk,
   diagnosticPrice,
-  founder,
   locale,
 }: {
   copy: HomeContent['hero'];
   desk: HomeContent['desk'];
   diagnosticPrice: string;
-  founder: Founder;
   locale: Locale;
 }) {
   const [factBefore = '', factAfter = ''] = copy.fact.split('{price}');
@@ -59,29 +55,13 @@ export function Hero({
         <div className="hero-pitch">
           <p className={`${LEAD} lg:col-span-7`}>{copy.lead}</p>
           <div className="lg:col-span-5">
-            <div className="hero-facts">
-              <p>
-                {factBefore}
-                <strong className="font-semibold text-fg">
-                  {diagnosticPrice}
-                </strong>
-                {factAfter}
-              </p>
-              <p>{copy.audience}</p>
-            </div>
-            <a href={pagePath(locale, 'about')} className="handoff">
-              <FounderPortrait
-                founder={founder}
-                className="size-10 text-ui-s"
-              />
-              <span className="leading-snug">
-                <span className="handoff-name font-semibold">
-                  {founder.name}
-                </span>
-                , {founder.role}
-                <span className="block text-fg-soft">{copy.handoff}</span>
-              </span>
-            </a>
+            <p className="max-w-[34em] text-ui-s text-fg-soft">
+              {factBefore}
+              <strong className="font-semibold text-fg">
+                {diagnosticPrice}
+              </strong>
+              {factAfter}
+            </p>
           </div>
         </div>
       </Container>

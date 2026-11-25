@@ -5,6 +5,7 @@ import { formatPrice, formatPriceSummary } from '@/lib/money';
 
 const [row] = services.integration.prices;
 const price = formatPrice('es', row);
+const agent = formatPriceSummary('es', services.agent.prices);
 const diagnostic = formatPriceSummary('es', services.diagnostic.prices);
 
 export const automation = {
@@ -20,10 +21,10 @@ export const automation = {
       after: '',
     },
     // TODO(albert): confirm the timeline
-    lead: `La automatización de procesos consiste en que un programa haga por ti los pasos repetitivos del trabajo: lee los documentos que llegan, pasa los datos de una herramienta a otra y envía los mensajes rutinarios, y avisa a una persona cuando algo no cuadra. La montamos para pymes de 10 a 100 personas, sobre las herramientas que ya usan. Un proyecto cuesta ${price}, IVA no incluido, y la primera automatización suele estar funcionando entre cuatro y ocho semanas después del diagnóstico.`,
+    lead: `La automatización de procesos consiste en que un programa haga por ti los pasos repetitivos del trabajo: lee los documentos que llegan, pasa los datos de una herramienta a otra y envía los mensajes rutinarios, y avisa a una persona cuando algo no cuadra. La montamos para pymes, sobre las herramientas que ya usan. Las automatizaciones con reglas fijas cuestan ${price}, IVA no incluido; los pasos en los que la IA lee documentos o mensajes se hacen como un agente de IA (${agent}). La primera automatización suele estar funcionando entre cuatro y ocho semanas después del diagnóstico.`,
   },
   facts: {
-    who: 'Empresas de 10 a 100 personas que pasan datos a mano entre el programa de facturación, la tienda, el CRM, el correo y Excel',
+    who: 'Empresas que pasan datos a mano entre el programa de facturación, la tienda, el CRM, el correo y Excel',
     // TODO(albert): confirm the timeline
     timeline:
       'De 4 a 8 semanas hasta la primera automatización en producción, tras un diagnóstico de 1 a 2 semanas',

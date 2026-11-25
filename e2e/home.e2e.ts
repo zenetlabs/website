@@ -33,7 +33,6 @@ const HOMES = [
     faq: 15,
     pricing: '/pricing',
     cta: CTA.en,
-    about: '/about',
     offer: [
       '/services/automation-diagnostic',
       '/services/ai-automation',
@@ -51,7 +50,6 @@ const HOMES = [
     faq: 16,
     pricing: '/es/precios',
     cta: CTA.es,
-    about: '/es/sobre-nosotros',
     offer: [
       '/es/servicios/diagnostico-de-automatizacion',
       '/es/servicios/automatizacion-de-procesos',
@@ -178,18 +176,6 @@ for (const home of HOMES) {
     test('scrolls to a question from its deep link', async ({ page }) => {
       await gotoHydrated(page, `${home.path}#faq-prices`);
       await expect(page.locator('#faq-prices')).toBeInViewport();
-    });
-
-    test('hands over to the founder in the hero, without an image', async ({
-      page,
-    }) => {
-      await gotoHydrated(page, home.path);
-      const handoff = page.locator(
-        'main > section:first-child .hero-pitch .handoff',
-      );
-      await expect(handoff.locator('img')).toHaveCount(0);
-      await expect(handoff.locator('[aria-hidden="true"]')).toHaveText('AS');
-      await expect(handoff).toHaveAttribute('href', home.about);
     });
   });
 }
@@ -347,7 +333,7 @@ async function launcherHits(page: Page): Promise<string[]> {
     if (!launcher) return ['no launcher'];
     return [
       ...document.querySelectorAll(
-        '[data-desk] a, [data-desk] [data-slot-meta], .handoff',
+        '[data-desk] a, [data-desk] [data-slot-meta]',
       ),
     ]
       .filter((element) => {

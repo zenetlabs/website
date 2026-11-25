@@ -60,9 +60,7 @@ export function foundedLine(
   entity: LegalEntity,
   locale: Locale,
 ): string | undefined {
-  const { foundingYear, founder } = entity;
-  if (!foundingYear || !founder) return undefined;
-  return messages[locale].footer.founded
-    .replace('{year}', foundingYear)
-    .replace('{founder}', founder);
+  const { foundingYear } = entity;
+  if (!foundingYear) return undefined;
+  return messages[locale].footer.founded.replace('{year}', foundingYear);
 }

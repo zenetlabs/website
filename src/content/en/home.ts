@@ -15,8 +15,6 @@ export const home = {
     lead: 'We connect the tools your company already uses and put AI agents on the repetitive work, so your team stops moving data by hand.',
     fact: '{price} fixed-price diagnostic, credited to the project if you continue within 60 days.',
     primary: 'Book a call',
-    audience: 'For companies of 10 to 100 people',
-    handoff: 'You work with the person who builds it.',
     stage: {
       agent: 'AI agent',
       tools: {
@@ -55,7 +53,7 @@ export const home = {
     human: {
       title: 'Ask us',
       welcome:
-        'Ask us anything about your tools and processes. A person replies by email, usually within a working day.',
+        'Ask us anything about your tools and processes. We reply by email, usually within a working day.',
       label: 'Your question for us',
       placeholder: 'Type your question',
     },
@@ -170,9 +168,9 @@ export const home = {
       emphasis: 'automation diagnostic',
       after: '.',
     },
-    lead: 'Tell us which tools you use and what your team still does by hand. We reply personally and agree the next step with you.',
+    lead: 'Tell us which tools you use and what your team still does by hand. We reply and agree the next step with you.',
     mail: 'Prefer email? Write to',
-    human: 'A human replies, personally.',
+    human: 'A person on our team replies.',
     book: 'Prefer a call? Pick a time',
     voice: {
       text: 'Prefer to talk? Our voice assistant is an AI, not a person: it can answer questions and book a call.',

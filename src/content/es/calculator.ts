@@ -143,7 +143,7 @@ export const calculatorPage = {
       emphasis: 'comentarlo',
       after: ' con nosotros?',
     },
-    lead: 'Déjanos tus datos y te responderemos personalmente. Tus respuestas y esta estimación se añaden al mensaje, así partimos de los mismos números. Es opcional: la estimación de arriba ya es tuya.',
+    lead: 'Déjanos tus datos y te responderemos. Tus respuestas y esta estimación se añaden al mensaje, así partimos de los mismos números. Es opcional: la estimación de arriba ya es tuya.',
     intro:
       'Estimación de la calculadora de precios (orientativa, reglas {version}):',
     page: 'Página del resultado',

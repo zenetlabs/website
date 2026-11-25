@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { loadPricingContent } from '@/content/load';
-import type { Price, ServiceId } from '@/content/types';
+import { PRICE_UNITS, type Price, type ServiceId } from '@/content/types';
 import { locales } from '@/lib/i18n';
 import { formatPrice } from '@/lib/money';
 import { serviceHref } from '@/lib/page-registry';
@@ -25,7 +25,7 @@ const priceSchema = z.object({
   min: z.number(),
   max: z.number().optional(),
   qualifier: z.literal('from').optional(),
-  unit: z.enum(['one-off', 'month']),
+  unit: z.enum(PRICE_UNITS),
   currency: z.enum(['SGD', 'EUR']),
   display: z.string(),
 });

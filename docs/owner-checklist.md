@@ -30,7 +30,7 @@ All items are `TODO(albert)` markers listed in the appendix. Groups:
 - **Case figures and claims** (`cases.ts`, `case-pages/viatsy.ts`, en and es): the `[X]` figures in both locales and every claim. `[X]` renders nowhere: a missing figure is `null`.
 - **Founder** (`founder.ts`, en and es): the photo (WebP up to 40 KB, twice the rendered size, under `public/`, with width and height) and the LinkedIn and GitHub URLs (they enable `sameAs`).
 - **Service pages** (five per locale, `service-pages/*.ts`): timelines, cases, FAQ answers, the Zapier/Make/n8n comparison, the stack and hosts, data-access promises, the training lead times and formats, where workshops can be held, and the legal wording of safe use.
-- **Pricing and services:** the `pricing.ts` lists, the `services.ts` maintenance tier names and scope, the services-hub "small consultancy" claim, the about copy, the home founder title and the FAQ answers.
+- **Pricing and services:** the `pricing.ts` lists, the `services.ts` maintenance tier names and scope, the about copy and the FAQ answers.
 - **Holded pair pages and Verifactu** (es): re-check the API, plugin and limit claims on holded.com/developers before the next deploy that touches them, the asesoría check, and the declaración responsable. **Re-check the BOE and the AEAT for the Verifactu dates before any deploy that touches them** (the announced October 2028 delay was not in the BOE on 2026-10-31).
 - **Email copy** (`src/server/lead-emails.ts`): the two-working-days promise and the booking confirmation.
 - **WebMCP copy** (`webmcp.ts`, en and es): live now on WebMCP-capable browsers.
@@ -63,7 +63,7 @@ Each one: do the prerequisites, then the flip PR in RB 9 (one flag per PR, one a
 
 ## Appendix: every `TODO(albert)` in the repo
 
-204 markers in 63 files. Regenerate before each review session with:
+201 markers in 61 files. Regenerate before each review session with:
 
 ```sh
 git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'
@@ -123,20 +123,20 @@ git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'
 - `src/content/pricing-rules.ts:88` (a coefficient or value to confirm; see the line)
 - `src/content/pricing-rules.ts:89` (a coefficient or value to confirm; see the line)
 
-### Service pages and the services hub (66)
+### Service pages and the services hub (64)
 
 - `src/content/en/service-pages/agents.ts:1` review this page: timelines, the case, the FAQ answers
 - `src/content/en/service-pages/agents.ts:23` confirm the timeline
 - `src/content/en/service-pages/agents.ts:28` confirm the timeline
 - `src/content/en/service-pages/agents.ts:67` confirm the flow steps and the approval example
 - `src/content/en/service-pages/agents.ts:127` confirm the case
-- `src/content/en/service-pages/agents.ts:148` confirm the data-access promises
+- `src/content/en/service-pages/agents.ts:152` confirm the data-access promises
 - `src/content/en/service-pages/automation.ts:1` review this page: timelines, the case, the FAQ answers
-- `src/content/en/service-pages/automation.ts:22` confirm the timeline
-- `src/content/en/service-pages/automation.ts:27` confirm the timeline
-- `src/content/en/service-pages/automation.ts:66` confirm the flow steps
-- `src/content/en/service-pages/automation.ts:105` confirm the case
-- `src/content/en/service-pages/automation.ts:135` confirm Zapier, Make and n8n
+- `src/content/en/service-pages/automation.ts:23` confirm the timeline
+- `src/content/en/service-pages/automation.ts:28` confirm the timeline
+- `src/content/en/service-pages/automation.ts:67` confirm the flow steps
+- `src/content/en/service-pages/automation.ts:106` confirm the case
+- `src/content/en/service-pages/automation.ts:136` confirm Zapier, Make and n8n
 - `src/content/en/service-pages/diagnostic.ts:1` review this page: the steps, the case, the FAQ answers
 - `src/content/en/service-pages/diagnostic.ts:109` confirm the case
 - `src/content/en/service-pages/integrations.ts:1` review this page: timelines, the case, the FAQ answers
@@ -156,20 +156,19 @@ git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'
 - `src/content/en/service-pages/training.ts:25` confirm the formats
 - `src/content/en/service-pages/training.ts:97` where can workshops be held in person?
 - `src/content/en/service-pages/training.ts:114` confirm the case
-- `src/content/en/services-hub.ts:21` review the "small AI consultancy" claim
-- `src/content/en/services.ts:79` tier names and scope
+- `src/content/en/services.ts:86` tier names and scope
 - `src/content/es/service-pages/agents.ts:1` review this page: timelines, the case, the FAQ answers
 - `src/content/es/service-pages/agents.ts:23` confirm the timeline
 - `src/content/es/service-pages/agents.ts:28` confirm the timeline
 - `src/content/es/service-pages/agents.ts:67` confirm the flow steps and the approval example
 - `src/content/es/service-pages/agents.ts:128` confirm the case
-- `src/content/es/service-pages/agents.ts:153` confirm the data-access promises
+- `src/content/es/service-pages/agents.ts:157` confirm the data-access promises
 - `src/content/es/service-pages/automation.ts:1` review this page: timelines, the case, the FAQ answers
-- `src/content/es/service-pages/automation.ts:22` confirm the timeline
-- `src/content/es/service-pages/automation.ts:27` confirm the timeline
-- `src/content/es/service-pages/automation.ts:66` confirm the flow steps
-- `src/content/es/service-pages/automation.ts:105` confirm the case
-- `src/content/es/service-pages/automation.ts:135` confirm Zapier, Make and n8n
+- `src/content/es/service-pages/automation.ts:23` confirm the timeline
+- `src/content/es/service-pages/automation.ts:28` confirm the timeline
+- `src/content/es/service-pages/automation.ts:67` confirm the flow steps
+- `src/content/es/service-pages/automation.ts:106` confirm the case
+- `src/content/es/service-pages/automation.ts:136` confirm Zapier, Make and n8n
 - `src/content/es/service-pages/diagnostic.ts:1` review this page: the steps, the case, the FAQ answers
 - `src/content/es/service-pages/diagnostic.ts:112` confirm the case
 - `src/content/es/service-pages/integrations.ts:1` review this page: timelines, the case, the FAQ answers
@@ -189,8 +188,7 @@ git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'
 - `src/content/es/service-pages/training.ts:25` confirm the formats
 - `src/content/es/service-pages/training.ts:97` where can workshops be held in person?
 - `src/content/es/service-pages/training.ts:114` confirm the case
-- `src/content/es/services-hub.ts:21` review the "consultoría pequeña" claim
-- `src/content/es/services.ts:79` tier names and scope
+- `src/content/es/services.ts:86` tier names and scope
 
 ### Es landing pages (Holded, Verifactu, travel agencies) (30)
 
@@ -256,7 +254,7 @@ git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'
 - `src/routes/{-$locale}/-legal/cookies-es.tsx:1` counsel sign-off of the 2026-11-05 draft
 - `src/routes/{-$locale}/-legal/legal-notice-es.tsx:1` counsel sign-off of the 2026-11-05 draft
 - `src/routes/{-$locale}/-legal/privacy-en.tsx:1` counsel sign-off of the 2026-11-05 draft
-- `src/routes/{-$locale}/-legal/privacy-en.tsx:360` counsel to confirm whether GDPR Art. 3(2) reaches the English pages and, if it does, whether the Art. 27(2) exemption applies or an EU representative...
+- `src/routes/{-$locale}/-legal/privacy-en.tsx:407` counsel to confirm whether GDPR Art. 3(2) reaches the English pages and, if it does, whether the Art. 27(2) exemption applies or an EU representative...
 - `src/routes/{-$locale}/-legal/privacy-es.tsx:1` counsel sign-off of the 2026-11-05 draft
 - `src/routes/{-$locale}/-legal/privacy-extras-en.tsx:1` counsel sign-off of the 2026-11-05 draft
 - `src/routes/{-$locale}/-legal/privacy-extras-es.tsx:1` counsel sign-off of the 2026-11-05 draft
@@ -291,7 +289,7 @@ git grep -n 'TODO(albert)' -- . ':!*.test.*' ':!*.md'
 - `src/content/es/faq.ts:1` review answers
 - `src/content/es/founder.ts:11` founder photo (WebP ≤ 40 KB, 2× the rendered size) under public/, then set { src, width, height }
 - `src/content/es/founder.ts:13` LinkedIn / GitHub URLs
-- `src/content/es/home.ts:85` confirm Holded shows its declaración responsable for the current version
+- `src/content/es/home.ts:113` confirm Holded shows its declaración responsable for the current version
 - `src/content/es/pricing.ts:23` confirm every list
 - `src/server/lead-emails.ts:238` review the booking confirmation copy
 - `src/server/lead-emails.ts:267` review the confirmation copy and the two-working-days promise

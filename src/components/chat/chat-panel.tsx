@@ -182,7 +182,7 @@ function ChatHeader({
   );
 }
 
-// The person behind the agent, in a person's amber: a call with the founder
+// The person behind the agent, in a person's amber: a call with our team
 // while booking is published, the contact page otherwise.
 function ChatPerson({
   copy,

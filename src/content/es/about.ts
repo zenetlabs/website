@@ -5,19 +5,19 @@ export const aboutPage = {
     title: 'Sobre nosotros',
     metaTitle: 'Sobre Zenet Labs y su fundador, Albert Sabaté',
     description:
-      'Zenet Labs la dirige Albert Sabaté, que lleva más de 15 años creando equipos de ingeniería y automatiza sus propias empresas antes que las de sus clientes.',
+      'Zenet Labs hace automatizaciones y agentes de IA para pymes. Nuestro equipo, con su fundador Albert Sabaté al frente, automatiza primero sus propias empresas.',
   },
   title: {
     before: 'Automatización hecha por gente que ',
     emphasis: 'dirige negocios',
     after: '',
   },
-  lead: 'Zenet Labs es un estudio pequeño fundado en 2022 por Albert Sabaté. Hacemos automatizaciones, integraciones y agentes de IA para pymes, y usamos las mismas herramientas cada día en las empresas que dirigimos.',
+  lead: 'En Zenet Labs hacemos automatizaciones, integraciones y agentes de IA para pymes, y usamos las mismas herramientas cada día en las empresas que dirigimos.',
   story: [
     {
       id: 'track',
       parts: [
-        'Albert lleva más de 15 años creando y liderando equipos de ingeniería. Dirigió la ingeniería de Splyt mientras su red global de movilidad se expandía a varios países, y contribuyó al núcleo de ',
+        'Albert fundó Zenet Labs en 2022 y está al frente del equipo. Lleva más de 15 años creando y liderando equipos de ingeniería: dirigió la ingeniería de Splyt mientras su red global de movilidad se expandía a varios países, y contribuyó al núcleo de ',
         { text: 'Brisa', href: 'https://brisa.build/' },
         ', un framework web de código abierto.',
       ],
@@ -25,7 +25,7 @@ export const aboutPage = {
     {
       id: 'today',
       parts: [
-        'Hoy dirige Viatsy y Taplany con agentes que hacen el trabajo repetitivo, y trabaja directamente con cada cliente de Zenet Labs.',
+        'También dirige Viatsy y Taplany, nuestras propias empresas, con agentes que hacen el trabajo repetitivo. Lo que funciona ahí es lo que construimos para nuestros clientes.',
       ],
     },
   ],
@@ -34,8 +34,8 @@ export const aboutPage = {
     items: [
       {
         id: 'builder',
-        title: 'Hablas con quien lo construye',
-        text: 'Sin intermediarios: quien define tu proyecto es quien lo construye.',
+        title: 'Lo define y lo construye el mismo equipo',
+        text: 'Sin intermediarios: quienes definen tu proyecto son quienes lo construyen.',
       },
       {
         id: 'ownership',
@@ -65,7 +65,7 @@ export const aboutPage = {
   },
   cta: {
     title: 'Cuéntanos qué hace tu equipo a mano',
-    text: 'Te responde una persona y acordamos contigo el siguiente paso.',
+    text: 'Te respondemos y acordamos contigo el siguiente paso.',
     button: 'Reservar una llamada',
   },
 } satisfies AboutPageContent;

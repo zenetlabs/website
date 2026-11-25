@@ -96,7 +96,7 @@ export const chatCopy = {
   slots: slotsCopy,
   zones: zoneNames,
   person: {
-    text: '¿Prefieres una persona? Habla con Albert Sabaté.',
+    text: '¿Prefieres una persona? Habla con nuestro equipo.',
     book: 'Reservar una llamada',
     write: 'Escríbenos',
   },

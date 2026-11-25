@@ -5,6 +5,7 @@ import { formatPrice, formatPriceSummary } from '@/lib/money';
 
 const [row] = services.integration.prices;
 const price = formatPrice('en', row);
+const agent = formatPriceSummary('en', services.agent.prices);
 const diagnostic = formatPriceSummary('en', services.diagnostic.prices);
 
 export const automation = {
@@ -20,10 +21,10 @@ export const automation = {
       after: '',
     },
     // TODO(albert): confirm the timeline
-    lead: `AI automation is software that runs the repetitive steps of a business process for you: it reads incoming documents, moves data between your tools and sends the routine messages, and it asks a person when something looks wrong. We build it for Singapore companies of 10 to 100 people, on the tools they already use. Projects cost ${price}, excluding GST, and the first automation usually goes live four to eight weeks after the diagnostic.`,
+    lead: `AI automation is software that runs the repetitive steps of a business process for you: it reads incoming documents, moves data between your tools and sends the routine messages, and it asks a person when something looks wrong. We build it for Singapore companies, on the tools they already use. Rule-based automations cost ${price}, excluding GST; steps where AI reads documents or messages are built as an AI agent (${agent}). The first automation usually goes live four to eight weeks after the diagnostic.`,
   },
   facts: {
-    who: 'Companies of 10 to 100 people that copy data by hand between an accounting system, a shop, a CRM, email and spreadsheets',
+    who: 'Companies that copy data by hand between an accounting system, a shop, a CRM, email and spreadsheets',
     // TODO(albert): confirm the timeline
     timeline:
       '4–8 weeks to the first automation in production, after a 1–2 week diagnostic',

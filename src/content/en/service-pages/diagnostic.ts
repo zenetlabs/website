@@ -20,13 +20,13 @@ export const diagnostic = {
     lead: `The automation diagnostic is where every Zenet Labs project starts. In one to two weeks we map your tools and the work your team still does by hand, and hand you a prioritised plan with a price and a timeline for each phase. It costs ${formatPrice('en', price)}, excluding GST, and is credited to the project if you continue within 60 days.`,
   },
   facts: {
-    who: 'Companies of 10 to 100 people that run on several tools and lose hours moving data between them',
+    who: 'Companies that run on several tools and lose hours moving data between them',
     timeline: '1–2 weeks',
     start: 'A short call to agree the scope and the processes to look at',
   },
   cta: {
     title: 'Book your diagnostic',
-    text: 'Tell us which tools you use and what your team still does by hand. We reply personally and agree the scope on a short call.',
+    text: 'Tell us which tools you use and what your team still does by hand. We reply and agree the scope on a short call.',
     button: 'Book a call',
   },
   useCases: {

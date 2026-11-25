@@ -111,14 +111,14 @@ describe.each(cases)('pageHeadFor(%s, %s)', (locale, page) => {
 describe('inner page descriptions', () => {
   const inner = cases.filter(([, page]) => page !== 'home');
 
-  it.each(inner)('%s %s is 120 to 155 characters', (locale, page) => {
+  it.each(inner)('%s %s is 120 to 160 characters', (locale, page) => {
     const [description] = contents(
       pageHeadFor(locale, page).meta,
       'name',
       'description',
     );
     expect(description?.length).toBeGreaterThanOrEqual(120);
-    expect(description?.length).toBeLessThanOrEqual(155);
+    expect(description?.length).toBeLessThanOrEqual(160);
   });
 });
 

@@ -20,6 +20,7 @@ import type {
   Country,
   FaqItem,
   Price,
+  PriceUnit,
   PricingPageContent,
   PublishedEntity,
   Service,
@@ -83,6 +84,11 @@ function breadcrumbNode(
   };
 }
 
+const UNIT_CODES: Record<Exclude<PriceUnit, 'one-off'>, string> = {
+  month: 'MON',
+  day: 'DAY',
+};
+
 function priceSpecification(
   price: Price,
 ): PriceSpecification | UnitPriceSpecification {
@@ -97,10 +103,10 @@ function priceSpecification(
       : price.qualifier === 'from'
         ? { minPrice: price.min }
         : { price: price.min };
-  if (price.unit === 'month') {
+  if (price.unit !== 'one-off') {
     return {
       '@type': 'UnitPriceSpecification',
-      unitCode: 'MON',
+      unitCode: UNIT_CODES[price.unit],
       ...amount,
       ...currency,
     };

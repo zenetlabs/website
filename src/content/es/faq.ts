@@ -20,7 +20,7 @@ export const faq = [
     group: 'scope',
     question: '¿Para qué empresas es?',
     answer:
-      'Para empresas de unas 10 a 100 personas que trabajan con varias herramientas que no se hablan entre sí (un programa de facturación o un ERP, una tienda online, un CRM, WhatsApp, Excel) y pierden horas pasando datos de una a otra. Un equipo más pequeño puede empezar por una sola integración.',
+      'Para empresas en crecimiento que trabajan con varias herramientas que no se hablan entre sí (un programa de facturación o un ERP, una tienda online, un CRM, WhatsApp, Excel) y pierden horas pasando datos de una a otra. Puedes empezar por una sola integración.',
   },
   {
     id: 'tools',
@@ -115,6 +115,6 @@ export const faq = [
     id: 'start',
     group: 'trust',
     question: '¿Cómo empezamos?',
-    answer: `Reserva una llamada, usa el formulario de contacto o escribe a ${PUBLIC_EMAIL}. Te responde una persona, acordamos el alcance en una llamada breve y, en una o dos semanas, tienes un plan con precio. Si sigues adelante en 60 días, el importe del diagnóstico se descuenta del proyecto.`,
+    answer: `Reserva una llamada, usa el formulario de contacto o escribe a ${PUBLIC_EMAIL}. Te respondemos, acordamos el alcance en una llamada breve y, en una o dos semanas, tienes un plan con precio. Si sigues adelante en 60 días, el importe del diagnóstico se descuenta del proyecto.`,
   },
 ] satisfies readonly HomeFaqItem[];

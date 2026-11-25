@@ -6,19 +6,19 @@ export const contactPage = {
     title: 'Contacto',
     metaTitle: 'Contacta con Zenet Labs: reserva un diagnóstico',
     description:
-      'Cuéntanos qué usas y qué hace tu equipo a mano. Te respondemos personalmente y acordamos el siguiente paso, empezando por un diagnóstico a precio cerrado.',
+      'Cuéntanos qué usas y qué hace tu equipo a mano. Te respondemos y acordamos el siguiente paso, empezando por un diagnóstico a precio cerrado.',
   },
   title: {
     before: 'Cuéntanos qué sigue haciendo tu equipo ',
     emphasis: 'a mano',
     after: '',
   },
-  lead: 'Dinos también qué herramientas usas. Una persona lee cada mensaje, te responde personalmente y acuerda contigo el siguiente paso.',
+  lead: 'Dinos también qué herramientas usas. Una persona de nuestro equipo lee cada mensaje y acuerda contigo el siguiente paso.',
   slots: slotsCopy,
   form: {
     title: { before: '', emphasis: 'Escríbenos', after: '' },
     mail: '¿Prefieres el correo? Escribe a',
-    human: 'Te responde una persona.',
+    human: 'Te responde una persona de nuestro equipo.',
     book: '¿Prefieres una llamada? Elige una hora',
     voice: {
       text: '¿Prefieres hablar? Nuestro asistente de voz es una IA, no una persona: responde tus dudas y te reserva una llamada.',
@@ -31,7 +31,7 @@ export const contactPage = {
       {
         id: 'reply',
         label: 'Te respondemos',
-        text: 'Te respondemos personalmente y acordamos el alcance en una llamada breve.',
+        text: 'Te respondemos y acordamos el alcance en una llamada breve.',
       },
       {
         id: 'diagnostic',

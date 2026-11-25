@@ -6,7 +6,7 @@ export const services = {
     name: 'Automation diagnostic',
     summary:
       'One to two weeks mapping your tools and manual work, ending in a costed plan. Credited to the project if you continue within 60 days.',
-    prices: [{ id: 'diagnostic', min: 3000, unit: 'one-off', currency: 'SGD' }],
+    prices: [{ id: 'diagnostic', min: 4000, unit: 'one-off', currency: 'SGD' }],
   },
   integration: {
     id: 'integration',
@@ -46,7 +46,7 @@ export const services = {
     prices: [
       {
         id: 'web',
-        min: 12000,
+        min: 15000,
         qualifier: 'from',
         unit: 'one-off',
         currency: 'SGD',
@@ -61,16 +61,23 @@ export const services = {
     prices: [
       {
         id: 'training-workshop',
-        label: 'Workshop',
+        label: 'Half-day workshop',
         min: 2500,
         qualifier: 'from',
         unit: 'one-off',
         currency: 'SGD',
       },
       {
+        id: 'training-workshop-day',
+        label: 'Longer workshops',
+        min: 4500,
+        unit: 'day',
+        currency: 'SGD',
+      },
+      {
         id: 'training-mentoring',
         label: 'Mentoring',
-        min: 1200,
+        min: 1500,
         unit: 'month',
         currency: 'SGD',
       },
@@ -87,7 +94,7 @@ export const services = {
         id: 'maintenance-essential',
         label: 'Essential',
         note: 'One integration or automation: monitoring and fixes.',
-        min: 500,
+        min: 600,
         unit: 'month',
         currency: 'SGD',
       },
@@ -95,7 +102,7 @@ export const services = {
         id: 'maintenance-standard',
         label: 'Standard',
         note: 'Several automations, plus monthly improvements.',
-        min: 1200,
+        min: 1500,
         unit: 'month',
         currency: 'SGD',
       },
@@ -103,7 +110,7 @@ export const services = {
         id: 'maintenance-extended',
         label: 'Extended',
         note: 'AI agents in production: evaluation, tuning and cost control.',
-        min: 2500,
+        min: 3000,
         unit: 'month',
         currency: 'SGD',
       },

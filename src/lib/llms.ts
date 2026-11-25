@@ -692,11 +692,7 @@ export async function buildLlmsFull(
       entity,
       copy.fullNote.replace('{index}', llmsUrl(locale, 'llms')),
     ),
-    section(
-      titleText(home.hero.title),
-      [home.hero.lead, home.hero.audience],
-      '\n\n',
-    ),
+    section(titleText(home.hero.title), [home.hero.lead], '\n\n'),
     pricingSection(locale),
     ...calculatorSection(locale, bodies, site),
     servicePagesSection(locale, bodies),

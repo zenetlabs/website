@@ -6,7 +6,7 @@ export const services = {
     name: 'Diagnóstico de automatización',
     summary:
       'Una o dos semanas analizando tus herramientas y el trabajo manual, con un plan con precio al final. Se descuenta del proyecto si sigues adelante en 60 días.',
-    prices: [{ id: 'diagnostic', min: 1500, unit: 'one-off', currency: 'EUR' }],
+    prices: [{ id: 'diagnostic', min: 2000, unit: 'one-off', currency: 'EUR' }],
   },
   integration: {
     id: 'integration',
@@ -31,8 +31,8 @@ export const services = {
     prices: [
       {
         id: 'agent',
-        min: 8000,
-        max: 20000,
+        min: 7500,
+        max: 17500,
         unit: 'one-off',
         currency: 'EUR',
       },
@@ -46,7 +46,7 @@ export const services = {
     prices: [
       {
         id: 'web',
-        min: 6000,
+        min: 7500,
         qualifier: 'from',
         unit: 'one-off',
         currency: 'EUR',
@@ -61,16 +61,23 @@ export const services = {
     prices: [
       {
         id: 'training-workshop',
-        label: 'Taller',
-        min: 1200,
+        label: 'Taller de medio día',
+        min: 1250,
         qualifier: 'from',
         unit: 'one-off',
         currency: 'EUR',
       },
       {
+        id: 'training-workshop-day',
+        label: 'Talleres más largos',
+        min: 2250,
+        unit: 'day',
+        currency: 'EUR',
+      },
+      {
         id: 'training-mentoring',
         label: 'Mentoría',
-        min: 600,
+        min: 750,
         unit: 'month',
         currency: 'EUR',
       },
@@ -117,7 +124,7 @@ export const services = {
     prices: [
       {
         id: 'growth',
-        min: 800,
+        min: 750,
         qualifier: 'from',
         unit: 'month',
         currency: 'EUR',

@@ -147,16 +147,12 @@ describe('legalClausesFor', () => {
 });
 
 describe('foundedLine', () => {
-  it('derives the line from the founder and the founding year', () => {
-    expect(foundedLine(enEntity, 'en')).toBe(
-      'Founded in 2022 by Albert Sabaté',
-    );
-    expect(foundedLine(enEntity, 'es')).toBe(
-      'Fundada en 2022 por Albert Sabaté',
-    );
+  it('derives the line from the founding year', () => {
+    expect(foundedLine(enEntity, 'en')).toBe('Founded in 2022');
+    expect(foundedLine(enEntity, 'es')).toBe('Fundada en 2022');
   });
 
-  it('is absent when the entity has no founder', () => {
+  it('is absent without a founding year', () => {
     expect(foundedLine(esEntity, 'es')).toBeUndefined();
   });
 });
@@ -245,13 +241,13 @@ type Row = {
   min: number;
   max?: number;
   qualifier?: 'from';
-  unit: 'one-off' | 'month';
+  unit: 'one-off' | 'month' | 'day';
 };
 
 const BRIEF: Record<string, readonly [Row, Row]> = {
   diagnostic: [
-    { min: 3000, unit: 'one-off' },
-    { min: 1500, unit: 'one-off' },
+    { min: 4000, unit: 'one-off' },
+    { min: 2000, unit: 'one-off' },
   ],
   integration: [
     { min: 8000, qualifier: 'from', unit: 'one-off' },
@@ -259,35 +255,39 @@ const BRIEF: Record<string, readonly [Row, Row]> = {
   ],
   agent: [
     { min: 15000, max: 35000, unit: 'one-off' },
-    { min: 8000, max: 20000, unit: 'one-off' },
+    { min: 7500, max: 17500, unit: 'one-off' },
   ],
   web: [
-    { min: 12000, qualifier: 'from', unit: 'one-off' },
-    { min: 6000, qualifier: 'from', unit: 'one-off' },
+    { min: 15000, qualifier: 'from', unit: 'one-off' },
+    { min: 7500, qualifier: 'from', unit: 'one-off' },
   ],
   'training-workshop': [
     { min: 2500, qualifier: 'from', unit: 'one-off' },
-    { min: 1200, qualifier: 'from', unit: 'one-off' },
+    { min: 1250, qualifier: 'from', unit: 'one-off' },
+  ],
+  'training-workshop-day': [
+    { min: 4500, unit: 'day' },
+    { min: 2250, unit: 'day' },
   ],
   'training-mentoring': [
-    { min: 1200, unit: 'month' },
-    { min: 600, unit: 'month' },
+    { min: 1500, unit: 'month' },
+    { min: 750, unit: 'month' },
   ],
   'maintenance-essential': [
-    { min: 500, unit: 'month' },
+    { min: 600, unit: 'month' },
     { min: 300, unit: 'month' },
   ],
   'maintenance-standard': [
-    { min: 1200, unit: 'month' },
+    { min: 1500, unit: 'month' },
     { min: 750, unit: 'month' },
   ],
   'maintenance-extended': [
-    { min: 2500, unit: 'month' },
+    { min: 3000, unit: 'month' },
     { min: 1500, unit: 'month' },
   ],
   growth: [
     { min: 1500, qualifier: 'from', unit: 'month' },
-    { min: 800, qualifier: 'from', unit: 'month' },
+    { min: 750, qualifier: 'from', unit: 'month' },
   ],
 };
 
