@@ -115,7 +115,7 @@ describe('confirmationEmail', () => {
       [
         'Hello,',
         '',
-        'Thank you for contacting Zenet Labs. We have received your message and will reply to this address, usually within two working days.',
+        'Thank you for contacting Zenet Labs. We have received your message and will reply to this address, usually within a working day.',
         '',
         'Next step: we read every message. If your enquiry is a good fit, we will suggest a short call to agree the scope of an automation diagnostic. To add anything, just reply to this email.',
         '',
@@ -134,7 +134,7 @@ describe('confirmationEmail', () => {
       [
         'Hola:',
         '',
-        'Gracias por escribir a Zenet Labs. Hemos recibido tu mensaje y te responderemos a esta dirección, normalmente en un plazo de dos días laborables.',
+        'Gracias por escribir a Zenet Labs. Hemos recibido tu mensaje y te responderemos a esta dirección, normalmente en un día laborable.',
         '',
         'Siguiente paso: leemos cada mensaje. Si tu consulta encaja, te propondremos una llamada breve para acordar el alcance de un diagnóstico de automatización. Si quieres añadir algo, responde a este correo.',
         '',
