@@ -85,7 +85,7 @@ export const PAGES: Record<
   home: { slugs: { en: '/', es: '/' }, lastmod: '2026-11-24' },
   services: {
     slugs: { en: '/services', es: '/servicios' },
-    lastmod: '2026-11-24',
+    lastmod: '2026-11-25',
   },
   diagnostic: {
     slugs: {
@@ -198,11 +198,11 @@ export const PAGES: Record<
   },
   contact: {
     slugs: { en: '/contact', es: '/contacto' },
-    lastmod: '2026-11-24',
+    lastmod: '2026-11-25',
   },
   pricing: {
     slugs: { en: '/pricing', es: '/precios' },
-    lastmod: '2026-11-24',
+    lastmod: '2026-11-25',
   },
   calculator: {
     slugs: { en: '/pricing/calculator', es: '/precios/calculadora' },
@@ -212,7 +212,7 @@ export const PAGES: Record<
   },
   about: {
     slugs: { en: '/about', es: '/sobre-nosotros' },
-    lastmod: '2026-11-24',
+    lastmod: '2026-11-25',
   },
   book: {
     slugs: { en: '/book', es: '/reservar' },

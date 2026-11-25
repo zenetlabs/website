@@ -1,9 +1,9 @@
+import { DeskClose } from '@/components/desk-close';
 import { Faq } from '@/components/faq';
-import { InnerClose } from '@/components/inner-close';
 import { Ledger } from '@/components/ledger';
 import { BulletList } from '@/components/lists';
 import { RelatedLinks } from '@/components/page-blocks';
-import { PageHero } from '@/components/page-hero';
+import { HeroActions, PageHero } from '@/components/page-hero';
 import { Includes, PriceTicket } from '@/components/price-ticket';
 import { Container, Section } from '@/components/section';
 import { StickyZone } from '@/components/sticky-cta';
@@ -80,12 +80,16 @@ export function VerifactuPage({
   return (
     <>
       <PageHero
-        locale={locale}
         title={copy.hero.title}
         lead={copy.hero.lead}
-        button={copy.cta.button}
-        pricing={hub.labels.pricing}
-        ticket={
+        actions={
+          <HeroActions
+            locale={locale}
+            button={copy.cta.button}
+            secondary={{ label: hub.labels.pricing, page: 'pricing' }}
+          />
+        }
+        stage={
           <PriceTicket
             service={services[serviceOf('verifactu')]}
             facts={copy.facts}
@@ -93,7 +97,7 @@ export function VerifactuPage({
             locale={locale}
           />
         }
-        includes={<Includes label={hub.labels.included} items={includes} />}
+        aside={<Includes label={hub.labels.included} items={includes} />}
       />
       <StickyZone locale={locale}>
         <Section id="deadlines" title={deadlines.title} lead={copy.hero.intro}>
@@ -137,11 +141,11 @@ export function VerifactuPage({
           labels={hub.labels}
         />
       </StickyZone>
-      <InnerClose
+      <DeskClose
         cta={copy.cta}
         faq={copy.faq}
-        hub={hub}
-        close={close}
+        mail={hub.labels.mail}
+        {...close}
         locale={locale}
       />
     </>

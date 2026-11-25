@@ -115,47 +115,6 @@ describe.each([
 });
 
 describe('the catalogue pieces', () => {
-  it('names a page of its own on a card that shares its ladder row', () => {
-    const { container } = render(
-      <ul>
-        <OfferCard
-          service={SERVICES.en.integration}
-          flow={['shopify', 'xero']}
-          locale="en"
-          heading="h2"
-          href="/services/integrations"
-          name="Integrations"
-          summary="Joined up"
-        >
-          <p className="tick-item">One</p>
-          <p className="tick-item">Two</p>
-        </OfferCard>
-      </ul>,
-    );
-    const link = container.querySelector('h2 a');
-    expect(link).toHaveAttribute('href', '/services/integrations');
-    expect(link?.textContent).toBe('Integrations');
-    expect(container).toHaveTextContent('Joined up');
-    expect(container.querySelectorAll('.tick-item')).toHaveLength(2);
-    expect(container.querySelector('li')).toHaveAttribute(
-      'data-service',
-      'integration',
-    );
-  });
-
-  it('labels an unnamed price and shows every note in the detailed tiers', () => {
-    const { container } = render(
-      <Tiers
-        service={SERVICES.en.growth}
-        locale="en"
-        priceLabel="Price"
-        detailed
-      />,
-    );
-    expect(container.querySelector('dt')?.textContent).toBe('Price');
-    expect(container.firstElementChild?.className).toContain('tiers-detailed');
-  });
-
   it('sets the ticket pills and the stub it is given', () => {
     render(
       <Ticket
@@ -164,16 +123,41 @@ describe('the catalogue pieces', () => {
         pills={['Empieza aquí', '1–2 semanas']}
         book="Reservar el diagnóstico"
         plan={{ title: 'Incluye', items: ['Uno'] }}
-        heading="h2"
         site={BOOKING}
       />,
-    );
-    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
-      SERVICES.es.diagnostic.name,
     );
     expect(screen.getByText('Empieza aquí')).toHaveClass('meta-pill');
     expect(
       screen.getByRole('link', { name: 'Reservar el diagnóstico' }),
     ).toHaveAttribute('href', BOOK.es);
+  });
+
+  it('labels every tier of a care line', () => {
+    const { container } = render(
+      <Tiers service={SERVICES.en.maintenance} locale="en" />,
+    );
+    expect(
+      [...container.querySelectorAll('dt')].map((dt) => dt.textContent),
+    ).toEqual(SERVICES.en.maintenance.prices.map((price) => price.label));
+  });
+
+  it('draws a card with its price, name and tools', () => {
+    const { container } = render(
+      <ul>
+        <OfferCard
+          service={SERVICES.en.integration}
+          flow={['shopify', 'xero']}
+          locale="en"
+        />
+      </ul>,
+    );
+    expect(container.querySelector('li')).toHaveAttribute(
+      'data-service',
+      'integration',
+    );
+    expect(container.querySelector('h3 a')).toHaveAttribute(
+      'href',
+      '/services/ai-automation',
+    );
   });
 });

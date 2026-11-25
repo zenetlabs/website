@@ -1,4 +1,4 @@
-import { serviceIncludes } from '@/content/es/service-includes';
+import { diagnosticPlan } from '@/content/es/diagnostic-plan';
 import type { PricingPageContent } from '@/content/types';
 
 export const pricingPage = {
@@ -17,41 +17,32 @@ export const pricingPage = {
     includes: 'Incluye',
     timeline: 'Plazo',
     more: 'Más sobre',
-    startHere: 'Empieza aquí',
-    book: 'Reservar el diagnóstico',
   },
-  // TODO(albert): confirm every list (in service-includes.ts)
-  details: {
-    diagnostic: {
-      includes: serviceIncludes.diagnostic,
-      timeline: '1–2 semanas',
-    },
-    integration: {
-      includes: serviceIncludes.integration,
-    },
-    agent: {
-      includes: serviceIncludes.agent,
-    },
-    web: {
-      includes: serviceIncludes.web,
-    },
-    training: {
-      includes: serviceIncludes.training,
-    },
-    maintenance: {
-      includes: serviceIncludes.maintenance,
-    },
-    growth: {
-      includes: serviceIncludes.growth,
-    },
-  },
+  timelines: { diagnostic: '1–2 semanas' },
+  plan: diagnosticPlan,
   how: {
     title: 'Cómo funcionan los precios',
     items: [
-      'El diagnóstico tiene precio cerrado. Si sigues adelante en 60 días, su importe se descuenta del proyecto.',
-      'Los precios «desde» y los rangos dependen de cuántas herramientas, cuánto volumen y cuánta IA haya. Tras el diagnóstico tienes un presupuesto cerrado para cada fase.',
-      'El mantenimiento es mensual y opcional; eliges el plan cuando el proyecto ya funciona.',
-      'El código, las cuentas y los datos que montamos para ti son tuyos.',
+      {
+        id: 'fixed',
+        title: 'Precio cerrado, descontado si sigues adelante',
+        text: 'El diagnóstico tiene precio cerrado. Si sigues adelante en 60 días, su importe se descuenta del proyecto.',
+      },
+      {
+        id: 'quote',
+        title: 'Presupuesto cerrado antes de comprometerte',
+        text: 'Los precios «desde» y los rangos dependen de cuántas herramientas, cuánto volumen y cuánta IA haya. Tras el diagnóstico tienes un presupuesto cerrado para cada fase.',
+      },
+      {
+        id: 'care',
+        title: 'Mantenimiento solo si lo quieres',
+        text: 'El mantenimiento es mensual y opcional; eliges el plan cuando el proyecto ya funciona.',
+      },
+      {
+        id: 'owner',
+        title: 'Tu código, tus cuentas y tus datos',
+        text: 'El código, las cuentas y los datos que montamos para ti son tuyos.',
+      },
     ],
   },
   calculator: {

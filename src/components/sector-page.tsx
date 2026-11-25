@@ -1,10 +1,10 @@
 import { BeforeAfter } from '@/components/before-after';
 import { CompanyMark } from '@/components/companies-strip';
+import { DeskClose } from '@/components/desk-close';
 import { Faq } from '@/components/faq';
 import { FlowBoard } from '@/components/flow-board';
-import { InnerClose } from '@/components/inner-close';
 import { RelatedLinks } from '@/components/page-blocks';
-import { PageHero } from '@/components/page-hero';
+import { HeroActions, PageHero } from '@/components/page-hero';
 import { Includes, PriceTicket } from '@/components/price-ticket';
 import { Container, Section } from '@/components/section';
 import { sectionFrame } from '@/components/section-frame';
@@ -45,21 +45,27 @@ export function SectorPage({
   return (
     <>
       <PageHero
-        locale={locale}
         title={copy.hero.title}
         lead={copy.hero.lead}
-        button={copy.cta.button}
-        pricing={hub.labels.pricing}
-        board={<FlowBoard flow={copy.flow} actors={hub.labels.actors} />}
-        ticket={
-          <PriceTicket
-            service={services[serviceOf('travelAgencies')]}
-            facts={copy.facts}
-            labels={hub.labels}
+        actions={
+          <HeroActions
             locale={locale}
+            button={copy.cta.button}
+            secondary={{ label: hub.labels.pricing, page: 'pricing' }}
           />
         }
-        includes={<Includes label={hub.labels.included} items={includes} />}
+        stage={
+          <>
+            <FlowBoard flow={copy.flow} actors={hub.labels.actors} />
+            <PriceTicket
+              service={services[serviceOf('travelAgencies')]}
+              facts={copy.facts}
+              labels={hub.labels}
+              locale={locale}
+            />
+          </>
+        }
+        aside={<Includes label={hub.labels.included} items={includes} />}
       />
       <StickyZone locale={locale}>
         <Section
@@ -125,11 +131,11 @@ export function SectorPage({
           labels={hub.labels}
         />
       </StickyZone>
-      <InnerClose
+      <DeskClose
         cta={copy.cta}
         faq={copy.faq}
-        hub={hub}
-        close={close}
+        mail={hub.labels.mail}
+        {...close}
         locale={locale}
       />
     </>

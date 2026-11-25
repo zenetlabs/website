@@ -103,7 +103,14 @@ test.describe('mobile page zones', () => {
   for (const path of ZONE_PAGES) {
     test(`${path} docks above the closing band`, async ({ page }) => {
       await gotoHydrated(page, path);
-      await page.evaluate(() => window.scrollBy(0, 900));
+      // The zone starts after the hero (on pricing, after the ladder that
+      // offers its own booking button); with its top at the top of the screen
+      // it still extends past the bottom, so the bar docks there
+      await page.evaluate(() => {
+        document
+          .querySelector('[data-sticky-cta]')
+          ?.parentElement?.scrollIntoView({ block: 'start' });
+      });
       await expect(page.locator(BAR)).toBeInViewport({ ratio: 1 });
       const mid = await box(page, BAR);
       expect(Math.round(mid.y + mid.height)).toBe(844);

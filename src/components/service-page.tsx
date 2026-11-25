@@ -1,13 +1,13 @@
+import { DeskClose } from '@/components/desk-close';
 import { Faq } from '@/components/faq';
 import { FlowBoard } from '@/components/flow-board';
-import { InnerClose } from '@/components/inner-close';
 import { Ledger } from '@/components/ledger';
 import {
   Breadcrumb,
   CaseCallout,
   RelatedLinks,
 } from '@/components/page-blocks';
-import { PageHero } from '@/components/page-hero';
+import { HeroActions, PageHero } from '@/components/page-hero';
 import { Includes, PriceTicket } from '@/components/price-ticket';
 import { Process } from '@/components/process';
 import { Section } from '@/components/section';
@@ -44,11 +44,15 @@ export function ServicePage({
   return (
     <>
       <PageHero
-        locale={locale}
         title={copy.hero.title}
         lead={copy.hero.lead}
-        button={copy.cta.button}
-        pricing={hub.labels.pricing}
+        actions={
+          <HeroActions
+            locale={locale}
+            button={copy.cta.button}
+            secondary={{ label: hub.labels.pricing, page: 'pricing' }}
+          />
+        }
         breadcrumb={
           <Breadcrumb
             page={page}
@@ -57,24 +61,24 @@ export function ServicePage({
             label={hub.labels.breadcrumb}
           />
         }
-        board={
-          copy.flow ? (
-            <FlowBoard
-              flow={copy.flow}
-              actors={hub.labels.actors}
-              approval={copy.approval}
+        stage={
+          <>
+            {copy.flow ? (
+              <FlowBoard
+                flow={copy.flow}
+                actors={hub.labels.actors}
+                approval={copy.approval}
+              />
+            ) : null}
+            <PriceTicket
+              service={services[serviceOf(page)]}
+              facts={copy.facts}
+              labels={hub.labels}
+              locale={locale}
             />
-          ) : undefined
+          </>
         }
-        ticket={
-          <PriceTicket
-            service={services[serviceOf(page)]}
-            facts={copy.facts}
-            labels={hub.labels}
-            locale={locale}
-          />
-        }
-        includes={<Includes label={hub.labels.included} items={includes} />}
+        aside={<Includes label={hub.labels.included} items={includes} />}
       />
       <StickyZone locale={locale}>
         <Section
@@ -95,11 +99,11 @@ export function ServicePage({
           labels={hub.labels}
         />
       </StickyZone>
-      <InnerClose
+      <DeskClose
         cta={copy.cta}
         faq={copy.faq}
-        hub={hub}
-        close={close}
+        mail={hub.labels.mail}
+        {...close}
         locale={locale}
       />
     </>

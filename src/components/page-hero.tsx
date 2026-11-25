@@ -6,39 +6,33 @@ import { LEAD, PRIMARY_BUTTON, TEXT_LINK } from '@/components/ui';
 import type { TitleParts } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 import { CTA_TARGET, navHref } from '@/lib/nav';
-import { pagePath } from '@/lib/page-registry';
+import type { PageId } from '@/lib/page-registry';
 
 const TINT = sectionFrame('tint');
 
-// The hero of a service or landing page, on the tint ground: the title, one
-// sentence and the actions on the left; the stage (the board, then the price
-// ticket) on the right and, from `lg`, what is included under the copy,
-// beside the ticket. The actions end with the link to the pricing page.
+// The hero of an inner page, on the tint ground: the title, one sentence and
+// the actions on the left; the stage on the right and, from `lg`, the aside
+// under the copy, beside the stage. Each slot renders only when it is given.
 export function PageHero({
   breadcrumb,
   title,
   lead,
-  button,
-  pricing,
-  board,
-  ticket,
-  includes,
-  locale,
+  actions,
+  stage,
+  aside,
 }: {
   breadcrumb?: ReactNode;
   title: TitleParts;
   lead: string;
-  button: string;
-  pricing: string;
-  board?: ReactNode;
-  ticket: ReactNode;
-  includes: ReactNode;
-  locale: Locale;
+  actions?: ReactNode;
+  stage?: ReactNode;
+  aside?: ReactNode;
 }) {
   return (
     <section
       aria-labelledby="page-title"
       data-ground={TINT.ground}
+      data-stage={stage ? undefined : 'none'}
       className={TINT.bg}
     >
       <Container className="inner-hero">
@@ -48,28 +42,40 @@ export function PageHero({
             <EmphasisTitle parts={title} />
           </h1>
           <p className={`mt-4 md:mt-6 ${LEAD}`}>{lead}</p>
-          <div className="page-hero-actions">
-            <CtaLink
-              cta="page_hero"
-              href={navHref(locale, CTA_TARGET)}
-              className={PRIMARY_BUTTON}
-            >
-              {button}
-            </CtaLink>
-            <a
-              href={pagePath(locale, 'pricing')}
-              className={`font-medium ${TEXT_LINK}`}
-            >
-              {pricing}
-            </a>
-          </div>
+          {actions}
         </div>
-        <div className="inner-hero-stage">
-          {board}
-          {ticket}
-        </div>
-        <div className="inner-hero-aside">{includes}</div>
+        {stage ? <div className="inner-hero-stage">{stage}</div> : null}
+        {aside ? <div className="inner-hero-aside">{aside}</div> : null}
       </Container>
     </section>
+  );
+}
+
+// The booking CTA, then a secondary link (the pricing page on a service page).
+export function HeroActions({
+  button,
+  secondary,
+  locale,
+}: {
+  button: string;
+  secondary: { label: string; page: PageId };
+  locale: Locale;
+}) {
+  return (
+    <div className="page-hero-actions">
+      <CtaLink
+        cta="page_hero"
+        href={navHref(locale, CTA_TARGET)}
+        className={PRIMARY_BUTTON}
+      >
+        {button}
+      </CtaLink>
+      <a
+        href={navHref(locale, secondary)}
+        className={`font-medium ${TEXT_LINK}`}
+      >
+        {secondary.label}
+      </a>
+    </div>
   );
 }

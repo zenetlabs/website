@@ -36,22 +36,26 @@ export const aboutPage = {
     items: [
       {
         id: 'builder',
+        tiles: ['human'],
         title: 'Scoped and built by the same team',
         // TODO(albert): confirm
         text: 'No account managers in between: the people who scope your project build it.',
       },
       {
         id: 'ownership',
+        tiles: ['app'],
         title: 'Yours to keep',
         text: 'Code, accounts and data stay with you. If we stop working together, everything keeps running.',
       },
       {
         id: 'approval',
+        tiles: ['agent', 'human'],
         title: 'People approve what matters',
         text: 'Agents act within agreed limits, and anything with consequences waits for a person.',
       },
       {
         id: 'measured',
+        tiles: [],
         title: 'Measured, not promised',
         text: 'We measure each process before we touch it and compare after go-live.',
       },

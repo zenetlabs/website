@@ -34,21 +34,25 @@ export const aboutPage = {
     items: [
       {
         id: 'builder',
+        tiles: ['human'],
         title: 'Lo define y lo construye el mismo equipo',
         text: 'Sin intermediarios: quienes definen tu proyecto son quienes lo construyen.',
       },
       {
         id: 'ownership',
+        tiles: ['app'],
         title: 'Todo queda en tus manos',
         text: 'El código, las cuentas y los datos son tuyos. Si dejamos de trabajar juntos, todo sigue funcionando.',
       },
       {
         id: 'approval',
+        tiles: ['agent', 'human'],
         title: 'Las personas aprueban lo importante',
         text: 'Los agentes actúan dentro de los límites acordados, y lo que tiene consecuencias espera a una persona.',
       },
       {
         id: 'measured',
+        tiles: [],
         title: 'Medido, no prometido',
         text: 'Medimos cada proceso antes de tocarlo y comparamos cuando ya está en marcha.',
       },

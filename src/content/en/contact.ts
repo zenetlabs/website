@@ -13,10 +13,11 @@ export const contactPage = {
     emphasis: 'still does by hand',
     after: '',
   },
-  lead: 'Mention the tools you use, too. A person on our team reads every message and agrees the next step with you.',
+  lead: 'A person on our team reads every message and agrees the next step with you.',
   slots: slotsCopy,
   form: {
     title: { before: '', emphasis: 'Write to us', after: '' },
+    lead: 'Mention the tools you use, too.',
     mail: 'Prefer email? Write to',
     human: 'A person on our team replies.',
     book: 'Prefer a call? Pick a time',

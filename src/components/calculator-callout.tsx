@@ -16,12 +16,12 @@ export function CalculatorCallout({
   site?: SiteFlags;
 }) {
   if (!isPublished('calculator', site)) return null;
-  const { ground, bg } = sectionFrame('tint');
+  const { ground, bg } = sectionFrame('compact');
   return (
     <section
       aria-labelledby="calculator-callout-title"
       data-ground={ground}
-      className={bg}
+      className={`${bg} border-t border-line-strong`}
     >
       <Container className="py-section-compact flex flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-12">
         <div>

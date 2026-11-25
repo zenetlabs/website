@@ -14,6 +14,7 @@ import type {
   HomeContent,
   Metric,
   PricingPageContent,
+  ServiceId,
   ServicePageContent,
   Services,
   ServicesHubContent,
@@ -238,12 +239,11 @@ export async function loadDeskClose(locale: Locale): Promise<DeskCloseCopy> {
   return __VOICE__ ? deskClose : withoutCall(deskClose);
 }
 
-async function loadIncludes(
+export async function loadServiceIncludes(
   locale: Locale,
-  page: ServicePageId | LandingPageId,
-): Promise<readonly string[]> {
+): Promise<Record<ServiceId, readonly string[]>> {
   const { serviceIncludes } = await INCLUDES[locale]();
-  return serviceIncludes[serviceOf(page)];
+  return serviceIncludes;
 }
 
 export async function loadHomeContent(locale: Locale): Promise<{
@@ -255,19 +255,24 @@ export async function loadHomeContent(locale: Locale): Promise<{
   return { home: __VOICE__ ? home : withoutVoice(home), faq, services };
 }
 
+// Only growth, which has no page of its own, lists what it includes on /pricing
 export async function loadPricingContent(locale: Locale): Promise<{
   page: PricingPageContent;
   services: Services;
   hub: ServicesHubContent;
   faq: readonly FaqItem[];
+  includes: { growth: readonly string[] };
 }> {
-  const [{ pricingPage }, { services }, { servicesHub }, { faq }] =
-    await PRICING[locale]();
+  const [
+    [{ pricingPage }, { services }, { servicesHub }, { faq }],
+    { serviceIncludes },
+  ] = await Promise.all([PRICING[locale](), INCLUDES[locale]()]);
   return {
     page: pricingPage,
     services,
     hub: servicesHub,
     faq: faq.filter((item) => item.group === 'terms'),
+    includes: { growth: serviceIncludes.growth },
   };
 }
 
@@ -333,7 +338,7 @@ export async function loadServicePageContent(
     await Promise.all([
       SERVICE_PAGES[page][locale](),
       SERVICES_HUB[locale](),
-      loadIncludes(locale, page),
+      loadServiceIncludes(locale).then((all) => all[serviceOf(page)]),
       loadDeskClose(locale),
     ]);
   return { copy, hub: servicesHub, services, includes, close };
@@ -361,7 +366,7 @@ async function loadSpanishLanding<T>(
     await Promise.all([
       copy(),
       SERVICES_HUB.es(),
-      loadIncludes('es', page),
+      loadServiceIncludes('es').then((all) => all[serviceOf(page)]),
       loadDeskClose('es'),
     ]);
   return { copy: loaded, hub: servicesHub, services, includes, close };

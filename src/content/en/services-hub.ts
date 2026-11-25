@@ -1,5 +1,4 @@
 import { casesName, contactName, viatsyCaseName } from '@/content/en/case-name';
-import { diagnosticPlan } from '@/content/en/diagnostic-plan';
 import { services } from '@/content/en/services';
 import type { ServicesHubContent } from '@/content/types';
 import { formatPriceSummary } from '@/lib/money';
@@ -18,7 +17,15 @@ export const servicesHub = {
     emphasis: 'working systems',
     after: '',
   },
-  lead: "Zenet Labs is an AI consultancy for growing Singapore companies. We don't stop at advice: we connect your tools, automate the manual work, put AI agents into production and train your team, with published prices and a fixed-price diagnostic to start.",
+  lead: 'Zenet Labs is an AI consultancy for growing Singapore companies.',
+  intro:
+    "We don't stop at advice: we connect your tools, automate the manual work, put AI agents into production and train your team, with published prices and a fixed-price diagnostic to start.",
+  ladder: {
+    build: 'Then build',
+    run: 'Then run, monthly',
+    credit: 'Credited if you go ahead within 60 days',
+    oneOff: 'One-off',
+  },
   cards: {
     diagnostic: {
       name: 'Automation diagnostic',
@@ -73,11 +80,6 @@ export const servicesHub = {
   },
   startHere: 'Start here',
   book: 'Book the diagnostic',
-  plan: { title: 'What the diagnostic hands you', items: diagnosticPlan },
-  also: {
-    title: 'Maintenance and growth',
-    lead: 'Once your project is live, maintenance keeps it working, and growth work helps the right customers find you.',
-  },
   start: {
     title: 'Not sure which service you need?',
     text: `Start with the automation diagnostic. In one to two weeks we map your tools and manual work and hand you a costed plan. It costs ${diagnostic}, excluding GST, and is credited to the project if you continue within 60 days.`,

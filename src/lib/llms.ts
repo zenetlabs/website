@@ -4,6 +4,7 @@ import { home as enHome } from '@/content/en/home';
 import { legalMeta as enLegalMeta } from '@/content/en/legal-meta';
 import { llms as enLlms } from '@/content/en/llms';
 import { pricingPage as enPricing } from '@/content/en/pricing';
+import { serviceIncludes as enIncludes } from '@/content/en/service-includes';
 import { services as enServices } from '@/content/en/services';
 import { aboutPage as esAbout } from '@/content/es/about';
 import { faq as esFaq } from '@/content/es/faq';
@@ -12,6 +13,7 @@ import { legalMeta as esLegalMeta } from '@/content/es/legal-meta';
 import { legalNotice } from '@/content/es/legal-notice';
 import { llms as esLlms } from '@/content/es/llms';
 import { pricingPage as esPricing } from '@/content/es/pricing';
+import { serviceIncludes as esIncludes } from '@/content/es/service-includes';
 import { services as esServices } from '@/content/es/services';
 import {
   loadBookContent,
@@ -90,6 +92,7 @@ import { titleText } from '@/lib/title-text';
 type Bodies = {
   home: HomeContent;
   pricing: PricingPageContent;
+  includes: Record<ServiceId, readonly string[]>;
   about: AboutPageContent;
   services: Services;
   faq: readonly FaqItem[];
@@ -102,6 +105,7 @@ const BODIES: Record<Locale, Bodies> = {
   en: {
     home: enHome,
     pricing: enPricing,
+    includes: enIncludes,
     about: enAbout,
     services: enServices,
     faq: enFaq,
@@ -110,6 +114,7 @@ const BODIES: Record<Locale, Bodies> = {
   es: {
     home: esHome,
     pricing: esPricing,
+    includes: esIncludes,
     about: esAbout,
     services: esServices,
     faq: esFaq,
@@ -379,13 +384,13 @@ export async function buildLlmsTxt(
 }
 
 function pricingSection(locale: Locale): string {
-  const { pricing, services, copy } = BODIES[locale];
+  const { pricing, includes, services, copy } = BODIES[locale];
   return section(
     copy.headings.pricing,
     [
       `${pricing.lead} ${pricing.taxNote}`,
       ...Object.values(services).flatMap((service) => {
-        const { includes, timeline } = pricing.details[service.id];
+        const timeline = pricing.timelines[service.id];
         return [
           `### [${service.name}](${serviceUrl(locale, service.id)})`,
           service.summary,
@@ -397,13 +402,13 @@ function pricingSection(locale: Locale): string {
             .join('\n'),
           [
             `${pricing.labels.includes}:`,
-            ...includes.map((item) => `- ${item}`),
+            ...includes[service.id].map((item) => `- ${item}`),
           ].join('\n'),
           ...(timeline ? [`${pricing.labels.timeline}: ${timeline}`] : []),
         ];
       }),
       `### ${pricing.how.title}`,
-      pricing.how.items.map((item) => `- ${item}`).join('\n'),
+      pricing.how.items.map((item) => `- ${item.text}`).join('\n'),
     ],
     '\n\n',
   );
@@ -482,7 +487,7 @@ function servicePagesSection(
   return section(
     copy.headings.servicePages,
     [
-      `${titleText(hub.title)}. ${hub.lead}`,
+      `${titleText(hub.title)}. ${hub.lead} ${hub.intro}`,
       ...SERVICE_PAGE_IDS.flatMap((page) => {
         const body = pages[page];
         return [
@@ -624,7 +629,7 @@ function caseBlocks(
 function contactPageLines({ contact }: ServiceBodies): string[] {
   return [
     '',
-    `${titleText(contact.title)}. ${contact.lead}`,
+    `${titleText(contact.title)}. ${contact.form.lead ? `${contact.form.lead} ` : ''}${contact.lead}`,
     ...contact.next.steps.map(
       (step, index) => `${index + 1}. ${step.label}: ${step.text}`,
     ),

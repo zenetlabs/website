@@ -9,9 +9,12 @@ import type {
   AssistantIntro,
   DeskCopy,
   DoorCopy,
+  FaqItem,
   HomeContent,
+  PageCta,
 } from '@/content/types';
 import { deskWords } from '@/lib/desk-words';
+import { faqChips } from '@/lib/faq-chips';
 import type { Locale } from '@/lib/i18n';
 import { navHref } from '@/lib/nav';
 import { isPublished, type SiteFlags } from '@/lib/page-registry';
@@ -32,25 +35,31 @@ function DoorText({ copy }: { copy: DoorCopy }) {
 
 // The close, the desk again on the band: the live doors (call, write), and a
 // card with the desk's chips and composer and, while booking is published, the
-// next free times. An inner page passes its own title and chips.
+// next free times. An inner page passes its `cta` and, for the chips, the
+// questions it answers (`faq`: its first two), or no questions for the desk's
+// own; home passes its own `title`, `lead` and, in tests, `chips`.
 export function DeskClose({
   title,
   lead,
+  cta,
   mail,
   human,
   doors,
   desk,
-  chips,
+  faq,
+  chips = faq ? faqChips(faq.items) : undefined,
   locale,
   site = SITE,
 }: {
-  title: ReactNode;
+  title?: ReactNode;
   lead?: string;
+  cta?: Pick<PageCta, 'title' | 'text'>;
   mail: string;
   human: string;
   doors: HomeContent['doors'];
   desk: DeskCopy;
   chips?: AssistantIntro['suggestions'];
+  faq?: { items: readonly FaqItem[] };
   locale: Locale;
   site?: SiteFlags;
 }) {
@@ -88,8 +97,10 @@ export function DeskClose({
       containerClassName="grid gap-10 lg:grid-cols-12 lg:items-start lg:gap-16"
     >
       <div className="lg:col-span-6">
-        <h2 id="contact-title">{title}</h2>
-        {lead ? <p className={`mt-5 ${LEAD}`}>{lead}</p> : null}
+        <h2 id="contact-title">{cta ? cta.title : title}</h2>
+        {cta || lead ? (
+          <p className={`mt-5 ${LEAD}`}>{cta ? cta.text : lead}</p>
+        ) : null}
         <ul data-doors className="mt-8 grid gap-3">
           {list}
         </ul>

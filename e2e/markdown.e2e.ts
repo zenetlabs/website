@@ -1,5 +1,9 @@
 import { expect } from '@playwright/test';
+import { aboutPage as enAbout } from '../src/content/en/about';
+import { aboutPage as esAbout } from '../src/content/es/about';
 import { formatPrice, formatPriceSummary } from '../src/lib/money';
+import { PORTFOLIO } from '../src/lib/portfolio';
+import { INCLUDES } from '../test/inner-content';
 import { faqPairs, jsonLdBlocks } from '../test/json-ld';
 import { SERVICES } from '../test/page-content';
 import { soloHits } from '../test/we-voice';
@@ -12,7 +16,10 @@ import {
   normalise,
   PAGES,
   PAIRS,
+  SERVICES_HUB,
 } from './helpers';
+
+const ABOUT = { en: enAbout, es: esAbout } as const;
 
 const VARY_ACCEPT = /(^|,)\s*accept\s*(,|$)/i;
 
@@ -314,7 +321,7 @@ test('the service page markdown keeps the answer, the FAQ and the contact', asyn
     'Software a medida',
     'Formación en IA para equipos',
   ]) {
-    expect(es).toMatch(new RegExp(`^## \\[${row}\\]\\(`, 'm'));
+    expect(es).toMatch(new RegExp(`^### \\[${row}\\]\\(`, 'm'));
   }
 });
 
@@ -356,6 +363,9 @@ for (const { locale, home, pricing } of AGENT_PAGES) {
       for (const price of service.prices) {
         expect(body).toContain(normalise(formatPrice(locale, price)));
       }
+    }
+    for (const item of INCLUDES[locale].growth) {
+      expect(body).toContain(normalise(item));
     }
   });
 }
@@ -407,6 +417,42 @@ test('the contact markdown lists the ways to reach us', async ({ request }) => {
       BOOKING_PUBLISHED,
     );
     expect(body, path).toContain('### ');
+  }
+});
+
+test('the About markdown has the five companies and both story paragraphs', async ({
+  request,
+}) => {
+  for (const locale of LOCALES) {
+    const path = PAIRS[2][locale];
+    const body = normalise(
+      await (await request.get(markdownPathOf(path))).text(),
+    );
+    for (const { name } of PORTFOLIO) expect(body, path).toContain(name);
+    const { story } = ABOUT[locale];
+    for (const { parts } of story) {
+      const first = parts[0];
+      expect(body, path).toContain(
+        normalise(typeof first === 'string' ? first.slice(0, 40) : ''),
+      );
+    }
+  }
+});
+
+test('the hub markdown lists the five services and every price', async ({
+  request,
+}) => {
+  for (const locale of LOCALES) {
+    const path = SERVICES_HUB[locale];
+    const body = normalise(
+      await (await request.get(markdownPathOf(path))).text(),
+    );
+    expect(body.match(/### \[/g), path).toHaveLength(5);
+    for (const service of Object.values(SERVICES[locale])) {
+      for (const price of service.prices) {
+        expect(body, path).toContain(normalise(formatPrice(locale, price)));
+      }
+    }
   }
 });
 

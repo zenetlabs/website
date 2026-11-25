@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { PageHero } from '@/components/page-hero';
+import { HeroActions, PageHero } from '@/components/page-hero';
 import { CTA_TARGET, navHref } from '@/lib/nav';
 import { titleText } from '@/lib/title-text';
 
@@ -10,17 +10,20 @@ const TITLE = {
   after: '',
 };
 
-function view(board?: boolean) {
+function view({ stage = true, aside = true } = {}) {
   return render(
     <PageHero
-      locale="en"
       title={TITLE}
       lead="One sentence."
-      button="Book a call"
-      pricing="See pricing"
-      board={board ? <p>The board</p> : undefined}
-      ticket={<p>The ticket</p>}
-      includes={<p>The includes</p>}
+      actions={
+        <HeroActions
+          locale="en"
+          button="Book a call"
+          secondary={{ label: 'See pricing', page: 'pricing' }}
+        />
+      }
+      stage={stage ? <p>The stage</p> : undefined}
+      aside={aside ? <p>The aside</p> : undefined}
     />,
   );
 }
@@ -51,23 +54,30 @@ describe('PageHero', () => {
     expect(links[links.length - 1]).toBe(secondary);
   });
 
-  it('puts the board then the ticket in the stage, and the includes in the aside', () => {
-    const { container } = view(true);
-    expect(container.querySelector('.inner-hero-stage')?.textContent).toBe(
-      'The boardThe ticket',
+  it('puts the stage on the right and the aside under the copy', () => {
+    const { container } = view();
+    expect(container.querySelector('.inner-hero-stage')).toHaveTextContent(
+      'The stage',
     );
     expect(container.querySelector('.inner-hero-aside')).toHaveTextContent(
-      'The includes',
+      'The aside',
     );
   });
 
-  it('leaves the stage to the ticket without a board', () => {
-    const { container } = view();
-    expect(container.querySelector('.inner-hero-stage')?.textContent).toBe(
-      'The ticket',
+  it('renders the stage and the aside only when they are given', () => {
+    const { container } = view({ stage: false, aside: false });
+    expect(container.querySelector('.inner-hero-stage')).toBeNull();
+    expect(container.querySelector('.inner-hero-aside')).toBeNull();
+    expect(container.querySelector('section')).toHaveAttribute(
+      'data-stage',
+      'none',
     );
-    expect(container.querySelector('.inner-hero-aside')).toHaveTextContent(
-      'The includes',
+  });
+
+  it('marks no stage attribute when it has a stage', () => {
+    const { container } = view();
+    expect(container.querySelector('section')).not.toHaveAttribute(
+      'data-stage',
     );
   });
 
