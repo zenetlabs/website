@@ -29,6 +29,13 @@ import {
 test.skip(!ASSISTANT_PUBLISHED, 'the assistant is not published in this build');
 test.describe.configure({ mode: 'serial' });
 
+// The bot check is not what these tests cover, and Cloudflare's live widget can
+// outlast say()'s 30 s. The bot-check tests register their own stand-in later,
+// and the most recently registered route wins.
+test.beforeEach(async ({ page }) => {
+  await fakeTurnstile(page);
+});
+
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 const COPY = { en, es } as const;
 const LAUNCHER = {

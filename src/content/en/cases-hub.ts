@@ -14,7 +14,9 @@ export const casesHub = {
     emphasis: 'our own companies',
     after: ' first',
   },
-  lead: 'Before we build an automation for a client, we run it in a business we own. These are two of the companies we run with agents, what runs on its own in each, and where to read the full story.',
+  lead: 'Before we build an automation for a client, we run it in a business we own.',
+  intro:
+    'These are two of the companies we run with agents, what runs on its own in each, and where to read the full story.',
   cases: {
     title: {
       before: 'Two of our companies, ',
@@ -30,6 +32,5 @@ export const casesHub = {
   cta: {
     title: 'Start with the diagnostic',
     text: 'Tell us what your team does by hand and we will reply.',
-    button: 'Book a call',
   },
 } satisfies CasesHubContent;

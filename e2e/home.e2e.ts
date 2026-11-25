@@ -6,7 +6,6 @@ import { test } from './fixtures';
 import {
   ASSISTANT_PUBLISHED,
   BOOKING_PUBLISHED,
-  CASES_HUB,
   CTA,
   gotoHydrated,
   navLinks,
@@ -229,26 +228,6 @@ test.describe('mobile menu', () => {
       'open',
       '',
     );
-  });
-});
-
-test.describe('case bullets fold on mobile only', () => {
-  test('are collapsed at 390 until the summary is opened', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await gotoHydrated(page, CASES_HUB.en);
-    const first = page.locator('#cases li').first();
-    const bullets = first.locator('ul li').first();
-    await expect(bullets).toBeHidden();
-    await first.locator('summary').click();
-    await expect(bullets).toBeVisible();
-  });
-
-  test('are open with no toggle at 1280', async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 900 });
-    await gotoHydrated(page, CASES_HUB.en);
-    const first = page.locator('#cases li').first();
-    await expect(first.locator('ul li').first()).toBeVisible();
-    await expect(first.locator('summary')).toBeHidden();
   });
 });
 

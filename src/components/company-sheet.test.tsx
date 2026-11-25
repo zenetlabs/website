@@ -47,4 +47,11 @@ describe('CompanySheet', () => {
     );
     expect(container).toHaveTextContent(enAbout.companies.lead);
   });
+
+  it('closes with the lead only when it has one', () => {
+    const { container } = render(
+      <CompanySheet title="Companies" companies={enCompanies} />,
+    );
+    expect(container.querySelector('ul + p')).toBeNull();
+  });
 });

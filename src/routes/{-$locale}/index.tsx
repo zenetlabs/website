@@ -43,7 +43,7 @@ function Home() {
         />
         <Problems copy={home.problems} />
         <OfferSystem copy={home.services} services={services} locale={locale} />
-        <Process copy={home.process} rail />
+        <Process copy={home.process} />
         {home.verifactu ? (
           <VerifactuStrip copy={home.verifactu} locale={locale} />
         ) : null}

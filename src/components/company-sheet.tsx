@@ -12,7 +12,7 @@ export function CompanySheet({
   companies,
 }: {
   title: string;
-  lead: string;
+  lead?: string;
   companies: CompanyCopy;
 }) {
   return (
@@ -42,7 +42,7 @@ export function CompanySheet({
           </li>
         ))}
       </ul>
-      <p className="mt-4 text-ui-s text-muted-fg">{lead}</p>
+      {lead ? <p className="mt-4 text-ui-s text-muted-fg">{lead}</p> : null}
     </div>
   );
 }

@@ -34,6 +34,14 @@ describe.each(locales)('buildKnowledge(%s)', (locale) => {
     for (const item of faq) expect(text).toContain(item.question);
   });
 
+  it('states the two approved figures with their qualifiers', async () => {
+    const text = await buildKnowledge(locale, LIVE);
+    expect(text).toContain(
+      locale === 'en' ? '8 h (estimated)' : '8 h (estimación)',
+    );
+    expect(text).toContain(locale === 'en' ? 'about 40' : 'unos 40');
+  });
+
   it('lists every published page id as a navigate target', async () => {
     for (const site of [LIVE, DARK]) {
       const text = await buildKnowledge(locale, site);

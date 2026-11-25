@@ -14,8 +14,6 @@ export type CtaId =
   | 'header_menu'
   | 'hero'
   | 'page_hero'
-  | 'page_cta'
-  | 'cases'
   | 'contact_book'
   | 'start_here'
   | 'sticky'

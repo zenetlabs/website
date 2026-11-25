@@ -1,6 +1,9 @@
 import { expect } from '@playwright/test';
 import { aboutPage as enAbout } from '../src/content/en/about';
+import { viatsyCase as enCase } from '../src/content/en/case-pages/viatsy';
+import { casesHub as enCases } from '../src/content/en/cases-hub';
 import { aboutPage as esAbout } from '../src/content/es/about';
+import { viatsyCase as esCase } from '../src/content/es/case-pages/viatsy';
 import { formatPrice, formatPriceSummary } from '../src/lib/money';
 import { PORTFOLIO } from '../src/lib/portfolio';
 import { INCLUDES } from '../test/inner-content';
@@ -397,11 +400,17 @@ test('the case markdown keeps the title, the date and no placeholder', async ({
     '# Viatsy, una agencia de viajes que *funciona con agentes de IA*',
   );
   expect(es).toContain('Publicado');
+  expect(es).toContain(esCase.lead);
+  expect(es).toContain('8 h estimación');
+  expect(es).toContain(esCase.intro.split('. ')[0]);
   expect(es).not.toContain('Ruta de navegación');
   expect(es).not.toContain('[X]');
   expect(es.match(/```json/g)).toHaveLength(5);
   const en = await (await request.get('/case-studies/viatsy.md')).text();
   expect(en).toContain('# Viatsy, a travel company *run with AI agents*');
+  expect(en).toContain(enCase.lead);
+  expect(en).toContain('8 h estimated');
+  expect(en).toContain(enCase.intro.split('. ')[0]);
   expect(en.match(/```json/g)).toHaveLength(5);
 });
 
@@ -462,6 +471,9 @@ test('the cases hub and the new service pages keep their content in markdown', a
   const hub = await (await request.get('/case-studies.md')).text();
   expect(hub).toContain('## Two of our companies, *run with agents*');
   expect(hub).toContain('(http://localhost:4173/case-studies/viatsy)');
+  expect(hub).toContain(enCases.lead);
+  expect(hub).toContain(enCases.intro);
+  expect(hub).toContain('An enquiry arrives by email or WhatsApp');
   const diagnostic = await (
     await request.get('/services/automation-diagnostic.md')
   ).text();

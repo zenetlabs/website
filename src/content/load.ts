@@ -388,12 +388,15 @@ export async function loadCaseContent(locale: Locale): Promise<{
   copy: CasePageContent;
   hub: ServicesHubContent;
   metrics: readonly Metric[];
+  close: DeskCloseCopy;
 }> {
-  const [[{ viatsyCase }, { viatsy }], [{ servicesHub }]] = await Promise.all([
-    VIATSY_CASE[locale](),
-    SERVICES_HUB[locale](),
-  ]);
-  return { copy: viatsyCase, hub: servicesHub, metrics: viatsy.metrics };
+  const [[{ viatsyCase }, { viatsy }], [{ servicesHub }], close] =
+    await Promise.all([
+      VIATSY_CASE[locale](),
+      SERVICES_HUB[locale](),
+      loadDeskClose(locale),
+    ]);
+  return { copy: viatsyCase, hub: servicesHub, metrics: viatsy.metrics, close };
 }
 
 export function loadLegalNotice() {

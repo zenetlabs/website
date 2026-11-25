@@ -17,6 +17,7 @@ import { test } from './fixtures';
 import {
   BOOKING_PUBLISHED,
   CASE_PAIR,
+  CASES_HUB,
   CONTACT_PAIR,
   HOLDED_PAGES,
   LOCALES,
@@ -34,6 +35,10 @@ const QUESTION = {
   en: 'Can you read our supplier PDFs?',
   es: '¿Podéis leer los PDF de proveedores?',
 } as const;
+const CASE_CLOSES = LOCALES.flatMap((locale) => [
+  { locale, path: CASES_HUB[locale] },
+  { locale, path: CASE_PAIR[locale] },
+]);
 const HOMES = LOCALES.map((locale) => ({ locale, path: PAIRS[0][locale] }));
 const PRICING = LOCALES.map((locale) => ({ locale, path: PAIRS[1][locale] }));
 
@@ -300,7 +305,7 @@ for (const { path, locale } of PRICING) {
   });
 }
 
-for (const { path, locale } of PRICING) {
+for (const { path, locale } of [...PRICING, ...CASE_CLOSES]) {
   test(`${path} close chip and composer reach the prefilled contact form without JavaScript`, async ({
     page,
   }) => {
@@ -395,7 +400,9 @@ for (const locale of LOCALES) {
   }) => {
     await page.goto(CASE_PAIR[locale]);
     await expect(page.locator('h1')).toHaveCount(1);
-    await expect(page.locator('header time').first()).toBeVisible();
+    await expect(
+      page.locator('section[aria-labelledby="page-title"] time').first(),
+    ).toBeVisible();
     await expect(page.locator('main')).toContainText('Viatsy');
   });
 }

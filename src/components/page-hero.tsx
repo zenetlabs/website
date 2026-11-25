@@ -20,6 +20,7 @@ export function PageHero({
   actions,
   stage,
   aside,
+  asideSpan,
 }: {
   breadcrumb?: ReactNode;
   title: TitleParts;
@@ -27,12 +28,15 @@ export function PageHero({
   actions?: ReactNode;
   stage?: ReactNode;
   aside?: ReactNode;
+  // `full`: the aside runs the whole width under the copy and the stage
+  asideSpan?: 'full';
 }) {
   return (
     <section
       aria-labelledby="page-title"
       data-ground={TINT.ground}
       data-stage={stage ? undefined : 'none'}
+      data-aside={asideSpan}
       className={TINT.bg}
     >
       <Container className="inner-hero">

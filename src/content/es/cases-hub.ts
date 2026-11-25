@@ -14,7 +14,9 @@ export const casesHub = {
     emphasis: 'nuestras propias empresas',
     after: '',
   },
-  lead: 'Antes de construir una automatización para un cliente, la hacemos funcionar en un negocio nuestro. Estas son dos de las empresas que gestionamos con agentes, qué funciona solo en cada una y dónde leer la historia completa.',
+  lead: 'Antes de construir una automatización para un cliente, la hacemos funcionar en un negocio nuestro.',
+  intro:
+    'Estas son dos de las empresas que gestionamos con agentes, qué funciona solo en cada una y dónde leer la historia completa.',
   cases: {
     title: {
       before: 'Dos de nuestras empresas, ',
@@ -30,6 +32,5 @@ export const casesHub = {
   cta: {
     title: 'Empieza por el diagnóstico',
     text: 'Cuéntanos qué hace tu equipo a mano y te responderemos.',
-    button: 'Reservar una llamada',
   },
 } satisfies CasesHubContent;

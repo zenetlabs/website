@@ -4,6 +4,7 @@ import { test } from './fixtures';
 import {
   CALCULATOR_RESULTS,
   CASE_PAIR,
+  CASES_HUB,
   CONTACT_PAIR,
   gotoHydrated,
   HOLDED_PAGES,
@@ -94,7 +95,14 @@ test.describe('mobile menu', () => {
 test.describe('reduced motion', () => {
   test.use({ reducedMotion: 'reduce' });
 
-  for (const url of ['/', '/es', '/services/ai-agents', HOLDED_PAGES[1]]) {
+  for (const url of [
+    '/',
+    '/es',
+    '/services/ai-agents',
+    HOLDED_PAGES[1],
+    CASE_PAIR.en,
+    CASES_HUB.es,
+  ]) {
     test(`${url} runs no animations`, async ({ page }) => {
       await gotoHydrated(page, url);
       expect(await page.evaluate(() => document.getAnimations().length)).toBe(
@@ -122,6 +130,8 @@ const OVERFLOW_URLS = [
   SECTOR_PAGE,
   CASE_PAIR.en,
   CASE_PAIR.es,
+  CASES_HUB.en,
+  CASES_HUB.es,
   ...CALCULATOR_RESULTS,
 ];
 

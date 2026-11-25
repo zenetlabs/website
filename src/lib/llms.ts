@@ -66,8 +66,8 @@ import {
   messages,
   otherLocale,
 } from '@/lib/i18n';
-import { isMeasured } from '@/lib/metrics';
-import { formatNumber, formatPrice, formatPriceSummary } from '@/lib/money';
+import { isMeasured, metricText } from '@/lib/metrics';
+import { formatPrice, formatPriceSummary } from '@/lib/money';
 import { pageLead } from '@/lib/page-lead';
 import {
   HOLDED_PAGE_IDS,
@@ -618,10 +618,7 @@ function caseBlocks(
       ...body.results.points.map((point) => `- ${point}`),
       ...metrics
         .filter(isMeasured)
-        .map(
-          (metric) =>
-            `- ${metric.label}: ${formatNumber(locale, metric.value)}${metric.unit}`,
-        ),
+        .map((metric) => `- ${metric.label}: ${metricText(locale, metric)}`),
     ].join('\n'),
   ];
 }
@@ -641,9 +638,9 @@ function casesSection(locale: Locale, bodies: ServiceBodies): string {
   return section(
     copy.headings.cases,
     [
-      `[${bodies.casesHub.meta.title}](${pageUrl(locale, 'cases')}): ${bodies.casesHub.lead}`,
+      `[${bodies.casesHub.meta.title}](${pageUrl(locale, 'cases')}): ${bodies.casesHub.lead} ${bodies.casesHub.intro}`,
       ...home.cases.items.flatMap((item) => [
-        `### ${item.name} (${item.tag})`,
+        `### ${item.name} (${item.tag.join(', ')})`,
         item.context,
         [
           `${home.cases.automatedLabel}:`,
@@ -651,8 +648,7 @@ function casesSection(locale: Locale, bodies: ServiceBodies): string {
           ...item.metrics
             .filter(isMeasured)
             .map(
-              (metric) =>
-                `- ${metric.label}: ${formatNumber(locale, metric.value)}${metric.unit}`,
+              (metric) => `- ${metric.label}: ${metricText(locale, metric)}`,
             ),
         ].join('\n'),
         ...(item.link?.page === 'viatsyCase'

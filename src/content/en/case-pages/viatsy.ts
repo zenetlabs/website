@@ -12,7 +12,9 @@ export const viatsyCase = {
     emphasis: 'run with AI agents',
     after: '',
   },
-  lead: 'Viatsy is a travel company we own and run. It organises small-group trips to Japan, China, Korea, Taiwan and Hong Kong, and every trip involves enquiries on several channels, a tailored proposal and many supplier bookings. We built the systems that let a small team handle that work: AI agents prepare replies, proposals, booking records and payment reminders, and a person approves every reply and proposal.',
+  lead: 'At Viatsy, our own travel company, AI agents prepare replies and proposals for a person to approve, and the system sends payment reminders.',
+  intro:
+    'Viatsy is a travel company we own and run. It organises small-group trips to Japan, China, Korea, Taiwan and Hong Kong, and every trip involves enquiries on several channels, a tailored proposal and many supplier bookings. We built the systems that let a small team handle that work.',
   published: '2026-10-31',
   labels: { published: 'Published', updated: 'Updated' },
   facts: [
@@ -55,31 +57,37 @@ export const viatsyCase = {
     items: [
       {
         id: 'inbox',
+        tiles: ['whatsapp', 'gmail', 'app'],
         title: 'One inbox for every channel',
         text: 'WhatsApp, email and website enquiries land in the same place, linked to the customer and the trip they ask about.',
       },
       {
         id: 'replies',
+        tiles: ['agent', 'human'],
         title: 'Drafted replies',
         text: 'An agent drafts replies from the trip details and the house rules the team has written, and a person edits and sends them. What the team changes is recorded, so the drafts improve.',
       },
       {
         id: 'proposals',
+        tiles: ['agent', 'human'],
         title: 'Proposals from the brief',
         text: 'Proposals are drafted from what the customer asked for and the trip catalogue, with prices calculated by fixed rules rather than by the model.',
       },
       {
         id: 'confirmations',
+        tiles: ['gmail', 'agent', 'app'],
         title: 'Supplier confirmations, read in',
         text: 'Confirmations pasted as text or forwarded by email become structured reservations on the booking, and gaps or mismatches are flagged.',
       },
       {
         id: 'payments',
+        tiles: ['app'],
         title: 'Payments on schedule',
         text: "Deposit and balance requests, and their reminders, follow each booking's payment plan.",
       },
       {
         id: 'pack',
+        tiles: ['app', 'human'],
         title: 'Travel documents assembled',
         text: "The customer's travel pack is built from the booking itself, with a check that lists anything still missing before it is sent.",
       },
@@ -144,7 +152,6 @@ export const viatsyCase = {
   cta: {
     title: 'Want the same for your business?',
     text: "Tell us which work still eats your team's hours. The diagnostic maps it, costs it and tells you honestly what is worth automating.",
-    button: 'Book a call',
   },
   related: ['agents', 'automation'],
 } satisfies CasePageContent;

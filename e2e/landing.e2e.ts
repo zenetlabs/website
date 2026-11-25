@@ -221,27 +221,38 @@ for (const [locale, path, switchTo, label, nav] of [
   ['es', CASE_PAIR.es, CASE_PAIR.en, 'English', 'Idioma'],
 ] as const) {
   test.describe(path, () => {
-    test('shows the story with a dated header and no figures', async ({
+    test('shows the story with a dated hero and one estimated figure', async ({
       page,
     }) => {
       await gotoHydrated(page, path);
+      const hero = page.locator('section[aria-labelledby="page-title"]');
       await expect(page.locator('h1')).toHaveCount(1);
       await expect(page.locator('main img')).toHaveCount(0);
       await expect(
-        page.locator(`header time[datetime="${viatsyCase.published}"]`),
+        hero.locator(`time[datetime="${viatsyCase.published}"]`),
       ).toHaveCount(1);
+      await expect(hero.locator('nav[aria-label] ol > li')).toHaveCount(3);
+      await expect(hero.locator('[data-flow-board] .fb-lane > li')).toHaveCount(
+        3,
+      );
       await expect(page.locator('#built h3')).toHaveCount(6);
-      await expect(page.locator('#operations .timeline > li')).toHaveCount(4);
-      await expect(page.locator('#results dl')).toHaveCount(0);
+      await expect(page.locator('#built .ledger-tiles')).toHaveCount(6);
+      await expect(page.locator('#operations .rail > li')).toHaveCount(4);
+      await expect(page.locator('#operations [data-stub]')).toHaveCount(0);
+      await expect(page.locator('#results dl > div')).toHaveCount(1);
+      await expect(page.locator('#results dd')).toHaveText(
+        locale === 'en' ? '8 h estimated' : '8 h estimación',
+      );
       await expect(page.locator('main')).not.toContainText('[X]');
     });
 
-    test('sends the call to action to the contact form', async ({ page }) => {
+    test('closes with the desk, its write door going to the contact form', async ({
+      page,
+    }) => {
       await gotoHydrated(page, path);
-      await expect(page.locator('#cta-title ~ div a').first()).toHaveAttribute(
-        'href',
-        locale === 'en' ? CTA.en : CTA.es,
-      );
+      await expect(
+        page.locator('#contact a[data-cta="close_contact"]'),
+      ).toHaveAttribute('href', locale === 'en' ? '/contact' : '/es/contacto');
     });
 
     test('switches to its twin', async ({ page }) => {

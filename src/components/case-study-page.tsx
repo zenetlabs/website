@@ -1,28 +1,24 @@
 import { CompanyMark } from '@/components/companies-strip';
-import { FlowDiagram } from '@/components/flow-diagram';
+import { DeskClose } from '@/components/desk-close';
+import { FlowBoard } from '@/components/flow-board';
+import { Ledger } from '@/components/ledger';
 import { BulletList, MetricList } from '@/components/lists';
-import { RelatedLinks } from '@/components/page-blocks';
-import {
-  FactList,
-  GetStarted,
-  HeroHeading,
-  UseCaseList,
-} from '@/components/plain-hero';
+import { Breadcrumb, RelatedLinks } from '@/components/page-blocks';
+import { PageHero } from '@/components/page-hero';
+import { FactList } from '@/components/plain-hero';
 import { Process } from '@/components/process';
-import { Container, Section } from '@/components/section';
-import { sectionFrame } from '@/components/section-frame';
+import { Section } from '@/components/section';
 import { StickyZone } from '@/components/sticky-cta';
 import { PROSE } from '@/components/ui';
 import type {
   CasePageContent,
+  DeskCloseCopy,
   Metric,
   ServicesHubContent,
 } from '@/content/types';
 import { hubNames } from '@/lib/crumb-names';
 import type { Locale } from '@/lib/i18n';
 import { portfolioOf } from '@/lib/portfolio';
-
-const TINT = sectionFrame('tint');
 
 const VIATSY = portfolioOf('viatsy');
 
@@ -36,63 +32,79 @@ export function CaseStudyPage({
   hub,
   metrics,
   lastmod,
+  close,
 }: {
   locale: Locale;
   copy: CasePageContent;
   hub: ServicesHubContent;
   metrics: readonly Metric[];
   lastmod: string;
+  close: DeskCloseCopy;
 }) {
   return (
     <>
-      <header data-ground={TINT.ground} className={TINT.bg}>
-        <Container className="page-hero">
-          <div className="lg:col-span-7">
+      <PageHero
+        breadcrumb={
+          <>
+            <Breadcrumb
+              page="viatsyCase"
+              locale={locale}
+              names={hubNames(hub)}
+              label={hub.labels.breadcrumb}
+            />
             <span className="case-mark">
               <CompanyMark name={VIATSY.name} logo={VIATSY.logo} />
             </span>
-            <HeroHeading title={copy.title} lead={copy.lead} />
-            <p className="mt-6 text-ui-s text-muted-fg">
+          </>
+        }
+        title={copy.title}
+        lead={copy.lead}
+        actions={
+          <p className="case-dates">
+            <span>
               {copy.labels.published}{' '}
               <time dateTime={copy.published}>
                 {dayMonthYear(copy.published)}
               </time>
-              {lastmod === copy.published ? null : (
-                <>
-                  {' · '}
-                  {copy.labels.updated}{' '}
-                  <time dateTime={lastmod}>{dayMonthYear(lastmod)}</time>
-                </>
-              )}
-            </p>
-          </div>
-          <div id="flow" className="lg:col-span-5">
-            <FlowDiagram
-              steps={copy.flow.steps}
-              actors={hub.labels.actors}
-              caption={copy.flow.caption}
-            />
-          </div>
-          <div className="lg:col-span-12">
-            <FactList facts={copy.facts} />
-          </div>
-        </Container>
-      </header>
+            </span>
+            {lastmod === copy.published ? null : (
+              <span>
+                {copy.labels.updated}{' '}
+                <time dateTime={lastmod}>{dayMonthYear(lastmod)}</time>
+              </span>
+            )}
+          </p>
+        }
+        stage={<FlowBoard flow={copy.flow} actors={hub.labels.actors} />}
+        aside={<FactList facts={copy.facts} />}
+        asideSpan="full"
+      />
       <StickyZone locale={locale}>
-        <Section id="problem" title={copy.problem.title}>
+        <Section
+          id="problem"
+          title={copy.problem.title}
+          intro={copy.intro}
+          layout="split"
+        >
           <div className={`grid gap-4 text-lg ${PROSE}`}>
             {copy.problem.paragraphs.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
             ))}
           </div>
         </Section>
-        <Section id="built" title={copy.built.title}>
-          <UseCaseList items={copy.built.items} locale={locale} />
+        <Section id="built" title={copy.built.title} variant="tint">
+          <Ledger items={copy.built.items} locale={locale} />
         </Section>
-        <Process id="operations" copy={copy.operations} />
-        <Section id="results" title={copy.results.title} variant="tint">
+        <Process id="operations" copy={copy.operations} stub={null} />
+        <Section
+          id="results"
+          title={copy.results.title}
+          variant="tint"
+          layout="split"
+        >
           <BulletList
             items={copy.results.points}
+            marker="tick"
             className="max-w-[60ch] text-lg"
           />
           <MetricList
@@ -108,7 +120,12 @@ export function CaseStudyPage({
           labels={hub.labels}
         />
       </StickyZone>
-      <GetStarted locale={locale} cta={copy.cta} mail={hub.labels.mail} />
+      <DeskClose
+        cta={copy.cta}
+        mail={hub.labels.mail}
+        {...close}
+        locale={locale}
+      />
     </>
   );
 }
