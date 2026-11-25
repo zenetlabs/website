@@ -20,7 +20,7 @@ export const software = {
       after: '',
     },
     // TODO(albert): confirm the timeline
-    lead: `Custom software is a web app, customer portal or internal tool designed around your processes, instead of bending your processes to fit someone else's product. We build it for Singapore companies of 10 to 100 people when off-the-shelf tools no longer fit, and we connect it to the systems you already run. Projects cost ${price}, excluding GST, and the first usable version is usually in your team's hands eight to twelve weeks after the diagnostic.`,
+    lead: `Custom software is a web app, customer portal or internal tool designed around your processes, instead of bending your processes to fit someone else's product. We build it for Singapore companies when off-the-shelf tools no longer fit, and we connect it to the systems you already run. Projects cost ${price}, excluding GST, and the first usable version is usually in your team's hands eight to twelve weeks after the diagnostic.`,
   },
   facts: {
     who: 'Companies whose work no longer fits a spreadsheet or an off-the-shelf tool, or whose customers need a portal of their own',

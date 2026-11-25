@@ -101,6 +101,12 @@ describe.each(locales)('service page prices (%s)', (locale) => {
     },
   );
 
+  it('prices AI reading on the automation page at the agent row', () => {
+    expect(SERVICE_PAGE_CONTENT[locale].automation.hero.lead).toContain(
+      formatPriceSummary(locale, services.agent.prices),
+    );
+  });
+
   it('starts training with a call, not the diagnostic', () => {
     expect(SERVICE_PAGE_CONTENT[locale].training.facts.start).not.toContain(
       diagnostic,

@@ -20,14 +20,14 @@ export const diagnostic = {
     lead: `El diagnóstico de automatización es donde empieza todo proyecto de Zenet Labs. En una o dos semanas analizamos tus herramientas y el trabajo que tu equipo sigue haciendo a mano, y te damos un plan priorizado con precio y plazo para cada fase. Cuesta ${formatPrice('es', price)}, IVA no incluido, y se descuenta del proyecto si sigues adelante en 60 días.`,
   },
   facts: {
-    who: 'Pymes de 10 a 100 personas que trabajan con varias herramientas y pierden horas pasando datos de una a otra',
+    who: 'Pymes que trabajan con varias herramientas y pierden horas pasando datos de una a otra',
     timeline: '1–2 semanas',
     start:
       'Una llamada breve para acordar el alcance y los procesos que miraremos',
   },
   cta: {
     title: 'Reserva tu diagnóstico',
-    text: 'Cuéntanos qué herramientas usas y qué sigue haciendo tu equipo a mano. Te respondemos personalmente y acordamos el alcance en una llamada breve.',
+    text: 'Cuéntanos qué herramientas usas y qué sigue haciendo tu equipo a mano. Te respondemos y acordamos el alcance en una llamada breve.',
     button: 'Reservar una llamada',
   },
   useCases: {

@@ -21,7 +21,7 @@ export const agents = {
       after: ', con una persona al mando',
     },
     // TODO(albert): confirm the timeline
-    lead: `Un agente de IA es un programa que lleva una tarea de principio a fin: lee una consulta o un documento, busca en tus sistemas lo que necesita, decide el siguiente paso y lo lleva a cabo, dentro de los límites que tú fijas. Implementamos agentes para pymes de 10 a 100 personas en tareas como clasificar consultas, redactar respuestas o procesar documentos, y una persona aprueba todo lo que tiene consecuencias. Un agente en producción cuesta ${price}, IVA no incluido, y el piloto suele estar trabajando con casos reales entre seis y diez semanas después del diagnóstico.`,
+    lead: `Un agente de IA es un programa que lleva una tarea de principio a fin: lee una consulta o un documento, busca en tus sistemas lo que necesita, decide el siguiente paso y lo lleva a cabo, dentro de los límites que tú fijas. Implementamos agentes para pymes en tareas como clasificar consultas, redactar respuestas o procesar documentos, y una persona aprueba todo lo que tiene consecuencias. Un agente en producción cuesta ${price}, IVA no incluido, y el piloto suele estar trabajando con casos reales entre seis y diez semanas después del diagnóstico.`,
   },
   facts: {
     who: 'Empresas con un flujo constante de consultas, documentos o peticiones que siguen patrones pero aún necesitan criterio',

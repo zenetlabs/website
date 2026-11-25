@@ -3,7 +3,7 @@ import { services } from '@/content/es/services';
 import type { ServicePageContent } from '@/content/types';
 import { formatPrice } from '@/lib/money';
 
-const [workshop, mentoring] = services.training.prices;
+const [workshop, day, mentoring] = services.training.prices;
 
 export const training = {
   meta: {
@@ -18,10 +18,10 @@ export const training = {
       after: ' de tu empresa',
     },
     // TODO(albert): confirm the lead time
-    lead: `Nuestra formación en IA es un taller práctico en el que tu equipo aprende a usar la IA en sus propios procesos, seguido, si quieres, de una mentoría mensual mientras se asientan los hábitos. Es para pymes de 10 a 100 personas que quieren que su equipo use la IA con seguridad y le saque partido, no solo que haya oído hablar de ella. Un taller cuesta ${formatPrice('es', workshop)} y la mentoría, ${formatPrice('es', mentoring)}, IVA no incluido, y el taller suele poder hacerse entre dos y cuatro semanas después de acordar el contenido.`,
+    lead: `Nuestra formación en IA es un taller práctico en el que tu equipo aprende a usar la IA en sus propios procesos, seguido, si quieres, de una mentoría mensual mientras se asientan los hábitos. Es para pymes que quieren que su equipo use la IA con seguridad y le saque partido, no solo que haya oído hablar de ella. Un taller de medio día cuesta ${formatPrice('es', workshop)}; uno más largo, ${formatPrice('es', day)}, y la mentoría, ${formatPrice('es', mentoring)}, IVA no incluido. El taller suele poder hacerse entre dos y cuatro semanas después de acordar el contenido.`,
   },
   facts: {
-    who: 'Pymes de 10 a 100 personas que quieren que su equipo use bien la IA, de la dirección a la primera línea',
+    who: 'Pymes que quieren que su equipo use bien la IA, de la dirección a la primera línea',
     // TODO(albert): confirm the formats
     timeline: 'Talleres de media jornada a dos días; mentoría mes a mes',
     start:

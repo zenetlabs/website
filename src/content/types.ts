@@ -70,6 +70,9 @@ export type ServiceId =
   | 'maintenance'
   | 'growth';
 
+export const PRICE_UNITS = ['one-off', 'month', 'day'] as const;
+export type PriceUnit = (typeof PRICE_UNITS)[number];
+
 export type Price = {
   id: string;
   label?: string;
@@ -77,7 +80,7 @@ export type Price = {
   min: number;
   max?: number;
   qualifier?: 'from';
-  unit: 'one-off' | 'month';
+  unit: PriceUnit;
   currency: Currency;
 };
 
@@ -188,8 +191,6 @@ export type HomeContent = {
     // `{price}` is the diagnostic's price from the ladder.
     fact: string;
     primary: string;
-    audience: string;
-    handoff: string;
     stage: StageCopy;
   };
   desk: DeskCopy;

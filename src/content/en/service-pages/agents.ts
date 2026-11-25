@@ -21,7 +21,7 @@ export const agents = {
       after: ', with a person in charge',
     },
     // TODO(albert): confirm the timeline
-    lead: `An AI agent is software that takes a task from start to finish: it reads an enquiry or a document, looks up what it needs in your systems, decides the next step and does it, within limits you set. We build agents for Singapore companies of 10 to 100 people, for work such as triaging enquiries, drafting replies and processing documents, and a person approves anything with consequences. An agent in production costs ${price}, excluding GST, and a pilot is usually working on real cases six to ten weeks after the diagnostic.`,
+    lead: `An AI agent is software that takes a task from start to finish: it reads an enquiry or a document, looks up what it needs in your systems, decides the next step and does it, within limits you set. We build agents for Singapore companies, for work such as triaging enquiries, drafting replies and processing documents, and a person approves anything with consequences. An agent in production costs ${price}, excluding GST, and a pilot is usually working on real cases six to ten weeks after the diagnostic.`,
   },
   facts: {
     who: 'Companies with a steady flow of enquiries, documents or requests that follow patterns but still need judgement',

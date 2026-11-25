@@ -16,8 +16,6 @@ export const home = {
     lead: 'Conectamos las herramientas que ya usa tu empresa y ponemos agentes de IA a hacer el trabajo repetitivo, para que tu equipo deje de pasar datos a mano.',
     fact: 'Diagnóstico a precio cerrado por {price}, que se descuenta del proyecto si sigues adelante en 60 días.',
     primary: 'Reservar una llamada',
-    audience: 'Para pymes de 10 a 100 personas',
-    handoff: 'Trabajas con quien lo construye.',
     stage: {
       agent: 'Agente de IA',
       tools: {
@@ -56,7 +54,7 @@ export const home = {
     human: {
       title: 'Pregúntanos',
       welcome:
-        'Pregúntanos lo que quieras sobre tus herramientas y tus procesos. Te responde una persona por correo, normalmente en un día laborable.',
+        'Pregúntanos lo que quieras sobre tus herramientas y tus procesos. Te respondemos por correo, normalmente en un día laborable.',
       label: 'Tu pregunta para nosotros',
       placeholder: 'Escribe tu pregunta',
     },
@@ -187,9 +185,9 @@ export const home = {
       emphasis: 'diagnóstico de automatización',
       after: '.',
     },
-    lead: 'Cuéntanos qué herramientas usa tu empresa y qué sigue haciendo tu equipo a mano. Te responde una persona y acordamos contigo el siguiente paso.',
+    lead: 'Cuéntanos qué herramientas usa tu empresa y qué sigue haciendo tu equipo a mano. Te respondemos y acordamos contigo el siguiente paso.',
     mail: '¿Prefieres el correo? Escribe a',
-    human: 'Lo lee y lo contesta una persona.',
+    human: 'Lo lee y lo contesta una persona de nuestro equipo.',
     book: '¿Prefieres una llamada? Elige una hora',
     voice: {
       text: '¿Prefieres hablar? Nuestro asistente de voz es una IA, no una persona: responde tus dudas y te reserva una llamada.',

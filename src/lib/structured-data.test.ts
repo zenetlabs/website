@@ -511,13 +511,13 @@ describe.each(locales)('route structured data (%s)', (locale) => {
     });
   });
 
-  it('describes the ladder as ten offers excluding tax', () => {
+  it('describes the ladder as eleven offers excluding tax', () => {
     const catalog = catalogSchema.parse(page('pricing')[0]);
     const rows = Object.values(SERVICES[locale]).flatMap((service) =>
       service.prices.map((price) => ({ service, price })),
     );
-    expect(rows).toHaveLength(10);
-    expect(catalog.itemListElement).toHaveLength(10);
+    expect(rows).toHaveLength(11);
+    expect(catalog.itemListElement).toHaveLength(11);
     const pricing = `${base}${locale === 'en' ? '/pricing' : '/precios'}`;
     expect(catalog['@id']).toBe(`${pricing}#catalog`);
     expect(catalog.name).toBe(PRICING_PAGE[locale].catalog);
@@ -533,11 +533,13 @@ describe.each(locales)('route structured data (%s)', (locale) => {
       expect(spec?.priceCurrency).toBe(locale === 'en' ? 'SGD' : 'EUR');
       expect(spec?.valueAddedTaxIncluded).toBe(false);
       expect(spec?.['@type']).toBe(
-        price.unit === 'month'
-          ? 'UnitPriceSpecification'
-          : 'PriceSpecification',
+        price.unit === 'one-off'
+          ? 'PriceSpecification'
+          : 'UnitPriceSpecification',
       );
-      expect(spec?.unitCode).toBe(price.unit === 'month' ? 'MON' : undefined);
+      expect(spec?.unitCode).toBe(
+        { 'one-off': undefined, month: 'MON', day: 'DAY' }[price.unit],
+      );
       if (price.max !== undefined) {
         expect([spec?.minPrice, spec?.maxPrice]).toEqual([
           price.min,
@@ -707,47 +709,53 @@ type ExpectedOffer = {
 
 const OFFERS: Record<Locale, Record<ServicePageId, ExpectedOffer[]>> = {
   en: {
-    diagnostic: [{ type: 'PriceSpecification', price: 3000 }],
+    diagnostic: [{ type: 'PriceSpecification', price: 4000 }],
     maintenance: [
       {
         name: 'Maintenance: Essential',
         type: 'UnitPriceSpecification',
         unitCode: 'MON',
-        price: 500,
+        price: 600,
       },
       {
         name: 'Maintenance: Standard',
         type: 'UnitPriceSpecification',
         unitCode: 'MON',
-        price: 1200,
+        price: 1500,
       },
       {
         name: 'Maintenance: Extended',
         type: 'UnitPriceSpecification',
         unitCode: 'MON',
-        price: 2500,
+        price: 3000,
       },
     ],
     automation: [{ type: 'PriceSpecification', min: 8000 }],
     integrations: [{ type: 'PriceSpecification', min: 8000 }],
     agents: [{ type: 'PriceSpecification', min: 15000, max: 35000 }],
-    software: [{ type: 'PriceSpecification', min: 12000 }],
+    software: [{ type: 'PriceSpecification', min: 15000 }],
     training: [
       {
-        name: 'AI training for teams: Workshop',
+        name: 'AI training for teams: Half-day workshop',
         type: 'PriceSpecification',
         min: 2500,
+      },
+      {
+        name: 'AI training for teams: Longer workshops',
+        type: 'UnitPriceSpecification',
+        unitCode: 'DAY',
+        price: 4500,
       },
       {
         name: 'AI training for teams: Mentoring',
         type: 'UnitPriceSpecification',
         unitCode: 'MON',
-        price: 1200,
+        price: 1500,
       },
     ],
   },
   es: {
-    diagnostic: [{ type: 'PriceSpecification', price: 1500 }],
+    diagnostic: [{ type: 'PriceSpecification', price: 2000 }],
     maintenance: [
       {
         name: 'Mantenimiento: Esencial',
@@ -770,19 +778,25 @@ const OFFERS: Record<Locale, Record<ServicePageId, ExpectedOffer[]>> = {
     ],
     automation: [{ type: 'PriceSpecification', min: 4000 }],
     integrations: [{ type: 'PriceSpecification', min: 4000 }],
-    agents: [{ type: 'PriceSpecification', min: 8000, max: 20000 }],
-    software: [{ type: 'PriceSpecification', min: 6000 }],
+    agents: [{ type: 'PriceSpecification', min: 7500, max: 17500 }],
+    software: [{ type: 'PriceSpecification', min: 7500 }],
     training: [
       {
-        name: 'Formación en IA para equipos: Taller',
+        name: 'Formación en IA para equipos: Taller de medio día',
         type: 'PriceSpecification',
-        min: 1200,
+        min: 1250,
+      },
+      {
+        name: 'Formación en IA para equipos: Talleres más largos',
+        type: 'UnitPriceSpecification',
+        unitCode: 'DAY',
+        price: 2250,
       },
       {
         name: 'Formación en IA para equipos: Mentoría',
         type: 'UnitPriceSpecification',
         unitCode: 'MON',
-        price: 600,
+        price: 750,
       },
     ],
   },

@@ -122,7 +122,7 @@ export const calculatorPage = {
   },
   contact: {
     title: { before: 'Want to talk it ', emphasis: 'through', after: '?' },
-    lead: "Leave your details and we'll reply personally. Your answers and this estimate are added to the message, so we start from the same numbers. It's optional: the estimate above is yours either way.",
+    lead: "Leave your details and we'll reply. Your answers and this estimate are added to the message, so we start from the same numbers. It's optional: the estimate above is yours either way.",
     intro: 'Price calculator estimate (indicative, rules {version}):',
     page: 'Result page',
     mail: 'Prefer email? Write to',

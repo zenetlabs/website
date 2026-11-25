@@ -9,7 +9,6 @@ import { Process } from '@/components/process';
 import { StickyZone } from '@/components/sticky-cta';
 import { VerifactuStrip } from '@/components/verifactu-strip';
 import { loadHomeContent } from '@/content/load';
-import { CONTENT } from '@/lib/content';
 import { formatPriceSummary } from '@/lib/money';
 import { homeStructuredData } from '@/lib/page-structured-data';
 import { pageHeadFor } from '@/lib/pages';
@@ -26,7 +25,6 @@ export const Route = createFileRoute('/{-$locale}/')({
 function Home() {
   const { locale } = Route.useRouteContext();
   const { home, services, faq } = Route.useLoaderData();
-  const { founder } = CONTENT[locale];
 
   return (
     <>
@@ -34,7 +32,6 @@ function Home() {
         copy={home.hero}
         desk={home.desk}
         diagnosticPrice={formatPriceSummary(locale, services.diagnostic.prices)}
-        founder={founder}
         locale={locale}
       />
       <StickyZone locale={locale}>

@@ -19,7 +19,7 @@ export const faq = [
     group: 'scope',
     question: 'Which companies is this for?',
     answer:
-      "Companies of about 10 to 100 people that run on several tools that don't talk to each other, such as an accounting system, an online shop, a CRM, WhatsApp and spreadsheets, and lose hours copying data between them. A smaller team can start with a single integration.",
+      "Growing companies that run on several tools that don't talk to each other, such as an accounting system, an online shop, a CRM, WhatsApp and spreadsheets, and lose hours copying data between them. You can start with a single integration.",
   },
   {
     id: 'tools',
@@ -108,6 +108,6 @@ export const faq = [
     id: 'start',
     group: 'trust',
     question: 'How do we start?',
-    answer: `Book a call, use the contact form or write to ${PUBLIC_EMAIL}. We reply personally, agree the scope on a short call and, one to two weeks later, you have a costed plan. If you go ahead within 60 days, the diagnostic fee is credited to the project.`,
+    answer: `Book a call, use the contact form or write to ${PUBLIC_EMAIL}. We reply, agree the scope on a short call and, one to two weeks later, you have a costed plan. If you go ahead within 60 days, the diagnostic fee is credited to the project.`,
   },
 ] satisfies readonly HomeFaqItem[];

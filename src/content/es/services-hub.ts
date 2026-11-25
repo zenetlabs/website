@@ -18,8 +18,7 @@ export const servicesHub = {
     emphasis: 'sistemas funcionando',
     after: '',
   },
-  // TODO(albert): review the "consultoría pequeña" claim
-  lead: 'Zenet Labs es una consultoría de IA pequeña para pymes de 10 a 100 personas. No nos quedamos en el consejo: conectamos tus herramientas, automatizamos el trabajo manual, ponemos agentes de IA en producción y formamos a tu equipo, con precios publicados y un diagnóstico a precio cerrado para empezar.',
+  lead: 'Zenet Labs es una consultoría de IA para pymes en crecimiento. No nos quedamos en el consejo: conectamos tus herramientas, automatizamos el trabajo manual, ponemos agentes de IA en producción y formamos a tu equipo, con precios publicados y un diagnóstico a precio cerrado para empezar.',
   cards: {
     diagnostic: {
       name: 'Diagnóstico de automatización',

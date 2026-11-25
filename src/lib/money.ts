@@ -1,4 +1,4 @@
-import type { Currency, Price } from '@/content/types';
+import type { Currency, Price, PriceUnit } from '@/content/types';
 import type { Locale } from '@/lib/i18n';
 
 type Style = { tag: string; currency: Currency; symbol?: string };
@@ -43,11 +43,29 @@ export function formatNumber(locale: Locale, amount: number): string {
 
 const RANGE = '–';
 
-const WORDS: Record<Locale, { from: string; month: string; perMonth: string }> =
-  {
-    en: { from: 'from ', month: '/month', perMonth: ' per month' },
-    es: { from: 'desde ', month: '/mes', perMonth: ' al mes' },
-  };
+type UnitWords = { suffix: string; per: string };
+
+const WORDS: Record<
+  Locale,
+  { from: string; units: Record<PriceUnit, UnitWords> }
+> = {
+  en: {
+    from: 'from ',
+    units: {
+      'one-off': { suffix: '', per: '' },
+      month: { suffix: '/month', per: ' per month' },
+      day: { suffix: '/day', per: ' per day' },
+    },
+  },
+  es: {
+    from: 'desde ',
+    units: {
+      'one-off': { suffix: '', per: '' },
+      month: { suffix: '/mes', per: ' al mes' },
+      day: { suffix: '/día', per: ' al día' },
+    },
+  },
+};
 
 function formatAmount(locale: Locale, price: Price): string {
   const { min, max } = price;
@@ -66,7 +84,7 @@ export function priceParts(
   return {
     from: price.qualifier === 'from' ? words.from : '',
     amount: formatAmount(locale, price),
-    unit: price.unit === 'month' ? words.month : '',
+    unit: words.units[price.unit].suffix,
   };
 }
 
@@ -87,7 +105,7 @@ function formatTiers(
   locale: Locale,
   prices: readonly [Price, ...Price[]],
 ): string {
-  const unit = prices[0].unit === 'month' ? WORDS[locale].perMonth : '';
+  const unit = WORDS[locale].units[prices[0].unit].per;
   const edge = locale === 'en' ? 0 : prices.length - 1;
   const amounts = prices.map((price, index) =>
     index === edge

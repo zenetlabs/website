@@ -20,7 +20,7 @@ export const integrations = {
       after: '',
     },
     // TODO(albert): confirm the timeline
-    lead: `Una integración conecta dos o más de tus herramientas para que los datos pasen solos de una a otra: un pedido de PrestaShop se convierte en factura en Holded, una oportunidad ganada en HubSpot crea el cliente y la factura, un cobro actualiza el CRM. Las montamos para pymes de 10 a 100 personas cuyas herramientas no se hablan entre sí. Un proyecto cuesta ${price}, IVA no incluido, y una integración típica está funcionando entre tres y seis semanas después del diagnóstico.`,
+    lead: `Una integración conecta dos o más de tus herramientas para que los datos pasen solos de una a otra: un pedido de PrestaShop se convierte en factura en Holded, una oportunidad ganada en HubSpot crea el cliente y la factura, un cobro actualiza el CRM. Las montamos para pymes cuyas herramientas no se hablan entre sí. Un proyecto cuesta ${price}, IVA no incluido, y una integración típica está funcionando entre tres y seis semanas después del diagnóstico.`,
   },
   facts: {
     who: 'Empresas que trabajan a la vez con Holded, PrestaShop, WooCommerce, Shopify, HubSpot o WhatsApp Business, con alguien pasando datos de una a otra',

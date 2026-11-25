@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 import { formatPrice, formatPriceSummary } from '../src/lib/money';
 import { faqPairs, jsonLdBlocks } from '../test/json-ld';
 import { SERVICES } from '../test/page-content';
+import { soloHits } from '../test/we-voice';
 import { test } from './fixtures';
 import {
   BOOKING_PUBLISHED,
@@ -63,7 +64,7 @@ test('the home markdown keeps content and drops chrome', async ({
   for (const expected of [
     '# Stop doing *by hand* what your tools can do.',
     '## What we do, and *what it costs*',
-    'S$3,000',
+    'S$4,000',
     "What do you do, and what don't you do?\n\nWe connect the tools",
     '[hello@zenetlabs.com](mailto:hello@zenetlabs.com)',
   ]) {
@@ -140,7 +141,23 @@ test('the Spanish pricing markdown keeps the ladder and its prices', async ({
   });
   const body = await response.text();
   expect(body).toContain('## Diagnóstico de automatización');
-  expect(body).toContain('1.500 €');
+  expect(body).toContain('2.000 €');
+});
+
+test('the home markdown carries no solo signal', async ({ request }) => {
+  for (const path of ['/', '/es']) {
+    const response = await request.get(path, {
+      headers: { accept: 'text/markdown' },
+    });
+    expect(response.ok()).toBe(true);
+    expect(response.headers()['content-type']).toBe(
+      'text/markdown; charset=utf-8',
+    );
+    const body = await response.text();
+    expect(body).toContain('# ');
+    expect(body).toContain('## ');
+    expect(soloHits(path, [body])).toEqual([]);
+  }
 });
 
 const NEGOTIATION: ReadonlyArray<readonly [string, string]> = [
@@ -401,7 +418,7 @@ test('the cases hub and the new service pages keep their content in markdown', a
     await request.get('/services/automation-diagnostic.md')
   ).text();
   expect(diagnostic).toContain('# The automation diagnostic');
-  expect(diagnostic).toContain('S$3,000');
+  expect(diagnostic).toContain('S$4,000');
   const maintenance = await (
     await request.get('/es/servicios/mantenimiento.md')
   ).text();

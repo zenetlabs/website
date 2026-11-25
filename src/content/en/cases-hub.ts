@@ -29,7 +29,7 @@ export const casesHub = {
   companies: { title: 'Every company we run', items: companies },
   cta: {
     title: 'Start with the diagnostic',
-    text: 'Tell us what your team does by hand and we will reply personally.',
+    text: 'Tell us what your team does by hand and we will reply.',
     button: 'Book a call',
   },
 } satisfies CasesHubContent;

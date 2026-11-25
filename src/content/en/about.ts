@@ -5,7 +5,7 @@ export const aboutPage = {
     title: 'About',
     metaTitle: 'About Zenet Labs and its founder, Albert Sabaté',
     description:
-      'Zenet Labs is run by Albert Sabaté, who has spent 15+ years building engineering teams and runs his own companies with AI agents before building yours.',
+      'Zenet Labs builds automations and AI agents for SMEs. Our team, led by founder Albert Sabaté, runs its own companies with agents before building yours.',
   },
   title: {
     before: 'Automation built by people who ',
@@ -13,12 +13,12 @@ export const aboutPage = {
     after: '',
   },
   // TODO(albert): confirm the studio description
-  lead: 'Zenet Labs is a small studio founded in 2022 by Albert Sabaté. We build automations, integrations and AI agents for SMEs, and we use the same tools every day in the companies we run.',
+  lead: 'At Zenet Labs we build automations, integrations and AI agents for SMEs, and we use the same tools every day in the companies we run.',
   story: [
     {
       id: 'track',
       parts: [
-        'Albert has spent 15+ years building and leading engineering teams. He led engineering at Splyt as its global mobility network scaled across several countries, and made core contributions to ',
+        'Albert founded Zenet Labs in 2022 and leads the team. He has spent 15+ years building and leading engineering teams: he led engineering at Splyt as its global mobility network scaled across several countries, and made core contributions to ',
         { text: 'Brisa', href: 'https://brisa.build/' },
         ', an open-source web framework.',
       ],
@@ -27,7 +27,7 @@ export const aboutPage = {
       id: 'today',
       // TODO(albert): confirm
       parts: [
-        'Today he runs Viatsy and Taplany with agents doing the repetitive work, and works directly with every Zenet Labs client.',
+        'He also runs Viatsy and Taplany, our own companies, with agents doing the repetitive work. What works there is what we build for clients.',
       ],
     },
   ],
@@ -36,9 +36,9 @@ export const aboutPage = {
     items: [
       {
         id: 'builder',
-        title: 'You talk to the builder',
+        title: 'Scoped and built by the same team',
         // TODO(albert): confirm
-        text: 'No account managers in between: the person who scopes your project builds it.',
+        text: 'No account managers in between: the people who scope your project build it.',
       },
       {
         id: 'ownership',
@@ -68,7 +68,7 @@ export const aboutPage = {
   },
   cta: {
     title: 'Tell us what your team does by hand',
-    text: 'We reply personally and agree the next step with you.',
+    text: 'We reply and agree the next step with you.',
     button: 'Book a call',
   },
 } satisfies AboutPageContent;

@@ -6,19 +6,19 @@ export const contactPage = {
     title: 'Contact',
     metaTitle: 'Contact Zenet Labs: book an automation diagnostic',
     description:
-      'Tell us which tools you use and what your team still does by hand. We reply personally and agree the next step, starting with a fixed-price diagnostic.',
+      'Tell us which tools you use and what your team still does by hand. We reply and agree the next step, starting with a fixed-price diagnostic.',
   },
   title: {
     before: 'Tell us what your team ',
     emphasis: 'still does by hand',
     after: '',
   },
-  lead: 'Mention the tools you use, too. A person reads every message, replies personally and agrees the next step with you.',
+  lead: 'Mention the tools you use, too. A person on our team reads every message and agrees the next step with you.',
   slots: slotsCopy,
   form: {
     title: { before: '', emphasis: 'Write to us', after: '' },
     mail: 'Prefer email? Write to',
-    human: 'A human replies, personally.',
+    human: 'A person on our team replies.',
     book: 'Prefer a call? Pick a time',
     voice: {
       text: 'Prefer to talk? Our voice assistant is an AI, not a person: it can answer questions and book a call.',
@@ -31,7 +31,7 @@ export const contactPage = {
       {
         id: 'reply',
         label: 'We reply',
-        text: 'We reply personally and agree the scope on a short call.',
+        text: 'We reply and agree the scope on a short call.',
       },
       {
         id: 'diagnostic',

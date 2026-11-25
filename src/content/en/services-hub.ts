@@ -18,8 +18,7 @@ export const servicesHub = {
     emphasis: 'working systems',
     after: '',
   },
-  // TODO(albert): review the "small AI consultancy" claim
-  lead: "Zenet Labs is a small AI consultancy for Singapore companies of 10 to 100 people. We don't stop at advice: we connect your tools, automate the manual work, put AI agents into production and train your team, with published prices and a fixed-price diagnostic to start.",
+  lead: "Zenet Labs is an AI consultancy for growing Singapore companies. We don't stop at advice: we connect your tools, automate the manual work, put AI agents into production and train your team, with published prices and a fixed-price diagnostic to start.",
   cards: {
     diagnostic: {
       name: 'Automation diagnostic',

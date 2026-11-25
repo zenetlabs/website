@@ -332,10 +332,6 @@
     @apply mt-3 grid gap-2 text-ui-s md:mt-4 md:gap-3 md:text-ui-m;
   }
 
-  .hero-facts {
-    @apply grid max-w-[34em] gap-1 text-ui-s md:gap-1.5 text-fg-soft;
-  }
-
   .hero-actions {
     @apply mt-5 text-center md:mt-(--hero-step);
   }
@@ -1103,10 +1099,6 @@
     .hover-line:hover {
       @apply decoration-fg;
     }
-
-    .handoff:hover .handoff-name {
-      text-decoration: underline;
-    }
   }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -1609,10 +1601,6 @@
 
   .booking-person {
     @apply flex items-center gap-3 text-ui-s leading-snug text-fg-soft;
-  }
-
-  .handoff {
-    @apply mt-3 flex w-fit items-center gap-3 text-ui-s leading-snug md:mt-6;
   }
 
   .monogram {

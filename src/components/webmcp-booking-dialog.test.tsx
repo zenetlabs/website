@@ -158,9 +158,7 @@ describe('WebMcpBookingDialog', () => {
       name: en.dialog.confirm,
     });
     expect(confirm).toBeEnabled();
-    expect(
-      screen.getByText("You'll talk to Albert Sabaté, the founder."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("You'll talk to our team.")).toBeInTheDocument();
     expect(await screen.findByText('solve challenge')).toBeInTheDocument();
   });
 

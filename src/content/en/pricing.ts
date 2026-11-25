@@ -97,7 +97,7 @@ export const pricingPage = {
   },
   cta: {
     title: 'Start with the diagnostic',
-    text: 'Tell us what your team does by hand and we will reply personally.',
+    text: 'Tell us what your team does by hand and we will reply.',
     button: 'Book a call',
   },
 } satisfies PricingPageContent;

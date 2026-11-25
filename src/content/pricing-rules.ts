@@ -7,7 +7,7 @@ import type { PricingRules } from '@/content/types';
 // currency. Bump `version` on every edit and update the goldens in
 // src/lib/estimate.test.ts. Never write a formatted price in a comment.
 export const PRICING_RULES = {
-  version: '2026-11-01',
+  version: '2026-11-24',
   shared: {
     // TODO(albert): uplift on every line by orders, documents or messages per month
     volumePercent: { low: 0, medium: 10, high: 25, 'very-high': 40 },

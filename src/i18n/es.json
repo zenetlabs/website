@@ -43,7 +43,7 @@
     }
   },
   "footer": {
-    "founded": "Fundada en {year} por {founder}",
+    "founded": "Fundada en {year}",
     "legalNotice": "Aviso legal",
     "privacy": "Política de privacidad",
     "cookies": "Política de cookies",

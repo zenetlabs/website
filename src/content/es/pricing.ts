@@ -95,7 +95,7 @@ export const pricingPage = {
   },
   cta: {
     title: 'Empieza por el diagnóstico',
-    text: 'Cuéntanos qué hace tu equipo a mano y te responderemos personalmente.',
+    text: 'Cuéntanos qué hace tu equipo a mano y te responderemos.',
     button: 'Reservar una llamada',
   },
 } satisfies PricingPageContent;

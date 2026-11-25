@@ -29,7 +29,7 @@ export const casesHub = {
   companies: { title: 'Todas las empresas que dirigimos', items: companies },
   cta: {
     title: 'Empieza por el diagnóstico',
-    text: 'Cuéntanos qué hace tu equipo a mano y te responderemos personalmente.',
+    text: 'Cuéntanos qué hace tu equipo a mano y te responderemos.',
     button: 'Reservar una llamada',
   },
 } satisfies CasesHubContent;

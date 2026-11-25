@@ -20,7 +20,7 @@ export const software = {
       after: '',
     },
     // TODO(albert): confirm the timeline
-    lead: `El software a medida es una aplicación web, un portal de clientes o una herramienta interna diseñada según tus procesos, en lugar de obligarte a adaptarlos al producto de otro. Lo desarrollamos para pymes de 10 a 100 personas cuando las herramientas estándar se quedan cortas, y lo conectamos con los sistemas que ya usas. Un proyecto cuesta ${price}, IVA no incluido, y la primera versión útil suele estar en manos de tu equipo entre ocho y doce semanas después del diagnóstico.`,
+    lead: `El software a medida es una aplicación web, un portal de clientes o una herramienta interna diseñada según tus procesos, en lugar de obligarte a adaptarlos al producto de otro. Lo desarrollamos para pymes cuando las herramientas estándar se quedan cortas, y lo conectamos con los sistemas que ya usas. Un proyecto cuesta ${price}, IVA no incluido, y la primera versión útil suele estar en manos de tu equipo entre ocho y doce semanas después del diagnóstico.`,
   },
   facts: {
     who: 'Empresas cuyo trabajo ya no cabe en un Excel ni en una herramienta estándar, o cuyos clientes necesitan un portal propio',
