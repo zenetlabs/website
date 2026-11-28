@@ -8,19 +8,24 @@ export const contactPage = {
     description:
       'Tell us which tools you use and what your team still does by hand. We reply and agree the next step, starting with a fixed-price diagnostic.',
   },
-  title: {
-    before: 'Tell us what your team ',
-    emphasis: 'still does by hand',
-    after: '',
+  title: { before: 'Talk ', emphasis: 'to us', after: '' },
+  lead: "Pick how you'd like to reach us, and we'll reply within a working day.",
+  doors: {
+    book: { title: 'Book a call', text: 'Pick a time that suits you.' },
+    message: {
+      title: 'Send a message',
+      text: 'A person on our team replies.',
+    },
+    ai: {
+      title: 'Talk to the AI',
+      text: "Ask now. It's an AI, not a person.",
+    },
   },
-  lead: 'A person on our team reads every message and agrees the next step with you.',
   slots: slotsCopy,
   form: {
     title: { before: '', emphasis: 'Write to us', after: '' },
     lead: 'Mention the tools you use, too.',
     mail: 'Prefer email? Write to',
-    human: 'A person on our team replies.',
-    book: 'Prefer a call? Pick a time',
     voice: {
       text: 'Prefer to talk? Our voice assistant is an AI, not a person: it can answer questions and book a call.',
       button: 'Talk to the assistant',

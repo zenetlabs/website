@@ -919,8 +919,7 @@
     }
 
     .desk-send:hover {
-      background-color: var(--send-hover-bg, var(--cta-hover));
-      color: var(--send-hover-fg, var(--cta-fg));
+      @apply bg-cta-hover;
     }
 
     .contact-book .slot-more:hover {
@@ -1098,12 +1097,8 @@
     @apply min-h-11 min-w-0 flex-1 bg-transparent text-ui-l outline-hidden;
   }
 
-  /* The send button's colours are tokens a desk can set (contact outlines it) */
   .desk-send {
-    @apply grid size-11 shrink-0 place-items-center rounded-input select-none;
-    border: 1px solid var(--send-border, transparent);
-    background-color: var(--send-bg, var(--cta));
-    color: var(--send-fg, var(--cta-fg));
+    @apply grid size-11 shrink-0 place-items-center rounded-input border border-transparent bg-cta text-cta-fg select-none;
     transition:
       background-color var(--duration-press) ease-out,
       color var(--duration-press) ease-out;
@@ -1133,6 +1128,10 @@
 
   .desk-rail-head > h3 {
     @apply sm:shrink-0;
+  }
+
+  .desk-rail-head h2 {
+    @apply tracking-normal;
   }
 
   /* A box of fixed width (the rest of the row): new text swaps inside it, so it never moves */
@@ -1889,7 +1888,51 @@
 
   /* Contact: the next times as the hero desk's footer, laid out like home's rail */
   .contact-book {
-    @apply grid grid-cols-[minmax(0,1fr)] gap-3 px-(--desk-pad) pt-2 pb-5 max-sm:pb-4;
+    @apply grid grid-cols-[minmax(0,1fr)] gap-3;
+  }
+
+  /* Contact's three doors: side by side from md, the open one's panel below */
+  .contact-doors {
+    @apply grid gap-2 md:grid-cols-3 md:gap-3;
+  }
+
+  .contact-door {
+    @apply min-h-14 justify-start py-2 md:min-h-16 md:py-3;
+  }
+
+  .contact-door .icon {
+    @apply size-6 shrink-0 text-fg-soft;
+  }
+
+  .contact-door > .desk-mark {
+    @apply max-sm:size-8;
+  }
+
+  .contact-door[aria-selected="true"] {
+    @apply border-agent bg-agent text-agent-fg;
+  }
+
+  .contact-door[aria-selected="true"] .door-text,
+  .contact-door[aria-selected="true"] .icon {
+    @apply text-agent-fg;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .contact-door:not([aria-selected="true"]):hover {
+      @apply bg-surface;
+    }
+  }
+
+  [data-door-panel]:not([data-open]) {
+    display: none;
+  }
+
+  [data-door-panel]:not([role]):target {
+    display: block;
+  }
+
+  .contact-ai {
+    @apply w-[min(100%,44rem)];
   }
 
   /* The home hero's switchboard: the agent core, the customer's tools and the
@@ -2329,15 +2372,6 @@
     view-timeline-name: --hero-desk;
   }
 
-  /* One ink primary in view on contact: the desk's send is outlined */
-  .contact-desk {
-    --send-border: var(--fg);
-    --send-bg: transparent;
-    --send-fg: var(--fg);
-    --send-hover-bg: var(--fg);
-    --send-hover-fg: var(--bg);
-  }
-
   [data-switchboard] > .desk {
     @apply relative z-1 mx-auto w-[min(100%,44rem)];
   }
@@ -2420,6 +2454,17 @@
 
   .inner-hero h1 {
     font-size: clamp(2.25rem, 1.2rem + 2.2vw, 3.25rem);
+  }
+
+  /* A compact hero: the page's work sits right below it */
+  [data-size="compact"] .inner-hero {
+    @apply pb-6 md:pb-10;
+  }
+
+  [data-size="compact"] .inner-hero h1 {
+    font-size: var(--text-h2-compact);
+    letter-spacing: var(--text-h2-compact--letter-spacing);
+    line-height: var(--text-h2-compact--line-height);
   }
 
   .inner-hero-stage {

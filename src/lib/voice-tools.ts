@@ -1,4 +1,5 @@
 import type { VoiceCopy } from '@/content/types';
+import { showContactForm } from '@/lib/contact-door';
 import { contactDraftTarget } from '@/lib/contact-draft';
 import type { Locale } from '@/lib/i18n';
 import { isRecord } from '@/lib/is-record';
@@ -65,7 +66,10 @@ export function contactDraftTool({
       isRecord(params) ? params.message : undefined,
     );
     if (target === null) return 'invalid';
-    if ('current' in target) return 'already_open';
+    if ('current' in target) {
+      showContactForm();
+      return 'already_open';
+    }
     push(target.url);
     onOpened(copy.pages.contact);
     return 'opened';

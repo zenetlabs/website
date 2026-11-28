@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { z } from 'zod';
 import { siteConfig } from '../site.config';
 import { BOOKING_RULES } from '../src/content/booking-rules';
@@ -240,6 +240,22 @@ export async function gotoHydrated(
 ) {
   await page.goto(path, options);
   await waitForHydration(page);
+}
+
+// The contact page's doors: tabs once hydrated. Picks one by its id.
+export async function openDoor(page: Page, id: 'book' | 'message' | 'ai') {
+  await page.locator(`#door-${id}-tab`).click();
+  await expectDoorOpen(page, id);
+}
+
+export async function expectDoorOpen(
+  page: Page,
+  id: 'book' | 'message' | 'ai',
+) {
+  await expect(page.locator(`#door-${id}-tab`)).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
 }
 
 export async function settleAnimations(page: Page) {

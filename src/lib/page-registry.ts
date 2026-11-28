@@ -198,7 +198,7 @@ export const PAGES: Record<
   },
   contact: {
     slugs: { en: '/contact', es: '/contacto' },
-    lastmod: '2026-11-25',
+    lastmod: '2026-11-28',
   },
   pricing: {
     slugs: { en: '/pricing', es: '/precios' },

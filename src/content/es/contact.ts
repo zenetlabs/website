@@ -8,19 +8,27 @@ export const contactPage = {
     description:
       'Cuéntanos qué usas y qué hace tu equipo a mano. Te respondemos y acordamos el siguiente paso, empezando por un diagnóstico a precio cerrado.',
   },
-  title: {
-    before: 'Cuéntanos qué sigue haciendo tu equipo ',
-    emphasis: 'a mano',
-    after: '',
+  title: { before: 'Habla ', emphasis: 'con nosotros', after: '' },
+  lead: 'Elige cómo prefieres contactarnos y te respondemos en un día laborable.',
+  doors: {
+    book: {
+      title: 'Reservar una llamada',
+      text: 'Elige la hora que te venga bien.',
+    },
+    message: {
+      title: 'Enviar un mensaje',
+      text: 'Te responde una persona de nuestro equipo.',
+    },
+    ai: {
+      title: 'Hablar con la IA',
+      text: 'Pregunta ahora. Es una IA, no una persona.',
+    },
   },
-  lead: 'Una persona de nuestro equipo lee cada mensaje y acuerda contigo el siguiente paso.',
   slots: slotsCopy,
   form: {
     title: { before: '', emphasis: 'Escríbenos', after: '' },
     lead: 'Dinos también qué herramientas usas.',
     mail: '¿Prefieres el correo? Escribe a',
-    human: 'Te responde una persona de nuestro equipo.',
-    book: '¿Prefieres una llamada? Elige una hora',
     voice: {
       text: '¿Prefieres hablar? Nuestro asistente de voz es una IA, no una persona: responde tus dudas y te reserva una llamada.',
       button: 'Hablar con el asistente',

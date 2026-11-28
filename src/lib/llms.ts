@@ -626,7 +626,7 @@ function caseBlocks(
 function contactPageLines({ contact }: ServiceBodies): string[] {
   return [
     '',
-    `${titleText(contact.title)}. ${contact.form.lead ? `${contact.form.lead} ` : ''}${contact.lead}`,
+    `${titleText(contact.title)}. ${contact.lead}`,
     ...contact.next.steps.map(
       (step, index) => `${index + 1}. ${step.label}: ${step.text}`,
     ),

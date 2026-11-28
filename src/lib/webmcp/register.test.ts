@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { webmcpCopy as en } from '@/content/en/webmcp';
 import { webmcpCopy as es } from '@/content/es/webmcp';
+import { contactFormAsks } from '@/lib/contact-door';
 import { isRecord } from '@/lib/is-record';
 import type { BookingRequest, MountDialog } from '@/lib/webmcp/confirmation';
 import {
@@ -488,10 +489,12 @@ describe('open_contact_form', () => {
       ['/es/contacto', '/es/contacto'],
     ] as const) {
       const run = deps(() => json({}), path);
+      const before = contactFormAsks();
       const envelope = await executorsFor(run.value).open_contact_form({
         message: 'Hola',
       });
       expect(envelope).toEqual({ ok: true, result: { url, current: true } });
+      expect(contactFormAsks()).toBe(before + 1);
       expect(run.tasks).toEqual([]);
       expect(run.assign).not.toHaveBeenCalled();
     }

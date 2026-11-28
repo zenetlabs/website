@@ -34,6 +34,7 @@ import {
   unsentMessage,
   useChatState,
 } from '@/lib/chat-store';
+import { keepFocus } from '@/lib/contact-door';
 import type { Locale } from '@/lib/i18n';
 import { contactWithMessage } from '@/lib/nav';
 import { pagePath } from '@/lib/page-registry';
@@ -564,6 +565,7 @@ export function ChatPanel({
     close: () => dialogRef.current?.close(),
   });
   const opened = useRef(false);
+  const opener = useRef<HTMLElement | null>(null);
   const titleId = useId();
   const noticeId = useId();
   const inputId = useId();
@@ -596,6 +598,9 @@ export function ChatPanel({
 
   function openPanel(dialog: HTMLDialogElement) {
     ensureLocale(locale);
+    if (document.activeElement instanceof HTMLElement) {
+      opener.current = document.activeElement;
+    }
     dialog.showModal();
     input.current?.focus();
     motion.grow(dialog);
@@ -657,6 +662,7 @@ export function ChatPanel({
       onClose={() => {
         // A check still running goes with the panel: no failure on reopening.
         challenge.cancel();
+        keepFocus(opener.current);
         onClose();
       }}
       aria-labelledby={titleId}

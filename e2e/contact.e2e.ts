@@ -1,7 +1,14 @@
 import { expect, type Page } from '@playwright/test';
 import { attemptsFor, sentFor, uniqueEmail } from './fakes';
 import { test } from './fixtures';
-import { BOOKING_PUBLISHED, CONTACT_PAIR, gotoHydrated } from './helpers';
+import {
+  ASSISTANT_PUBLISHED,
+  BOOKING_PUBLISHED,
+  CONTACT_PAIR,
+  expectDoorOpen,
+  gotoHydrated,
+  openDoor,
+} from './helpers';
 import { forceInteractiveTurnstile } from './turnstile-interactive';
 
 const TURNSTILE_SCRIPT = 'script[src*="challenges.cloudflare.com"]';
@@ -126,6 +133,7 @@ test('the booking card shows the next free times as chips, in the same box', asy
     await route.continue();
   });
   await gotoHydrated(page, CONTACT_PAIR.en);
+  await openDoor(page, 'book');
   const card = page.locator('.contact-book');
   await expect(card.locator('[data-slot-fallback]')).toBeVisible();
   const before = await card.boundingBox();
@@ -140,44 +148,106 @@ test('the booking card shows the next free times as chips, in the same box', asy
   );
 });
 
+const INK_DOORS = [
+  'message',
+  ...(BOOKING_PUBLISHED ? (['book'] as const) : []),
+  ...(ASSISTANT_PUBLISHED ? (['ai'] as const) : []),
+] as const;
+
 for (const viewport of [
   { width: 390, height: 844 },
   { width: 1440, height: 900 },
 ]) {
-  test(`the booking card has one ink primary in the first viewport at ${viewport.width}`, async ({
-    page,
-  }) => {
-    test.skip(!BOOKING_PUBLISHED, 'booking is not published in this build');
-    await page.setViewportSize(viewport);
-    await gotoHydrated(page, CONTACT_PAIR.en);
-    const card = page.locator('.contact-book');
-    await expect(card.locator('.slot-chip').first()).toBeVisible({
-      timeout: 15_000,
+  for (const door of INK_DOORS) {
+    test(`the ${door} door has one ink primary on the page at ${viewport.width}`, async ({
+      page,
+    }) => {
+      await page.setViewportSize(viewport);
+      await gotoHydrated(page, CONTACT_PAIR.en);
+      await openDoor(page, door);
+      if (door === 'book') {
+        await expect(
+          page.locator('.contact-book .slot-chip').first(),
+        ).toBeVisible({ timeout: 15_000 });
+      }
+      const inks = await page.evaluate(() => {
+        const ink = getComputedStyle(document.body).getPropertyValue('--cta');
+        const probe = document.createElement('div');
+        probe.style.backgroundColor = ink;
+        document.body.appendChild(probe);
+        const want = getComputedStyle(probe).backgroundColor;
+        probe.remove();
+        return Array.from(document.querySelectorAll('a, button'))
+          .filter(
+            (element) =>
+              element.checkVisibility({
+                opacityProperty: true,
+                visibilityProperty: true,
+              }) && getComputedStyle(element).backgroundColor === want,
+          )
+          .map((element) => element.className);
+      });
+      expect(inks).toHaveLength(1);
     });
-    const more = card.locator('.slot-more');
-    await expect(more).toBeInViewport();
-    const inks = await page.evaluate(() => {
-      const ink = getComputedStyle(
-        document.querySelector('.slot-more') ?? document.body,
-      ).backgroundColor;
-      return Array.from(document.querySelectorAll('a, button'))
-        .filter((element) => {
-          const box = element.getBoundingClientRect();
-          return (
-            element.checkVisibility({
-              opacityProperty: true,
-              visibilityProperty: true,
-            }) &&
-            box.width > 0 &&
-            box.top < window.innerHeight &&
-            box.bottom > 0 &&
-            getComputedStyle(element).backgroundColor === ink
-          );
-        })
-        .map((element) => element.className);
+  }
+}
+
+test('the doors are a tablist with the message door open and the form visible', async ({
+  page,
+}) => {
+  await gotoHydrated(page, CONTACT_PAIR.en);
+  const tablist = page.getByRole('tablist', { name: 'Talk to us' });
+  await expect(tablist.getByRole('tab')).toHaveCount(
+    1 + Number(BOOKING_PUBLISHED) + Number(ASSISTANT_PUBLISHED),
+  );
+  await expectDoorOpen(page, 'message');
+  await expect(page.getByRole('form', { name: 'Contact form' })).toBeVisible();
+  if (BOOKING_PUBLISHED) await expect(page.locator('#door-book')).toBeHidden();
+  if (ASSISTANT_PUBLISHED) await expect(page.locator('#door-ai')).toBeHidden();
+});
+
+test('the doors work from the keyboard and keep what was typed', async ({
+  page,
+}) => {
+  test.skip(
+    !(BOOKING_PUBLISHED && ASSISTANT_PUBLISHED),
+    'needs all three doors',
+  );
+  await gotoHydrated(page, CONTACT_PAIR.en);
+  await page.getByLabel('Name').fill('Ada Lovelace');
+  await page.locator('#door-message-tab').focus();
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.locator('#door-book-tab')).toBeFocused();
+  await expect(page.locator('#door-book')).toBeVisible();
+  await page.keyboard.press('End');
+  await expect(page.locator('#door-ai-tab')).toBeFocused();
+  await expect(page.locator('#door-ai')).toBeVisible();
+  await page.keyboard.press('Home');
+  await page.keyboard.press('ArrowRight');
+  await expectDoorOpen(page, 'message');
+  await page.keyboard.press('Tab');
+  await expect(page.locator('#door-message')).toBeFocused();
+  await expect(page.getByLabel('Name')).toHaveValue('Ada Lovelace');
+});
+
+for (const viewport of [
+  { width: 1280, height: 800 },
+  { width: 390, height: 844 },
+]) {
+  for (const path of [CONTACT_PAIR.en, CONTACT_PAIR.es]) {
+    test(`${path} shows the doors and the form's first field in the first screen at ${viewport.width}`, async ({
+      page,
+    }) => {
+      await page.setViewportSize(viewport);
+      await gotoHydrated(page, path);
+      for (const tab of await page.locator('#contact [role="tab"]').all()) {
+        await expect(tab).toBeInViewport();
+      }
+      await expect(
+        page.locator('#door-message input').first(),
+      ).toBeInViewport();
     });
-    expect(inks).toEqual([await more.getAttribute('class')]);
-  });
+  }
 }
 
 test('a filled honeypot gets a silent success and sends nothing', async ({

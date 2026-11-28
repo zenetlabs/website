@@ -8,6 +8,7 @@ import {
   CONTACT_PAIR,
   gotoHydrated,
   HOLDED_PAGES,
+  openDoor,
   PAGES,
   PAIRS,
   SECTOR_PAGE,
@@ -52,6 +53,17 @@ for (const viewport of VIEWPORTS) {
         }
       });
     }
+  });
+}
+
+for (const door of ['book', 'ai'] as const) {
+  test(`/contact with the ${door} door open has no axe violations`, async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/contact');
+    await openDoor(page, door);
+    await settleAnimations(page);
+    expect((await axe(page)).violations).toEqual([]);
   });
 }
 

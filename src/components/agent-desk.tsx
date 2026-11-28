@@ -6,7 +6,7 @@ import { isPublished } from '@/lib/page-registry';
 import { SITE } from '@/lib/site';
 
 // The working desk of a hero: one surface, the conversation above and the
-// page's own `footer` below (home's next-slots rail, contact's booking card).
+// page's own `footer` below (home's next-slots rail; contact's AI door has none).
 // The contact page's desk is marked `data-contact-desk` instead of
 // `data-desk`, so home's scripts and tests never mistake one for the other.
 export function AgentDesk({

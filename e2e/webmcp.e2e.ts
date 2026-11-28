@@ -13,8 +13,10 @@ import { test } from './fixtures';
 import {
   BOOKING_PUBLISHED,
   CALCULATOR_PUBLISHED,
+  expectDoorOpen,
   gotoHydrated,
   lateSlot,
+  openDoor,
   settleAnimations,
   WEBMCP_PUBLISHED,
   waitForHydration,
@@ -432,6 +434,7 @@ test.describe('with modelContext', () => {
       await gotoHydrated(page, '/contact');
       await registered(page);
       await page.getByLabel('Name').fill('Ada Lovelace');
+      await openDoor(page, 'ai');
       await page.evaluate(() => {
         Object.assign(window, { marker: 'same-document' });
       });
@@ -443,6 +446,7 @@ test.describe('with modelContext', () => {
       expect(await page.evaluate(() => Reflect.get(window, 'marker'))).toBe(
         'same-document',
       );
+      await expectDoorOpen(page, 'message');
       await expect(page.getByLabel('Name')).toHaveValue('Ada Lovelace');
     });
 

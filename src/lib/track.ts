@@ -1,3 +1,4 @@
+import type { ContactDoorId } from '@/content/types';
 import type { SURFACE_ACTION, Surface } from '@/lib/booking-surfaces';
 import type { ProjectType } from '@/lib/calculator-answers';
 
@@ -24,7 +25,8 @@ export type CtaId =
   | 'close_call'
   | 'desk_call'
   | 'chat_slot'
-  | 'chat_times';
+  | 'chat_times'
+  | `contact_door_${ContactDoorId}`;
 
 // Where a chat was opened from: the floating launcher, the home desk, or the
 // chips and composer in the home close.

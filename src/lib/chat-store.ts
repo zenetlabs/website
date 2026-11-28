@@ -4,6 +4,7 @@ import { postChat } from '@/lib/chat-client';
 import type { ChatError, ChatEvent, Proposal } from '@/lib/chat-events';
 import { setChatSessionId } from '@/lib/chat-session';
 import { offeredTimes, withoutListedTimes } from '@/lib/chat-slot-text';
+import { showContactForm } from '@/lib/contact-door';
 import type { Locale } from '@/lib/i18n';
 import type { NavigateSection } from '@/lib/navigate';
 import type { PageId } from '@/lib/page-registry';
@@ -280,6 +281,7 @@ async function consume(
     if (signal.aborted) return;
     set(applyEvent(state, event));
     if (event.t === 'session') setChatSessionId(event.id);
+    if (event.t === 'contact_draft') showContactForm();
   }
   if (!signal.aborted && state.status !== 'idle') set(settle(state));
 }

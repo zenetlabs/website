@@ -329,6 +329,24 @@ for (const { path, locale } of [...PRICING, ...CASE_CLOSES]) {
 
 for (const locale of LOCALES) {
   const path = CONTACT_PAIR[locale];
+  test(`${path} shows its doors as links to three stacked panels without JavaScript`, async ({
+    page,
+  }) => {
+    await page.goto(path);
+    const links = page.locator('#contact nav[data-doors] a');
+    const hrefs = await links.evaluateAll((nodes) =>
+      nodes.map((node) => node.getAttribute('href')),
+    );
+    expect(hrefs.length).toBeGreaterThanOrEqual(2);
+    for (const href of hrefs) {
+      await expect(page.locator(href ?? '#none')).toBeVisible();
+    }
+    await expect(page.locator('#contact [role="tab"]')).toHaveCount(0);
+    const last = hrefs.at(-1) ?? '#none';
+    await links.last().click();
+    await expect(page).toHaveURL(new RegExp(`${last}$`));
+  });
+
   test(`${path} desk chip and composer reach the prefilled form without JavaScript`, async ({
     page,
   }) => {
@@ -341,7 +359,6 @@ for (const locale of LOCALES) {
     const box = page.locator('[data-contact-desk]');
     const chip = box.getByRole('link', { name: desk.intro.suggestions[0] });
     await chip.click();
-    await expect(page.locator('[data-contact-desk]')).toHaveCount(0);
     await expect(page.locator('textarea[name="message"]')).toHaveValue(
       desk.intro.suggestions[0],
     );

@@ -300,7 +300,7 @@ Bookings made this way are stored as channel `web`, like `/book`: setting `webmc
 
 ### Contact prefill
 
-`open_contact_form` takes `message` (1 to 1,500 characters), builds `contactWithMessage(locale, message)` and navigates with `navigate`'s scheduling (after the result). On the contact page it navigates nowhere and answers `{ url, current: true }`, so what the visitor typed is never replaced: the agent gives them the message to paste. The visitor reviews the form, adds name, email and consent and sends it themselves: no lead endpoint or Turnstile change, and no `POST /api/lead` from any surface.
+`open_contact_form` takes `message` (1 to 1,500 characters), builds `contactWithMessage(locale, message)` and navigates with `navigate`'s scheduling (after the result). On the contact page it navigates nowhere and answers `{ url, current: true }`, so what the visitor typed is never replaced: the agent gives them the message to paste, and the page's message door opens (`showContactForm()`). The visitor reviews the form, adds name, email and consent and sends it themselves: no lead endpoint or Turnstile change, and no `POST /api/lead` from any surface.
 
 ### Origin-trial token (owner, optional)
 

@@ -18,7 +18,9 @@ import { test } from './fixtures';
 import {
   ASSISTANT_PUBLISHED,
   BOOKING_PUBLISHED,
+  expectDoorOpen,
   gotoHydrated,
+  openDoor,
   settleAnimations,
 } from './helpers';
 import {
@@ -327,11 +329,36 @@ for (const { locale, base, contact, text } of [
 test('on the contact page the draft card asks to paste it and links nowhere', async ({
   page,
 }) => {
-  await openChat(page, 'en', '/contact');
+  await gotoHydrated(page, '/contact');
+  await openDoor(page, 'ai');
+  await page.getByRole('button', { name: LAUNCHER.en }).click();
+  await expect(page.getByRole('dialog', { name: COPY.en.title })).toBeVisible();
   await say(page, 'en', 'Can I write to you about syncing orders?');
   const card = page.locator('[data-chat-draft]');
   await expect(card).toContainText(en.contactDraft.onPage);
   await expect(card.getByRole('link')).toHaveCount(0);
+  await expectDoorOpen(page, 'message');
+  await expect(page.locator('#door-message textarea')).toBeVisible();
+});
+
+test('closing a chat opened from the AI door lands focus in the message door after a draft', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await gotoHydrated(page, '/contact');
+  await openDoor(page, 'ai');
+  await page.locator('[data-contact-desk] .desk-chip').first().click();
+  const panel = page.locator('dialog[data-chat-panel]');
+  await expect(panel).toBeVisible();
+  await expect(panel).toHaveAttribute('data-chat-state', 'idle', {
+    timeout: 30_000,
+  });
+  await say(page, 'en', 'Can I write to you about syncing orders?');
+  await expect(page.locator('[data-chat-draft]')).toBeVisible();
+  await expectDoorOpen(page, 'message');
+  await page.keyboard.press('Escape');
+  await expect(panel).toBeHidden();
+  await expect(page.locator('#door-message-tab')).toBeFocused();
 });
 
 test('a contact desk chip opens one chat panel with the question sent, and the launcher reopens it', async ({
@@ -339,6 +366,7 @@ test('a contact desk chip opens one chat panel with the question sent, and the l
 }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await gotoHydrated(page, '/contact');
+  await openDoor(page, 'ai');
   const chip = page.locator('[data-contact-desk] .desk-chip').first();
   const question = (await chip.textContent())?.trim() ?? '';
   await chip.click();
