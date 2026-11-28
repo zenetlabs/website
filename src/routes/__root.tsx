@@ -85,9 +85,12 @@ function RootDocument({ children }: { children: ReactNode }) {
         <meta name="color-scheme" content="light" />
         <meta name="theme-color" content={THEME_COLOR} />
         {/* Controls that need JavaScript (the home desk's call and chat doors)
-            are hidden from the first paint without it, so nothing shifts. */}
+            are hidden from the first paint without it, so nothing shifts, and
+            the contact page's closed door panels are shown, stacked. */}
         <noscript>
-          <style>{'[data-needs-js]{display:none}'}</style>
+          <style>
+            {'[data-needs-js]{display:none}[data-door-panel]{display:block}'}
+          </style>
         </noscript>
       </head>
       <body data-hydrated={hydrated ? 'true' : undefined}>

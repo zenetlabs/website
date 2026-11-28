@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { voiceCopy as en } from '@/content/en/voice';
 import { voiceCopy as es } from '@/content/es/voice';
+import { contactFormAsks } from '@/lib/contact-door';
 import {
   contactDraftTool,
   navigateTool,
@@ -133,10 +134,19 @@ describe('contactDraftTool', () => {
       ['es', '/es/contacto'],
     ] as const) {
       const { run, push, onOpened } = draft(locale, path);
+      const before = contactFormAsks();
       expect(await run({ message: 'Hola' })).toBe('already_open');
+      expect(contactFormAsks()).toBe(before + 1);
       expect(push).not.toHaveBeenCalled();
       expect(onOpened).not.toHaveBeenCalled();
     }
+  });
+
+  it('does not ask the contact page to open its form off the contact page', async () => {
+    const { run } = draft('en', '/pricing');
+    const before = contactFormAsks();
+    await run({ message: 'Sync Xero' });
+    expect(contactFormAsks()).toBe(before);
   });
 
   it.each([

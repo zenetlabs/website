@@ -21,6 +21,7 @@ export function PageHero({
   stage,
   aside,
   asideSpan,
+  compact,
 }: {
   breadcrumb?: ReactNode;
   title: TitleParts;
@@ -30,6 +31,8 @@ export function PageHero({
   aside?: ReactNode;
   // `full`: the aside runs the whole width under the copy and the stage
   asideSpan?: 'full';
+  // A smaller title, for a page whose work is below the hero
+  compact?: boolean;
 }) {
   return (
     <section
@@ -37,6 +40,7 @@ export function PageHero({
       data-ground={TINT.ground}
       data-stage={stage ? undefined : 'none'}
       data-aside={asideSpan}
+      data-size={compact ? 'compact' : undefined}
       className={TINT.bg}
     >
       <Container className="inner-hero">

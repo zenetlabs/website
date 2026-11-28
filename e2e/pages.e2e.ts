@@ -4,12 +4,14 @@ import { INCLUDES } from '../test/inner-content';
 import { jsonLdBlocks } from '../test/json-ld';
 import { test } from './fixtures';
 import {
+  ASSISTANT_PUBLISHED,
   BOOKING_PUBLISHED,
   CALCULATOR_PUBLISHED,
   CASE_PAIR,
   CASES_HUB,
   CONTACT_PAIR,
   CTA,
+  expectDoorOpen,
   gotoHydrated,
   markdownPathOf,
   typesOf,
@@ -225,23 +227,27 @@ test.describe('the contact page', () => {
     }) => {
       await gotoHydrated(page, path);
       await expect(page.locator('h1')).toHaveCount(1);
-      await expect(page.locator('#contact form')).toHaveCount(1);
+      await expect(page.locator('#door-message form')).toHaveCount(1);
       await expect(
         page.locator('#contact a[href="mailto:hello@zenetlabs.com"]'),
       ).toHaveCount(1);
       await expect(page.locator('html')).toHaveAttribute('lang', locale);
     });
 
-    test(`${path} puts the desk and its times in the hero, and the diagnostic as the stub`, async ({
+    test(`${path} puts three doors on the band, and the diagnostic as the stub`, async ({
       page,
     }) => {
       await gotoHydrated(page, path);
+      await expect(page.locator('#contact [role="tab"]')).toHaveCount(
+        1 + Number(BOOKING_PUBLISHED) + Number(ASSISTANT_PUBLISHED),
+      );
+      await expectDoorOpen(page, 'message');
       if (BOOKING_PUBLISHED) {
-        await expect(
-          page.locator('[data-contact-desk] .contact-book'),
-        ).toHaveCount(1);
+        await expect(page.locator('#door-book .contact-book')).toHaveCount(1);
       }
-      await expect(page.locator('[data-contact-desk]')).toHaveCount(1);
+      await expect(page.locator('#door-ai [data-contact-desk]')).toHaveCount(
+        ASSISTANT_PUBLISHED ? 1 : 0,
+      );
       await expect(page.locator('#next .rail > li')).toHaveCount(3);
       await expect(page.locator('#next [data-stub]')).toHaveText(
         locale === 'en' ? /The diagnostic/ : /El diagnóstico/,
@@ -252,19 +258,15 @@ test.describe('the contact page', () => {
       );
     });
 
-    test(`${path} shows no desk when it arrives with a message`, async ({
+    test(`${path} opens the message door with the text when it arrives with a message`, async ({
       page,
     }) => {
       await gotoHydrated(page, `${path}?message=Hello%20there`);
-      await expect(page.locator('[data-contact-desk]')).toHaveCount(0);
+      await expectDoorOpen(page, 'message');
       await expect(page.locator('#contact textarea')).toHaveValue(
         'Hello there',
       );
-      if (BOOKING_PUBLISHED) {
-        await expect(
-          page.locator('#contact a[data-cta="contact_book"]'),
-        ).toHaveAttribute('href', CTA[locale]);
-      }
+      await expect(page.locator('#contact textarea')).toBeVisible();
     });
 
     test(`${path} describes a contact page and a breadcrumb`, async ({

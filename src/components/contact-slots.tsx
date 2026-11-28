@@ -46,7 +46,7 @@ function Times({
   return (
     <>
       <div className="desk-rail-head">
-        <h3 className="text-ui-l font-semibold">{copy.title}</h3>
+        <h2 className="text-ui-l font-semibold">{copy.title}</h2>
         <p className="desk-rail-meta" data-slot-meta>
           {`${ready.day} · ${copy.timesIn.replace('{zone}', ready.zone)}`}
         </p>

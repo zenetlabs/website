@@ -426,6 +426,7 @@ test('the contact markdown lists the ways to reach us', async ({ request }) => {
       BOOKING_PUBLISHED,
     );
     expect(body, path).toContain('### ');
+    expect(body, path).not.toContain('](#door-');
   }
 });
 

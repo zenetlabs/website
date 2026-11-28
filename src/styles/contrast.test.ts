@@ -83,6 +83,7 @@ const PAIRS: ReadonlyArray<
   ['link', 'bg', TEXT, BAND],
   ['agent', 'bg', TEXT, BAND],
   ['agent', 'surface', TEXT, BAND],
+  ['agent-fg', 'agent', TEXT, BAND],
   ['tool', 'bg', TEXT, BAND],
   ['human', 'bg', TEXT, BAND],
   ['cta-fg', 'cta', TEXT, BAND],

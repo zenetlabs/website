@@ -1,3 +1,4 @@
+import { showContactForm } from '@/lib/contact-door';
 import { contactDraftTarget } from '@/lib/contact-draft';
 import { localeFromPath } from '@/lib/i18n';
 import { isRecord } from '@/lib/is-record';
@@ -26,6 +27,7 @@ export function runOpenContactForm(
     };
   }
   if ('current' in target) {
+    showContactForm();
     return {
       ok: true,
       result: { url: navHref(locale, { page: 'contact' }), current: true },

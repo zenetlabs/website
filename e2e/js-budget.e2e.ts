@@ -123,8 +123,8 @@ const NEEDLES: Record<Kind, Partial<Record<Locale, string>>> = {
     es: 'En todos los casos, los agentes preparan',
   },
   contact: {
-    en: 'A person on our team reads every message',
-    es: 'Una persona de nuestro equipo lee cada mensaje',
+    en: 'Pick how you',
+    es: 'Elige cómo prefieres contactarnos',
   },
   diagnostic: {
     en: 'Do we need to know what to automate',

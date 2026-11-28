@@ -9,6 +9,7 @@ import {
   CTA,
   gotoHydrated,
   navLinks,
+  openDoor,
   settleAnimations,
   VOICE_PUBLISHED,
   waitForHydration,
@@ -385,10 +386,11 @@ test.describe('the launcher on a phone', () => {
     page,
   }) => {
     await gotoHydrated(page, '/contact');
+    await openDoor(page, 'ai');
     const launcher = page.locator('[data-chat-launcher]');
     await expect(page.locator('[data-contact-desk]')).toBeInViewport();
     await expect(launcher).toBeHidden();
-    await page.locator('#next').scrollIntoViewIfNeeded();
+    await page.locator('footer').scrollIntoViewIfNeeded();
     await expect(page.locator('[data-contact-desk]')).not.toBeInViewport();
     await expect(launcher).toBeVisible();
   });

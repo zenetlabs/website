@@ -363,12 +363,15 @@ export type AboutPageContent = {
   cta: { title: string; text: string; button: string };
 };
 
+export type ContactDoorId = 'book' | 'message' | 'ai';
+
 export type ContactPageContent = {
   meta: PageMeta;
   title: TitleParts;
   lead: string;
+  doors: Record<ContactDoorId, DoorCopy>;
   slots: DeskCopy['slots'];
-  form: HomeContent['contact'];
+  form: Omit<HomeContent['contact'], 'book' | 'human'>;
   next: ProcessCopy;
 };
 

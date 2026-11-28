@@ -16,6 +16,7 @@ import {
   send,
   unsentMessage,
 } from '@/lib/chat-store';
+import { contactFormAsks } from '@/lib/contact-door';
 
 const postChat = vi.hoisted(() => vi.fn());
 const track = vi.hoisted(() => vi.fn());
@@ -257,6 +258,18 @@ describe('send', () => {
     expect(postChat.mock.calls[1]?.[0]).not.toHaveProperty('turnstileToken');
     expect(track).toHaveBeenCalledTimes(2);
     expect(track).toHaveBeenCalledWith('chat_message');
+  });
+
+  it('asks the contact page to open its message door when a draft arrives', async () => {
+    const before = contactFormAsks();
+    postChat.mockResolvedValueOnce(
+      ok(
+        { t: 'contact_draft', message: 'Sync Xero.' },
+        { t: 'done', remaining: 19 },
+      ),
+    );
+    await send('Hello', context());
+    expect(contactFormAsks()).toBe(before + 1);
   });
 
   it('ignores an empty message and a send while one is pending', async () => {

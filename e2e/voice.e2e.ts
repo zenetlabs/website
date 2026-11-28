@@ -18,7 +18,13 @@ import {
   uniqueEmail,
 } from './fakes';
 import { test } from './fixtures';
-import { gotoHydrated, settleAnimations, VOICE_PUBLISHED } from './helpers';
+import {
+  expectDoorOpen,
+  gotoHydrated,
+  openDoor,
+  settleAnimations,
+  VOICE_PUBLISHED,
+} from './helpers';
 import { forceInteractiveTurnstile } from './turnstile-interactive';
 
 test.skip(!VOICE_PUBLISHED, 'voice is not published in this build');
@@ -296,6 +302,7 @@ test('on the contact page the draft is not pushed: the form stays as it is', asy
     ),
   ).toBe('opened');
   await expect(page).toHaveURL(/\/contact$/);
+  await openDoor(page, 'ai');
   expect(
     await page.evaluate(() =>
       window.__voiceFake?.callClientTool('open_contact_form', {
@@ -303,6 +310,7 @@ test('on the contact page the draft is not pushed: the form stays as it is', asy
       }),
     ),
   ).toBe('already_open');
+  await expectDoorOpen(page, 'message');
   expect(
     await page.evaluate(() =>
       window.__voiceFake?.callClientTool('open_contact_form', { message: '' }),

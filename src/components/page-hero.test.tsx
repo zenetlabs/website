@@ -81,6 +81,16 @@ describe('PageHero', () => {
     );
   });
 
+  it('marks a compact hero and no other', () => {
+    const { container, rerender } = view();
+    expect(container.querySelector('section')).not.toHaveAttribute('data-size');
+    rerender(<PageHero compact title={TITLE} lead="One sentence." />);
+    expect(container.querySelector('section')).toHaveAttribute(
+      'data-size',
+      'compact',
+    );
+  });
+
   it('sits on the tint ground and spaces the title only under a breadcrumb', () => {
     const { container } = view();
     expect(container.querySelector('section')).toHaveAttribute(
